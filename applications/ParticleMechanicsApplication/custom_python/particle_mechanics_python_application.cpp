@@ -65,7 +65,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_python/add_custom_constitutive_laws_to_python.h"
 
 #include "custom_elements/updated_lagrangian.hpp"
-//#include "custom_elements/updated_lagrangian_UP.hpp"
+#include "custom_elements/updated_lagrangian_UP2.hpp"
 #include "custom_elements/updated_lagrangian_quadrilateral.hpp"
 //#include "custom_elements/updated_lagrangian_UP_quadrilateral.hpp"
 
@@ -94,13 +94,13 @@ Element::Pointer CreateUpdatedLagragian2D3N()
 	
 	}
 	
-//Element::Pointer CreateUpdatedLagragianUP2D3N()
-//{
-	//UpdatedLagrangianUP::Pointer NewElement( 
-	//new UpdatedLagrangianUP( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ));
-	//return NewElement;
+Element::Pointer CreateUpdatedLagragianUP22D3N()
+{
+	UpdatedLagrangianUP2::Pointer NewElement( 
+	new UpdatedLagrangianUP2( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ));
+	return NewElement;
 	
-	//}	
+	}	
 	
 Element::Pointer CreateUpdatedLagragian3D4N()
 {
@@ -141,7 +141,7 @@ Element::Pointer CreateUpdatedLagragian2D4N()
 	AddCustomConstitutiveLawsToPython();
 
 	def("CreateUpdatedLagragian2D3N", &CreateUpdatedLagragian2D3N);
-//	def("CreateUpdatedLagragianUP2D3N", &CreateUpdatedLagragianUP2D3N);
+	def("CreateUpdatedLagragianUP22D3N", &CreateUpdatedLagragianUP22D3N);
 	def("CreateUpdatedLagragian3D4N", &CreateUpdatedLagragian3D4N);
 	def("CreateUpdatedLagragian2D4N", &CreateUpdatedLagragian2D4N);
 //	def("CreateUpdatedLagragianUP2D4N", &CreateUpdatedLagragianUP2D4N);
@@ -163,6 +163,7 @@ Element::Pointer CreateUpdatedLagragian2D4N()
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(MP_KINETIC_ENERGY);
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(MP_STRAIN_ENERGY);
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(MP_TOTAL_ENERGY);
+        KRATOS_REGISTER_IN_PYTHON_VARIABLE(MP_PRESSURE);
 	//KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_MASS);
 	KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(AUX_VELOCITY);
 	KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(AUX_ACCELERATION);
@@ -182,7 +183,11 @@ Element::Pointer CreateUpdatedLagragian2D4N()
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(MP_CONSTITUTIVE_MATRIX);
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_MOMENTUM);
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_INERTIA);
+        KRATOS_REGISTER_IN_PYTHON_VARIABLE( DILATANCY_COEFFICIENT )
 	KRATOS_REGISTER_IN_PYTHON_VARIABLE( AUX_R )
+        KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_MPRESSURE);
+	KRATOS_REGISTER_IN_PYTHON_VARIABLE(AUX_PRESSURE);
+	KRATOS_REGISTER_IN_PYTHON_VARIABLE(AUX_MP_PRESSURE);
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( AUX_T )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( AUX_R_VEL )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( AUX_T_VEL )

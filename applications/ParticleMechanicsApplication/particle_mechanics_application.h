@@ -37,7 +37,7 @@
 
 //element
 #include "custom_elements/updated_lagrangian.hpp"
-//#include "custom_elements/updated_lagrangian_UP.hpp"
+#include "custom_elements/updated_lagrangian_UP2.hpp"
 #include "custom_elements/updated_lagrangian_quadrilateral.hpp"
 //#include "custom_elements/updated_lagrangian_UP_quadrilateral.hpp"
 //#include "custom_elements/total_lagrangian.hpp"
@@ -72,13 +72,15 @@ namespace Kratos
     KRATOS_DEFINE_VARIABLE(double, MP_KINETIC_ENERGY )
     KRATOS_DEFINE_VARIABLE(double, MP_STRAIN_ENERGY )
     KRATOS_DEFINE_VARIABLE(double, MP_TOTAL_ENERGY )
-    
-    
+    KRATOS_DEFINE_VARIABLE(double, MP_PRESSURE )
+    KRATOS_DEFINE_VARIABLE(double, NODAL_MPRESSURE )
+    KRATOS_DEFINE_VARIABLE(double, AUX_PRESSURE)
+    KRATOS_DEFINE_VARIABLE(double, AUX_MP_PRESSURE)
     
     //constitutive law
 	
     KRATOS_DEFINE_VARIABLE(ConstitutiveLaw::Pointer, CONSTITUTIVE_LAW_POINTER )
-    
+    KRATOS_DEFINE_VARIABLE( double, DILATANCY_COEFFICIENT )
     
     ////nodal dofs
     //KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( IMPOSED_DISPLACEMENT )
@@ -263,7 +265,7 @@ namespace Kratos
 		///@{ 
  		const UpdatedLagrangian mUpdatedLagrangian2D3N;
  		const UpdatedLagrangian mUpdatedLagrangian3D4N;
- 		//const UpdatedLagrangianUP mUpdatedLagrangianUP2D3N;
+ 		const UpdatedLagrangianUP2 mUpdatedLagrangianUP22D3N;
  		//const UpdatedLagrangianUP mUpdatedLagrangianUP3D4N;
  		const UpdatedLagrangianQuadrilateral mUpdatedLagrangian2D4N;
  		//const UpdatedLagrangianUPQuadrilateral mUpdatedLagrangianUP2D4N;

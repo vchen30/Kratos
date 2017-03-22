@@ -72,11 +72,13 @@ namespace Kratos
     KRATOS_CREATE_VARIABLE( double, MP_STRAIN_ENERGY )
     KRATOS_CREATE_VARIABLE( double, MP_TOTAL_ENERGY )
     //KRATOS_CREATE_VARIABLE( double, NODAL_MASS )
-    
-    
+    KRATOS_CREATE_VARIABLE( double, MP_PRESSURE )
+    KRATOS_CREATE_VARIABLE( double, NODAL_MPRESSURE )
+    KRATOS_CREATE_VARIABLE( double, AUX_PRESSURE)
+    KRATOS_CREATE_VARIABLE( double, AUX_MP_PRESSURE)
     //constitutive law
     KRATOS_CREATE_VARIABLE( ConstitutiveLaw::Pointer, CONSTITUTIVE_LAW_POINTER )
-    
+    KRATOS_CREATE_VARIABLE( double, DILATANCY_COEFFICIENT )
     //nodal dofs
     //KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( IMPOSED_DISPLACEMENT )
     KRATOS_CREATE_VARIABLE( double, AUX_R)
@@ -111,7 +113,7 @@ namespace Kratos
     KratosParticleMechanicsApplication::KratosParticleMechanicsApplication():
         mUpdatedLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
         mUpdatedLagrangian3D4N( 0, Element::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-        //mUpdatedLagrangianUP2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
+        mUpdatedLagrangianUP22D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
         //mUpdatedLagrangianUP3D4N( 0, Element::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
         mUpdatedLagrangian2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4) ) ) )
         //mUpdatedLagrangianUP2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) )
@@ -137,7 +139,7 @@ namespace Kratos
         //Registering elements and conditions here
         KRATOS_REGISTER_ELEMENT( "UpdatedLagrangian2D3N", mUpdatedLagrangian2D3N )
         KRATOS_REGISTER_ELEMENT( "UpdatedLagrangian3D4N", mUpdatedLagrangian3D4N )
-        //KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianUP2D3N", mUpdatedLagrangianUP2D3N )
+        KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianUP22D3N", mUpdatedLagrangianUP22D3N )
         //KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianUP3D4N", mUpdatedLagrangianUP3D4N )
         KRATOS_REGISTER_ELEMENT( "UpdatedLagrangian2D4N", mUpdatedLagrangian2D4N )
         //KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianUP2D4N", mUpdatedLagrangianUP2D4N )
@@ -156,13 +158,15 @@ namespace Kratos
         KRATOS_REGISTER_VARIABLE( MP_KINETIC_ENERGY )
         KRATOS_REGISTER_VARIABLE( MP_STRAIN_ENERGY )
         KRATOS_REGISTER_VARIABLE( MP_TOTAL_ENERGY )
-        
-        
+        KRATOS_REGISTER_VARIABLE( MP_PRESSURE )
+        KRATOS_REGISTER_VARIABLE( NODAL_MPRESSURE )
+        KRATOS_REGISTER_VARIABLE( AUX_PRESSURE )
+        KRATOS_REGISTER_VARIABLE( AUX_MP_PRESSURE )
               
         //consitutive law
         
         KRATOS_REGISTER_VARIABLE( CONSTITUTIVE_LAW_POINTER )
-        
+        KRATOS_REGISTER_VARIABLE( DILATANCY_COEFFICIENT )
         ////nodal dofs
         //KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( IMPOSED_DISPLACEMENT )
 	KRATOS_REGISTER_VARIABLE( AUX_R )
