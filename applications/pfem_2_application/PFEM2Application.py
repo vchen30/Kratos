@@ -1,6 +1,6 @@
 from KratosPFEM2Application import *
 application = KratosPFEM2Application()
-application_name = "KratosPFEM2Application"
+application_name = "KratosPFEM_2_Application"
 application_folder = "pfem_2_application"
 
 # The following lines are common for all applications

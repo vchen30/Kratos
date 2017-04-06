@@ -44,6 +44,7 @@ Import_ContactMechanicsApplication = False
 Import_ContactStructuralMechanicsApplication = False
 Import_KratosMappingApplication = False
 Import_ConstitutiveModelsApplication = False
+Import_Pfem2Application = False
 
 print("Applications Available:")
 print("Import_SolidMechanicsApplication: False")
@@ -86,6 +87,7 @@ print("Import_ContactMechanicsApplication: False")
 print("Import_ContactStructuralMechanicsApplication: False")
 print("Import_KratosMappingApplication: False")
 print("Import_ConstitutiveModelsApplication: False")
+print("Import_PFEM_2_Application: False")
 
 application_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -131,6 +133,7 @@ def ImportApplications(kernel, applications_path=application_directory):
     print("Import_ContactStructuralMechanicsApplication: " + str(Import_ContactStructuralMechanicsApplication))
     print("Import_KratosMappingApplication: " + str(Import_KratosMappingApplication))    
     print("Import_ConstitutiveModelsApplication: " + str(Import_ConstitutiveModelsApplication))
+    print("Import_PFEM_2_Application: " + str(Import_PFEM_2_Application))
 
     if(Import_SolidMechanicsApplication):
         print("importing KratosSolidMechanicsApplication ...")
@@ -483,6 +486,14 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.AddApplication(constitutive_models_application)
         print("KratosConstitutiveModelsApplication Succesfully imported")
 
+    if(Import_PFEM_2_Application):
+        print("importing KratosPFEM_2_Application ...")
+        sys.path.append(applications_path + '/pfem_2_application/python_scripts')
+        sys.path.append(applications_path + '/pfem_2_application/Linux')
+        from KratosPFEM_2_Application import *
+        pfem_2_application = KratosPFEM_2_Application()
+        kernel.AddApplication(pfem_2_application)
+        print("KratosPFEM_2_Application Succesfully imported")
 
     # dynamic renumbering of variables to ensure the consistency
     kernel.Initialize()
@@ -568,6 +579,8 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.InitializeApplication(mapping_application)    
     if(Import_ConstitutiveModelsApplication):
         kernel.InitializeApplication(constitutive_models_application)
+   if(Import_PFEM_2_Application):
+        kernel.InitializeApplication(pfem_2_application)
 
 # def ImportApplications(kernel  ):
     # import os.path
