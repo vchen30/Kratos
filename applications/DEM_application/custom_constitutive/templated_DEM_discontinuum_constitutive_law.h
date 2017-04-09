@@ -1,6 +1,6 @@
 
-#if !defined(DEM_DISCONTINUUM_CONSTITUTIVE_LAW_H_INCLUDED)
-#define  DEM_DISCONTINUUM_CONSTITUTIVE_LAW_H_INCLUDED
+#if !defined(TEMPLATED_DEM_DISCONTINUUM_CONSTITUTIVE_LAW_H_INCLUDED)
+#define  TEMPLATED_DEM_DISCONTINUUM_CONSTITUTIVE_LAW_H_INCLUDED
 
 /* Project includes */
 #include "includes/define.h"
@@ -18,20 +18,21 @@
 namespace Kratos {
     
     class Properties;
-    class SphericParticle; // forward declaration of spheric cont particle
+    //class TParticleType; // forward declaration of spheric cont particle
     class DEMWall; //forward declaration
 
-    class /*__declspec( dllexport )*/ DEMDiscontinuumConstitutiveLaw : public Flags {
+    template<class TParticleType>
+    class /*__declspec( dllexport )*/ TemplatedDEMDiscontinuumConstitutiveLaw : public Flags {
     public:
 
         double mKn;
         double mKt;
 
-        KRATOS_CLASS_POINTER_DEFINITION(DEMDiscontinuumConstitutiveLaw);
+        KRATOS_CLASS_POINTER_DEFINITION(TemplatedDEMDiscontinuumConstitutiveLaw);
 
-        DEMDiscontinuumConstitutiveLaw();
+        TemplatedDEMDiscontinuumConstitutiveLaw();
 
-        DEMDiscontinuumConstitutiveLaw(const DEMDiscontinuumConstitutiveLaw &rReferenceDiscontinuumConstitutiveLaw);
+        TemplatedDEMDiscontinuumConstitutiveLaw(const TemplatedDEMDiscontinuumConstitutiveLaw &rReferenceDiscontinuumConstitutiveLaw);
 
         virtual void Initialize(const ProcessInfo& r_process_info);
 
@@ -39,9 +40,9 @@ namespace Kratos {
         
         virtual std::string GetTypeOfLaw();
 
-        virtual ~DEMDiscontinuumConstitutiveLaw();
+        virtual ~TemplatedDEMDiscontinuumConstitutiveLaw();
 
-        virtual DEMDiscontinuumConstitutiveLaw::Pointer Clone() const;
+        virtual TemplatedDEMDiscontinuumConstitutiveLaw::Pointer Clone() const;
 
         virtual void CalculateContactArea(double radius, double other_radius, double &calculation_area);
 
@@ -51,15 +52,15 @@ namespace Kratos {
                 double equiv_young,
                 double equiv_poisson,
                 double calculation_area,
-                SphericParticle* element1,
-                SphericParticle* element2);
+                TParticleType* element1,
+                TParticleType* element2);
 
         
         virtual void CalculateElasticEnergy(double& normal_elastic_energy,
                                                                 double indentation,
                                                                 double& cohesive_force,
-                                                                SphericParticle* element1,
-                                                                SphericParticle* element2);
+                                                                TParticleType* element1,
+                                                                TParticleType* element2);
 
         
         virtual void CalculateViscoDamping(double LocalRelVel[3],
@@ -71,15 +72,15 @@ namespace Kratos {
 
         virtual void CalculateViscoDampingCoeff(double &equiv_visco_damp_coeff_normal,
                 double &equiv_visco_damp_coeff_tangential,
-                SphericParticle* element1,
-                SphericParticle* element2,
+                TParticleType* element1,
+                TParticleType* element2,
                 double kn_el,
                 double kt_el);
 
-        virtual void InitializeContact(SphericParticle * const element1, SphericParticle * const element2, const double ini_delta = 0.0);
-        virtual void InitializeContactWithFEM(SphericParticle* const element, DEMWall* const wall, const double indentation, const double ini_delta = 0.0);
+        virtual void InitializeContact(TParticleType * const element1, TParticleType * const element2, const double ini_delta = 0.0);
+        virtual void InitializeContactWithFEM(TParticleType* const element, DEMWall* const wall, const double indentation, const double ini_delta = 0.0);
         
-        virtual void GetContactStiffness(SphericParticle* const element1, SphericParticle* const element2, const double ini_delta, double& kn,double& kt);
+        virtual void GetContactStiffness(TParticleType* const element1, TParticleType* const element2, const double ini_delta, double& kn,double& kt);
         
         virtual void CalculateForces(const ProcessInfo& r_process_info,
                                                         const double OldLocalContactForce[3],
@@ -90,8 +91,8 @@ namespace Kratos {
                                                         double previous_indentation,
                                                         double ViscoDampingLocalContactForce[3],
                                                         double& cohesive_force,
-                                                        SphericParticle* element1,
-                                                        SphericParticle* element2,
+                                                        TParticleType* element1,
+                                                        TParticleType* element2,
                                                         bool& sliding, double LocalCoordSystem[3][3]);
         
         virtual void CalculateForcesWithFEM( ProcessInfo& r_process_info,
@@ -103,16 +104,16 @@ namespace Kratos {
                                             double previous_indentation,
                                             double ViscoDampingLocalContactForce[3],
                                             double& cohesive_force,
-                                            SphericParticle* const element,
+                                            TParticleType* const element,
                                             DEMWall* const wall,
                                             bool& sliding);
                 
         virtual double CalculateNormalForce(const double indentation);
-        virtual double CalculateNormalForce(SphericParticle* const element1, SphericParticle* const element2, const double indentation, double LocalCoordSystem[3][3]);
-        virtual double CalculateNormalForce(SphericParticle* const element, DEMWall* const wall, const double indentation);
-        virtual double CalculateCohesiveNormalForce(SphericParticle * const element1, SphericParticle * const element2, const double indentation);
-        virtual double CalculateCohesiveNormalForceWithFEM(SphericParticle* const element, DEMWall* const wall, const double indentation);
-        virtual double LocalPeriod(const int i, SphericParticle* element1,SphericParticle* element2);
+        virtual double CalculateNormalForce(TParticleType* const element1, TParticleType* const element2, const double indentation, double LocalCoordSystem[3][3]);
+        virtual double CalculateNormalForce(TParticleType* const element, DEMWall* const wall, const double indentation);
+        virtual double CalculateCohesiveNormalForce(TParticleType * const element1, TParticleType * const element2, const double indentation);
+        virtual double CalculateCohesiveNormalForceWithFEM(TParticleType* const element, DEMWall* const wall, const double indentation);
+        virtual double LocalPeriod(const int i, TParticleType* element1,TParticleType* element2);
 
 
     private:
@@ -130,9 +131,6 @@ namespace Kratos {
                     //rSerializer.load("MyMemberName",myMember);
         }
     };
-
-    //This definition is done here to avoid recursive inclusion of header files
-    KRATOS_DEFINE_VARIABLE(DEMDiscontinuumConstitutiveLaw::Pointer, DEM_DISCONTINUUM_CONSTITUTIVE_LAW_POINTER)
 
 } /* namespace Kratos.*/
 #endif /* DEM_CONSTITUTIVE_LAW_H_INCLUDED  defined */

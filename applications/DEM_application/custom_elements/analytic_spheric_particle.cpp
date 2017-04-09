@@ -19,25 +19,25 @@ namespace Kratos
 // using namespace GeometryFunctions;
 
 AnalyticSphericParticle::AnalyticSphericParticle()
-    : SphericParticle()
+    : BaseType()
 {
     ClearMemberVariables();
 }
 
 AnalyticSphericParticle::AnalyticSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SphericParticle(NewId, pGeometry)
+    : BaseType(NewId, pGeometry)
 {
     ClearMemberVariables();
 }
 
 AnalyticSphericParticle::AnalyticSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SphericParticle(NewId, pGeometry, pProperties)
+    : BaseType(NewId, pGeometry, pProperties)
 {
     ClearMemberVariables();
 }
 
 AnalyticSphericParticle::AnalyticSphericParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SphericParticle(NewId, ThisNodes)
+    : BaseType(NewId, ThisNodes)
 {
     ClearMemberVariables();
 }
@@ -67,7 +67,7 @@ Element::Pointer AnalyticSphericParticle::Create(IndexType NewId, NodesArrayType
 
 void AnalyticSphericParticle::CalculateRelativePositions(ParticleDataBuffer & data_buffer)
 {
-    SphericParticle::CalculateRelativePositions(data_buffer);
+    BaseType::CalculateRelativePositions(data_buffer);
     const auto id = data_buffer.mpOtherParticle->Id();
 
     if (IsNewNeighbour(id)){
@@ -102,5 +102,8 @@ void AnalyticSphericParticle::FinalizeForceComputation(ParticleDataBuffer & data
     mNumberOfCollidingSpheres = 0;
     mContactingNeighbourIds = data_buffer.mCurrentContactingNeighbourIds;
 }
+
+//Explicit Instantiations
+template class TemplatedSphericParticle <AnalyticSphericParticle>;
 
 }  // namespace Kratos.

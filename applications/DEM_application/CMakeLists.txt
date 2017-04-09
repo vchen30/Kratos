@@ -14,6 +14,7 @@ set( KRATOS_DEM_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_constitutive_laws_to_python.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spheric_particle.cpp
+				${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/templated_spheric_particle.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/nanoparticle.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/analytic_spheric_particle.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spheric_continuum_particle.cpp
@@ -32,6 +33,7 @@ set( KRATOS_DEM_APPLICATION_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/dem_wall.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/mapping_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/DEM_discontinuum_constitutive_law.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/templated_DEM_discontinuum_constitutive_law.cpp	
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/DEM_continuum_constitutive_law.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/custom_clusters/beadcluster3D.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/custom_clusters/capsulecluster3D.cpp

@@ -9,15 +9,18 @@
 // System includes
 #include <string>
 #include <iostream>
-#include "spheric_particle.h"
+#include "templated_spheric_particle.h"
 
 
 namespace Kratos
 {
 
-class KRATOS_API(DEM_APPLICATION) AnalyticSphericParticle : public SphericParticle
+class KRATOS_API(DEM_APPLICATION) AnalyticSphericParticle : public TemplatedSphericParticle<AnalyticSphericParticle>
 {
 public:
+typedef TemplatedSphericParticle <AnalyticSphericParticle> BaseType;
+
+// Explicit instantiation
 
 /// Pointer definition of AnalyticSphericParticle
 KRATOS_CLASS_POINTER_DEFINITION(AnalyticSphericParticle);
@@ -37,7 +40,7 @@ AnalyticSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry,  Prop
 Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
 
 /// Destructor.
-virtual ~AnalyticSphericParticle(){};
+virtual ~AnalyticSphericParticle(){}
 
 /// Turn back information as a string.
 std::string Info() const override
@@ -59,11 +62,11 @@ protected:
 
 AnalyticSphericParticle();
 
-class ParticleDataBuffer: public SphericParticle::ParticleDataBuffer
+class ParticleDataBuffer: public BaseType::ParticleDataBuffer
 {
 public:
 
-ParticleDataBuffer(SphericParticle* p_this_particle): SphericParticle::ParticleDataBuffer(p_this_particle){}
+ParticleDataBuffer(BaseType* p_this_particle): BaseType::ParticleDataBuffer(p_this_particle){}
 
 virtual ~ParticleDataBuffer(){}
 
@@ -71,9 +74,9 @@ std::vector<int> mCurrentContactingNeighbourIds;
 
 };
 
-virtual std::unique_ptr<SphericParticle::ParticleDataBuffer> CreateParticleDataBuffer(SphericParticle* p_this_particle)
+virtual std::unique_ptr<BaseType::ParticleDataBuffer> CreateParticleDataBuffer(BaseType* p_this_particle)
 {
-    return std::unique_ptr<SphericParticle::ParticleDataBuffer>(new ParticleDataBuffer(p_this_particle));
+    return std::unique_ptr<BaseType::ParticleDataBuffer>(new ParticleDataBuffer(p_this_particle));
 }
 
 private:
@@ -107,12 +110,12 @@ void RecordNewImpact(ParticleDataBuffer & data_buffer);
 
 void save(Serializer& rSerializer) const override
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, SphericParticle);
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseType);
 }
 
 void load(Serializer& rSerializer) override
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, SphericParticle);
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, BaseType);
 }
 
 }; // Class AnalyticSphericParticle
