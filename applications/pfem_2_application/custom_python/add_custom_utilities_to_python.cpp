@@ -202,9 +202,9 @@ namespace Python
 	  .def ("MarkLonelyNodesForErasing", &Pfem2Utils::MarkLonelyNodesForErasing)
 	  .def ("SaveReducedPart", &Pfem2Utils::SaveReducedPart)
 	  ;
+
 	class_<MarkOuterNodesProcess, bases<Process> >("MarkOuterNodesProcess",init<ModelPart&>())
 	  .def("MarkOuterNodes",&MarkOuterNodesProcess::MarkOuterNodes)
-
 	  ;
 	
  	class_<MarkFluidProcess, bases<Process> >("MarkFluidProcess", init<ModelPart&>());

@@ -36,6 +36,7 @@
 #include "boost/smart_ptr.hpp"
 #include "includes/cfd_variables.h"
 #include "includes/deprecated_variables.h"
+#include "includes/c2c_variables.h"
 
 #include "processes/process.h"
 #include "includes/condition.h"
@@ -1227,7 +1228,7 @@ public:
 	//change the name of the var to another one  - otherwise confusing
 	for(ModelPart::NodesContainerType::iterator in = full_model_part.NodesBegin() ; in != full_model_part.NodesEnd() ; ++in)
 	{	  	
-	//in->FastGetSolutionStepValue(IS_INACTIVE)=false;
+	in->FastGetSolutionStepValue(MATERIAL)=false;
 	in->FastGetSolutionStepValue(MATERIAL_VARIABLE)=false;
 	}
 
@@ -1258,7 +1259,6 @@ public:
                 im->GetGeometry()[0].FastGetSolutionStepValue(MATERIAL_VARIABLE)=true;
                 im->GetGeometry()[1].FastGetSolutionStepValue(MATERIAL_VARIABLE)=true;
                 im->GetGeometry()[2].FastGetSolutionStepValue(MATERIAL_VARIABLE)=true;
-                //im->GetGeometry()[3].FastGetSolutionStepValue(MATERIAL_VARIABLE)=true; 
                 
             }
 
@@ -1270,7 +1270,7 @@ public:
 
 		for (int i=0;i<n_nodes;i++)
 			{
-			//im->GetGeometry()[i].FastGetSolutionStepValue(IS_INACTIVE)=true;
+			im->GetGeometry()[i].FastGetSolutionStepValue(MATERIAL)=true;
 			}               
             }
 
@@ -1283,7 +1283,7 @@ public:
 
 	for(ModelPart::NodesContainerType::iterator in = full_model_part.NodesBegin() ; in != full_model_part.NodesEnd() ; ++in)
         {
-            int n_disabled=0.0;//in->FastGetSolutionStepValue(IS_INACTIVE);
+            int n_disabled=in->FastGetSolutionStepValue(MATERIAL);
             if (n_disabled==1)
             {
                 reduced_model_part.Nodes().push_back(*(in.base()));
@@ -1298,10 +1298,6 @@ public:
 
         }
 	
-
-
-
- 	
 	//find neighbors within reduced model part
 	if (n_nodes==3)
 		{
