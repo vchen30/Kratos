@@ -40,11 +40,8 @@
 #include "includes/radiation_settings.h"
 #include "containers/periodic_variables_container.h"
 
-
 namespace Kratos
 {
- 
-    
     typedef array_1d<double, 3> Array3;
 
     REGISTER_COMPONENT( Variable<bool> )
@@ -56,32 +53,27 @@ namespace Kratos
     REGISTER_COMPONENT( Variable<Vector> )
     REGISTER_COMPONENT( Variable<Matrix> )
     REGISTER_COMPONENT( Variable<std::string> )
-    REGISTER_COMPONENT( VariableComponent<VectorComponentAdaptor<Array3>> )    
+    REGISTER_COMPONENT( VariableComponent<VectorComponentAdaptor<Array3>> )
     REGISTER_COMPONENT( Variable<Flags> )
-    REGISTER_COMPONENT( Variable<Element> )  
-    REGISTER_COMPONENT( Variable<Element::Pointer> ) 
+    REGISTER_COMPONENT( Variable<Element> )
+    REGISTER_COMPONENT( Variable<Element::Pointer> )
     REGISTER_COMPONENT( Variable<Condition> )
-    REGISTER_COMPONENT( Variable<ConstitutiveLaw> )  
-    REGISTER_COMPONENT( Variable<ConstitutiveLaw::Pointer> )  
-    REGISTER_COMPONENT( Variable<vector<int> > )  
-    REGISTER_COMPONENT( Variable<vector<Array3> > )  
+    REGISTER_COMPONENT( Variable<ConstitutiveLaw> )
+    REGISTER_COMPONENT( Variable<ConstitutiveLaw::Pointer> )
+    REGISTER_COMPONENT( Variable<vector<int> > )
+    REGISTER_COMPONENT( Variable<vector<Array3> > )
     REGISTER_COMPONENT( Variable<WeakPointerVector<Node<3>>> )
-    REGISTER_COMPONENT( Variable<WeakPointerVector<Element>> ) 
-    REGISTER_COMPONENT( Variable<WeakPointerVector<Condition>> ) 
+    REGISTER_COMPONENT( Variable<WeakPointerVector<Element>> )
+    REGISTER_COMPONENT( Variable<WeakPointerVector<Condition>> )
     REGISTER_COMPONENT( Variable<WeakPointerVector<GeometricalObject>>)
-    REGISTER_COMPONENT( Variable<ConvectionDiffusionSettings::Pointer> ) 
-    REGISTER_COMPONENT( Variable<RadiationSettings::Pointer> ) 
+    REGISTER_COMPONENT( Variable<ConvectionDiffusionSettings::Pointer> )
+    REGISTER_COMPONENT( Variable<RadiationSettings::Pointer> )
     REGISTER_COMPONENT( Variable<PeriodicVariablesContainer> )
-    REGISTER_COMPONENT( Element )  
-    
-    REGISTER_COMPONENT( Condition )  
-    REGISTER_COMPONENT( Flags )  
-    
-    REGISTER_COMPONENT( VariableData )  
-    
+    REGISTER_COMPONENT( Element )
 
-    
+    REGISTER_COMPONENT( Condition )
+    REGISTER_COMPONENT( Flags )
 
-
+    REGISTER_COMPONENT( VariableData )
 
 }  // namespace Kratos.

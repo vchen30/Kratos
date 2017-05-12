@@ -15,6 +15,12 @@
 #if !defined(KRATOS_KRATOS_COMPONENTS_H_INCLUDED )
 #define  KRATOS_KRATOS_COMPONENTS_H_INCLUDED
 
+#ifdef KRATOS_CORE
+#define KRATOS_DEF_API KRATOS_API(KRATOS_CORE)
+#else
+#define KRATOS_DEF_API
+#endif
+
 // System includes
 #include <string>
 #include <iostream>
@@ -36,7 +42,7 @@ namespace Kratos
 */
 
 template<class TComponentType>
-class KRATOS_API(KRATOS_CORE) KratosComponents
+class KRATOS_DEF_API KratosComponents
 {
 
 public:
@@ -196,7 +202,10 @@ private:
     ///@name Private Operators
     ///@{
 
-    static ComponentsContainerType& GetComponentsInstance();
+    static ComponentsContainerType& GetComponentsInstance() {
+      static KratosComponents<TComponentType>::ComponentsContainerType instance;
+      return instance;
+    }
 
     ///@}
     ///@name Private Operations
@@ -228,12 +237,11 @@ private:
 }; // Class KratosComponents
 
 #define REGISTER_COMPONENT(component_type) \
-    template<>  KratosComponents<component_type >::ComponentsContainerType& KratosComponents<component_type >::GetComponentsInstance() \
-    { \
-            static KratosComponents<component_type >::ComponentsContainerType instance; \
-            return instance; \
-    }
-    
+    template class KRATOS_API(KRATOS_CORE) KratosComponents<component_type>;
+
+#define REGISTER_EXTERNAL_COMPONENT(component_type) \
+    template class KratosComponents<component_type>;
+
 
 ///@name Input and output
 ///@{
@@ -243,7 +251,10 @@ private:
 //   inline std::istream& operator >> (std::istream& rIStream,
 // 				    KratosComponents<TComponentType>& rThis);
 
-
+template<class TComponentType> void KRATOS_DEF_API AddKratosComponent(std::string const& Name, TComponentType const& ThisComponent)
+{
+    KratosComponents<TComponentType>::Add(Name, ThisComponent);
+}
 
 /// output stream function
 template<class TComponentType>
@@ -258,15 +269,8 @@ inline std::ostream& operator << (std::ostream& rOStream,
 }
 ///@}
 
-
-template<class TComponentType> void KRATOS_API(KRATOS_CORE) AddKratosComponent(std::string const& Name, TComponentType const& ThisComponent)
-{
-    KratosComponents<TComponentType>::Add(Name, ThisComponent);
-}
-
-
-
 }  // namespace Kratos.
 
+#undef KRATOS_DEF_API
 
 #endif // KRATOS_KRATOS_COMPONENTS_H_INCLUDED  defined
