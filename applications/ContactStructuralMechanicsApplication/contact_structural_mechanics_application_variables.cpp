@@ -14,7 +14,7 @@ namespace Kratos
 {
 typedef array_1d<double,3> Vector3;
 
-REGISTER_COMPONENT( Variable< std::vector< contact_container>* > )
+REGISTER_EXTERNAL_COMPONENT( Variable< std::vector< contact_container>* > )
 
 // CONDITIONS
 /* Mortar method */
