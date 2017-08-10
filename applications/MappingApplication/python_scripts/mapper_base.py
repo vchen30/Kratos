@@ -33,7 +33,7 @@ class MapperBase(object):
 
         self._read_model_parts(model_part_origin, main_model_part_destination)
 
-        self._do_some_more_checks
+        self._do_some_more_checks # TODO implement this
 
 
         self._create_mapper()
@@ -43,6 +43,7 @@ class MapperBase(object):
     #### Public functions ####
 
     def Map(variable_origin, variable_destination):
+        # Create the mapper only here?
         self._get_mapper().Map()
 
 

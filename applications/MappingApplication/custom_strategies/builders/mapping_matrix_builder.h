@@ -84,9 +84,13 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     ///@name Operations
     ///@{
 
+
+    /**
+    This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem
+     */
     virtual void BuildLHS(typename TSchemeType::Pointer pScheme,
                           ModelPart& rModelPart,
-                          TSystemMatrixType& A)
+                          TSystemMatrixType& A) override
     {   // funciton copied from "residualbased_block_builder_and_solver.h"
     //     KRATOS_TRY
     //     if (!pScheme)
@@ -153,12 +157,44 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     //     KRATOS_CATCH("")
     }
 
+    /**
+    This functions build the RHS (aka the vector of nodal quantities 
+    for a given variable) of the mapping problem
+     */
     virtual void BuildRHS(typename TSchemeType::Pointer pScheme,
                           ModelPart& rModelPart,
-                          TSystemVectorType& b)
+                          TSystemVectorType& b) override
     {
 
 
+    }
+
+    virtual void SetUpDofSet(
+        typename TSchemeType::Pointer pScheme,
+        ModelPart& r_model_part
+    ) override
+    {
+    }
+
+    /**
+    organises the dofset in order to speed up the building phase
+     */
+    virtual void SetUpSystem(
+        ModelPart& r_model_part
+    ) override
+    {
+    }
+
+    virtual void ResizeAndInitializeVectors(
+        typename TSchemeType::Pointer pScheme,
+        TSystemMatrixPointerType& pA,
+        TSystemVectorPointerType& pDx,
+        TSystemVectorPointerType& pb,
+        ElementsArrayType& rElements,
+        ConditionsArrayType& rConditions,
+        ProcessInfo& CurrentProcessInfo
+    ) override
+    {
     }
 
     ///@}
