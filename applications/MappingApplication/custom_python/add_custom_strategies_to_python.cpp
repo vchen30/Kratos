@@ -28,6 +28,7 @@
 // Project includes
 #include "includes/define.h"
 #include "custom_python/add_custom_strategies_to_python.h"
+#include "custom_strategies/strategies/mapper_strategy.h"
 
 namespace Kratos
 {
@@ -38,7 +39,6 @@ using namespace boost::python;
 
 void  AddCustomStrategiesToPython()
 {
-
 
 }
 
