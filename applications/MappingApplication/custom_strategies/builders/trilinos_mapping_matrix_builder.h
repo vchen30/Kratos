@@ -82,24 +82,20 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@name Operations
     ///@{
 
-    void BuildLHS(typename TSchemeType::Pointer pScheme,
-                          ModelPart& rModelPart,
+    void BuildLHS(ModelPart& rModelPart,
                           TSystemMatrixType& A) override
     {   
 
     }
 
-    void BuildRHS(typename TSchemeType::Pointer pScheme,
-                          ModelPart& rModelPart,
+    void BuildRHS(ModelPart& rModelPart,
                           TSystemVectorType& b) override
     {
 
 
     }
 
-    void SetUpDofSet(
-        typename TSchemeType::Pointer pScheme,
-        ModelPart& r_model_part
+    void SetUpDofSet(ModelPart& r_model_part
     ) override
     {
     }
@@ -114,7 +110,6 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     }
 
     void ResizeAndInitializeVectors(
-        typename TSchemeType::Pointer pScheme,
         TSystemMatrixPointerType& pA,
         TSystemVectorPointerType& pDx,
         TSystemVectorPointerType& pb,

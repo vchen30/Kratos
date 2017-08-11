@@ -90,12 +90,12 @@ public:
     ///@{
 
     MapperCommunicator(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,
-                       Parameters JsonParameters, const int CommRank = 0) :
+                       Parameters JsonParameters) :
         mrModelPartOrigin(rModelPartOrigin),
         mrModelPartDestination(rModelPartDestination),
         mJsonParameters(JsonParameters)
     {
-        CheckAndValidateJson(CommRank);
+        CheckAndValidateJson(0);
 
         mInitialSearchRadius = mJsonParameters["search_radius"].GetDouble();
         mMaxSearchIterations = mJsonParameters["search_iterations"].GetInt();
@@ -103,7 +103,7 @@ public:
 
         mEchoLevel = mJsonParameters["echo_level"].GetInt();
         
-        CheckInterfaceModelParts(CommRank);
+        CheckInterfaceModelParts(0);
     }
 
     /// Destructor.

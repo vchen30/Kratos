@@ -74,8 +74,6 @@ class MapperStrategy
 
     typedef TSparseSpace SparseSpaceType;
 
-    typedef typename BaseType::TSchemeType TSchemeType;
-
     //typedef typename BaseType::DofSetType DofSetType;
 
     typedef typename BaseType::DofsArrayType DofsArrayType;
@@ -99,13 +97,11 @@ class MapperStrategy
     /// Default constructor.
     MapperStrategy(ModelPart& model_part_origin,
         ModelPart& model_part_destination,
-        typename TSchemeType::Pointer pScheme,
         typename TBuilderAndSolverType::Pointer pMappingMatrixBuilder
     ) 
         : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(model_part_destination), 
         mrModelPartOrigin(model_part_origin)
     {
-        mpScheme = pScheme;
         mpMappingMatrixBuilder = pMappingMatrixBuilder;
 
         // Initializing the Mapping Matrix and vector of quantities
@@ -117,7 +113,6 @@ class MapperStrategy
     // constructor for Mortar, takes the BuilderAndSolver for Mdd
     MapperStrategy(ModelPart& model_part_origin,
         ModelPart& model_part_destination,
-        typename TSchemeType::Pointer pScheme,
         typename TBuilderAndSolverType::Pointer pMappingMatrixBuilder,
         typename TBuilderAndSolverType::Pointer pBuilderAndSolver
     ) 
@@ -126,7 +121,6 @@ class MapperStrategy
     {
         mIsMortar = true;
 
-        mpScheme = pScheme;
         mpMappingMatrixBuilder = pMappingMatrixBuilder;
         mpBuilderAndSolver = pBuilderAndSolver;
 
@@ -155,12 +149,12 @@ class MapperStrategy
      */    
     void Initialize() override
     {
-        mpMappingMatrixBuilder->BuildLHS(mpScheme, BaseType::GetModelPart(), mpMdo);
+        mpMappingMatrixBuilder->BuildLHS(BaseType::GetModelPart(), mpMdo);
 
         // assemble the mass matrix for the mortar mapper (M_dd)
         if (mIsMortar)
         {
-            mpBuilderAndSolver->BuildLHS(mpScheme, mrModelPartOrigin, mpMdd);
+            mpBuilderAndSolver->BuildLHS(mrModelPartOrigin, mpMdd);
         }
     }
 
@@ -172,11 +166,11 @@ class MapperStrategy
     {
         if (InverseOperation) // for conservative mapping
         {
-            mpMappingMatrixBuilder->BuildRHS(mpScheme, BaseType::GetModelPart(), mpQd);
+            mpMappingMatrixBuilder->BuildRHS(BaseType::GetModelPart(), mpQd);
         }
         else
         {
-            mpMappingMatrixBuilder->BuildRHS(mpScheme, mrModelPartOrigin, mpQo);
+            mpMappingMatrixBuilder->BuildRHS(mrModelPartOrigin, mpQo);
         }
         
     }
@@ -189,12 +183,12 @@ class MapperStrategy
     {
         if (InverseOperation) // for conservative mapping
         {
-            mpScheme->Update(mrModelPartOrigin, mpMappingMatrixBuilder->GetDofSet(), 
+            Update(mrModelPartOrigin, mpMappingMatrixBuilder->GetDofSet(), 
                              mpMdo, mpQo, mpQd);
         }
         else
         {
-            mpScheme->Update(BaseType::GetModelPart(), mpMappingMatrixBuilder->GetDofSet(), 
+            Update(BaseType::GetModelPart(), mpMappingMatrixBuilder->GetDofSet(), 
                              mpMdo, mpQd, mpQo);
         }
     }
@@ -328,8 +322,6 @@ class MapperStrategy
     ///@{
 
     ModelPart& mrModelPartOrigin;
-    
-    typename TSchemeType::Pointer mpScheme;
 
     typename TBuilderAndSolverType::Pointer mpMappingMatrixBuilder; // TODO change type...?
     typename TBuilderAndSolverType::Pointer mpBuilderAndSolver; // needed for Mortar

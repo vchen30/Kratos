@@ -27,20 +27,27 @@
 
 // Project includes
 #include "includes/define.h"
-#include "custom_python/add_custom_utilities_to_python.h"
-
 #include "includes/kratos_parameters.h"
 #include "custom_utilities/mapper_flags.h"
-// #include "custom_utilities/mapper_factory.h"
 
-#include "custom_utilities/mapper_communicator.h"
+#include "custom_python/add_custom_mappers_to_python.h"
+
+#include "custom_mappers/mapper.h"
+#include "custom_mappers/nearest_neighbor_mapper.h"
+#include "custom_mappers/nearest_element_mapper.h"
+
+
+// #include "custom_utilities/mapper_flags.h"
+// // #include "custom_utilities/mapper_factory.h"
+
+// #include "custom_utilities/mapper_communicator.h"
 
 
 
 
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-#include "custom_utilities/mapper_mpi_communicator.h"
-#endif
+// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+// #include "custom_utilities/mapper_mpi_communicator.h"
+// #endif
 
 
 namespace Kratos
@@ -102,7 +109,16 @@ namespace Python
 //     dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
 // }
 
-void  AddCustomUtilitiesToPython()
+struct mapper_wrap
+  : Mapper, boost::python::wrapper<Mapper>
+{
+  mapper_wrap(): Mapper(ModelPart&, ModelPart&, Parameters) {}
+  void UpdateInterface() { return this->get_override("UpdateInterface")(); }
+  void Map() { return this->get_override("Map")(); }
+  void InverseMap() { return this->get_override("InverseMap")(); }
+};
+
+void  AddCustomMappersToPython()
 {
     using namespace boost::python;
 
@@ -184,18 +200,22 @@ void  AddCustomUtilitiesToPython()
 // stuff for the new MappingApplication design
 
 
+  // Expose models.
+//   python::class_<polygon_wrap, boost::noncopyable>(
+//       "Polygon", python::init<>())
+//     .def("area", python::pure_virtual(&polygon::area))
+//     ;
 
-    class_< MapperCommunicator, boost::noncopyable >
-        ("MapperCommunicator", init<ModelPart&, ModelPart&, Parameters>())
-        // TODO add the functions
+    class_< mapper_wrap>("Mapper", no_init)
+        .def("UpdateInterface", python::pure_virtual(&Mapper::UpdateInterface))
         ;
 
 
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-    class_< MapperMPICommunicator, bases< MapperCommunicator >,  boost::noncopyable >
-        ("MapperMPICommunicator", init<ModelPart&, ModelPart&, Parameters>())
-        ;
-#endif
+// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+//     class_< MapperMPICommunicator, bases< MapperCommunicator >,  boost::noncopyable >
+//         ("MapperMPICommunicator", init<ModelPart&, ModelPart&, Parameters>())
+//         ;
+// #endif
 }
 
 }  // namespace Python.
