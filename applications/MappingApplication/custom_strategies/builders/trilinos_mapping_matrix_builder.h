@@ -18,12 +18,14 @@
 #define KRATOS_TRILINOS_MAPPING_MATRIX_BUILDER_H_INCLUDED
 
 // System includes
+#include "mpi.h"
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
 #include "solving_strategies/schemes/scheme.h"
+
 
 namespace Kratos
 {
@@ -197,6 +199,44 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@}
     ///@name Private Operations
     ///@{
+
+    /**
+    This functions computes the start equationId for to local nodes
+    aka the equation id of the global system by asking the ranks
+    with an rank-id smaller than my own rank id for their number
+    of nodes
+    Example:
+    r0 : 5 Nodes (start EquationId: 0)
+    r1 : 7 Nodes (start EquationId: 5)
+    r2 : 8 Nodes (start EquationId: 12)
+    */
+    int GetStartEquationId(ModelPart& rModelPart) override
+    {   
+        const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes()
+
+        const int comm_rank = rModelPart.GetCommunicator().MyPID();
+        const int comm_size = rModelPart.GetCommunicator().TotalProcesses();
+
+        int* num_nodes_list = new int[comm_size];
+
+        // get the number of nodes on the other ranks
+        MPI_Allgather(num_local_nodes, 1, MPI_INT, num_nodes_list,
+                    1, MPI_INT, MPI_COMM_WORLD);
+
+        int start_equation_id = 0;
+        for (int i = 0; i < comm_rank ; ++i) // loop the ranks before me
+        {
+            start_equation_id += num_nodes_list[i];
+        }
+ 
+        delete num_nodes_list;
+
+        return start_equation_id;
+    }
+
+    virtual void GlobalUpdateVector(TSystemVectorType& b) {
+        // Do the trilinos assembling here (if necessary, since the vector exists already ...)
+    }
 
     ///@}
     ///@name Private  Access

@@ -37,11 +37,28 @@
 
 namespace Kratos
 {
+    class MyTestClass
+    {
+    public:
+        virtual void MyPureVirtualFunction() = 0;
+
+
+    };
+
+    class MyTestClassToBeExposed
+    {
+    public:
+        void MyPureVirtualFunction() {}
+
+
+    };
+
+    
 
 namespace Python
 {
 
-void  AddCustomMappersToPython();
+void AddCustomMappersToPython();
 
 }  // namespace Python.
 

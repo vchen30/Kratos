@@ -36,18 +36,8 @@
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
 
+#include "custom_utilities/mapper_factory_new.h"
 
-// #include "custom_utilities/mapper_flags.h"
-// // #include "custom_utilities/mapper_factory.h"
-
-// #include "custom_utilities/mapper_communicator.h"
-
-
-
-
-// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-// #include "custom_utilities/mapper_mpi_communicator.h"
-// #endif
 
 
 namespace Kratos
@@ -56,166 +46,150 @@ namespace Kratos
 namespace Python
 {
 
-// // Wrapper functions for taking a default argument for the flags
-// void UpdateInterface(MapperFactory& dummy)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     double dummy_search_radius = -1.0f;
-//     dummy.UpdateInterface(dummy_flags, dummy_search_radius);
-// }
-
-// void UpdateInterface(MapperFactory& dummy, Kratos::Flags& options)
-// {
-//     double dummy_search_radius = -1.0f;
-//     dummy.UpdateInterface(options, dummy_search_radius);
-// }
-
-// void UpdateInterface(MapperFactory& dummy, double search_radius)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     dummy.UpdateInterface(dummy_flags, search_radius);
-// }
-
-
-// void Map(MapperFactory& dummy,
-//          const Variable<double>& origin_variable,
-//          const Variable<double>& destination_variable)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     dummy.Map(origin_variable, destination_variable, dummy_flags);
-// }
-
-// void Map(MapperFactory& dummy,
-//          const Variable< array_1d<double, 3> >& origin_variable,
-//          const Variable< array_1d<double, 3> >& destination_variable)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     dummy.Map(origin_variable, destination_variable, dummy_flags);
-// }
-
-// void InverseMap(MapperFactory& dummy,
-//                 const Variable<double>& origin_variable,
-//                 const Variable<double>& destination_variable)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
-// }
-
-// void InverseMap(MapperFactory& dummy,
-//                 const Variable< array_1d<double, 3> >& origin_variable,
-//                 const Variable< array_1d<double, 3> >& destination_variable)
-// {
-//     Kratos::Flags dummy_flags = Kratos::Flags();
-//     dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
-// }
-
-struct mapper_wrap
-  : Mapper, boost::python::wrapper<Mapper>
+// Wrapper functions for taking a default argument for the flags
+void UpdateInterface(Mapper& dummy)
 {
-  mapper_wrap(): Mapper(ModelPart&, ModelPart&, Parameters) {}
-  void UpdateInterface() { return this->get_override("UpdateInterface")(); }
-  void Map() { return this->get_override("Map")(); }
-  void InverseMap() { return this->get_override("InverseMap")(); }
-};
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    double dummy_search_radius = -1.0f;
+    dummy.UpdateInterface(dummy_flags, dummy_search_radius);
+}
+
+void UpdateInterface(Mapper& dummy, Kratos::Flags options)
+{
+    double dummy_search_radius = -1.0f;
+    dummy.UpdateInterface(options, dummy_search_radius);
+}
+
+void UpdateInterface(Mapper& dummy, double search_radius)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.UpdateInterface(dummy_flags, search_radius);
+}
+
+
+void Map(Mapper& dummy,
+         const Variable<double>& origin_variable,
+         const Variable<double>& destination_variable)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.Map(origin_variable, destination_variable, dummy_flags);
+}
+
+void Map(Mapper& dummy,
+         const Variable< array_1d<double, 3> >& origin_variable,
+         const Variable< array_1d<double, 3> >& destination_variable)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.Map(origin_variable, destination_variable, dummy_flags);
+}
+
+void InverseMap(Mapper& dummy,
+                const Variable<double>& origin_variable,
+                const Variable<double>& destination_variable)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
+}
+
+void InverseMap(Mapper& dummy,
+                const Variable< array_1d<double, 3> >& origin_variable,
+                const Variable< array_1d<double, 3> >& destination_variable)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
+}
 
 void  AddCustomMappersToPython()
 {
     using namespace boost::python;
 
-    // void (*pUpdateInterface)(MapperFactory &)
-    //     = &UpdateInterface;
+    void (*pUpdateInterface)(Mapper &)
+        = &UpdateInterface;
 
-    // void (*pUpdateInterfaceOptions)(MapperFactory &, Kratos::Flags &)
-    //     = &UpdateInterface;
+    void (*pUpdateInterfaceOptions)(Mapper &, Kratos::Flags)
+        = &UpdateInterface;
 
-    // void (*pUpdateInterfaceSearchRadius)(MapperFactory &, double)
-    //     = &UpdateInterface;
+    void (*pUpdateInterfaceSearchRadius)(Mapper &, double)
+        = &UpdateInterface;
 
-    // void (*pMapScalar)(MapperFactory &,
-    //                    const Variable<double> &,
-    //                    const Variable<double> &)
-    //     = &Map;
+    void (*pMapScalar)(Mapper &,
+                       const Variable<double> &,
+                       const Variable<double> &)
+        = &Map;
 
-    // void (*pMapVector)(MapperFactory &,
-    //                    const Variable< array_1d<double, 3> > &,
-    //                    const Variable< array_1d<double, 3> > &)
-    //     = &Map;
+    void (*pMapVector)(Mapper &,
+                       const Variable< array_1d<double, 3> > &,
+                       const Variable< array_1d<double, 3> > &)
+        = &Map;
 
-    // void (*pInverseMapScalar)(MapperFactory &,
-    //                           const Variable<double> &,
-    //                           const Variable<double> &)
-    //     = &InverseMap;
+    void (*pInverseMapScalar)(Mapper &,
+                              const Variable<double> &,
+                              const Variable<double> &)
+        = &InverseMap;
 
-    // void (*pInverseMapVector)(MapperFactory &,
-    //                           const Variable< array_1d<double, 3> > &,
-    //                           const Variable< array_1d<double, 3> > &)
-    //     = &InverseMap;
-
-
-    // void (MapperFactory::*pUpdateInterfaceFull)(Kratos::Flags &, double)
-    //     = &MapperFactory::UpdateInterface;
-
-    // void (MapperFactory::*pMapScalarOptions)(const Variable<double> &,
-    //         const Variable<double> &,
-    //         Kratos::Flags &)
-    //     = &MapperFactory::Map;
-
-    // void (MapperFactory::*pMapVectorOptions)(const Variable< array_1d<double, 3> > &,
-    //         const Variable< array_1d<double, 3> > &,
-    //         Kratos::Flags &)
-    //     = &MapperFactory::Map;
-
-    // void (MapperFactory::*pInverseMapScalarOptions)(const Variable<double> &,
-    //         const Variable<double> &,
-    //         Kratos::Flags &)
-    //     = &MapperFactory::InverseMap;
-
-    // void (MapperFactory::*pInverseMapVectorOptions)(const Variable< array_1d<double, 3> > &,
-    //         const Variable< array_1d<double, 3> > &,
-    //         Kratos::Flags &)
-    //     = &MapperFactory::InverseMap;
+    void (*pInverseMapVector)(Mapper &,
+                              const Variable< array_1d<double, 3> > &,
+                              const Variable< array_1d<double, 3> > &)
+        = &InverseMap;
 
 
-    // class_< MapperFactory > mapper_factory = class_<MapperFactory>("MapperFactory", init<ModelPart&, ModelPart&, Parameters>())
-    //         .def("UpdateInterface",  pUpdateInterface)
-    //         .def("UpdateInterface",  pUpdateInterfaceOptions)
-    //         .def("UpdateInterface",  pUpdateInterfaceSearchRadius)
-    //         .def("Map",              pMapScalar)
-    //         .def("Map",              pMapVector)
-    //         .def("InverseMap",       pInverseMapScalar)
-    //         .def("InverseMap",       pInverseMapVector)
+    void (Mapper::*pUpdateInterfaceFull)(Kratos::Flags, double)
+        = &Mapper::UpdateInterface;
 
-    //         .def("UpdateInterface",  pUpdateInterfaceFull)
-    //         .def("Map",              pMapScalarOptions)
-    //         .def("Map",              pMapVectorOptions)
-    //         .def("InverseMap",       pInverseMapScalarOptions)
-    //         .def("InverseMap",       pInverseMapVectorOptions)
-    //         ;
+    void (Mapper::*pMapScalarOptions)(const Variable<double> &,
+            const Variable<double> &,
+            Kratos::Flags)
+        = &Mapper::Map;
 
-    // mapper_factory.attr("SWAP_SIGN") = MapperFlags::SWAP_SIGN;
-    // mapper_factory.attr("ADD_VALUES") = MapperFlags::ADD_VALUES;
-    // mapper_factory.attr("CONSERVATIVE") = MapperFlags::CONSERVATIVE;
-    // mapper_factory.attr("REMESHED") = MapperFlags::REMESHED;
+    void (Mapper::*pMapVectorOptions)(const Variable< array_1d<double, 3> > &,
+            const Variable< array_1d<double, 3> > &,
+            Kratos::Flags)
+        = &Mapper::Map;
 
-// stuff for the new MappingApplication design
+    void (Mapper::*pInverseMapScalarOptions)(const Variable<double> &,
+            const Variable<double> &,
+            Kratos::Flags)
+        = &Mapper::InverseMap;
 
-
-  // Expose models.
-//   python::class_<polygon_wrap, boost::noncopyable>(
-//       "Polygon", python::init<>())
-//     .def("area", python::pure_virtual(&polygon::area))
-//     ;
-
-    class_< mapper_wrap>("Mapper", no_init)
-        .def("UpdateInterface", python::pure_virtual(&Mapper::UpdateInterface))
-        ;
+    void (Mapper::*pInverseMapVectorOptions)(const Variable< array_1d<double, 3> > &,
+            const Variable< array_1d<double, 3> > &,
+            Kratos::Flags)
+        = &Mapper::InverseMap;
 
 
-// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-//     class_< MapperMPICommunicator, bases< MapperCommunicator >,  boost::noncopyable >
-//         ("MapperMPICommunicator", init<ModelPart&, ModelPart&, Parameters>())
-//         ;
-// #endif
+    class_< Mapper, boost::noncopyable > mapper 
+        = class_< Mapper, boost::noncopyable >("Mapper", no_init)
+            .def("UpdateInterface",  pUpdateInterface)
+            .def("UpdateInterface",  pUpdateInterfaceOptions)
+            .def("UpdateInterface",  pUpdateInterfaceSearchRadius)
+            .def("Map",              pMapScalar)
+            .def("Map",              pMapVector)
+            .def("InverseMap",       pInverseMapScalar)
+            .def("InverseMap",       pInverseMapVector)
+
+            .def("UpdateInterface",  pUpdateInterfaceFull)
+            .def("Map",              pMapScalarOptions)
+            .def("Map",              pMapVectorOptions)
+            .def("InverseMap",       pInverseMapScalarOptions)
+            .def("InverseMap",       pInverseMapVectorOptions)
+            ;
+
+    mapper.attr("SWAP_SIGN") = MapperFlags::SWAP_SIGN;
+    mapper.attr("ADD_VALUES") = MapperFlags::ADD_VALUES;
+    mapper.attr("CONSERVATIVE") = MapperFlags::CONSERVATIVE;
+    mapper.attr("REMESHED") = MapperFlags::REMESHED;
+
+    class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
+        ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
+    class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
+        ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
+
+    // class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
+    // .def("CreateMapper", &MapperFactoryNew::CreateMapper, return_value_policy<manage_new_object>())
+    // .staticmethod("CreateMapper")
+    ;
+    
+
 }
 
 }  // namespace Python.

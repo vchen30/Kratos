@@ -18,13 +18,12 @@
 #define KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED
 
 // System includes
+#include <unordered_map> 
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
-#include "solving_strategies/schemes/scheme.h"
-#include "solving_strategies/builder_and_solvers/builder_and_solver.h"
 
 namespace Kratos
 {
@@ -57,7 +56,7 @@ template <class TSparseSpace,
           class TDenseSpace,  // = DenseSpace<double>,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
           >
-class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace, TLinearSolver >
+class MappingMatrixBuilder
 {
   public:
     ///@name Type Definitions
@@ -65,6 +64,8 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
 
     /// Pointer definition of MappingMatrixBuilder
     KRATOS_CLASS_POINTER_DEFINITION(MappingMatrixBuilder);
+
+    typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
 
     ///@}
     ///@name Life Cycle
@@ -84,6 +85,24 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     ///@name Operations
     ///@{
 
+    /** 
+    This function set up the structure of the system, i.e. the NodeSet,
+    which relates the nodes to the equation Ids
+    */
+    void SetUpMatrixStructure(ModelPart& rModelPart, 
+                              EquationIdMapType& EquationIdNodeMap)
+    {
+        EquationIdNodeMap.clear();
+
+        // these ids are the positions in the global vectors and matrix
+        int equation_id = GetStartEquationId(rModelPart);
+
+        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        {
+        EquationIdNodeMap.emplace(equation_id, &node); // TODO check if this is a pointer
+        ++equation_id;
+        }
+    }
 
     /**
     This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem
@@ -160,11 +179,17 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     This functions build the RHS (aka the vector of nodal quantities 
     for a given variable) of the mapping problem
      */
-    virtual void BuildRHS(ModelPart& rModelPart,
-                          TSystemVectorType& b) override
+    template <typename T>
+    void UpdateRHS(EquationIdMapType& EquationIdNodeMap,
+                  TSystemVectorType& b
+                  const Variable< T >& rVariable)
     {
+        for (auto const &entry : EquationIdNodeMap)
+        {
+            b[entry.first] = entry.second.FastGetCurrentSolutionStepValue(rVariable);
+        }
 
-
+        GlobalAssembleVector(b); // TODO is this needed?
     }
 
     virtual void SetUpDofSet(
@@ -233,6 +258,8 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     ///@name Protected member Variables
     ///@{
 
+    
+
     ///@}
     ///@name Protected Operators
     ///@{
@@ -240,6 +267,22 @@ class MappingMatrixBuilder : public BuilderAndSolver< TSparseSpace, TDenseSpace,
     ///@}
     ///@name Protected Operations
     ///@{
+
+    /**
+    This functions computes the start equationId for to local nodes
+    aka the equation id of the global system
+    */
+    virtual int GetStartEquationId(ModelPart& rModelPart)
+    {   
+        return 0;
+    }
+
+    /**
+    This function does nothing in the serial case
+    It exists such that the BuildRHS only exists in this
+    class and can therefore be templated
+    */
+    virtual void GlobalAssembleVector(TSystemVectorType& b) {}
 
     ///@}
     ///@name Protected  Access

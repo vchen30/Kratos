@@ -18,6 +18,7 @@
 #define KRATOS_MAPPER_STRATEGY_H_INCLUDED
 
 // System includes
+#include <unordered_map> 
 
 // External includes
 
@@ -67,6 +68,8 @@ class MapperStrategy
     KRATOS_CLASS_POINTER_DEFINITION(MapperStrategy);
 
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
+
+    typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
     
     typedef typename BaseType::TBuilderAndSolverType TBuilderAndSolverType;
 
@@ -149,6 +152,9 @@ class MapperStrategy
      */    
     void Initialize() override
     {
+        mpMappingMatrixBuilder->SetUpMatrixStructure(mrModelPartOrigin, mEquationIdNodeMapOrigin);
+        mpMappingMatrixBuilder->SetUpMatrixStructure(BaseType::GetModelPart(), mEquationIdNodeMapDestination);
+
         mpMappingMatrixBuilder->BuildLHS(BaseType::GetModelPart(), mpMdo);
 
         // assemble the mass matrix for the mortar mapper (M_dd)
@@ -166,11 +172,11 @@ class MapperStrategy
     {
         if (InverseOperation) // for conservative mapping
         {
-            mpMappingMatrixBuilder->BuildRHS(BaseType::GetModelPart(), mpQd);
+            mpMappingMatrixBuilder->UpdateRHS(BaseType::GetModelPart(), mpQd);
         }
         else
         {
-            mpMappingMatrixBuilder->BuildRHS(mrModelPartOrigin, mpQo);
+            mpMappingMatrixBuilder->UpdateRHS(mrModelPartOrigin, mpQo);
         }
         
     }
@@ -331,6 +337,9 @@ class MapperStrategy
     TSystemVectorPointerType mpQtmp; // for Mortar (needed bcs Trilinos cannot multiply in place)
     TSystemMatrixPointerType mpMdo;
     TSystemMatrixPointerType mpMdd; // for Mortar
+
+    EquationIdMapType mEquationIdNodeMapOrigin; // This is the equivalent to the dofset I think
+    EquationIdMapType mEquationIdNodeMapDestination;
 
     bool mIsMortar = false; // needed to check if additional operations (for mortar-type mappers are required)
 

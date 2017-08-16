@@ -98,7 +98,21 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius) = 0;
+    virtual void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius)
+    {
+        // mpMapperCommunicator->UpdateInterface(MappingOptions, SearchRadius);
+        // if (mpInverseMapper)
+        // {
+        //     mpInverseMapper->UpdateInterface(MappingOptions, SearchRadius);
+        // }
+
+        // if (MappingOptions.Is(MapperFlags::REMESHED))
+        // {
+        //     ComputeNumberOfNodesAndConditions();
+        // }
+
+        UpdateInterfaceSpecific();
+    }
 
     /* This function maps from Origin to Destination */
     virtual void Map(const Variable<double>& rOriginVariable,
@@ -111,14 +125,14 @@ public:
                      Kratos::Flags MappingOptions) = 0;
 
     /* This function maps from Destination to Origin */
-    virtual void InverseMap(const Variable<double>& rOriginVariable,
+    void InverseMap(const Variable<double>& rOriginVariable,
                             const Variable<double>& rDestinationVariable,
-                            Kratos::Flags MappingOptions) = 0;
+                            Kratos::Flags MappingOptions) {}
 
     /* This function maps from Destination to Origin */
-    virtual void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
+    void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
                             const Variable< array_1d<double, 3> >& rDestinationVariable,
-                            Kratos::Flags MappingOptions) = 0;
+                            Kratos::Flags MappingOptions) {}
 
     MapperCommunicator::Pointer pGetMapperCommunicator()
     {
@@ -191,6 +205,13 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
+
+
+    /**
+    This function can be overridden by derived classes to do additional things
+    */
+    virtual void UpdateInterfaceSpecific() {     }
+
 
     // Constructor, can only be called by derived classes (actual mappers)
     Mapper(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,
