@@ -36,6 +36,9 @@
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
 
+// #include "custom_mappers/nearest_neighbor_mapper_matrix.h"
+// #include "custom_mappers/mortar_mapper.h"
+
 #include "custom_utilities/mapper_factory_new.h"
 
 
@@ -155,7 +158,7 @@ void  AddCustomMappersToPython()
             Kratos::Flags)
         = &Mapper::InverseMap;
     
-    // Exposing the base class of the mappers to Python, but without constructor
+    // Exposing the base class of the Mappers to Python, but without constructor
     class_< Mapper, boost::noncopyable > mapper 
         = class_< Mapper, boost::noncopyable >("Mapper", no_init)
             .def("UpdateInterface",  pUpdateInterface)
@@ -180,11 +183,17 @@ void  AddCustomMappersToPython()
     mapper.attr("REMESHED") = MapperFlags::REMESHED;
 
 
-    // Exposing the mappers
+    // Exposing the Mappers
+        // Matrix-free Mappers
     class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
         ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
     class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
         ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
+        // Matrix-based Mappers
+    // class_< NearestNeighborMapperMatrix, bases<Mapper>, boost::noncopyable>
+    //     ("NearestNeighborMapperMatrix", init<ModelPart&, ModelPart&, Parameters>());
+    // class_< MortarMapper, bases<Mapper>, boost::noncopyable>
+    //     ("MortarMapper", init<ModelPart&, ModelPart&, Parameters>());
 
     
     // Exposing the MapperFactory

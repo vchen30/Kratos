@@ -113,27 +113,27 @@ class MapperStrategy
         mpQd = TSparseSpace::CreateEmptyVectorPointer();
     }
 
-    // constructor for Mortar, takes the BuilderAndSolver for Mdd
-    MapperStrategy(ModelPart& model_part_origin,
-        ModelPart& model_part_destination,
-        typename TBuilderAndSolverType::Pointer pMappingMatrixBuilder,
-        typename TBuilderAndSolverType::Pointer pBuilderAndSolver
-    ) 
-        : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(model_part_destination),
-        mrModelPartOrigin(model_part_origin)
-    {
-        mIsMortar = true;
+    // // constructor for Mortar, takes the BuilderAndSolver for Mdd
+    // MapperStrategy(ModelPart& model_part_origin,
+    //     ModelPart& model_part_destination,
+    //     typename TBuilderAndSolverType::Pointer pMappingMatrixBuilder,
+    //     typename TBuilderAndSolverType::Pointer pBuilderAndSolver
+    // ) 
+    //     : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(model_part_destination),
+    //     mrModelPartOrigin(model_part_origin)
+    // {
+    //     mIsMortar = true;
 
-        mpMappingMatrixBuilder = pMappingMatrixBuilder;
-        mpBuilderAndSolver = pBuilderAndSolver;
+    //     mpMappingMatrixBuilder = pMappingMatrixBuilder;
+    //     mpBuilderAndSolver = pBuilderAndSolver;
 
-        // Initializing the Mapping Matrix and vector of quantities
-        mpMdo = TSparseSpace::CreateEmptyMatrixPointer();
-        mpMdd = TSparseSpace::CreateEmptyMatrixPointer();
-        mpQo = TSparseSpace::CreateEmptyVectorPointer();
-        mpQd = TSparseSpace::CreateEmptyVectorPointer();
-        mpQtmp = TSparseSpace::CreateEmptyVectorPointer();
-    }
+    //     // Initializing the Mapping Matrix and vector of quantities
+    //     mpMdo = TSparseSpace::CreateEmptyMatrixPointer();
+    //     mpMdd = TSparseSpace::CreateEmptyMatrixPointer();
+    //     mpQo = TSparseSpace::CreateEmptyVectorPointer();
+    //     mpQd = TSparseSpace::CreateEmptyVectorPointer();
+    //     mpQtmp = TSparseSpace::CreateEmptyVectorPointer();
+    // }
 
     /// Destructor.
     virtual ~MapperStrategy() {}
@@ -163,6 +163,8 @@ class MapperStrategy
             mpBuilderAndSolver->BuildLHS(mrModelPartOrigin, mpMdd);
         }
     }
+
+    void InitializeMortar() {}
 
     template <typename T>
     void InitializeMappingStep(const Variable< T >& rOriginVariable,
