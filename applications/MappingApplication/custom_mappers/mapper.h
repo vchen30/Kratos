@@ -125,14 +125,14 @@ public:
                      Kratos::Flags MappingOptions) = 0;
 
     /* This function maps from Destination to Origin */
-    void InverseMap(const Variable<double>& rOriginVariable,
+    virtual void InverseMap(const Variable<double>& rOriginVariable,
                             const Variable<double>& rDestinationVariable,
-                            Kratos::Flags MappingOptions) {}
+                            Kratos::Flags MappingOptions) = 0;
 
     /* This function maps from Destination to Origin */
-    void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
+    virtual void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
                             const Variable< array_1d<double, 3> >& rDestinationVariable,
-                            Kratos::Flags MappingOptions) {}
+                            Kratos::Flags MappingOptions) = 0;
 
     MapperCommunicator::Pointer pGetMapperCommunicator()
     {
@@ -223,27 +223,26 @@ protected:
 
         ComputeNumberOfNodesAndConditions();
 
-        // Create the mapper communicator
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
         int mpi_initialized;
         MPI_Initialized(&mpi_initialized);
         if (mpi_initialized)   // parallel execution, i.e. mpi imported in python
         {
-            int comm_size;
-            MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-            if (comm_size > 1)
-            {
-                mpMapperCommunicator = MapperCommunicator::Pointer (
-                                           new MapperMPICommunicator(mModelPartOrigin,
-                                                   mModelPartDestination,
-                                                   mJsonParameters) );
-            }
-            else     // mpi importet in python, but execution with one process only
-            {
-                InitializeSerialCommunicator();
-            }
+            MPI_Comm_rank(MPI_COMM_WORLD, &mCommRank);
+            MPI_Comm_size(MPI_COMM_WORLD, &mCommSize);
         }
-        else     // serial execution, i.e. mpi NOT imported in python
+#endif
+
+        // Create the mapper communicator
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        if (mCommSize > 1)
+        {
+            mpMapperCommunicator = MapperCommunicator::Pointer (
+                                        new MapperMPICommunicator(mModelPartOrigin,
+                                                mModelPartDestination,
+                                                mJsonParameters) );
+        }
+        else
         {
             InitializeSerialCommunicator();
         }
@@ -281,6 +280,16 @@ protected:
             Factor *= (-1);
         }
     }
+    
+    int MyPID()
+    {
+        return mCommRank;
+    }
+
+    int TotalProcesses()
+    {
+        return mCommSize;
+    }
 
     ///@}
     ///@name Protected  Access
@@ -304,6 +313,10 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+    
+    // Computed once at construction time, cannot be changed later, only accessed!
+    int mCommRank = 0;
+    int mCommSize = 1;
 
     ///@}
     ///@name Private Operators

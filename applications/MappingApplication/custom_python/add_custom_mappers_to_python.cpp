@@ -66,7 +66,6 @@ void UpdateInterface(Mapper& dummy, double search_radius)
     dummy.UpdateInterface(dummy_flags, search_radius);
 }
 
-
 void Map(Mapper& dummy,
          const Variable<double>& origin_variable,
          const Variable<double>& destination_variable)
@@ -155,8 +154,8 @@ void  AddCustomMappersToPython()
             const Variable< array_1d<double, 3> > &,
             Kratos::Flags)
         = &Mapper::InverseMap;
-
-
+    
+    // Exposing the base class of the mappers to Python, but without constructor
     class_< Mapper, boost::noncopyable > mapper 
         = class_< Mapper, boost::noncopyable >("Mapper", no_init)
             .def("UpdateInterface",  pUpdateInterface)
@@ -173,21 +172,32 @@ void  AddCustomMappersToPython()
             .def("InverseMap",       pInverseMapScalarOptions)
             .def("InverseMap",       pInverseMapVectorOptions)
             ;
-
+    
+    // Adding the flags that can be used while mapping
     mapper.attr("SWAP_SIGN") = MapperFlags::SWAP_SIGN;
     mapper.attr("ADD_VALUES") = MapperFlags::ADD_VALUES;
     mapper.attr("CONSERVATIVE") = MapperFlags::CONSERVATIVE;
     mapper.attr("REMESHED") = MapperFlags::REMESHED;
 
+
+    // Exposing the mappers
     class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
         ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
     class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
         ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
 
+    
+    // Exposing the MapperFactory
     // class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
     // .def("CreateMapper", &MapperFactoryNew::CreateMapper, return_value_policy<manage_new_object>())
     // .staticmethod("CreateMapper")
-    ;
+    // ;
+    /*
+    Jordi
+    This should work according to "https://wiki.python.org/moin/boost.python/HowTo", search for "manage_new_object"
+    see also "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/exposing.html", search for "ownership"
+    and "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/functions.html#tutorial.functions.call_policies", search for "manage_new_object"
+    */
     
 
 }
