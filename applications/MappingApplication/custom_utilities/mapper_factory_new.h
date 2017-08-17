@@ -90,7 +90,6 @@ public:
     ///@{
 
     
-
     /// Destructor.
     virtual ~MapperFactoryNew() { }
 
@@ -157,7 +156,7 @@ public:
     //     }
     // }
 
-    static Mapper::Pointer CreateMapper(ModelPart& rModelPartOrigin, 
+    static Mapper* CreateMapper(ModelPart& rModelPartOrigin, 
                                         ModelPart& rModelPartDestination,
                                         Parameters JsonParameters)
     {
@@ -172,7 +171,7 @@ public:
         }
 #endif
 
-        Mapper::Pointer mapper;
+        Mapper* mapper;
         // double start_time = MapperUtilities::GetCurrentTime();
 
         if (!JsonParameters.Has("mapper_type"))
@@ -190,15 +189,15 @@ public:
                              << "specified for Nearest Neighbor Mapper" << std::endl;
             }
 
-            mapper = Mapper::Pointer(new NearestNeighborMapper(rModelPartOrigin,
+            mapper = new NearestNeighborMapper(rModelPartOrigin,
                                        rModelPartDestination,
-                                       JsonParameters));
+                                       JsonParameters);
         }
         else if (mapper_type == "NearestElement")
         {
-            mapper = Mapper::Pointer(new NearestElementMapper(rModelPartOrigin,
+            mapper = new NearestElementMapper(rModelPartOrigin,
                                        rModelPartDestination,
-                                       JsonParameters));
+                                       JsonParameters);
 
         } 
         else if (mapper_type == "NearestNeighborMatrixBased") 
@@ -206,27 +205,27 @@ public:
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (comm_size > 1)   // parallel execution, i.e. mpi imported in python
             {
-                mapper = Mapper::Pointer(new NearestNeighborMapperMatrix<
+                mapper = new NearestNeighborMapperMatrix<
                     TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
-                        JsonParameters));
+                        JsonParameters);
             }
             else
             {
-                mapper = Mapper::Pointer(new NearestNeighborMapperMatrix<
+                mapper = new NearestNeighborMapperMatrix<
                     SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
-                        JsonParameters));
+                        JsonParameters);
             }
 
 #else
-            mapper = Mapper::Pointer(new NearestNeighborMapperMatrix<
+            mapper = new NearestNeighborMapperMatrix<
                 SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
-                    JsonParameters));
+                    JsonParameters);
 #endif
         } 
         /*else if (mapper_type == "NearestElementMatrixBased") {
@@ -239,27 +238,27 @@ public:
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (comm_size > 1)   // parallel execution, i.e. mpi imported in python
             {
-                mapper = Mapper::Pointer(new MortarMapper<
+                mapper = new MortarMapper<
                     TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
-                        JsonParameters));
+                        JsonParameters);
             }
             else
             {
-                mapper = Mapper::Pointer(new MortarMapper<
+                mapper = new MortarMapper<
                     SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
-                        JsonParameters));
+                        JsonParameters);
             }
 
 #else
-            mapper = Mapper::Pointer(new MortarMapper<
+            mapper = new MortarMapper<
                 SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
-                    JsonParameters));
+                    JsonParameters);
 #endif
         } 
         /*else if (mapper_type == "IGA") {
@@ -376,33 +375,30 @@ private:
     ///@name Private Operations
     ///@{
 
-    /// Default constructor.
-    MapperFactoryNew()
-    {
-    }
+  /// Default constructor.
+  MapperFactoryNew()
+  {
+  }
 
-    ///@}
-    ///@name Private  Access
-    ///@{
+  ///@}
+  ///@name Private  Access
+  ///@{
 
+  ///@}
+  ///@name Private Inquiry
+  ///@{s
 
-    ///@}
-    ///@name Private Inquiry
-    ///@{s
+  ///@}
+  ///@name Un accessible methods
+  ///@{
 
+  /// Assignment operator.
+  MapperFactoryNew &operator=(MapperFactoryNew const &rOther);
 
-    ///@}
-    ///@name Un accessible methods
-    ///@{
+  //   /// Copy constructor.
+  //   MapperFactoryNew(MapperFactoryNew const& rOther){}
 
-    /// Assignment operator.
-    MapperFactoryNew& operator=(MapperFactoryNew const& rOther);
-
-    //   /// Copy constructor.
-    //   MapperFactoryNew(MapperFactoryNew const& rOther){}
-
-
-    ///@}
+  ///@}
 
 }; // Class MapperFactoryNew
 
