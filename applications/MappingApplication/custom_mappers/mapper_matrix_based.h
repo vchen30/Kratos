@@ -22,8 +22,10 @@
 
 // Project includes
 #include "mapper.h"
-#include "custom_strategies/strategies/mapper_strategy.h"
-
+#include "custom_strategies/builders/mapping_matrix_builder.h"
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
+#endif
 
 namespace Kratos
 {
@@ -63,29 +65,54 @@ public:
     /// Pointer definition of MapperMatrixBased
     KRATOS_CLASS_POINTER_DEFINITION(MapperMatrixBased);
 
+    typedef typename MappingMatrixBuilder<TSparseSpace, TDenseSpace>::Pointer TMappingMatrixBuilderPointerType;
 
+    typedef std::unordered_map<int, Node<3> *> EquationIdMapType;
+
+    typedef typename TSparseSpace::DataType TDataType;
+
+    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+
+    typedef typename TSparseSpace::VectorType TSystemVectorType;
+
+    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+
+    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+
+    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+
+    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
-    MapperMatrixBased(ModelPart& rModelPartOrigin, ModelPart& rModelpartDestination,
-                          Parameters rJsonParameters) : Mapper(
-                            rModelPartOrigin, rModelpartDestination, rJsonParameters)
+    MapperMatrixBased(ModelPart &rModelPartOrigin, ModelPart &rModelpartDestination,
+                      Parameters rJsonParameters) : Mapper(rModelPartOrigin, rModelpartDestination, rJsonParameters)
     {
-        // InitializeMapperStrategy();
-        // MapperStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPartOrigin, rModelpartDestination, rJsonParameters);
+        mpMdo = TSparseSpace::CreateEmptyMatrixPointer();
+        mpQo = TSparseSpace::CreateEmptyVectorPointer();
+        mpQd = TSparseSpace::CreateEmptyVectorPointer();
+
+        // mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder<TSparseSpace, TDenseSpace>());
 
 
-        // @Jordi should the BuilderAndSolver be a member of this class or of the Communicator?
-        // In case of mortar we need two (one for Mdo and one for Mdd). The one for Mdd is specific to Mortar and should 
-        // imo not be in the communicator. In order to be consistent it might make sense to have also the Mdo-BuilderAndSolver as a
-        // member of this class.
-        // If we don't use a BuilderAndSolver for Mdo then the above is obsolete.
-        // In any case, if the BuilderAndSolver is member of the Mapper, how can we destinguish btw serial and parallel?
-        // mpCommunicator->InitializeBuilderAndSolverForMdo();
+#ifdef KRATOS_USING_MPI    // mpi-parallel compilation
+        if (MapperUtilities::TotalProcesses() > 1)
+        {
+            mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TrilinosMappingMatrixBuilder<TSparseSpace, TDenseSpace>());
+            KRATOS_WATCH("TrilinosMappingMatrixBuilder Initialized")
+        }
+        else
+        {
+            mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder<TSparseSpace, TDenseSpace>());
 
-        // mpMapperCommunicator->InitilizeMappingMatrixUtility(mpMappingMatrixUtility);
+            KRATOS_WATCH("MappingMatrixBuilder Initialized")
+        }
+#else
+        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder<TSparseSpace, TDenseSpace>());
+
+#endif
     }
 
     /// Destructor.
@@ -99,9 +126,21 @@ public:
     ///@name Operations
     ///@{
 
-    void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius) override
-    {
-
+    virtual void UpdateInterfaceSpecific(Kratos::Flags MappingOptions) override {
+        if (MappingOptions.Is(MapperFlags::REMESHED))
+        {
+            // TODO this gives compiler errors!
+            // TSparseSpace::Clear(mpMdo);
+            // TSparseSpace::Clear(mpQo);
+            // TSparseSpace::Clear(mpQd);
+        }
+        else
+        {
+            // TODO this gives compiler errors!
+            // TSparseSpace::ClearData(mpMdo);
+            // TSparseSpace::ClearData(mpQo);
+            // TSparseSpace::ClearData(mpQd);
+        }
     }
 
     /* This function maps from Origin to Destination */
@@ -180,29 +219,38 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    // MapperStrategy::Pointer mpMapperStrategy;
+  TMappingMatrixBuilderPointerType mpMappingMatrixBuilder;
 
-    ///@}
-    ///@name Protected Operators
-    ///@{
+  TSystemVectorPointerType mpQo;
+  TSystemVectorPointerType mpQd;
+  TSystemMatrixPointerType mpMdo;
 
-    ///@}
-    ///@name Protected Operations
-    ///@{
+  ///@}
+  ///@name Protected Operators
+  ///@{
 
-    ///@}
-    ///@name Protected  Access
-    ///@{
+  ///@}
+  ///@name Protected Operations
+  ///@{
 
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
+void InitializeSystemMatrixAndVectors()
+{
 
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
+}
 
-    ///@}
+  ///@}
+  ///@name Protected  Access
+  ///@{
+
+  ///@}
+  ///@name Protected Inquiry
+  ///@{
+
+  ///@}
+  ///@name Protected LifeCycle
+  ///@{
+
+  ///@}
 
 private:
 

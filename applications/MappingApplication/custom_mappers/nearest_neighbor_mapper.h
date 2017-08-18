@@ -92,20 +92,6 @@ public:
     ///@name Operations
     ///@{
 
-    void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius) override
-    {
-        mpMapperCommunicator->UpdateInterface(MappingOptions, SearchRadius);
-        if (mpInverseMapper)
-        {
-            mpInverseMapper->UpdateInterface(MappingOptions, SearchRadius);
-        }
-
-        if (MappingOptions.Is(MapperFlags::REMESHED))
-        {
-            ComputeNumberOfNodesAndConditions();
-        }
-    }
-
     /* This function maps from Origin to Destination */
     void Map(const Variable<double>& rOriginVariable,
              const Variable<double>& rDestinationVariable,

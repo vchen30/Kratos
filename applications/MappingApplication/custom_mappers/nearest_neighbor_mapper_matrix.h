@@ -70,6 +70,8 @@ public:
                                 Parameters rJsonParameters) : MapperMatrixBased<TSparseSpace, TDenseSpace, TLinearSolver>(
                                 i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
+        KRATOS_WATCH("NearestNeighborMapperMatrix Constructor")
+
         // TODO for some reason it does not recognize "mpMapperCommunicator"
         // mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
         // mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
@@ -89,11 +91,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-
-    void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius) override
-    {
-
-    }
 
     /* This function maps from Origin to Destination */
     void Map(const Variable<double>& rOriginVariable,

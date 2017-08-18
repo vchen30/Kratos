@@ -62,6 +62,20 @@ public:
     /// Pointer definition of MortarMapper
     KRATOS_CLASS_POINTER_DEFINITION(MortarMapper);
 
+    typedef typename TSparseSpace::DataType TDataType;
+
+    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+
+    typedef typename TSparseSpace::VectorType TSystemVectorType;
+
+    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+
+    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+
+    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+
+    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -70,6 +84,7 @@ public:
                           Parameters rJsonParameters) : MapperMatrixBased<TSparseSpace, TDenseSpace, TLinearSolver>(
                                   i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
+        KRATOS_WATCH("Mortar Mapper Constructor")
         // mpMapperStrategy->InitializeMortar();
 
 
@@ -98,11 +113,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-
-    void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius) override
-    {
-
-    }
 
     /* This function maps from Origin to Destination */
     void Map(const Variable<double>& rOriginVariable,
@@ -185,29 +195,30 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    ///@}
-    ///@name Protected Operators
-    ///@{
+  TSystemVectorPointerType mpQtmp; // for Mortar (needed bcs Trilinos cannot multiply in place)
+  TSystemMatrixPointerType mpMdd; // for Mortar
 
-    ///@}
-    ///@name Protected Operations
-    ///@{
+  ///@}
+  ///@name Protected Operators
+  ///@{
 
-    
+  ///@}
+  ///@name Protected Operations
+  ///@{
 
-    ///@}
-    ///@name Protected  Access
-    ///@{
+  ///@}
+  ///@name Protected  Access
+  ///@{
 
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
+  ///@}
+  ///@name Protected Inquiry
+  ///@{
 
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
+  ///@}
+  ///@name Protected LifeCycle
+  ///@{
 
-    ///@}
+  ///@}
 
 private:
 

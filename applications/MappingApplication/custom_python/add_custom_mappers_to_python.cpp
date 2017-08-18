@@ -27,6 +27,15 @@
 
 // Project includes
 #include "includes/define.h"
+#include "linear_solvers/linear_solver.h"
+
+#include "spaces/ublas_space.h" // Always needed, for "LocalSpaceType"
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "trilinos_space.h"
+#include "Epetra_FEVector.h"
+#endif
+
 #include "includes/kratos_parameters.h"
 #include "custom_utilities/mapper_flags.h"
 
@@ -36,8 +45,8 @@
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
 
-// #include "custom_mappers/nearest_neighbor_mapper_matrix.h"
-// #include "custom_mappers/mortar_mapper.h"
+#include "custom_mappers/nearest_neighbor_mapper_matrix.h"
+#include "custom_mappers/mortar_mapper.h"
 
 #include "custom_utilities/mapper_factory_new.h"
 
@@ -104,6 +113,16 @@ void InverseMap(Mapper& dummy,
 void  AddCustomMappersToPython()
 {
     using namespace boost::python;
+
+    typedef UblasSpace<double, CompressedMatrix, Vector> SerialSparseSpaceType;
+    typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
+    typedef LinearSolver<SerialSparseSpaceType, LocalSpaceType> SerialLinearSolverType; // for Mortar
+
+// Overwrite the SparseSpaceType in case of mpi-parallel execution
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+    typedef TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector> TrilinosSparseSpaceType;
+    typedef LinearSolver<TrilinosSparseSpaceType, LocalSpaceType> TrilinosLinearSolverType; // for Mortar
+#endif
 
     void (*pUpdateInterface)(Mapper &)
         = &UpdateInterface;
@@ -185,22 +204,32 @@ void  AddCustomMappersToPython()
 
     // Exposing the Mappers
         // Matrix-free Mappers
-    class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
+        class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
         ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
-    class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
+        class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
         ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
         // Matrix-based Mappers
-    // class_< NearestNeighborMapperMatrix, bases<Mapper>, boost::noncopyable>
-    //     ("NearestNeighborMapperMatrix", init<ModelPart&, ModelPart&, Parameters>());
-    // class_< MortarMapper, bases<Mapper>, boost::noncopyable>
-    //     ("MortarMapper", init<ModelPart&, ModelPart&, Parameters>());
+        class_<NearestNeighborMapperMatrix<
+                   SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>,
+               bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+        class_<MortarMapper<
+                   SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>,
+               bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        class_<NearestNeighborMapperMatrix<
+                TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>,
+            bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+        class_<MortarMapper<
+                TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>,
+            bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
+#endif
 
     
     // Exposing the MapperFactory
-    // class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
-    // .def("CreateMapper", &MapperFactoryNew::CreateMapper, return_value_policy<manage_new_object>())
-    // .staticmethod("CreateMapper")
-    // ;
+    class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
+    .def("CreateMapper", &MapperFactoryNew::CreateMapper, return_value_policy<manage_new_object>())
+    .staticmethod("CreateMapper")
+    ;
     /*
     Jordi
     This should work according to "https://wiki.python.org/moin/boost.python/HowTo", search for "manage_new_object"

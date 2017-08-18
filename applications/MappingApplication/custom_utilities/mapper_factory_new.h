@@ -160,17 +160,6 @@ public:
                                         ModelPart& rModelPartDestination,
                                         Parameters JsonParameters)
     {
-        int comm_size = 1;
-
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        int mpi_initialized;
-        MPI_Initialized(&mpi_initialized);
-        if (mpi_initialized)   // parallel execution, i.e. mpi imported in python
-        {
-            MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-        }
-#endif
-
         Mapper* mapper;
         // double start_time = MapperUtilities::GetCurrentTime();
 
@@ -203,7 +192,7 @@ public:
         else if (mapper_type == "NearestNeighborMatrixBased") 
         {
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-            if (comm_size > 1)   // parallel execution, i.e. mpi imported in python
+            if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new NearestNeighborMapperMatrix<
                     TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
@@ -236,13 +225,15 @@ public:
         else if (mapper_type == "Mortar") 
         {
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-            if (comm_size > 1)   // parallel execution, i.e. mpi imported in python
+            KRATOS_WATCH(MapperUtilities::TotalProcesses())
+            if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new MortarMapper<
                     TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
+                KRATOS_WATCH("MPI Mortar Mapper")
             }
             else
             {
@@ -251,8 +242,8 @@ public:
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
-            }
-
+                KRATOS_WATCH("Serial Mortar Mapper")
+                        }
 #else
             mapper = new MortarMapper<
                 SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(

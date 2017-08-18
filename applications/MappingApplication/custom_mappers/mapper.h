@@ -98,7 +98,7 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius)
+    void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius)
     {
         // mpMapperCommunicator->UpdateInterface(MappingOptions, SearchRadius);
         // if (mpInverseMapper)
@@ -111,7 +111,7 @@ public:
         //     ComputeNumberOfNodesAndConditions();
         // }
 
-        UpdateInterfaceSpecific();
+        UpdateInterfaceSpecific(MappingOptions);
     }
 
     /* This function maps from Origin to Destination */
@@ -210,8 +210,7 @@ protected:
     /**
     This function can be overridden by derived classes to do additional things
     */
-    virtual void UpdateInterfaceSpecific() {     }
-
+    virtual void UpdateInterfaceSpecific(Kratos::Flags MappingOptions) {}
 
     // Constructor, can only be called by derived classes (actual mappers)
     Mapper(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,
@@ -223,19 +222,9 @@ protected:
 
         ComputeNumberOfNodesAndConditions();
 
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        int mpi_initialized;
-        MPI_Initialized(&mpi_initialized);
-        if (mpi_initialized)   // parallel execution, i.e. mpi imported in python
-        {
-            MPI_Comm_rank(MPI_COMM_WORLD, &mCommRank);
-            MPI_Comm_size(MPI_COMM_WORLD, &mCommSize);
-        }
-#endif
-
         // Create the mapper communicator
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        if (mCommSize > 1)
+        if (MapperUtilities::TotalProcesses() > 1)
         {
             mpMapperCommunicator = MapperCommunicator::Pointer (
                                         new MapperMPICommunicator(mModelPartOrigin,
@@ -280,16 +269,6 @@ protected:
             Factor *= (-1);
         }
     }
-    
-    int MyPID()
-    {
-        return mCommRank;
-    }
-
-    int TotalProcesses()
-    {
-        return mCommSize;
-    }
 
     ///@}
     ///@name Protected  Access
@@ -313,10 +292,6 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-    
-    // Computed once at construction time, cannot be changed later, only accessed!
-    int mCommRank = 0;
-    int mCommSize = 1;
 
     ///@}
     ///@name Private Operators

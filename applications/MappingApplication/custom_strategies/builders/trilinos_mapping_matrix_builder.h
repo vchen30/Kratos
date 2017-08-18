@@ -55,7 +55,7 @@ namespace Kratos
 /** Detail class definition.
   */
 template <class TSparseSpace,
-          class TDenseSpace, // = DenseSpace<double>,
+          class TDenseSpace // = DenseSpace<double>,
           >
 class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDenseSpace>
 {
@@ -84,43 +84,43 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@name Operations
     ///@{
 
-    void BuildLHS(ModelPart& rModelPart,
-                          TSystemMatrixType& A) override
-    {   
+    // void BuildLHS(ModelPart& rModelPart,
+    //                       TSystemMatrixType& A) override
+    // {   
 
-    }
+    // }
 
-    void BuildRHS(ModelPart& rModelPart,
-                          TSystemVectorType& b) override
-    {
+    // void BuildRHS(ModelPart& rModelPart,
+    //                       TSystemVectorType& b) override
+    // {
 
 
-    }
+    // }
 
-    void SetUpDofSet(ModelPart& r_model_part
-    ) override
-    {
-    }
+    // void SetUpDofSet(ModelPart& r_model_part
+    // ) override
+    // {
+    // }
 
     /**
             organises the dofset in order to speed up the building phase
      */
-    void SetUpSystem(
-        ModelPart& r_model_part
-    ) override
-    {
-    }
+    // void SetUpSystem(
+    //     ModelPart& r_model_part
+    // ) override
+    // {
+    // }
 
-    void ResizeAndInitializeVectors(
-        TSystemMatrixPointerType& pA,
-        TSystemVectorPointerType& pDx,
-        TSystemVectorPointerType& pb,
-        ElementsArrayType& rElements,
-        ConditionsArrayType& rConditions,
-        ProcessInfo& CurrentProcessInfo
-    ) override
-    {
-    }
+    // void ResizeAndInitializeVectors(
+    //     TSystemMatrixPointerType& pA,
+    //     TSystemVectorPointerType& pDx,
+    //     TSystemVectorPointerType& pb,
+    //     ElementsArrayType& rElements,
+    //     ConditionsArrayType& rConditions,
+    //     ProcessInfo& CurrentProcessInfo
+    // ) override
+    // {
+    // }
 
     ///@}
     ///@name Access
@@ -210,33 +210,33 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     r1 : 7 Nodes (start EquationId: 5)
     r2 : 8 Nodes (start EquationId: 12)
     */
-    int GetStartEquationId(ModelPart& rModelPart) override
-    {   
-        const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes()
+    // int GetStartEquationId(ModelPart& rModelPart) override
+    // {   
+    //     const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes()
 
-        const int comm_rank = rModelPart.GetCommunicator().MyPID();
-        const int comm_size = rModelPart.GetCommunicator().TotalProcesses();
+    //     const int comm_rank = rModelPart.GetCommunicator().MyPID();
+    //     const int comm_size = rModelPart.GetCommunicator().TotalProcesses();
 
-        int* num_nodes_list = new int[comm_size];
+    //     int* num_nodes_list = new int[comm_size];
 
-        // get the number of nodes on the other ranks
-        MPI_Allgather(num_local_nodes, 1, MPI_INT, num_nodes_list,
-                    1, MPI_INT, MPI_COMM_WORLD);
+    //     // get the number of nodes on the other ranks
+    //     MPI_Allgather(num_local_nodes, 1, MPI_INT, num_nodes_list,
+    //                 1, MPI_INT, MPI_COMM_WORLD);
 
-        int start_equation_id = 0;
-        for (int i = 0; i < comm_rank ; ++i) // loop the ranks before me
-        {
-            start_equation_id += num_nodes_list[i];
-        }
+    //     int start_equation_id = 0;
+    //     for (int i = 0; i < comm_rank ; ++i) // loop the ranks before me
+    //     {
+    //         start_equation_id += num_nodes_list[i];
+    //     }
  
-        delete num_nodes_list;
+    //     delete num_nodes_list;
 
-        return start_equation_id;
-    }
+    //     return start_equation_id;
+    // }
 
-    virtual void GlobalUpdateVector(TSystemVectorType& b) {
-        // Do the trilinos assembling here (if necessary, since the vector exists already ...)
-    }
+    // virtual void GlobalUpdateVector(TSystemVectorType& b) {
+    //     // Do the trilinos assembling here (if necessary, since the vector exists already ...)
+    // }
 
     ///@}
     ///@name Private  Access
@@ -251,10 +251,10 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@{
 
     /// Assignment operator.
-    TrilinosMappingMatrixBuilder &operator=(TrilinosMappingMatrixBuilder const &rOther) {}
+    // TrilinosMappingMatrixBuilder &operator=(TrilinosMappingMatrixBuilder const &rOther) {}
 
-    /// Copy constructor.
-    TrilinosMappingMatrixBuilder(TrilinosMappingMatrixBuilder const &rOther) {}
+    // /// Copy constructor.
+    // TrilinosMappingMatrixBuilder(TrilinosMappingMatrixBuilder const &rOther) {}
 
     ///@}
 
@@ -270,19 +270,19 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 ///@{
 
 /// input stream function
-inline std::istream &operator>>(std::istream &rIStream,
-                                TrilinosMappingMatrixBuilder &rThis) {}
+// inline std::istream &operator>>(std::istream &rIStream,
+//                                 TrilinosMappingMatrixBuilder &rThis) {}
 
-/// output stream function
-inline std::ostream &operator<<(std::ostream &rOStream,
-                                const TrilinosMappingMatrixBuilder &rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
+// /// output stream function
+// inline std::ostream &operator<<(std::ostream &rOStream,
+//                                 const TrilinosMappingMatrixBuilder &rThis)
+// {
+//     rThis.PrintInfo(rOStream);
+//     rOStream << std::endl;
+//     rThis.PrintData(rOStream);
 
-    return rOStream;
-}
+//     return rOStream;
+// }
 ///@}
 
 ///@} addtogroup block

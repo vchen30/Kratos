@@ -25,6 +25,7 @@
 // Project includes
 #include "includes/define.h"
 #include "solving_strategies/strategies/solving_strategy.h"
+#include "custom_strategies/builders/mapping_matrix_builder.h"
 
 namespace Kratos
 {
@@ -69,6 +70,8 @@ class MapperStrategy
 
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
 
+    typedef typename MappingMatrixBuilder<TSparseSpace, TDenseSpace>::Pointer TMappingMatrixBuilderPointerType;
+
     typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
     
     typedef typename BaseType::TBuilderAndSolverType TBuilderAndSolverType;
@@ -99,13 +102,12 @@ class MapperStrategy
 
     /// Default constructor.
     MapperStrategy(ModelPart& model_part_origin,
-        ModelPart& model_part_destination,
-        typename TBuilderAndSolverType::Pointer pMappingMatrixBuilder
+        ModelPart& model_part_destination
     ) 
         : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(model_part_destination), 
         mrModelPartOrigin(model_part_origin)
     {
-        mpMappingMatrixBuilder = pMappingMatrixBuilder;
+        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder < TSparseSpace, TDenseSpace>());
 
         // Initializing the Mapping Matrix and vector of quantities
         mpMdo = TSparseSpace::CreateEmptyMatrixPointer();
@@ -150,105 +152,105 @@ class MapperStrategy
     /**
      * This function computes the mapping matrix
      */    
-    void Initialize() override
-    {
-        mpMappingMatrixBuilder->SetUpMatrixStructure(mrModelPartOrigin, mEquationIdNodeMapOrigin);
-        mpMappingMatrixBuilder->SetUpMatrixStructure(BaseType::GetModelPart(), mEquationIdNodeMapDestination);
+    // void Initialize() override
+    // {
+    //     mpMappingMatrixBuilder->SetUpMatrixStructure(mrModelPartOrigin, mEquationIdNodeMapOrigin);
+    //     mpMappingMatrixBuilder->SetUpMatrixStructure(BaseType::GetModelPart(), mEquationIdNodeMapDestination);
 
-        mpMappingMatrixBuilder->BuildLHS(BaseType::GetModelPart(), mpMdo);
+    //     mpMappingMatrixBuilder->BuildLHS(BaseType::GetModelPart(), mpMdo);
 
-        // assemble the mass matrix for the mortar mapper (M_dd)
-        if (mIsMortar)
-        {
-            mpBuilderAndSolver->BuildLHS(mrModelPartOrigin, mpMdd);
-        }
-    }
+    //     // assemble the mass matrix for the mortar mapper (M_dd)
+    //     if (mIsMortar)
+    //     {
+    //         mpBuilderAndSolver->BuildLHS(mrModelPartOrigin, mpMdd);
+    //     }
+    // }
 
-    void InitializeMortar() {}
+    // void InitializeMortar() {}
 
-    template <typename T>
-    void InitializeMappingStep(const Variable< T >& rOriginVariable,
-                               const Variable< T >& rDestinationVariable,
-                               Kratos::Flags MappingOptions,
-                               const bool InverseOperation = false)
-    {
-        if (InverseOperation) // for conservative mapping
-        {
-            mpMappingMatrixBuilder->UpdateRHS(BaseType::GetModelPart(), mpQd);
-        }
-        else
-        {
-            mpMappingMatrixBuilder->UpdateRHS(mrModelPartOrigin, mpQo);
-        }
+    // template <typename T>
+    // void InitializeMappingStep(const Variable< T >& rOriginVariable,
+    //                            const Variable< T >& rDestinationVariable,
+    //                            Kratos::Flags MappingOptions,
+    //                            const bool InverseOperation = false)
+    // {
+    //     if (InverseOperation) // for conservative mapping
+    //     {
+    //         mpMappingMatrixBuilder->UpdateRHS(BaseType::GetModelPart(), mpQd);
+    //     }
+    //     else
+    //     {
+    //         mpMappingMatrixBuilder->UpdateRHS(mrModelPartOrigin, mpQo);
+    //     }
         
-    }
+    // }
 
-    template <typename T>
-    void FinalizeMappingStep(const Variable< T >& rOriginVariable,
-                             const Variable< T >& rDestinationVariable,
-                             Kratos::Flags MappingOptions,
-                             const bool InverseOperation = false)
-    {
-        if (InverseOperation) // for conservative mapping
-        {
-            Update(mrModelPartOrigin, mpMappingMatrixBuilder->GetDofSet(), 
-                             mpMdo, mpQo, mpQd);
-        }
-        else
-        {
-            Update(BaseType::GetModelPart(), mpMappingMatrixBuilder->GetDofSet(), 
-                             mpMdo, mpQd, mpQo);
-        }
-    }
+    // template <typename T>
+    // void FinalizeMappingStep(const Variable< T >& rOriginVariable,
+    //                          const Variable< T >& rDestinationVariable,
+    //                          Kratos::Flags MappingOptions,
+    //                          const bool InverseOperation = false)
+    // {
+    //     if (InverseOperation) // for conservative mapping
+    //     {
+    //         Update(mrModelPartOrigin, mpMappingMatrixBuilder->GetDofSet(), 
+    //                          mpMdo, mpQo, mpQd);
+    //     }
+    //     else
+    //     {
+    //         Update(BaseType::GetModelPart(), mpMappingMatrixBuilder->GetDofSet(), 
+    //                          mpMdo, mpQd, mpQo);
+    //     }
+    // }
 
 
-    bool SolveSolutionStep(const bool InverseOperation = false) override
-    {   
-        if (InverseOperation) // for conservative mapping
-        {
-           if (mIsMortar)
-            {
-                mpBuilderAndSolver->SystemSolve(mpMdd, mpQtmp, mpQd); // Jordi the trilinos call also wants a modelpart!
-                TSparseSpace::TransposeMult(mpMdo, mpQtmp, mpQo);
-            }
-            else
-            {
-                TSparseSpace::TransposeMult(mpMdo, mpQd, mpQo);
-            } 
-        }
-        else
-        {
-            if (mIsMortar)
-            {
-                TSparseSpace::Mult(mpMdo, mpQo, mpQtmp);
-                mpBuilderAndSolver->SystemSolve(mpMdd, mpQd, mpQtmp); // Jordi the trilinos call also wants a modelpart!
-                // if this turns out to be a problem we can pass the BuilderAndSolver to the MappingMatrixBuilder to call 
-                // the correct function, bcs this is different for serial and Trilinos
-                // I would try to avoid duplicating the MapperStrategy at all cost!!!
-            }
-            else
-            {
-                TSparseSpace::Mult(mpMdo, mpQo, mpQd);
-            }
-        }
+    // bool SolveSolutionStep(const bool InverseOperation = false)
+    // {   
+    //     if (InverseOperation) // for conservative mapping
+    //     {
+    //        if (mIsMortar)
+    //         {
+    //             mpBuilderAndSolver->SystemSolve(mpMdd, mpQtmp, mpQd); // Jordi the trilinos call also wants a modelpart!
+    //             TSparseSpace::TransposeMult(mpMdo, mpQtmp, mpQo);
+    //         }
+    //         else
+    //         {
+    //             TSparseSpace::TransposeMult(mpMdo, mpQd, mpQo);
+    //         } 
+    //     }
+    //     else
+    //     {
+    //         if (mIsMortar)
+    //         {
+    //             TSparseSpace::Mult(mpMdo, mpQo, mpQtmp);
+    //             mpBuilderAndSolver->SystemSolve(mpMdd, mpQd, mpQtmp); // Jordi the trilinos call also wants a modelpart!
+    //             // if this turns out to be a problem we can pass the BuilderAndSolver to the MappingMatrixBuilder to call 
+    //             // the correct function, bcs this is different for serial and Trilinos
+    //             // I would try to avoid duplicating the MapperStrategy at all cost!!!
+    //         }
+    //         else
+    //         {
+    //             TSparseSpace::Mult(mpMdo, mpQo, mpQd);
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    template <typename T>
-    void Map(const Variable< T >& rOriginVariable,
-             const Variable< T >& rDestinationVariable,
-             Kratos::Flags MappingOptions,
-             const bool InverseOperation = false)
-    {
-        InitializeMappingStep(rOriginVariable, rDestinationVariable, 
-                              MappingOptions, InverseOperation);
+    // template <typename T>
+    // void Map(const Variable< T >& rOriginVariable,
+    //          const Variable< T >& rDestinationVariable,
+    //          Kratos::Flags MappingOptions,
+    //          const bool InverseOperation = false)
+    // {
+    //     InitializeMappingStep(rOriginVariable, rDestinationVariable, 
+    //                           MappingOptions, InverseOperation);
 
-        SolveSolutionStep(InverseOperation);
+    //     SolveSolutionStep(InverseOperation);
 
-        FinalizeMappingStep(rOriginVariable, rDestinationVariable, 
-                            MappingOptions, InverseOperation);
-    }
+    //     FinalizeMappingStep(rOriginVariable, rDestinationVariable, 
+    //                         MappingOptions, InverseOperation);
+    // }
 
 
 
@@ -331,7 +333,7 @@ class MapperStrategy
 
     ModelPart& mrModelPartOrigin;
 
-    typename TBuilderAndSolverType::Pointer mpMappingMatrixBuilder; // TODO change type...?
+    TMappingMatrixBuilderPointerType mpMappingMatrixBuilder;    // TODO change type...?
     typename TBuilderAndSolverType::Pointer mpBuilderAndSolver; // needed for Mortar
                     
     TSystemVectorPointerType mpQo;

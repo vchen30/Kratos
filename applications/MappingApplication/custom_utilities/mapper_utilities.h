@@ -116,6 +116,36 @@ public:
         return current_time;
     }
 
+    static int MyPID()
+    {
+        int comm_rank = 0;
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        int mpi_initialized;
+        MPI_Initialized(&mpi_initialized);
+        if (mpi_initialized) // parallel execution, i.e. mpi imported in python
+        {
+            MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
+        }
+#endif
+        return comm_rank;
+    }
+
+    static int TotalProcesses()
+    {
+        int comm_size = 1;
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        int mpi_initialized;
+        MPI_Initialized(&mpi_initialized);
+        if (mpi_initialized) // parallel execution, i.e. mpi imported in python
+        {
+            MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+        }
+#endif
+        return comm_size;
+    }
+
     static int ComputeNumberOfNodes(ModelPart& rModelPart)
     {
         int num_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();

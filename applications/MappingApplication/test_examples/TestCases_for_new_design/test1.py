@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
 import KratosMultiphysics
+import KratosMultiphysics.mpi as KratosMPI
 import KratosMultiphysics.MappingApplication as KratosMapping
 
 model_part_origin = KratosMultiphysics.ModelPart("NumberOne")
@@ -14,7 +15,7 @@ model_part_destination.CreateNewNode(1, 1.4, 2.5, 3.6)
 
 mapper_settings = KratosMultiphysics.Parameters("""
         {
-            "mapper_type": "NearestElement",
+            "mapper_type": "Mortar",
             "interface_submodel_part_origin": "interface_chimera_background",
             "interface_submodel_part_destination": "Inlet2D_inlet"
         }
@@ -26,6 +27,6 @@ mapper.Map(KratosMultiphysics.PRESSURE, KratosMultiphysics.PRESSURE, KratosMappi
 
 mapper.UpdateInterface()
 
-mapper = KratosMapping.MortarMapper(model_part_origin, model_part_destination, mapper_settings)
+# mapper = KratosMapping.MortarMapper(model_part_origin, model_part_destination, mapper_settings)
 
-# KratosMapping.MapperFactoryNew.CreateMapper(model_part_origin, model_part_destination, mapper_settings)
+KratosMapping.MapperFactoryNew.CreateMapper(model_part_origin, model_part_destination, mapper_settings)
