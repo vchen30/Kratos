@@ -201,6 +201,8 @@ void  AddCustomMappersToPython()
     mapper.attr("CONSERVATIVE") = MapperFlags::CONSERVATIVE;
     mapper.attr("REMESHED") = MapperFlags::REMESHED;
 
+    // Jordi is it possible to expose the mappers without a constructor and use them only through the factory?
+    // This would circumvent problems with the wrong space being selected
 
     // Exposing the Mappers
         // Matrix-free Mappers
@@ -235,6 +237,7 @@ void  AddCustomMappersToPython()
     This should work according to "https://wiki.python.org/moin/boost.python/HowTo", search for "manage_new_object"
     see also "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/exposing.html", search for "ownership"
     and "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/functions.html#tutorial.functions.call_policies", search for "manage_new_object"
+    UPDATE it works, but only if the MapperFactory returns a raw pointer to the mapper (i.e. Mapper::Pointer as return type does not work)
     */
     
 

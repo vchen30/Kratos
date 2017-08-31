@@ -63,6 +63,7 @@ void KratosMappingApplication::Register()
     if (rank == 0) std::cout << banner.str();
 
     // Needed to exchange Information abt the found neighbors (i.e. only for debugging)
+    KRATOS_REGISTER_VARIABLE( MAPPING_MATRIX_EQUATION_ID )
     KRATOS_REGISTER_VARIABLE( NEIGHBOR_RANK )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( NEIGHBOR_COORDINATES )
 }

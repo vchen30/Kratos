@@ -195,30 +195,40 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-  TSystemVectorPointerType mpQtmp; // for Mortar (needed bcs Trilinos cannot multiply in place)
-  TSystemMatrixPointerType mpMdd; // for Mortar
+    TSystemVectorPointerType mpQtmp; // for Mortar (needed bcs Trilinos cannot multiply in place)
+    TSystemMatrixPointerType mpMdd; // for Mortar
 
-  ///@}
-  ///@name Protected Operators
-  ///@{
+    ///@}
+    ///@name Protected Operators
+    ///@{
 
-  ///@}
-  ///@name Protected Operations
-  ///@{
+    ///@}
+    ///@name Protected Operations
+    ///@{
+        
+    void Initialize()
+    {
 
-  ///@}
-  ///@name Protected  Access
-  ///@{
+    }
+    
+    void ComputeInterfaceModelPart()
+    {
+        
+    }
 
-  ///@}
-  ///@name Protected Inquiry
-  ///@{
+    ///@}
+    ///@name Protected  Access
+    ///@{
 
-  ///@}
-  ///@name Protected LifeCycle
-  ///@{
+    ///@}
+    ///@name Protected Inquiry
+    ///@{
 
-  ///@}
+    ///@}
+    ///@name Protected LifeCycle
+    ///@{
+
+    ///@}
 
 private:
 

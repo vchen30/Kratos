@@ -65,6 +65,22 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 
     /// Pointer definition of TrilinosMappingMatrixBuilder
     KRATOS_CLASS_POINTER_DEFINITION(TrilinosMappingMatrixBuilder);
+    
+    typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
+
+    typedef typename TSparseSpace::DataType TDataType;
+    
+    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+
+    typedef typename TSparseSpace::VectorType TSystemVectorType;
+
+    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+
+    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+
+    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+
+    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
 
     ///@}
     ///@name Life Cycle
@@ -83,6 +99,52 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@}
     ///@name Operations
     ///@{
+
+    void UpdateSystemVector(ModelPart& rModelPart,
+            TSystemVectorPointerType pB,
+            const Variable<double>& rVariable) override
+    {
+        // inline static void AssembleRHS(
+        //     VectorType& b,
+        //     Vector& RHS_Contribution,
+        //     std::vector<std::size_t>& EquationId
+        // )
+        TSystemVectorType& rB = *pB;
+
+        const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+
+        Vector local_contribution(num_local_nodes);
+        std::vector<std::size_t> equation_ids(num_local_nodes);
+
+        int index = 0;
+
+        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        {
+            // local_contribution[index] = node.FastGetSolutionStepValue(rVariable);
+            // // The following has two variants, either trilinos uses the local or global equation ID
+            // equation_ids[index] = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
+            // equation_ids[index] = index;
+
+            ++index;
+        }
+
+        TSparseSpace::AssembleRHS(rB, local_contribution, equation_ids);
+    }
+
+    void Update(ModelPart& rModelPart,
+        TSystemVectorPointerType pB,
+        const Variable<double>& rVariable) override
+    {
+        TSystemVectorType& rB = *pB;
+        int index = 0;
+        int global_equation_id;
+        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        {
+            global_equation_id = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
+            node.FastGetSolutionStepValue(rVariable) = TSparseSpace::GetValue(rB, global_equation_id); // or index?
+            ++index; // needed?
+        }
+    }
 
     // void BuildLHS(ModelPart& rModelPart,
     //                       TSystemMatrixType& A) override
@@ -210,29 +272,31 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     r1 : 7 Nodes (start EquationId: 5)
     r2 : 8 Nodes (start EquationId: 12)
     */
-    // int GetStartEquationId(ModelPart& rModelPart) override
-    // {   
-    //     const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes()
+    int GetStartEquationId(ModelPart& rModelPart) override
+    {   
+        int* num_local_nodes = new int(rModelPart.GetCommunicator().LocalMesh().NumberOfNodes());
 
-    //     const int comm_rank = rModelPart.GetCommunicator().MyPID();
-    //     const int comm_size = rModelPart.GetCommunicator().TotalProcesses();
+        const int comm_rank = rModelPart.GetCommunicator().MyPID();
+        const int comm_size = rModelPart.GetCommunicator().TotalProcesses();
 
-    //     int* num_nodes_list = new int[comm_size];
+        int* num_nodes_list = new int[comm_size];
 
-    //     // get the number of nodes on the other ranks
-    //     MPI_Allgather(num_local_nodes, 1, MPI_INT, num_nodes_list,
-    //                 1, MPI_INT, MPI_COMM_WORLD);
+        // get the number of nodes on the other ranks
+        MPI_Allgather(num_local_nodes, 1, MPI_INT, num_nodes_list,
+                    1, MPI_INT, MPI_COMM_WORLD);
 
-    //     int start_equation_id = 0;
-    //     for (int i = 0; i < comm_rank ; ++i) // loop the ranks before me
-    //     {
-    //         start_equation_id += num_nodes_list[i];
-    //     }
+        int start_equation_id = 0;
+        for (int i = 0; i < comm_rank ; ++i) // loop the ranks before me
+        {
+            start_equation_id += num_nodes_list[i];
+        }
  
-    //     delete num_nodes_list;
-
-    //     return start_equation_id;
-    // }
+        delete num_local_nodes;
+        delete [] num_nodes_list;
+        KRATOS_WATCH(comm_rank)
+        KRATOS_WATCH(start_equation_id)
+        return start_equation_id;
+    }
 
     // virtual void GlobalUpdateVector(TSystemVectorType& b) {
     //     // Do the trilinos assembling here (if necessary, since the vector exists already ...)

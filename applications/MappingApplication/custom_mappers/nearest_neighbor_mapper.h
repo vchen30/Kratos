@@ -171,8 +171,8 @@ public:
         // It is constructed with the order of the model_parts changed!
         if (!mpInverseMapper)
         {
-            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mModelPartDestination,
-                                               mModelPartOrigin,
+            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mrModelPartDestination,
+                                               mrModelPartOrigin,
                                                mJsonParameters) );
         }
         mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
@@ -187,8 +187,8 @@ public:
         // It is constructed with the order of the model_parts changed!
         if (!mpInverseMapper)
         {
-            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mModelPartDestination,
-                                               mModelPartOrigin,
+            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mrModelPartDestination,
+                                               mrModelPartOrigin,
                                                mJsonParameters) );
         }
         mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);

@@ -24,6 +24,7 @@
 
 // Project includes
 #include "includes/define.h"
+#include "mapping_application_variables.h"
 
 namespace Kratos
 {
@@ -66,6 +67,20 @@ class MappingMatrixBuilder
 
     typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
 
+    typedef typename TSparseSpace::DataType TDataType;
+    
+    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+
+    typedef typename TSparseSpace::VectorType TSystemVectorType;
+
+    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+
+    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+
+    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+
+    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -91,20 +106,57 @@ class MappingMatrixBuilder
     This function set up the structure of the system, i.e. the NodeSet,
     which relates the nodes to the equation Ids
     */
-    // void SetUpMatrixStructure(ModelPart& rModelPart, 
-    //                           EquationIdMapType& EquationIdNodeMap)
-    // {
-    //     EquationIdNodeMap.clear();
+    void SetUpSystem(ModelPart& rModelPart, 
+                     EquationIdMapType& EquationIdNodeMap)
+    {
+        // EquationIdNodeMap.clear();
 
-    //     // these ids are the positions in the global vectors and matrix
-    //     int equation_id = GetStartEquationId(rModelPart);
+        // these ids are the positions in the global vectors and matrix
+        int equation_id = GetStartEquationId(rModelPart);
+        std::cout << "Start Equation ID = " << equation_id << std::endl;
 
-    //     for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
-    //     {
-    //     EquationIdNodeMap.emplace(equation_id, &node); // TODO check if this is a pointer
-    //     ++equation_id;
-    //     }
-    // }
+        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        {
+        // EquationIdNodeMap.emplace(equation_id, &node); // TODO check if this is a pointer
+        node.SetValue(MAPPING_MATRIX_EQUATION_ID, equation_id); // TODO replace with sth faster?
+        ++equation_id;
+        }
+
+        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        {
+            KRATOS_WATCH(node.GetValue(MAPPING_MATRIX_EQUATION_ID));
+        }
+    }
+
+    virtual void UpdateSystemVector(ModelPart& rModelPart,
+                        TSystemVectorPointerType b,
+                        const Variable<double>& rVariable)
+    {
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *b;
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
+        {
+            // Jordi how to make this work?
+            // r_b[index] = node.FastGetSolutionStepValue(rVariable);
+            ++index;
+        }
+    }
+
+    virtual void Update(ModelPart& rModelPart,
+                        TSystemVectorPointerType b,
+                        const Variable<double>& rVariable)
+    {
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *b;
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
+        {
+            // Jordi how to make this work?
+            // node.FastGetSolutionStepValue(rVariable) = r_b[index];
+            ++index;
+        }
+    }
 
     // /**
     // This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem
@@ -272,10 +324,10 @@ class MappingMatrixBuilder
     This functions computes the start equationId for to local nodes
     aka the equation id of the global system
     */
-    // virtual int GetStartEquationId(ModelPart& rModelPart)
-    // {   
-    //     return 0;
-    // }
+    virtual int GetStartEquationId(ModelPart& rModelPart)
+    {   
+        return 0;
+    }
 
     /**
     This function does nothing in the serial case

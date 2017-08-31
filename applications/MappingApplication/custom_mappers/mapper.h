@@ -182,8 +182,8 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
-    ModelPart& mModelPartOrigin;
-    ModelPart& mModelPartDestination;
+    ModelPart& mrModelPartOrigin;
+    ModelPart& mrModelPartDestination;
 
     Parameters mJsonParameters;
 
@@ -215,8 +215,8 @@ protected:
     // Constructor, can only be called by derived classes (actual mappers)
     Mapper(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,
            Parameters JsonParameters) :
-        mModelPartOrigin(rModelPartOrigin),
-        mModelPartDestination(rModelPartDestination),
+        mrModelPartOrigin(rModelPartOrigin),
+        mrModelPartDestination(rModelPartDestination),
         mJsonParameters(JsonParameters)
     {
 
@@ -227,8 +227,8 @@ protected:
         if (MapperUtilities::TotalProcesses() > 1)
         {
             mpMapperCommunicator = MapperCommunicator::Pointer (
-                                        new MapperMPICommunicator(mModelPartOrigin,
-                                                mModelPartDestination,
+                                        new MapperMPICommunicator(mrModelPartOrigin,
+                                                mrModelPartDestination,
                                                 mJsonParameters) );
         }
         else
@@ -247,18 +247,18 @@ protected:
     void ComputeNumberOfNodesAndConditions()
     {
         // Compute the quantities of the local model_parts
-        mNumConditionsOrigin = mModelPartOrigin.GetCommunicator().LocalMesh().NumberOfConditions();
-        mNumConditionsDestination = mModelPartDestination.GetCommunicator().LocalMesh().NumberOfConditions();
+        mNumConditionsOrigin = mrModelPartOrigin.GetCommunicator().LocalMesh().NumberOfConditions();
+        mNumConditionsDestination = mrModelPartDestination.GetCommunicator().LocalMesh().NumberOfConditions();
 
-        mNumNodesOrigin = mModelPartOrigin.GetCommunicator().LocalMesh().NumberOfNodes();
-        mNumNodesDestination = mModelPartDestination.GetCommunicator().LocalMesh().NumberOfNodes();
+        mNumNodesOrigin = mrModelPartOrigin.GetCommunicator().LocalMesh().NumberOfNodes();
+        mNumNodesDestination = mrModelPartDestination.GetCommunicator().LocalMesh().NumberOfNodes();
 
         // Compute the quantities of the global model_parts
-        mModelPartOrigin.GetCommunicator().SumAll(mNumConditionsOrigin);
-        mModelPartDestination.GetCommunicator().SumAll(mNumConditionsDestination);
+        mrModelPartOrigin.GetCommunicator().SumAll(mNumConditionsOrigin);
+        mrModelPartDestination.GetCommunicator().SumAll(mNumConditionsDestination);
 
-        mModelPartOrigin.GetCommunicator().SumAll(mNumNodesOrigin);
-        mModelPartDestination.GetCommunicator().SumAll(mNumNodesDestination);
+        mrModelPartOrigin.GetCommunicator().SumAll(mNumNodesOrigin);
+        mrModelPartDestination.GetCommunicator().SumAll(mNumNodesDestination);
     }
 
     void ProcessMappingOptions(const Kratos::Flags& rMappingOptions,
@@ -304,8 +304,8 @@ private:
     void InitializeSerialCommunicator()
     {
         mpMapperCommunicator = MapperCommunicator::Pointer (
-                                   new MapperCommunicator(mModelPartOrigin,
-                                           mModelPartDestination,
+                                   new MapperCommunicator(mrModelPartOrigin,
+                                           mrModelPartDestination,
                                            mJsonParameters) );
     }
 

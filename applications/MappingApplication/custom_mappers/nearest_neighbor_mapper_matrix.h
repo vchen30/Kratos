@@ -62,6 +62,20 @@ public:
     /// Pointer definition of NearestNeighborMapperMatrix
     KRATOS_CLASS_POINTER_DEFINITION(NearestNeighborMapperMatrix);
 
+    typedef typename TSparseSpace::DataType TDataType;
+    
+    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+
+    typedef typename TSparseSpace::VectorType TSystemVectorType;
+
+    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+
+    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+
+    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+
+    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -72,11 +86,13 @@ public:
     {
         KRATOS_WATCH("NearestNeighborMapperMatrix Constructor")
 
-        // TODO for some reason it does not recognize "mpMapperCommunicator"
-        // mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
-        // mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
-        // mpMapperCommunicator->Initialize();
+        this->mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
+        this->mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
+        this->mpMapperCommunicator->Initialize();
 
+
+        Initialize();
+        this->mpMappingMatrixBuilder->Update(this->mrModelPartOrigin, this->mpQd, PRESSURE);
 
         //mpMapperCommunicator->GetBuilderAndMultiplier()->BuildLHS(scheme, modelpart, Mdo); // could be moved to baseclass...?
     }
@@ -184,7 +200,21 @@ protected:
     ///@name Protected Operations
     ///@{
         
+    void Initialize()
+    {
+        this->ComputeMappingMatrix();
+    }
+    
+    void ComputeInterfaceModelPart()
+    {   
+        Parameters interface_parameters = Parameters( R"(
+            {
+                   "condition_name" : "nearest_neighbor"
+                   "use_nodes"      : true
+             }  )" );
 
+        this->mpInterfacePreprocessor->GenerateInterfacePart(interface_parameters);
+    }
 
     ///@}
     ///@name Protected  Access

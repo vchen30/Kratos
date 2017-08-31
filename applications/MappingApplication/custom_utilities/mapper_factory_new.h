@@ -191,6 +191,7 @@ public:
         } 
         else if (mapper_type == "NearestNeighborMatrixBased") 
         {
+            // Jordi What would be the best way to select the execution and the space?
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
@@ -199,6 +200,7 @@ public:
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
+                KRATOS_WATCH("MapperFactory MPI NearestNeighborMapperMatrix")
             }
             else
             {
@@ -207,6 +209,7 @@ public:
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
+                KRATOS_WATCH("MapperFactory Serial NearestNeighborMapperMatrix")
             }
 
 #else
@@ -215,6 +218,7 @@ public:
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);
+            KRATOS_WATCH("MapperFactory Serial NearestNeighborMapperMatrix")
 #endif
         } 
         /*else if (mapper_type == "NearestElementMatrixBased") {
@@ -225,7 +229,6 @@ public:
         else if (mapper_type == "Mortar") 
         {
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-            KRATOS_WATCH(MapperUtilities::TotalProcesses())
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new MortarMapper<
@@ -233,7 +236,7 @@ public:
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
-                KRATOS_WATCH("MPI Mortar Mapper")
+                KRATOS_WATCH("MapperFactory MPI Mortar Mapper")
             }
             else
             {
@@ -242,7 +245,7 @@ public:
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
-                KRATOS_WATCH("Serial Mortar Mapper")
+                KRATOS_WATCH("MapperFactory Serial Mortar Mapper")
                         }
 #else
             mapper = new MortarMapper<
@@ -250,6 +253,7 @@ public:
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);
+            KRATOS_WATCH("MapperFactory Serial Mortar Mapper")
 #endif
         } 
         /*else if (mapper_type == "IGA") {
