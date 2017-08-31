@@ -23,7 +23,7 @@
 // Project includes
 #include "includes/define.h"
 #include "mapper_utilities.h"
-#include "../mapping_application_variables.h"
+#include "mapping_application_variables.h"
 
 
 namespace Kratos
