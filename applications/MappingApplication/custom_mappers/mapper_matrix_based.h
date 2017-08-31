@@ -23,10 +23,10 @@
 // Project includes
 #include "mapper.h"
 #include "custom_utilities/interface_preprocess.h"
-#include "custom_strategies/builders/mapping_matrix_builder.h"
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-#include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
-#endif
+// #include "custom_strategies/builders/mapping_matrix_builder.h"
+// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+// #include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
+// #endif
 
 namespace Kratos
 {
@@ -52,6 +52,7 @@ namespace Kratos
 /// Short class definition.
 template <class TSparseSpace,
           class TDenseSpace,  // = DenseSpace<double>,
+          class TMappingMatrixBuilder,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
 >
 class MapperMatrixBased : public Mapper
@@ -66,7 +67,11 @@ public:
     /// Pointer definition of MapperMatrixBased
     KRATOS_CLASS_POINTER_DEFINITION(MapperMatrixBased);
 
-    typedef typename MappingMatrixBuilder<TSparseSpace, TDenseSpace>::Pointer TMappingMatrixBuilderPointerType;
+    typedef TMappingMatrixBuilder TMappingMatrixBuilderType;
+
+    typedef typename TMappingMatrixBuilderType::Pointer TMappingMatrixBuilderPointerType;
+
+    // typedef typename TMappingMatrixBuilderType::TSparseSpace TSomeOtherSpaceSpace;
 
     typedef std::unordered_map<int, Node<3> *> EquationIdMapType;
 
@@ -96,23 +101,8 @@ public:
         mpQd = TSparseSpace::CreateEmptyVectorPointer();
 
 
-#ifdef KRATOS_USING_MPI    // mpi-parallel compilation
-        if (MapperUtilities::TotalProcesses() > 1)
-        {
-            mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TrilinosMappingMatrixBuilder<TSparseSpace, TDenseSpace>());
-            KRATOS_WATCH("TrilinosMappingMatrixBuilder Initialized")
-        }
-        else
-        {
-            mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder<TSparseSpace, TDenseSpace>());
+        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType());
 
-            KRATOS_WATCH("MappingMatrixBuilder Initialized")
-        }
-#else
-        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new MappingMatrixBuilder<TSparseSpace, TDenseSpace>());
-        KRATOS_WATCH("MappingMatrixBuilder Initialized")
-
-#endif
 
         mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination, 
             this->mpInterfaceModelPart) );

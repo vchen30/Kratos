@@ -48,9 +48,10 @@ namespace Kratos
 /// Short class definition.
 template <class TSparseSpace,
           class TDenseSpace,  // = DenseSpace<double>,
+          class TMappingMatrixBuilder,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
 >
-class MortarMapper : public MapperMatrixBased<TSparseSpace, TDenseSpace, TLinearSolver>
+class MortarMapper : public MapperMatrixBased<TSparseSpace, TDenseSpace, TMappingMatrixBuilder, TLinearSolver>
 {
 public:
 
@@ -81,7 +82,7 @@ public:
     ///@{
 
     MortarMapper(ModelPart& i_model_part_origin, ModelPart& i_model_part_destination,
-                          Parameters rJsonParameters) : MapperMatrixBased<TSparseSpace, TDenseSpace, TLinearSolver>(
+                          Parameters rJsonParameters) : MapperMatrixBased<TSparseSpace, TDenseSpace, TMappingMatrixBuilder, TLinearSolver>(
                                   i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
         KRATOS_WATCH("Mortar Mapper Constructor")

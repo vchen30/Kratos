@@ -33,6 +33,11 @@
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
 
+#include "custom_strategies/builders/mapping_matrix_builder.h"
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
+#endif
+
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
 #include "custom_mappers/nearest_neighbor_mapper_matrix.h"
@@ -78,12 +83,14 @@ public:
     typedef UblasSpace<double, CompressedMatrix, Vector> SerialSparseSpaceType;
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     typedef LinearSolver<SerialSparseSpaceType, LocalSpaceType> SerialLinearSolverType; // for Mortar
+    typedef MappingMatrixBuilder<SerialSparseSpaceType, LocalSpaceType> SerialMappingMatrixBuilderType;
     
     // Overwrite the SparseSpaceType in case of mpi-parallel execution
-    #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
     typedef TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector> TrilinosSparseSpaceType;
     typedef LinearSolver<TrilinosSparseSpaceType, LocalSpaceType> TrilinosLinearSolverType; // for Mortar
-    #endif
+    typedef MappingMatrixBuilder<TrilinosSparseSpaceType, LocalSpaceType> TrilinosMappingMatrixBuilderType;
+#endif
 
     ///@}
     ///@name Life Cycle
@@ -196,7 +203,7 @@ public:
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new NearestNeighborMapperMatrix<
-                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
+                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -205,7 +212,7 @@ public:
             else
             {
                 mapper = new NearestNeighborMapperMatrix<
-                    SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
+                    SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -214,7 +221,7 @@ public:
 
 #else
             mapper = new NearestNeighborMapperMatrix<
-                SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
+                SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);
@@ -232,7 +239,7 @@ public:
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new MortarMapper<
-                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosLinearSolverType>(
+                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -241,7 +248,7 @@ public:
             else
             {
                 mapper = new MortarMapper<
-                    SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
+                    SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -249,7 +256,7 @@ public:
                         }
 #else
             mapper = new MortarMapper<
-                SerialSparseSpaceType, LocalSpaceType, SerialLinearSolverType>(
+                SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);
