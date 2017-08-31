@@ -50,9 +50,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 /// Short class definition.
-template <class TSparseSpace,
-          class TDenseSpace,  // = DenseSpace<double>,
-          class TMappingMatrixBuilder,
+template <class TMappingMatrixBuilder,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
 >
 class MapperMatrixBased : public Mapper
@@ -71,23 +69,22 @@ public:
 
     typedef typename TMappingMatrixBuilderType::Pointer TMappingMatrixBuilderPointerType;
 
-    // typedef typename TMappingMatrixBuilderType::TSparseSpace TSomeOtherSpaceSpace;
-
     typedef std::unordered_map<int, Node<3> *> EquationIdMapType;
 
-    typedef typename TSparseSpace::DataType TDataType;
+    // Jordi can I use the same names without problems?
+    typedef typename TMappingMatrixBuilderType::TDataType TDataType;
 
-    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+    typedef typename TMappingMatrixBuilderType::TSystemMatrixType TSystemMatrixType;
 
-    typedef typename TSparseSpace::VectorType TSystemVectorType;
+    typedef typename TMappingMatrixBuilderType::TSystemVectorType TSystemVectorType;
 
-    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+    typedef typename TMappingMatrixBuilderType::TSystemMatrixPointerType TSystemMatrixPointerType;
 
-    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+    typedef typename TMappingMatrixBuilderType::TSystemVectorPointerType TSystemVectorPointerType;
 
-    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+    typedef typename TMappingMatrixBuilderType::LocalSystemMatrixType LocalSystemMatrixType;
 
-    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+    typedef typename TMappingMatrixBuilderType::LocalSystemVectorType LocalSystemVectorType;
 
     ///@}
     ///@name Life Cycle
@@ -96,11 +93,6 @@ public:
     MapperMatrixBased(ModelPart &rModelPartOrigin, ModelPart &rModelpartDestination,
                       Parameters rJsonParameters) : Mapper(rModelPartOrigin, rModelpartDestination, rJsonParameters)
     {
-        mpMdo = TSparseSpace::CreateEmptyMatrixPointer();
-        mpQo = TSparseSpace::CreateEmptyVectorPointer();
-        mpQd = TSparseSpace::CreateEmptyVectorPointer();
-
-
         mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType());
 
 
@@ -233,10 +225,15 @@ protected:
 
     void ComputeMappingMatrix()
     {
-        mpMappingMatrixBuilder->SetUpSystem(mrModelPartOrigin, mEquationIdNodeMapOrigin);
-        mpMappingMatrixBuilder->SetUpSystem(mrModelPartDestination, mEquationIdNodeMapDestination);
+        mpMappingMatrixBuilder->SetUpSystem(mrModelPartOrigin);
+        mpMappingMatrixBuilder->SetUpSystem(mrModelPartDestination);
 
-        // mpMappingMatrixBuilder->BuildLHS(BaseType::GetModelPart(), mpMdo);
+
+        int num_nodes_origin = mrModelPartOrigin.GetCommunicator().LocalMesh().NumberOfNodes();
+        int num_nodes_destination = mrModelPartDestination.GetCommunicator().LocalMesh().NumberOfNodes();
+
+        mpMappingMatrixBuilder->ResizeAndInitializeVectors(mpMdo, mpQo, mpQd, num_nodes_origin, num_nodes_destination);
+        mpMappingMatrixBuilder->BuildMappingMatrix(mpInterfaceModelPart, mpMdo);
     }
 
     /**

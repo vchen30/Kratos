@@ -106,8 +106,7 @@ class MappingMatrixBuilder
     This function set up the structure of the system, i.e. the NodeSet,
     which relates the nodes to the equation Ids
     */
-    void SetUpSystem(ModelPart& rModelPart, 
-                     EquationIdMapType& EquationIdNodeMap)
+    void SetUpSystem(ModelPart& rModelPart)
     {
         // EquationIdNodeMap.clear();
 
@@ -121,19 +120,14 @@ class MappingMatrixBuilder
         node.SetValue(MAPPING_MATRIX_EQUATION_ID, equation_id); // TODO replace with sth faster?
         ++equation_id;
         }
-
-        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
-        {
-            KRATOS_WATCH(node.GetValue(MAPPING_MATRIX_EQUATION_ID));
-        }
     }
 
     virtual void UpdateSystemVector(ModelPart& rModelPart,
-                        TSystemVectorPointerType b,
+                        TSystemVectorPointerType pB,
                         const Variable<double>& rVariable)
     {
         // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *b;
+        TSystemVectorType& r_b = *pB;
         int index = 0;
         for (auto& node : rModelPart.Nodes())
         {
@@ -144,11 +138,11 @@ class MappingMatrixBuilder
     }
 
     virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorPointerType b,
+                        TSystemVectorPointerType pB,
                         const Variable<double>& rVariable)
     {
         // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *b;
+        TSystemVectorType& r_b = *pB;
         int index = 0;
         for (auto& node : rModelPart.Nodes())
         {
@@ -156,6 +150,65 @@ class MappingMatrixBuilder
             // node.FastGetSolutionStepValue(rVariable) = r_b[index];
             ++index;
         }
+    }
+
+    virtual void ResizeAndInitializeVectors(
+        TSystemMatrixPointerType& pMdo,
+        TSystemVectorPointerType& pQo,
+        TSystemVectorPointerType& pQd,
+        const int size_origin,
+        const int size_destination)
+    {
+        
+        // if (!pMdo) //if the pointer is not initialized initialize it to an empty matrix
+        // {
+        //     TSystemMatrixPointerType pNewMdo = TSparseSpace::CreateEmptyMatrixPointer();
+        //     pMdo.swap(pNewMdo);
+        // }
+        // if (!pQo) //if the pointer is not initialized initialize it to an empty matrix
+        // {
+        //     TSystemVectorPointerType pNewQo = TSparseSpace::CreateEmptyVectorPointer();
+        //     pQo.swap(pNewQo);
+        // }
+        // if (!pQd) //if the pointer is not initialized initialize it to an empty matrix
+        // {
+        //     TSystemVectorPointerType pNewQd = TSparseSpace::CreateEmptyVectorPointer();
+        //     pQd.swap(pNewQd);
+        // }
+
+
+        // TSystemMatrixType& Mdo = *pMdo;
+        // TSystemVectorType& Qo = *pQo;
+        // TSystemVectorType& Qd = *pQd;
+
+        // //resizing the system vectors and matrix
+        // if (Mdo.size1() == 0) //if the matrix is not initialized
+        // {
+        //     Mdo.resize(size_destination, size_origin, false);
+        //     // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+        // }
+        // else
+        // {
+        //     if (Mdo.size1() != size_destination || Mdo.size2() != size_origin)
+        //     {
+        //         KRATOS_WATCH("it should not come here!!!!!!!! ... this is SLOW");
+        //         Mdo.resize(size_destination, size_origin, true);
+        //         // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+        //     }
+        // }
+
+        // if (Qo.size() != size_origin)
+        //     Qo.resize(size_origin, false);
+
+        // if (Qd.size() != size_destination)
+        //     Qd.resize(size_destination, false);
+
+    }
+
+    virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+                                    TSystemMatrixPointerType& pA)
+    {
+
     }
 
     // /**

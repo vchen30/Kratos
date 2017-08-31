@@ -217,18 +217,14 @@ void  AddCustomMappersToPython()
         class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
         ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
         // Matrix-based Mappers
-        class_<NearestNeighborMapperMatrix<
-                   SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>,
+        class_<NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
                bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<MortarMapper<
-                   SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>,
+        class_<MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
                bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        class_<NearestNeighborMapperMatrix<
-                TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+        class_<NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<MortarMapper<
-                TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+        class_<MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 #endif
 

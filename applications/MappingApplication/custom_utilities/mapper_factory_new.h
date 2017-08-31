@@ -202,8 +202,7 @@ public:
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
-                mapper = new NearestNeighborMapperMatrix<
-                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
+                mapper = new NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -211,8 +210,7 @@ public:
             }
             else
             {
-                mapper = new NearestNeighborMapperMatrix<
-                    SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+                mapper = new NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -220,8 +218,7 @@ public:
             }
 
 #else
-            mapper = new NearestNeighborMapperMatrix<
-                SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+            mapper = new NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);
@@ -238,8 +235,7 @@ public:
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
-                mapper = new MortarMapper<
-                    TrilinosSparseSpaceType, LocalSpaceType, TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
+                mapper = new MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
@@ -247,16 +243,14 @@ public:
             }
             else
             {
-                mapper = new MortarMapper<
-                    SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+                mapper = new MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                         rModelPartOrigin,
                         rModelPartDestination,
                         JsonParameters);
                 KRATOS_WATCH("MapperFactory Serial Mortar Mapper")
                         }
 #else
-            mapper = new MortarMapper<
-                SerialSparseSpaceType, LocalSpaceType, SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+            mapper = new MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
                     rModelPartOrigin,
                     rModelPartDestination,
                     JsonParameters);

@@ -46,12 +46,10 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 /// Short class definition.
-template <class TSparseSpace,
-          class TDenseSpace,  // = DenseSpace<double>,
-          class TMappingMatrixBuilder,
+template <class TMappingMatrixBuilder,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
 >
-class MortarMapper : public MapperMatrixBased<TSparseSpace, TDenseSpace, TMappingMatrixBuilder, TLinearSolver>
+class MortarMapper : public MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>
 {
 public:
 
@@ -62,27 +60,29 @@ public:
     ///@name Pointer Definitions
     /// Pointer definition of MortarMapper
     KRATOS_CLASS_POINTER_DEFINITION(MortarMapper);
+    
+    typedef TMappingMatrixBuilder TMappingMatrixBuilderType;
 
-    typedef typename TSparseSpace::DataType TDataType;
+    typedef typename TMappingMatrixBuilderType::TDataType TDataType;
 
-    typedef typename TSparseSpace::MatrixType TSystemMatrixType;
+    typedef typename TMappingMatrixBuilderType::TSystemMatrixType TSystemMatrixType;
 
-    typedef typename TSparseSpace::VectorType TSystemVectorType;
+    typedef typename TMappingMatrixBuilderType::TSystemVectorType TSystemVectorType;
 
-    typedef typename TSparseSpace::MatrixPointerType TSystemMatrixPointerType;
+    typedef typename TMappingMatrixBuilderType::TSystemMatrixPointerType TSystemMatrixPointerType;
 
-    typedef typename TSparseSpace::VectorPointerType TSystemVectorPointerType;
+    typedef typename TMappingMatrixBuilderType::TSystemVectorPointerType TSystemVectorPointerType;
 
-    typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
+    typedef typename TMappingMatrixBuilderType::LocalSystemMatrixType LocalSystemMatrixType;
 
-    typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+    typedef typename TMappingMatrixBuilderType::LocalSystemVectorType LocalSystemVectorType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     MortarMapper(ModelPart& i_model_part_origin, ModelPart& i_model_part_destination,
-                          Parameters rJsonParameters) : MapperMatrixBased<TSparseSpace, TDenseSpace, TMappingMatrixBuilder, TLinearSolver>(
+                          Parameters rJsonParameters) : MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>(
                                   i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
         KRATOS_WATCH("Mortar Mapper Constructor")

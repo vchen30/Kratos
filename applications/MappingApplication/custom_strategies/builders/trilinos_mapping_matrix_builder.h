@@ -120,9 +120,9 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 
         for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
         {
-            // local_contribution[index] = node.FastGetSolutionStepValue(rVariable);
-            // // The following has two variants, either trilinos uses the local or global equation ID
-            // equation_ids[index] = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
+            local_contribution[index] = node.FastGetSolutionStepValue(rVariable);
+            // The following has two variants, either trilinos uses the local or global equation ID
+            equation_ids[index] = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
             // equation_ids[index] = index;
 
             ++index;
@@ -141,9 +141,29 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
         {
             global_equation_id = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
-            node.FastGetSolutionStepValue(rVariable) = TSparseSpace::GetValue(rB, global_equation_id); // or index?
+            // node.FastGetSolutionStepValue(rVariable) = TSparseSpace::GetValue(rB, global_equation_id); // or index?
             ++index; // needed?
         }
+    }
+
+
+
+    void ResizeAndInitializeVectors(
+        TSystemMatrixPointerType& pMdo,
+        TSystemVectorPointerType& pQo,
+        TSystemVectorPointerType& pQd,
+        const int size_origin,
+        const int size_destination) override
+    {
+        
+    }
+
+
+
+    void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+                                    TSystemMatrixPointerType& pA) override
+    {
+        
     }
 
     // void BuildLHS(ModelPart& rModelPart,
