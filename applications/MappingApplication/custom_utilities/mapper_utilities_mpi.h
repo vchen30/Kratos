@@ -247,7 +247,7 @@ public:
 
         MPI_Allgather(local_bounding_box_tol, 6, MPI_DOUBLE,
                       pGlobalBoundingBoxes, 6, MPI_DOUBLE, MPI_COMM_WORLD);
-        delete local_bounding_box_tol;
+        delete [] local_bounding_box_tol;
     }
 
     ///@}
