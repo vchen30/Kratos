@@ -14,16 +14,17 @@
 //  Framework for Non-Matching Grid Mapping"
 //
 
-#if !defined(KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED)
-#define KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED
+#if !defined(KRATOS_UBLAS_MAPPING_MATRIX_BUILDER_H_INCLUDED)
+#define KRATOS_UBLAS_MAPPING_MATRIX_BUILDER_H_INCLUDED
 
 // System includes
+#include <unordered_map> 
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
-#include "mapping_application_variables.h"
+#include "mapping_matrix_builder.h"
 
 namespace Kratos
 {
@@ -53,16 +54,18 @@ namespace Kratos
 /** Detail class definition.
   */
 template <class TSparseSpace,
-          class TDenseSpace // = DenseSpace<double>,
+          class TDenseSpace  // = DenseSpace<double>,
           >
-class MappingMatrixBuilder
+class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDenseSpace>
 {
   public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MappingMatrixBuilder
-    KRATOS_CLASS_POINTER_DEFINITION(MappingMatrixBuilder);
+    /// Pointer definition of UblasMappingMatrixBuilder
+    KRATOS_CLASS_POINTER_DEFINITION(UblasMappingMatrixBuilder);
+
+    typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
 
     typedef typename TSparseSpace::DataType TDataType;
     
@@ -83,13 +86,10 @@ class MappingMatrixBuilder
     ///@{
 
     /// Default constructor.
-    MappingMatrixBuilder() {
-
-      TSparseSpace::WhatAmI();
-    }
+    UblasMappingMatrixBuilder() {}
 
     /// Destructor.
-    virtual ~MappingMatrixBuilder() {}
+    virtual ~UblasMappingMatrixBuilder() {}
 
     ///@}
     ///@name Operators
@@ -98,47 +98,97 @@ class MappingMatrixBuilder
     ///@}
     ///@name Operations
     ///@{
-
-    /** 
-    This function set up the structure of the system, i.e. the NodeSet,
-    which relates the nodes to the equation Ids
-    */
-    void SetUpSystem(ModelPart& rModelPart)
+        
+    void UpdateSystemVector(ModelPart& rModelPart,
+                        TSystemVectorPointerType pB,
+                        const Variable<double>& rVariable) override
     {
-        // EquationIdNodeMap.clear();
-
-        // these ids are the positions in the global vectors and matrix
-        int equation_id = GetStartEquationId(rModelPart);
-        std::cout << "Start Equation ID = " << equation_id << std::endl;
-
-        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *pB;
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
         {
-        // EquationIdNodeMap.emplace(equation_id, &node); // TODO check if this is a pointer
-        node.SetValue(MAPPING_MATRIX_EQUATION_ID, equation_id); // TODO replace with sth faster?
-        ++equation_id;
+            // Jordi how to make this work?
+            // r_b[index] = node.FastGetSolutionStepValue(rVariable);
+            ++index;
         }
     }
 
-    virtual void UpdateSystemVector(ModelPart& rModelPart,
+    void Update(ModelPart& rModelPart,
                         TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) = 0;
+                        const Variable<double>& rVariable) override
+    {
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *pB;
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
+        {
+            // Jordi how to make this work?
+            // node.FastGetSolutionStepValue(rVariable) = r_b[index];
+            ++index;
+        }
+    }
 
-
-    virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) = 0;
-
-
-    virtual void ResizeAndInitializeVectors(
+    void ResizeAndInitializeVectors(
         TSystemMatrixPointerType& pMdo,
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
         const int size_origin,
-        const int size_destination) = 0;
+        const int size_destination) override
+    {
+        
+        if (!pMdo) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemMatrixPointerType pNewMdo = TSparseSpace::CreateEmptyMatrixPointer();
+            pMdo.swap(pNewMdo);
+        }
+        if (!pQo) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemVectorPointerType pNewQo = TSparseSpace::CreateEmptyVectorPointer();
+            pQo.swap(pNewQo);
+        }
+        if (!pQd) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemVectorPointerType pNewQd = TSparseSpace::CreateEmptyVectorPointer();
+            pQd.swap(pNewQd);
+        }
 
 
-    virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
-                                    TSystemMatrixPointerType& pA) = 0;
+        TSystemMatrixType& Mdo = *pMdo;
+        TSystemVectorType& Qo = *pQo;
+        TSystemVectorType& Qd = *pQd;
+
+        //resizing the system vectors and matrix
+        if (Mdo.size1() == 0) //if the matrix is not initialized
+        {
+            Mdo.resize(size_destination, size_origin, false);
+            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+        }
+        else
+        {
+            if (Mdo.size1() != size_destination || Mdo.size2() != size_origin)
+            {
+                KRATOS_WATCH("it should not come here!!!!!!!! ... this is SLOW");
+                Mdo.resize(size_destination, size_origin, true);
+                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+            }
+        }
+
+        if (Qo.size() != size_origin)
+            Qo.resize(size_origin, false);
+
+        if (Qd.size() != size_destination)
+            Qd.resize(size_destination, false);
+        
+        KRATOS_WATCH("Done with the resizing stuff")
+
+    }
+
+    void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+                                    TSystemMatrixPointerType& pA) override
+    {
+
+    }
 
     // /**
     // This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem
@@ -270,12 +320,12 @@ class MappingMatrixBuilder
     virtual std::string Info() const
     {
         std::stringstream buffer;
-        buffer << "MappingMatrixBuilder";
+        buffer << "UblasMappingMatrixBuilder";
         return buffer.str();
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream &rOStream) const { rOStream << "MappingMatrixBuilder"; }
+    virtual void PrintInfo(std::ostream &rOStream) const { rOStream << "UblasMappingMatrixBuilder"; }
 
     /// Print object's data.
     virtual void PrintData(std::ostream &rOStream) const {}
@@ -361,14 +411,14 @@ class MappingMatrixBuilder
     ///@{
 
     /// Assignment operator.
-    // MappingMatrixBuilder &operator=(MappingMatrixBuilder const &rOther) {}
+    // UblasMappingMatrixBuilder &operator=(UblasMappingMatrixBuilder const &rOther) {}
 
     /// Copy constructor.
-    // MappingMatrixBuilder(MappingMatrixBuilder const &rOther) {}
+    // UblasMappingMatrixBuilder(UblasMappingMatrixBuilder const &rOther) {}
 
     ///@}
 
-}; // Class MappingMatrixBuilder
+}; // Class UblasMappingMatrixBuilder
 
 ///@}
 
@@ -381,11 +431,11 @@ class MappingMatrixBuilder
 
 /// input stream function
 // inline std::istream &operator>>(std::istream &rIStream,
-//                                 MappingMatrixBuilder &rThis) {}
+//                                 UblasMappingMatrixBuilder &rThis) {}
 
 // /// output stream function
 // inline std::ostream &operator<<(std::ostream &rOStream,
-//                                 const MappingMatrixBuilder &rThis)
+//                                 const UblasMappingMatrixBuilder &rThis)
 // {
 //     rThis.PrintInfo(rOStream);
 //     rOStream << std::endl;
@@ -399,4 +449,4 @@ class MappingMatrixBuilder
 
 } // namespace Kratos.
 
-#endif // KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED  defined
+#endif // KRATOS_UBLAS_MAPPING_MATRIX_BUILDER_H_INCLUDED  defined

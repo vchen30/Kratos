@@ -33,7 +33,7 @@
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
 
-#include "custom_strategies/builders/mapping_matrix_builder.h"
+#include "custom_strategies/builders/ublas_mapping_matrix_builder.h"
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 #include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
 #endif
@@ -83,7 +83,7 @@ public:
     typedef UblasSpace<double, CompressedMatrix, Vector> SerialSparseSpaceType;
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     typedef LinearSolver<SerialSparseSpaceType, LocalSpaceType> SerialLinearSolverType; // for Mortar
-    typedef MappingMatrixBuilder<SerialSparseSpaceType, LocalSpaceType> SerialMappingMatrixBuilderType;
+    typedef UblasMappingMatrixBuilder<SerialSparseSpaceType, LocalSpaceType> SerialMappingMatrixBuilderType;
     
     // Overwrite the SparseSpaceType in case of mpi-parallel execution
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
