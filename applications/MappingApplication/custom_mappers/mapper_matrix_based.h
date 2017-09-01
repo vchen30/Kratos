@@ -69,8 +69,6 @@ public:
 
     typedef typename TMappingMatrixBuilderType::Pointer TMappingMatrixBuilderPointerType;
 
-    typedef std::unordered_map<int, Node<3> *> EquationIdMapType;
-
     // Jordi can I use the same names without problems?
     typedef typename TMappingMatrixBuilderType::TDataType TDataType;
 
@@ -95,9 +93,10 @@ public:
     {
         mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType());
 
-
         mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination, 
             this->mpInterfaceModelPart) );
+
+        InitializeMappingMatrix();
     }
 
     /// Destructor.
@@ -120,6 +119,9 @@ public:
             // TSparseSpace::Clear(mpMdo);
             // TSparseSpace::Clear(mpQo);
             // TSparseSpace::Clear(mpQd);
+
+            InitializeMappingMatrix();
+            ComputeMappingMatrix();
         }
         else
         {
@@ -127,6 +129,8 @@ public:
             // TSparseSpace::ClearData(mpMdo);
             // TSparseSpace::ClearData(mpQo);
             // TSparseSpace::ClearData(mpQd);
+
+            ComputeMappingMatrix();
         }
     }
 
@@ -135,7 +139,9 @@ public:
              const Variable<double>& rDestinationVariable,
              Kratos::Flags MappingOptions) override
     {
-        
+        InitializeMappingStep(rOriginVariable, rDestinationVariable, MappingOptions);
+        ExecuteMappingStep(MappingOptions);
+        FinalizeMappingStep(rOriginVariable, rDestinationVariable, MappingOptions);        
     }
 
     /* This function maps from Origin to Destination */
@@ -143,7 +149,7 @@ public:
              const Variable< array_1d<double, 3> >& rDestinationVariable,
              Kratos::Flags MappingOptions) override
     {
-        
+         
     }
 
     /* This function maps from Destination to Origin */
@@ -160,6 +166,13 @@ public:
                     Kratos::Flags MappingOptions) override
     {
         
+    }
+
+    TSystemMatrixType& GetSystemMatrix()
+    {
+        TSystemMatrixType& mMdo = *mpMdo;
+
+        return mMdo;
     }
 
     ///@}
@@ -214,6 +227,7 @@ protected:
 
     ModelPart::Pointer mpInterfaceModelPart;
     InterfacePreprocess::Pointer mpInterfacePreprocessor;
+    Parameters mInterfaceParameters = Parameters(R"({})");
 
     ///@}
     ///@name Protected Operators
@@ -223,7 +237,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void ComputeMappingMatrix()
+    void InitializeMappingMatrix()
     {
         mpMappingMatrixBuilder->SetUpSystem(mrModelPartOrigin);
         mpMappingMatrixBuilder->SetUpSystem(mrModelPartDestination);
@@ -233,18 +247,65 @@ protected:
         int num_nodes_destination = mrModelPartDestination.GetCommunicator().LocalMesh().NumberOfNodes();
 
         mpMappingMatrixBuilder->ResizeAndInitializeVectors(mpMdo, mpQo, mpQd, num_nodes_origin, num_nodes_destination);
+    }
+
+    void ComputeMappingMatrix()
+    {
         mpMappingMatrixBuilder->BuildMappingMatrix(mpInterfaceModelPart, mpMdo);
     }
 
     /**
-    This function creates the Interface-ModelPart and sets up the Matrix-Structure
-    */
-    virtual void Initialize() = 0;
-
-    /**
     This function creates the Interface-ModelPart
     */
-    virtual void ComputeInterfaceModelPart() = 0;
+    void ComputeInterfaceModelPart()
+    {   
+        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
+    }
+
+    template <typename T>
+    void InitializeMappingStep(const Variable< T >& rOriginVariable,
+                               const Variable< T >& rDestinationVariable,
+                               Kratos::Flags MappingOptions)
+    {
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartDestination, mpQd, rDestinationVariable);
+        }
+        else
+        {
+            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartOrigin, mpQo, rOriginVariable);
+        }
+        
+    }
+
+    virtual void ExecuteMappingStep(Kratos::Flags MappingOptions)
+    {
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            const bool transpose_flag = true;
+            mpMappingMatrixBuilder->Multiply(mpMdo, mpQd, mpQo, transpose_flag);
+        }
+        else
+        {
+            mpMappingMatrixBuilder->Multiply(mpMdo, mpQo, mpQd);
+        }
+    }
+
+    template <typename T>
+    void FinalizeMappingStep(const Variable< T >& rOriginVariable,
+                             const Variable< T >& rDestinationVariable,
+                             Kratos::Flags MappingOptions)
+    {
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+
+            mpMappingMatrixBuilder->Update(mrModelPartOrigin, mpQo, rOriginVariable);
+        }
+        else
+        {
+            mpMappingMatrixBuilder->Update(mrModelPartDestination, mpQd, rDestinationVariable);
+        }
+    }
 
     ///@}
     ///@name Protected  Access
@@ -269,9 +330,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    EquationIdMapType mEquationIdNodeMapOrigin; // This is the equivalent to the dofset I think
-    EquationIdMapType mEquationIdNodeMapDestination;
-
     ///@}
     ///@name Private Operators
     ///@{
@@ -279,35 +337,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-
-
-
-
-//     void InitializeMapperStrategy()
-//     {
-// #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-//         if (mCommSize > 1)
-//         {
-//             mpMapperStrategy = MapperStrategy<TrilinosSparseSpaceType, 
-//             LocalSpaceType, TrilinosLinearSolverType>(mrModelPartOrigin, 
-//                             mrModelPartDestination);
-//         }
-//         else
-//         {
-//             mpMapperStrategy = MapperStrategy<SerialSparseSpaceType, 
-//             LocalSpaceType, SerialLinearSolverType>(mrModelPartOrigin, 
-//                             mrModelPartDestination);
-//         }
-
-// #else // serial compilation
-//         mpMapperStrategy = MapperStrategy<SerialSparseSpaceType, 
-//         LocalSpaceType, SerialLinearSolverType>(mrModelPartOrigin, 
-//                         mrModelPartDestination);
-// #endif
-
-
-// }
 
     ///@}
     ///@name Private  Access

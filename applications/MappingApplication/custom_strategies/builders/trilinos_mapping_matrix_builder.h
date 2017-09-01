@@ -166,44 +166,6 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         
     }
 
-    // void BuildLHS(ModelPart& rModelPart,
-    //                       TSystemMatrixType& A) override
-    // {   
-
-    // }
-
-    // void BuildRHS(ModelPart& rModelPart,
-    //                       TSystemVectorType& b) override
-    // {
-
-
-    // }
-
-    // void SetUpDofSet(ModelPart& r_model_part
-    // ) override
-    // {
-    // }
-
-    /**
-            organises the dofset in order to speed up the building phase
-     */
-    // void SetUpSystem(
-    //     ModelPart& r_model_part
-    // ) override
-    // {
-    // }
-
-    // void ResizeAndInitializeVectors(
-    //     TSystemMatrixPointerType& pA,
-    //     TSystemVectorPointerType& pDx,
-    //     TSystemVectorPointerType& pb,
-    //     ElementsArrayType& rElements,
-    //     ConditionsArrayType& rConditions,
-    //     ProcessInfo& CurrentProcessInfo
-    // ) override
-    // {
-    // }
-
     ///@}
     ///@name Access
     ///@{

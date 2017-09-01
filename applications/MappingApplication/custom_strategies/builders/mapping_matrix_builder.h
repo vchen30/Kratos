@@ -119,6 +119,26 @@ class MappingMatrixBuilder
         }
     }
 
+    void Multiply(TSystemMatrixPointerType& pA,
+                  TSystemVectorPointerType& pX,
+                  TSystemVectorPointerType& pY,
+                  const bool Transposed = false)
+    {   
+        TSystemMatrixType& rA = *pA;
+        TSystemVectorType& rX = *pX;
+        TSystemVectorType& rY = *pY;
+
+        if (Transposed) // pY = pAT * pX
+        {
+            TSparseSpace::TransposeMult(rA, rX, rY);
+        }
+        else // pY = pA * pX
+        { 
+            TSparseSpace::Mult(rA, rX, rY);
+        }
+        
+    }
+
     virtual void UpdateSystemVector(ModelPart& rModelPart,
                         TSystemVectorPointerType pB,
                         const Variable<double>& rVariable) = 0;
@@ -139,6 +159,8 @@ class MappingMatrixBuilder
 
     virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
                                     TSystemMatrixPointerType& pA) = 0;
+
+
 
     // /**
     // This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem

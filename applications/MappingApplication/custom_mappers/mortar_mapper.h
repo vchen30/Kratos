@@ -115,27 +115,6 @@ public:
     ///@name Operations
     ///@{
 
-    /* This function maps from Origin to Destination */
-    void Map(const Variable<double>& rOriginVariable,
-             const Variable<double>& rDestinationVariable,
-             Kratos::Flags MappingOptions) override
-    {   
-        // InterpolateToDestinationMesh(mQ_tmp) // here the Multiplication is done
-        
-        // // @Jordi this BuilderAndSolver is only needed for Mortar. Can it be a member of this class then?
-        // mpMapperCommunicator->GetBuilderAndSolver()->Solve(scheme, modelpart_destination, mM_dd, mQ_d, mQ_tmp);
-
-        // SetNodalValues();
-    }
-
-    /* This function maps from Origin to Destination */
-    void Map(const Variable< array_1d<double, 3> >& rOriginVariable,
-             const Variable< array_1d<double, 3> >& rDestinationVariable,
-             Kratos::Flags MappingOptions) override
-    {
-        
-    }
-
     /* This function maps from Destination to Origin */
     void InverseMap(const Variable<double>& rOriginVariable,
                     const Variable<double>& rDestinationVariable,
@@ -206,15 +185,48 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-        
-    void Initialize()
-    {
 
-    }
-    
-    void ComputeInterfaceModelPart()
+    void ExecuteMappingStep(Kratos::Flags MappingOptions) override
     {
-        
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            // mpBuilderAndSolver->SystemSolve(mpMdd, mpQtmp, this->mpQd); // Jordi the trilinos call also wants a modelpart!
+            const bool transpose_flag = true;
+            this->mpMappingMatrixBuilder->Multiply(this->mpMdo, this->mpQd, this->mpQo, transpose_flag);
+        }
+        else
+        {
+            this->mpMappingMatrixBuilder->Multiply(this->mpMdo, this->mpQo, this->mpQd);
+            // mpBuilderAndSolver->SystemSolve(mpMdd, this->mpQd, mpQtmp); // Jordi the trilinos call also wants a modelpart!
+        }
+
+            //     if (InverseOperation) // for conservative mapping
+    //     {
+    //        if (mIsMortar)
+    //         {
+    //             mpBuilderAndSolver->SystemSolve(mpMdd, mpQtmp, mpQd); // Jordi the trilinos call also wants a modelpart!
+    //             TSparseSpace::TransposeMult(mpMdo, mpQtmp, mpQo);
+    //         }
+    //         else
+    //         {
+    //             TSparseSpace::TransposeMult(mpMdo, mpQd, mpQo);
+    //         } 
+    //     }
+    //     else
+    //     {
+    //         if (mIsMortar)
+    //         {
+    //             TSparseSpace::Mult(mpMdo, mpQo, mpQtmp);
+    //             mpBuilderAndSolver->SystemSolve(mpMdd, mpQd, mpQtmp); // Jordi the trilinos call also wants a modelpart!
+    //             // if this turns out to be a problem we can pass the BuilderAndSolver to the MappingMatrixBuilder to call 
+    //             // the correct function, bcs this is different for serial and Trilinos
+    //             // I would try to avoid duplicating the MapperStrategy at all cost!!!
+    //         }
+    //         else
+    //         {
+    //             TSparseSpace::Mult(mpMdo, mpQo, mpQd);
+    //         }
+    //     }
     }
 
     ///@}

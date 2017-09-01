@@ -31,6 +31,10 @@
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
 
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "custom_utilities/parallel_fill_communicator.h"
+#endif
+
 
 namespace Kratos
 {
@@ -75,11 +79,7 @@ namespace Kratos
         /// Default constructor.
         InterfacePreprocess(ModelPart& rModelPart, ModelPart::Pointer rInterfaceModelPart) : 
             mrModelPart(rModelPart), 
-            mpInterfaceModelPart(rInterfaceModelPart)
-        {
-            
-
-        }
+            mpInterfaceModelPart(rInterfaceModelPart) {}
 
         /// Destructor.
         virtual ~InterfacePreprocess(){}
@@ -96,10 +96,24 @@ namespace Kratos
 
         void GenerateInterfacePart(Parameters InterfaceParameters)
         {
+            CheckAndValidateParameters(InterfaceParameters);      
+
             // Create a new / overwrite the InterfaceModelpart
             mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
             
-            CheckAndValidateParameters(InterfaceParameters);            
+            AddNodes();
+            AddConditions(InterfaceParameters);
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+            if (MapperUtilities::TotalProcesses() > 1)
+            {
+                // Set the MPICommunicator
+                std::cout << "Doing the ParallelFillCommunicator stuff" << std::endl;
+                ParallelFillCommunicator parallel_fill_communicator(*mpInterfaceModelPart);
+                parallel_fill_communicator.Execute();
+            }
+#endif
+            
         }
         
         
@@ -209,6 +223,16 @@ namespace Kratos
             std::string condition_name = InterfaceParameters["condition_name"].GetString();
             
             KRATOS_ERROR_IF(condition_name == "") << "Condition name for Interface-ModelPart not specified" << std::endl;
+        }
+
+        void AddNodes()
+        {
+
+        }
+
+        void CreateConditions(Parameters InterfaceParameters)
+        {
+
         }
             
         ///@} 

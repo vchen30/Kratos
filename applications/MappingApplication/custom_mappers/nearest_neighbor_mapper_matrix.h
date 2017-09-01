@@ -87,15 +87,22 @@ public:
     {
         KRATOS_WATCH("NearestNeighborMapperMatrix Constructor")
 
+        this->mInterfaceParameters = Parameters( R"(
+        {
+            "condition_name" : "nearest_neighbor",
+            "use_nodes"      : true
+        }  )" );
+        this->ComputeInterfaceModelPart();
+
         this->mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
         this->mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
         this->mpMapperCommunicator->Initialize();
 
-
-        Initialize();
-        this->mpMappingMatrixBuilder->Update(this->mrModelPartOrigin, this->mpQd, PRESSURE);
-
-        //mpMapperCommunicator->GetBuilderAndMultiplier()->BuildLHS(scheme, modelpart, Mdo); // could be moved to baseclass...?
+        this->ComputeMappingMatrix();
+        
+        
+        
+        // this->mpMappingMatrixBuilder->Update(this->mrModelPartOrigin, this->mpQd, PRESSURE);
     }
 
     /// Destructor.
@@ -108,30 +115,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-
-    /* This function maps from Origin to Destination */
-    void Map(const Variable<double>& rOriginVariable,
-             const Variable<double>& rDestinationVariable,
-             Kratos::Flags MappingOptions) override
-    {   
-        // mpMappingMatrixUtility->AssembleRHSOrigin(rOriginVariable, 
-        //                                           MappingOptions, 
-        //                                           mpIndexNodeMapOrigin); // Assemble m_Qo
-
-        // mpMappingMatrixUtility->Multiply(); // here the Multiplication is done; m_Mdo * m_Qo
-
-        // mpMappingMatrixUtility->UpdateDestination(rDestinationVariable, 
-        //                                           MappingOptions, 
-        //                                           mpIndexNodeMapDestination); // Set nodal Values from m_Qd
-    }
-
-    /* This function maps from Origin to Destination */
-    void Map(const Variable< array_1d<double, 3> >& rOriginVariable,
-             const Variable< array_1d<double, 3> >& rDestinationVariable,
-             Kratos::Flags MappingOptions) override
-    {
-        
-    }
 
     /* This function maps from Destination to Origin */
     void InverseMap(const Variable<double>& rOriginVariable,
@@ -200,22 +183,6 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-        
-    void Initialize()
-    {
-        this->ComputeMappingMatrix();
-    }
-    
-    void ComputeInterfaceModelPart()
-    {   
-        Parameters interface_parameters = Parameters( R"(
-            {
-                   "condition_name" : "nearest_neighbor"
-                   "use_nodes"      : true
-             }  )" );
-
-        this->mpInterfacePreprocessor->GenerateInterfacePart(interface_parameters);
-    }
 
     ///@}
     ///@name Protected  Access

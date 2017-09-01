@@ -100,13 +100,15 @@ if number_of_processors > 1:
         for node in model_part_destination.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.PARTITION_INDEX, my_rank)
 
-    MPICommSetupOrigin = KratosMetis.SetMPICommunicatorProcess(model_part_origin)
-    MPICommSetupOrigin.Execute()
+    # Jordi I think this is not needed, since the "ParallelFillCommunicator" also sets an mpi-communicator
+    # It is also done in the trilinos import modelpart utility
+    # MPICommSetupOrigin = KratosMetis.SetMPICommunicatorProcess(model_part_origin)
+    # MPICommSetupOrigin.Execute()
     ParallelFillCommOrigin = KratosTrilinos.ParallelFillCommunicator(model_part_origin.GetRootModelPart())
     ParallelFillCommOrigin.Execute()
 
-    MPICommSetupDestination = KratosMetis.SetMPICommunicatorProcess(model_part_destination)
-    MPICommSetupDestination.Execute()
+    # MPICommSetupDestination = KratosMetis.SetMPICommunicatorProcess(model_part_destination)
+    # MPICommSetupDestination.Execute()
     ParallelFillCommDestination = KratosTrilinos.ParallelFillCommunicator(model_part_destination.GetRootModelPart())
     ParallelFillCommDestination.Execute()
 
