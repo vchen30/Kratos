@@ -113,7 +113,7 @@ public:
     virtual void UpdateInterfaceSpecific(Kratos::Flags MappingOptions) override {
         if (MappingOptions.Is(MapperFlags::REMESHED))
         {
-            ComputeInterfaceModelPart();
+            GenerateInterfaceModelPart();
 
             // TODO this gives compiler errors!
             // TSparseSpace::Clear(mpMdo);
@@ -257,7 +257,7 @@ protected:
     /**
     This function creates the Interface-ModelPart
     */
-    void ComputeInterfaceModelPart()
+    void GenerateInterfaceModelPart()
     {   
         this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
     }

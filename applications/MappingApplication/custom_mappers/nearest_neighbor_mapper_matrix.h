@@ -92,7 +92,15 @@ public:
             "condition_name" : "nearest_neighbor",
             "use_nodes"      : true
         }  )" );
-        this->ComputeInterfaceModelPart();
+        this->GenerateInterfaceModelPart();
+
+        KRATOS_WATCH("Before Communicator Access")
+        KRATOS_WATCH(this->mpInterfaceModelPart)
+        std::cout << this->mpInterfaceModelPart << std::endl;
+        // std::cout << "Rank " << this->mpInterfaceModelPart->GetCommunicator().MyPID() << ", num_local_nodes = " 
+        //           << this->mpInterfaceModelPart->GetCommunicator().LocalMesh().NumberOfNodes() << std::endl;
+
+        KRATOS_WATCH("After Communicator Access")
 
         this->mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
         this->mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);

@@ -130,11 +130,11 @@ class MappingMatrixBuilder
 
         if (Transposed) // pY = pAT * pX
         {
-            TSparseSpace::TransposeMult(rA, rX, rY);
+            // TSparseSpace::TransposeMult(rA, rX, rY); // TODO uncommented for now
         }
         else // pY = pA * pX
         { 
-            TSparseSpace::Mult(rA, rX, rY);
+            // TSparseSpace::Mult(rA, rX, rY); // TODO uncommented for now
         }
         
     }

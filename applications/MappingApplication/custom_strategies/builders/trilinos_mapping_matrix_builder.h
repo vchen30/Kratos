@@ -128,7 +128,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
             ++index;
         }
 
-        TSparseSpace::AssembleRHS(rB, local_contribution, equation_ids);
+        // TSparseSpace::AssembleRHS(rB, local_contribution, equation_ids); // TODO uncommented for now
     }
 
     void Update(ModelPart& rModelPart,

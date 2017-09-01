@@ -77,9 +77,9 @@ namespace Kratos
         ///@{ 
         
         /// Default constructor.
-        InterfacePreprocess(ModelPart& rModelPart, ModelPart::Pointer rInterfaceModelPart) : 
+        InterfacePreprocess(ModelPart& rModelPart, ModelPart::Pointer pInterfaceModelPart) : 
             mrModelPart(rModelPart), 
-            mpInterfaceModelPart(rInterfaceModelPart) {}
+            mpInterfaceModelPart(pInterfaceModelPart) {}
 
         /// Destructor.
         virtual ~InterfacePreprocess(){}
@@ -99,10 +99,12 @@ namespace Kratos
             CheckAndValidateParameters(InterfaceParameters);      
 
             // Create a new / overwrite the InterfaceModelpart
-            mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
+            KRATOS_WATCH(mpInterfaceModelPart)
+            mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") ); // TODO why is this not working?
+            KRATOS_WATCH(*mpInterfaceModelPart)
             
             AddNodes();
-            AddConditions(InterfaceParameters);
+            CreateConditions(InterfaceParameters);
 
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1)
@@ -227,7 +229,14 @@ namespace Kratos
 
         void AddNodes()
         {
-
+            KRATOS_WATCH("Reached the node fct")
+            // Store pointers to all interface nodes
+            unsigned int nodes_counter = 0;
+            for (ModelPart::NodesContainerType::const_iterator node_it = mrModelPart.NodesBegin(); node_it != mrModelPart.NodesEnd(); ++node_it)
+            {
+                mpInterfaceModelPart->Nodes().push_back( *(node_it.base()) ); // TODO resize? I know the size in advance...
+                ++nodes_counter;
+            }
         }
 
         void CreateConditions(Parameters InterfaceParameters)
