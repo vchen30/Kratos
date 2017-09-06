@@ -93,8 +93,7 @@ public:
     {
         mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType());
 
-        mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination, 
-            this->mpInterfaceModelPart) );
+        mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination) );
 
         InitializeMappingMatrix();
     }
@@ -260,6 +259,7 @@ protected:
     void GenerateInterfaceModelPart()
     {   
         this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
+        this->mpInterfaceModelPart = this->mpInterfacePreprocessor->pGetInterfaceModelPart();
     }
 
     template <typename T>

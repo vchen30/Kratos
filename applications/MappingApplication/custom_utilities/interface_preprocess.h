@@ -77,9 +77,11 @@ namespace Kratos
         ///@{ 
         
         /// Default constructor.
-        InterfacePreprocess(ModelPart& rModelPart, ModelPart::Pointer pInterfaceModelPart) : 
-            mrModelPart(rModelPart), 
-            mpInterfaceModelPart(pInterfaceModelPart) {}
+        InterfacePreprocess(ModelPart& rModelPart) : 
+            mrModelPart(rModelPart)
+        {
+            
+        }
 
         /// Destructor.
         virtual ~InterfacePreprocess(){}
@@ -93,6 +95,11 @@ namespace Kratos
         ///@}
         ///@name Operations
         ///@{
+
+        ModelPart::Pointer pGetInterfaceModelPart()
+        {
+            return mpInterfaceModelPart;
+        }
 
         void GenerateInterfacePart(Parameters InterfaceParameters)
         {

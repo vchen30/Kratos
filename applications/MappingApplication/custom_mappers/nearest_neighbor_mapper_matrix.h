@@ -97,8 +97,8 @@ public:
         KRATOS_WATCH("Before Communicator Access")
         KRATOS_WATCH(this->mpInterfaceModelPart)
         std::cout << this->mpInterfaceModelPart << std::endl;
-        // std::cout << "Rank " << this->mpInterfaceModelPart->GetCommunicator().MyPID() << ", num_local_nodes = " 
-        //           << this->mpInterfaceModelPart->GetCommunicator().LocalMesh().NumberOfNodes() << std::endl;
+        std::cout << "Rank " << this->mpInterfaceModelPart->GetCommunicator().MyPID() << ", num_local_nodes = " 
+                  << this->mpInterfaceModelPart->GetCommunicator().LocalMesh().NumberOfNodes() << std::endl;
 
         KRATOS_WATCH("After Communicator Access")
 
