@@ -532,40 +532,40 @@ public:
     {
         KRATOS_TRY;
 
-        //pointers needed in the solution
+        // Pointers needed in the solution
         typename TSchemeType::Pointer pScheme = GetScheme();
         typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
-        int rank = BaseType::GetModelPart().GetCommunicator().MyPID();
+        const int rank = BaseType::GetModelPart().GetCommunicator().MyPID();
 
-        //set up the system, operation performed just once unless it is required
-        //to reform the dof set at each iteration
-        if (pBuilderAndSolver->GetDofSetIsInitializedFlag() == false ||
-                mReformDofSetAtEachStep == true)
+        // Set up the system, operation performed just once unless it is required
+        // To reform the dof set at each iteration
+        if (pBuilderAndSolver->GetDofSetIsInitializedFlag()  == false ||
+                                     mReformDofSetAtEachStep == true  || 
+                       BaseType::GetModelPart().Is(MODIFIED) == true)
         {
-            //setting up the list of the DOFs to be solved
-            double setup_dofs_begintime = OpenMPUtils::GetCurrentTime();
+            // Setting up the list of the DOFs to be solved
+            const double setup_dofs_begintime = OpenMPUtils::GetCurrentTime();
             pBuilderAndSolver->SetUpDofSet(pScheme, BaseType::GetModelPart());
             if (this->GetEchoLevel() > 0 && rank == 0)
             {
-                double setup_dofs_endtime = OpenMPUtils::GetCurrentTime();
-                std::cout << "setup_dofs_time : " << setup_dofs_endtime- setup_dofs_begintime << std::endl;
+                const double setup_dofs_endtime = OpenMPUtils::GetCurrentTime();
+                std::cout << "Setup_dofs_time : " << setup_dofs_endtime- setup_dofs_begintime << std::endl;
             }
 
-            //shaping correctly the system
-            double setup_system_begin = OpenMPUtils::GetCurrentTime();
+            // Shaping correctly the system
+            const double setup_system_begin = OpenMPUtils::GetCurrentTime();
             pBuilderAndSolver->SetUpSystem(BaseType::GetModelPart());
             if (this->GetEchoLevel() > 0 && rank == 0)
             {
-                double setup_system_end = OpenMPUtils::GetCurrentTime();
+                const double setup_system_end = OpenMPUtils::GetCurrentTime();
                 std::cout << rank << ": setup_system_time : " << setup_system_end- setup_system_begin << std::endl;
             }
         }
 
-        //prints informations about the current time
+        // Prints informations about the current time
         if (this->GetEchoLevel() != 0 && BaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
         {
-            std::cout << " " << std::endl;
-            std::cout << "CurrentTime = " << BaseType::GetModelPart().GetProcessInfo()[TIME] << std::endl;
+            std::cout << "\nCurrentTime = " << BaseType::GetModelPart().GetProcessInfo()[TIME] << std::endl;
         }
 
         if (mSolutionStepIsInitialized == false)
@@ -575,21 +575,20 @@ public:
             int rank = BaseType::GetModelPart().GetCommunicator().MyPID(); */
 
             //setting up the Vectors involved to the correct size
-            double system_matrix_resize_begin = OpenMPUtils::GetCurrentTime();
+            const double system_matrix_resize_begin = OpenMPUtils::GetCurrentTime();
             pBuilderAndSolver->ResizeAndInitializeVectors(pScheme, mpA, mpDx, mpb, BaseType::GetModelPart().Elements(), BaseType::GetModelPart().Conditions(), BaseType::GetModelPart().GetProcessInfo());
             if (this->GetEchoLevel() > 0 && rank == 0)
             {
-                double system_matrix_resize_end = OpenMPUtils::GetCurrentTime();
+                const double system_matrix_resize_end = OpenMPUtils::GetCurrentTime();
                 std::cout << rank << ": system_matrix_resize_time : " << system_matrix_resize_end- system_matrix_resize_begin << std::endl;
             }
-            TSystemMatrixType& A = *mpA;
+            
+            TSystemMatrixType& A  = *mpA;
             TSystemVectorType& Dx = *mpDx;
-            TSystemVectorType& b = *mpb;
+            TSystemVectorType& b  = *mpb;
 
-            //initial operations ... things that are constant over the Solution Step
+            // Initial operations ... things that are constant over the Solution Step
             pBuilderAndSolver->InitializeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
-
-            //initial operations ... things that are constant over the Solution Step
             pScheme->InitializeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
 
             mSolutionStepIsInitialized = true;
@@ -623,10 +622,10 @@ public:
         pScheme->FinalizeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
         pBuilderAndSolver->FinalizeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
 
-        //Cleaning memory after the solution
+        // Cleaning memory after the solution
         pScheme->Clean();
 
-        //reset flags for next step
+        // Reset flags for next step
         mSolutionStepIsInitialized = false;
 
         if (mReformDofSetAtEachStep == true) //deallocate the systemvectors
@@ -660,11 +659,11 @@ public:
         BaseType::GetModelPart().GetProcessInfo()[NL_ITERATION_NUMBER] = iteration_number;
         //			BaseType::GetModelPart().GetProcessInfo().SetNonLinearIterationNumber(iteration_number);
         bool is_converged = false;
-        bool ResidualIsUpdated = false;
+        bool residual_is_updated = false;
         pScheme->InitializeNonLinIteration(BaseType::GetModelPart(), A, Dx, b);
         is_converged = mpConvergenceCriteria->PreCriteria(BaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
 
-        //function to perform the building and the solving phase.
+        // Function to perform the building and the solving phase.
         if (BaseType::mRebuildLevel > 1 || BaseType::mStiffnessMatrixIsBuilt == false)
         {
             TSparseSpace::SetToZero(A);
@@ -704,7 +703,6 @@ public:
             is_converged = mpConvergenceCriteria->PostCriteria(BaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
         }
 
-
         //Iteration Cicle... performed only for NonLinearProblems
         while (is_converged == false &&
                 iteration_number++<mMaxIterationNumber)
@@ -716,20 +714,30 @@ public:
 
             is_converged = mpConvergenceCriteria->PreCriteria(BaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
 
-            //call the linear system solver to find the correction mDx for the
-            //it is not called if there is no system to solve
+            // Call the linear system solver to find the correction mDx for the
+            // It is not called if there is no system to solve
             if (SparseSpaceType::Size(Dx) != 0)
             {
                 if (BaseType::mRebuildLevel > 1 || BaseType::mStiffnessMatrixIsBuilt == false )
                 {
-                    if( GetKeepSystemConstantDuringIterations() == false)
+                    if( GetKeepSystemConstantDuringIterations() == false || BaseType::GetModelPart().Is(MODIFIED) == true)
                     {
-                        //A = 0.00;
-                        TSparseSpace::SetToZero(A);
-                        TSparseSpace::SetToZero(Dx);
-                        TSparseSpace::SetToZero(b);
-
+                        if (BaseType::GetModelPart().Is(MODIFIED) == true) 
+                        {
+                            FinalizeSolutionStep();
+                            Clear();
+                            InitializeSolutionStep();
+                        }
+                        else
+                        {
+                            //A = 0.00;
+                            TSparseSpace::SetToZero(A);
+                            TSparseSpace::SetToZero(Dx);
+                            TSparseSpace::SetToZero(b);
+                        }
+                    
                         pBuilderAndSolver->BuildAndSolve(pScheme, BaseType::GetModelPart(), A, Dx, b);
+                        if (BaseType::GetModelPart().Is(MODIFIED) == true) BaseType::GetModelPart().Set(MODIFIED, false);
                     }
                     else
                     {
@@ -751,16 +759,16 @@ public:
             {
                 std::cout << "ATTENTION: no free DOFs!! " << std::endl;
             }
-
+            
             // Debugging info
             EchoInfo(iteration_number);
-        
+            
             // Updating the results stored in the database
             UpdateDatabase(A, Dx, b, BaseType::MoveMeshFlag());
 
             pScheme->FinalizeNonLinIteration(BaseType::GetModelPart(), A, Dx, b);
 
-            ResidualIsUpdated = false;
+            residual_is_updated = false;
 
             if (is_converged == true)
             {
@@ -770,7 +778,7 @@ public:
                     TSparseSpace::SetToZero(b);
 
                     pBuilderAndSolver->BuildRHS(pScheme, BaseType::GetModelPart(), b);
-                    ResidualIsUpdated = true;
+                    residual_is_updated = true;
                     //std::cout << "mb is calculated" << std::endl;
                 }
 
@@ -787,7 +795,7 @@ public:
 
         //recalculate residual if needed
         //(note that some convergence criteria need it to be recalculated)
-        if (ResidualIsUpdated == false)
+        if (residual_is_updated == false)
         {
             // NOTE:
             // The following part will be commented because it is time consuming

@@ -92,6 +92,8 @@ public:
     
     typedef std::size_t                                             KeyType;
     
+    typedef std::size_t                                            SizeType;
+    
     typedef boost::shared_ptr<ProcessFactoryUtility>      ProcessesListType;
 
     ///@}
@@ -214,7 +216,7 @@ public:
             
             Node<3>::DofsContainerType& NodeDofs = (it_node)->GetDofs();
 
-            std::size_t dof_id;
+            SizeType dof_id;
 //             TDataType DofValue;
             
             for (typename Node<3>::DofsContainerType::const_iterator itDof = NodeDofs.begin(); itDof != NodeDofs.end(); itDof++)
@@ -335,6 +337,9 @@ public:
             mpMyProcesses->ExecuteBeforeSolutionLoop();
             // Processes of initialize the solution step
             mpMyProcesses->ExecuteInitializeSolutionStep();
+            
+            // We set the model part as modified
+            rModelPart.Set(MODIFIED, true);
         }
         
         return converged_error;
