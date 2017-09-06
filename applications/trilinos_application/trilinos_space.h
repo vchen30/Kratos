@@ -147,11 +147,6 @@ public:
 
     /// return size of vector rV
 
-    static void WhatAmI()
-    {
-        std::cout << "I am the Trilinos space" << std::endl;
-    }
-
     static IndexType Size(VectorType const& rV)
     {
         int size;

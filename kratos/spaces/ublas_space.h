@@ -171,12 +171,7 @@ public:
         return rV.size();
     }
 
-    /// return number of rows of rM    
-    
-    static void WhatAmI()
-    {
-        std::cout << "I am the UBLAS space" << std::endl;
-    }
+    /// return number of rows of rM
 
     static IndexType Size1(MatrixType const& rM)
     {
