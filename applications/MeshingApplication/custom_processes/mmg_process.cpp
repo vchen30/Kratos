@@ -657,12 +657,20 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         }
     }
     
+    // We copy the MainModelPart to the ComputationalModelPart // NOTE: Remove this if you figure out how to remesh consistently the nodes
+    NodesArrayType& node_array = mrThisModelPart.Nodes();
+    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddNodes(node_array.begin(), node_array.end());
+    ConditionsArrayType& condition_array = mrThisModelPart.Conditions();
+    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddConditions(condition_array.begin(), condition_array.end());
+    ElementsArrayType& element_array = mrThisModelPart.Elements();
+    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddElements(element_array.begin(), element_array.end());
+    
     // We add nodes, conditions and elements to the sub model parts
     for (auto & color_list : mColors)
     {
         const int key = color_list.first;
         
-        if (key != 0) // NOTE: key == 0 is the MainModelPart
+        if (key != 0 && key != 1) // NOTE: key == 0 is the MainModelPart and key == 1 is the ComputationalModelPart (this one is not necessary if you figure out how to remesh consistently the nodes)
         {
             for (auto sub_model_part_name : color_list.second)
             {      
@@ -1565,8 +1573,8 @@ void MmgProcess<3>::InitVerbosityParameter(const int& VerbosityMMG)
 template<>  
 void MmgProcess<2>::SetMeshSize(
     const SizeType NumNodes,
-    const array_1d<int, 1> NumArrayElements, 
-    const array_1d<int, 1> NumArrayConditions
+    const array_1d<SizeType, 1> NumArrayElements, 
+    const array_1d<SizeType, 1> NumArrayConditions
     )
 {
     //Give the size of the mesh: NumNodes vertices, num_elements triangles, num_conditions edges (2D) 
@@ -1582,8 +1590,8 @@ void MmgProcess<2>::SetMeshSize(
 template<>  
 void MmgProcess<3>::SetMeshSize(
     const SizeType NumNodes,
-    const array_1d<int, 2> NumArrayElements,  // NOTE: We do this tricky thing to take into account the prisms
-    const array_1d<int, 2> NumArrayConditions // NOTE: We do this tricky thing to take into account the quadrilaterals
+    const array_1d<SizeType, 2> NumArrayElements,  // NOTE: We do this tricky thing to take into account the prisms
+    const array_1d<SizeType, 2> NumArrayConditions // NOTE: We do this tricky thing to take into account the quadrilaterals
     )
 {
     //Give the size of the mesh: NumNodes Vertex, num_elements tetra and prism, NumArrayConditions triangles and quadrilaterals, 0 edges (3D) 
