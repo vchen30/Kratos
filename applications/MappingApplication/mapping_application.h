@@ -32,6 +32,10 @@
 #include "includes/kratos_application.h"
 #include "includes/variables.h"
 
+#include "custom_conditions/nearest_neighbor_mapper_condition.h"
+#include "custom_conditions/nearest_element_mapper_condition.h"
+#include "custom_conditions/mortar_mapper_condition.h"
+
 
 namespace Kratos
 {
@@ -190,8 +194,26 @@ private:
     ///@name Member Variables
     ///@{
 
-    // const Elem2D   mElem2D;
-    // const Elem3D   mElem3D;
+    const NearestNeighborMapperCondition   mNearestNeighborMapperCondition2D1N;
+    const NearestNeighborMapperCondition   mNearestNeighborMapperCondition3D1N;
+
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D2NLine; // 2D-Line
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D2NLine; // 3D-Line
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D3NTri;  // 2D-Tri
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D3NTri;  // 3D-Tri
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D4NQuad; // 2D-Quad
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D4NQuad; // 3D-Quad
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D4N;     // Tetra
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D8N;     // Hexa
+
+    const MortarMapperCondition   mMortarMapperCondition2D2NLine; // 2D-Line
+    const MortarMapperCondition   mMortarMapperCondition3D2NLine; // 3D-Line
+    const MortarMapperCondition   mMortarMapperCondition2D3NTri;  // 2D-Tri
+    const MortarMapperCondition   mMortarMapperCondition3D3NTri;  // 3D-Tri
+    const MortarMapperCondition   mMortarMapperCondition2D4NQuad; // 2D-Quad
+    const MortarMapperCondition   mMortarMapperCondition3D4NQuad; // 3D-Quad
+    const MortarMapperCondition   mMortarMapperCondition3D4N;     // Tetra
+    const MortarMapperCondition   mMortarMapperCondition3D8N;     // Hexa
 
     ///@}
     ///@name Private Operators
