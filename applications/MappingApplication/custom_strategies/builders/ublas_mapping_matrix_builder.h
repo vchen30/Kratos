@@ -86,7 +86,9 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     ///@{
 
     /// Default constructor.
-    UblasMappingMatrixBuilder() {}
+    UblasMappingMatrixBuilder() {
+        KRATOS_ERROR_IF(TSparseSpace::IsDistributed()) << "WRONG SPACE!" << std::endl;        
+    }
 
     /// Destructor.
     virtual ~UblasMappingMatrixBuilder() {}

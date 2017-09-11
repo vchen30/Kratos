@@ -85,7 +85,14 @@ class MappingMatrixBuilder
     /// Default constructor.
     MappingMatrixBuilder() {
 
-      TSparseSpace::WhatAmI();
+        if (TSparseSpace::IsDistributed())
+        {
+            std::cout << "Using the TRILINOS Space" << std::endl;
+        }
+        else
+        {
+            std::cout << "Using the UBLAS Space" << std::endl;            
+        }
     }
 
     /// Destructor.
