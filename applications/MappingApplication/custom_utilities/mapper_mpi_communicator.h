@@ -88,15 +88,13 @@ public:
     ///@name Operations
     ///@{
 
-    void InitializeOrigin(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeOrigin,
-                          GeometryData::IntegrationMethod IntegrationMethodOrigin = GeometryData::NumberOfIntegrationMethods) override
+    void InitializeOrigin(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeOrigin) override
     {
 
         mpInterfaceObjectManagerOrigin = InterfaceObjectManagerParallel::Pointer(
                                              new InterfaceObjectManagerParallel(mrModelPartOrigin, MyPID(),
                                                      TotalProcesses(),
                                                      InterfaceObjectTypeOrigin,
-                                                     IntegrationMethodOrigin,
                                                      mEchoLevel,
                                                      mApproximationTolerance) );
 
@@ -106,18 +104,15 @@ public:
         }
 
         mInterfaceObjectTypeOrigin = InterfaceObjectTypeOrigin;
-        mIntegrationMethodOrigin = IntegrationMethodOrigin;
     }
 
-    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination,
-                               GeometryData::IntegrationMethod IntegrationMethodDestination = GeometryData::NumberOfIntegrationMethods) override
+    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination) override
     {
 
         mpInterfaceObjectManagerDestination = InterfaceObjectManagerParallel::Pointer(
                 new InterfaceObjectManagerParallel(mrModelPartDestination, MyPID(),
                         TotalProcesses(),
                         InterfaceObjectTypeDestination,
-                        IntegrationMethodDestination,
                         mEchoLevel,
                         mApproximationTolerance) );
 
@@ -127,7 +122,6 @@ public:
         }
 
         mInterfaceObjectTypeDestination = InterfaceObjectTypeDestination;
-        mIntegrationMethodDestination = IntegrationMethodDestination;
     }
 
     void TransferVariableData(std::function<double(InterfaceObject*, const std::vector<double>&)> FunctionPointerOrigin,

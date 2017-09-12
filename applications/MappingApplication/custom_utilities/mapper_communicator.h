@@ -119,15 +119,13 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void InitializeOrigin(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeOrigin,
-                                  GeometryData::IntegrationMethod IntegrationMethodOrigin = GeometryData::NumberOfIntegrationMethods)
+    virtual void InitializeOrigin(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeOrigin)
     {
 
         mpInterfaceObjectManagerOrigin = InterfaceObjectManagerBase::Pointer(
                                              new InterfaceObjectManagerSerial(mrModelPartOrigin, MyPID(),
                                                      TotalProcesses(),
                                                      InterfaceObjectTypeOrigin,
-                                                     IntegrationMethodOrigin,
                                                      mEchoLevel,
                                                      mApproximationTolerance) );
 
@@ -138,18 +136,15 @@ public:
 
         // Save for updating the interface
         mInterfaceObjectTypeOrigin = InterfaceObjectTypeOrigin;
-        mIntegrationMethodOrigin = IntegrationMethodOrigin;
     }
 
-    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination,
-                                       GeometryData::IntegrationMethod IntegrationMethodDestination = GeometryData::NumberOfIntegrationMethods)
+    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination)
     {
 
         mpInterfaceObjectManagerDestination = InterfaceObjectManagerBase::Pointer(
                 new InterfaceObjectManagerSerial(mrModelPartDestination, MyPID(),
                         TotalProcesses(),
                         InterfaceObjectTypeDestination,
-                        IntegrationMethodDestination,
                         mEchoLevel,
                         mApproximationTolerance) );
 
@@ -160,7 +155,6 @@ public:
 
         // Save for updating the interface
         mInterfaceObjectTypeDestination = InterfaceObjectTypeDestination;
-        mIntegrationMethodDestination = IntegrationMethodDestination;
     }
 
     void Initialize()
@@ -173,16 +167,16 @@ public:
     {
         if (rOptions.Is(MapperFlags::REMESHED))   // recompute the managers and the search structure
         {
-            InitializeOrigin(mInterfaceObjectTypeOrigin, mIntegrationMethodOrigin);
-            InitializeDestination(mInterfaceObjectTypeDestination, mIntegrationMethodDestination);
+            InitializeOrigin(mInterfaceObjectTypeOrigin);
+            InitializeDestination(mInterfaceObjectTypeDestination);
             InitializeSearchStructure();
         }
         else     // clear the managers
         {
             // TODO does the same for now, since the InterfaceObjects do not use the refs to their
             // original entities, so their position is not updated!
-            InitializeOrigin(mInterfaceObjectTypeOrigin, mIntegrationMethodOrigin);
-            InitializeDestination(mInterfaceObjectTypeDestination, mIntegrationMethodDestination);
+            InitializeOrigin(mInterfaceObjectTypeOrigin);
+            InitializeDestination(mInterfaceObjectTypeDestination);
             InitializeSearchStructure();
             // mpInterfaceObjectManagerOrigin->Clear();
             // mpInterfaceObjectManagerDestination->Clear();
@@ -288,9 +282,7 @@ protected:
     InterfaceObjectManagerBase::Pointer mpInterfaceObjectManagerDestination;
 
     MapperUtilities::InterfaceObjectConstructionType mInterfaceObjectTypeOrigin;
-    GeometryData::IntegrationMethod mIntegrationMethodOrigin;
     MapperUtilities::InterfaceObjectConstructionType mInterfaceObjectTypeDestination;
-    GeometryData::IntegrationMethod mIntegrationMethodDestination;
 
     InterfaceSearchStructure::Pointer mpSearchStructure;
 

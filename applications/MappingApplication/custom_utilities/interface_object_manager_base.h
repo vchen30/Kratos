@@ -457,8 +457,7 @@ protected:
 
     InterfaceObjectManagerBase(ModelPart& rModelPart, int CommRank, int CommSize,
                                MapperUtilities::InterfaceObjectConstructionType InterfaceObjectType,
-                               GeometryData::IntegrationMethod IntegrationMethod, const int EchoLevel,
-                               const double ApproximationTolerance) :
+                               const int EchoLevel, const double ApproximationTolerance) :
         mrModelPart(rModelPart)
     {
 
@@ -474,7 +473,7 @@ protected:
         else if (InterfaceObjectType == MapperUtilities::Condition_Center ||
                  InterfaceObjectType == MapperUtilities::Condition_Gauss_Point)
         {
-            InitializeInterfaceGeometryObjectManager(rModelPart, IntegrationMethod, ApproximationTolerance);
+            InitializeInterfaceGeometryObjectManager(rModelPart, ApproximationTolerance);
         }
         else
         {
@@ -556,74 +555,23 @@ private:
         }
     }
 
-    void InitializeInterfaceGeometryObjectManager(ModelPart& rModelPart,
-            GeometryData::IntegrationMethod IntegrationMethod,
-            const double ApproximationTolerance)
+    void InitializeInterfaceGeometryObjectManager(ModelPart& rModelPart, const double ApproximationTolerance)
     {
-        bool construct_with_center;
-        int size_factor = 1;
-        if (IntegrationMethod == GeometryData::NumberOfIntegrationMethods)
-        {
-            construct_with_center = true;
-            size_factor = 1;
-        }
-        else
-        {
-            construct_with_center = false;
-            if (rModelPart.GetCommunicator().LocalMesh().NumberOfConditions() > 0)
-            {
-                size_factor = rModelPart.GetCommunicator().LocalMesh().ConditionsBegin()->GetGeometry().IntegrationPointsNumber(IntegrationMethod);
-            }
-            else if (rModelPart.GetCommunicator().LocalMesh().NumberOfElements() > 0)
-            {
-                size_factor = rModelPart.GetCommunicator().LocalMesh().ElementsBegin()->GetGeometry().IntegrationPointsNumber(IntegrationMethod);
-            }
-        }
+        mInterfaceObjects.reserve(rModelPart.GetCommunicator().LocalMesh().NumberOfConditions());
 
-        mInterfaceObjects.reserve(size_factor * rModelPart.GetCommunicator().LocalMesh().NumberOfConditions());
-
-        if (construct_with_center)   // construct with condition center point
+        for (auto& condition : rModelPart.GetCommunicator().LocalMesh().Conditions())
         {
-            for (auto& condition : rModelPart.GetCommunicator().LocalMesh().Conditions())
-            {
-                mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(condition.GetGeometry(),
-                                            ApproximationTolerance,
-                                            mEchoLevel, 
-                                            0) ));
-            }
-            for (auto& element : rModelPart.GetCommunicator().LocalMesh().Elements())
-            {
-                mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(element.GetGeometry(),
-                                            ApproximationTolerance,
-                                            mEchoLevel,
-                                            0) ));
-            }
+            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(condition.GetGeometry(),
+                                        ApproximationTolerance,
+                                        mEchoLevel) ));
         }
-        else     // construct with condition gauss points
+        for (auto& element : rModelPart.GetCommunicator().LocalMesh().Elements())
         {
-            KRATOS_ERROR << "This is not implemented at the moment" << std::endl;
-            for (auto& condition : rModelPart.GetCommunicator().LocalMesh().Conditions())
-            {
-                for (int g = 0; g < 111111; ++g) // TODO fix this, should be number of GPs
-                {
-                    mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(condition.GetGeometry(),
-                                                ApproximationTolerance,
-                                                mEchoLevel,
-                                                g, IntegrationMethod) ));
-                }
-            }
-            for (auto& element : rModelPart.GetCommunicator().LocalMesh().Elements())
-            {
-                for (int g = 0; g < 111111; ++g) // TODO fix this, should be number of GPs
-                {
-                    mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(element.GetGeometry(),
-                                                ApproximationTolerance,
-                                                mEchoLevel,
-                                                g, IntegrationMethod) ));
-                }
-            }
-
+            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(element.GetGeometry(),
+                                        ApproximationTolerance,
+                                        mEchoLevel) ));
         }
+        
     }
 
     ///@}

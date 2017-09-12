@@ -70,10 +70,9 @@ public:
 
     InterfaceObjectManagerParallel(ModelPart& rModelPart, int CommRank, int CommSize,
                                    MapperUtilities::InterfaceObjectConstructionType InterfaceObjectType,
-                                   GeometryData::IntegrationMethod IntegrationMethod, const int EchoLevel,
-                                   const double ApproximationTolerance) :
-        InterfaceObjectManagerBase(rModelPart, CommRank, CommSize,
-                                   InterfaceObjectType, IntegrationMethod, EchoLevel, ApproximationTolerance) {}
+                                   const int EchoLevel, const double ApproximationTolerance) :
+        InterfaceObjectManagerBase(rModelPart, CommRank, CommSize, InterfaceObjectType, 
+                                   EchoLevel, ApproximationTolerance) {}
 
     /// Destructor.
     virtual ~InterfaceObjectManagerParallel() { }

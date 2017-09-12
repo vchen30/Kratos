@@ -72,12 +72,9 @@ public:
     ///@{
 
     /// Default constructor.
-    InterfaceGeometryObject(Geometry<Node<3>>& rGeometry, const double ApproximationTolerance, const int EchoLevel, const int ConstructionIndex,
-                            GeometryData::IntegrationMethod IntegrationMethod = GeometryData::NumberOfIntegrationMethods) :
+    InterfaceGeometryObject(Geometry<Node<3>>& rGeometry, const double ApproximationTolerance, const int EchoLevel) :
         mpGeometry(&rGeometry),
-        mApproximationTolerance(ApproximationTolerance),
-        mConstructionIndex(ConstructionIndex),
-        mIntegrationMethod(IntegrationMethod)
+        mApproximationTolerance(ApproximationTolerance)
     {
         SetCoordinates();
     
@@ -338,9 +335,6 @@ private:
     GeometryData::KratosGeometryFamily mGeometryFamily;
     int mNumPoints; 
     double mApproximationTolerance = 0.0f;
-    int mConstructionIndex;
-    GeometryData::IntegrationMethod mIntegrationMethod;
-
 
     ///@}
     ///@name Private Operators
@@ -353,35 +347,7 @@ private:
 
     void SetCoordinates() override
     {
-        if (mConstructionIndex == 0)
-        {
-            this->Coordinates() = mpGeometry->Center();
-        }
-        else
-        {
-            Matrix shape_functions = mpGeometry->ShapeFunctionsValues(mIntegrationMethod); // TODO "ShapeFunctionsValues" seems to not be implemented for every geometry!!!
-
-            // const int num_gauss_points = shape_functions.size1();
-            const int num_nodes = shape_functions.size2();
-
-            array_1d<double, 3> gauss_point_global_coords;
-
-            gauss_point_global_coords[0] = 0.0f;
-            gauss_point_global_coords[1] = 0.0f;
-            gauss_point_global_coords[2] = 0.0f;
-
-            // TODO change to GlobalCoordinates()?
-            // here mConstructionIndex is the number of the GP to use for this Object
-            for (int n = 0; n < num_nodes; ++n)
-            {
-                gauss_point_global_coords[0] += shape_functions(mConstructionIndex - 1, n) * mpGeometry->GetPoint(n).X();
-                gauss_point_global_coords[1] += shape_functions(mConstructionIndex - 1, n) * mpGeometry->GetPoint(n).Y();
-                gauss_point_global_coords[2] += shape_functions(mConstructionIndex - 1, n) * mpGeometry->GetPoint(n).Z();
-            }
-            // TODO check again if this is whole computation of the GPs is correct
-
-            this->Coordinates() = gauss_point_global_coords;
-        }
+        this->Coordinates() = mpGeometry->Center();
     }
 
 
