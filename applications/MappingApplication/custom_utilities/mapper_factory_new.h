@@ -164,9 +164,12 @@ public:
     // }
 
     static Mapper* CreateMapper(ModelPart& rModelPartOrigin, 
-                                        ModelPart& rModelPartDestination,
-                                        Parameters JsonParameters)
+                                ModelPart& rModelPartDestination,
+                                Parameters JsonParameters)
     {
+        ModelPart& r_interface_model_part_origin = ReadInterfaceModelPart(rModelPartOrigin, JsonParameters, "origin");
+        ModelPart& r_interface_model_part_destination = ReadInterfaceModelPart(rModelPartDestination, JsonParameters, "destination");
+
         Mapper* mapper;
         // double start_time = MapperUtilities::GetCurrentTime();
 
@@ -185,14 +188,14 @@ public:
                              << "specified for Nearest Neighbor Mapper" << std::endl;
             }
 
-            mapper = new NearestNeighborMapper(rModelPartOrigin,
-                                       rModelPartDestination,
+            mapper = new NearestNeighborMapper(r_interface_model_part_origin,
+                                       r_interface_model_part_destination,
                                        JsonParameters);
         }
         else if (mapper_type == "NearestElement")
         {
-            mapper = new NearestElementMapper(rModelPartOrigin,
-                                       rModelPartDestination,
+            mapper = new NearestElementMapper(r_interface_model_part_origin,
+                                       r_interface_model_part_destination,
                                        JsonParameters);
 
         } 
@@ -203,63 +206,52 @@ public:
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
-                        rModelPartOrigin,
-                        rModelPartDestination,
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
                         JsonParameters);
-                KRATOS_WATCH("MapperFactory MPI NearestNeighborMapperMatrix")
             }
             else
             {
                 mapper = new NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
-                        rModelPartOrigin,
-                        rModelPartDestination,
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
                         JsonParameters);
-                KRATOS_WATCH("MapperFactory Serial NearestNeighborMapperMatrix")
             }
 
 #else
             mapper = new NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
-                    rModelPartOrigin,
-                    rModelPartDestination,
+                    r_interface_model_part_origin,
+                    r_interface_model_part_destination,
                     JsonParameters);
-            KRATOS_WATCH("MapperFactory Serial NearestNeighborMapperMatrix")
 #endif
         } 
-        /*else if (mapper_type == "NearestElementMatrixBased") {
-              mapper = Mapper::Pointer(new RBFMapper(rModelPartOrigin,
-                                                         rModelPartDestination,
-                                                         JsonParameters));
-        }*/
         else if (mapper_type == "Mortar") 
         {
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
             {
                 mapper = new MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
-                        rModelPartOrigin,
-                        rModelPartDestination,
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
                         JsonParameters);
-                KRATOS_WATCH("MapperFactory MPI Mortar Mapper")
             }
             else
             {
                 mapper = new MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
-                        rModelPartOrigin,
-                        rModelPartDestination,
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
                         JsonParameters);
-                KRATOS_WATCH("MapperFactory Serial Mortar Mapper")
                         }
 #else
             mapper = new MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
-                    rModelPartOrigin,
-                    rModelPartDestination,
+                    r_interface_model_part_origin,
+                    r_interface_model_part_destination,
                     JsonParameters);
-            KRATOS_WATCH("MapperFactory Serial Mortar Mapper")
 #endif
         } 
         /*else if (mapper_type == "IGA") {
-              mapper = Mapper::Pointer(new IGAMapper(*rModelPartOrigin,
-                                                         *rModelPartDestination,
+              mapper = Mapper::Pointer(new IGAMapper(*r_interface_model_part_origin,
+                                                         *r_interface_model_part_destination,
                                                          mJsonParameters));
 
         } */
@@ -371,30 +363,69 @@ private:
     ///@name Private Operations
     ///@{
 
-  /// Default constructor.
-  MapperFactoryNew()
-  {
-  }
+    /// Default constructor.
+    MapperFactoryNew()
+    {
+    }
 
-  ///@}
-  ///@name Private  Access
-  ///@{
+    static ModelPart& ReadInterfaceModelPart(ModelPart& rModelPart,
+                                             Parameters InterfaceParameters,
+                                             const std::string InterfaceSide)
+    {
+        int echo_level = 0;
+        // read the echo_level temporarily, bcs the mJsonParameters have not yet been validated and defaults assigned
+        if (InterfaceParameters.Has("echo_level"))
+        {
+            echo_level = std::max(echo_level, InterfaceParameters["echo_level"].GetInt());
+        }
 
-  ///@}
-  ///@name Private Inquiry
-  ///@{s
+        int comm_rank = rModelPart.GetCommunicator().MyPID();
 
-  ///@}
-  ///@name Un accessible methods
-  ///@{
+        std::string key_sub_model_part = "interface_submodel_part_";
+        key_sub_model_part.append(InterfaceSide);
 
-  /// Assignment operator.
-  MapperFactoryNew &operator=(MapperFactoryNew const &rOther);
 
-  //   /// Copy constructor.
-  //   MapperFactoryNew(MapperFactoryNew const& rOther){}
+        if (InterfaceParameters.Has(key_sub_model_part))
+        {
+            const std::string name_interface_submodel_part = InterfaceParameters[key_sub_model_part].GetString();
+            
+            if (echo_level >= 3 && comm_rank == 0)
+            {
+                std::cout << "Mapper: SubModelPart used for " << InterfaceSide << "-ModelPart" << std::endl;
+            }
 
-  ///@}
+            return rModelPart.GetSubModelPart(name_interface_submodel_part);
+        }
+        else
+        {
+            if (echo_level >= 3 && comm_rank == 0)
+            {
+                std::cout << "Mapper: Main ModelPart used for " << InterfaceSide << "-ModelPart" << std::endl;
+            }
+
+            return rModelPart;
+        }
+    }
+
+    ///@}
+    ///@name Private  Access
+    ///@{
+
+    ///@}
+    ///@name Private Inquiry
+    ///@{s
+
+    ///@}
+    ///@name Un accessible methods
+    ///@{
+
+    /// Assignment operator.
+    MapperFactoryNew &operator=(MapperFactoryNew const &rOther);
+
+    //   /// Copy constructor.
+    //   MapperFactoryNew(MapperFactoryNew const& rOther){}
+
+    ///@}
 
 }; // Class MapperFactoryNew
 

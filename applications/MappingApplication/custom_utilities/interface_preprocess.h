@@ -27,9 +27,21 @@
 
 
 // Project includes
-#include "includes/model_part.h"
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "includes/kratos_parameters.h"
+
+#include "geometries/point_2d.h"
+#include "geometries/point_3d.h"
+#include "geometries/line_2d_2.h"
+#include "geometries/line_2d_3.h"
+#include "geometries/line_3d_2.h"
+#include "geometries/line_3d_3.h"
+#include "geometries/triangle_3d_3.h"
+#include "geometries/triangle_3d_6.h"
+#include "geometries/quadrilateral_3d_4.h"
+#include "geometries/quadrilateral_3d_8.h"
+#include "geometries/quadrilateral_3d_9.h"
 
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 #include "custom_utilities/parallel_fill_communicator.h"
@@ -106,10 +118,15 @@ namespace Kratos
             CheckAndValidateParameters(InterfaceParameters);      
 
             // Create a new / overwrite the InterfaceModelpart
-            KRATOS_WATCH(mpInterfaceModelPart)
-            mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") ); // TODO why is this not working?
-            KRATOS_WATCH(*mpInterfaceModelPart)
-            
+            mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
+
+            // mDimension = mrModelPart.GetProcessInfo[DOMAIN_SIZE]
+
+            // create dummy properties // TODO is this ok? Or is there a case where I cannot do this?            
+            Properties::Pointer dummy_properties = Properties::Pointer( new Properties() );
+            mpInterfaceModelPart->AddProperties(dummy_properties);
+
+
             AddNodes();
             CreateConditions(InterfaceParameters);
 
@@ -209,6 +226,7 @@ namespace Kratos
         ///@{ 
         ModelPart& mrModelPart;
         ModelPart::Pointer mpInterfaceModelPart;
+        int mDimension;
 
         Parameters mDefaultParameters = Parameters( R"(
         {
@@ -229,14 +247,13 @@ namespace Kratos
         void CheckAndValidateParameters(Parameters InterfaceParameters)
         {
             InterfaceParameters.RecursivelyValidateAndAssignDefaults(mDefaultParameters);
-            std::string condition_name = InterfaceParameters["condition_name"].GetString();
-            
-            KRATOS_ERROR_IF(condition_name == "") << "Condition name for Interface-ModelPart not specified" << std::endl;
+
+            KRATOS_ERROR_IF(InterfaceParameters["condition_name"].GetString() == "") 
+                << "Condition name for Interface-ModelPart not specified" << std::endl;
         }
 
         void AddNodes()
         {
-            KRATOS_WATCH("Reached the node fct")
             // Store pointers to all interface nodes
             unsigned int nodes_counter = 0;
             for (ModelPart::NodesContainerType::const_iterator node_it = mrModelPart.NodesBegin(); node_it != mrModelPart.NodesEnd(); ++node_it)
@@ -248,7 +265,107 @@ namespace Kratos
 
         void CreateConditions(Parameters InterfaceParameters)
         {
+            //     // Generate Conditions from original the edges that can be considered interface
+            // for (ModelPart::ElementsContainerType::const_iterator it_elem = rOriginPart.ElementsBegin(); it_elem != rOriginPart.ElementsEnd(); it_elem++)
+            // {
+            //     for (unsigned int i_edge = 0; i_edge < (*it_elem).GetGeometry().EdgesNumber(); i_edge++)
+            //     {
+            //         unsigned int count = 0;
+            //         const unsigned int number_of_points = (*it_elem).GetGeometry().Edges()[i_edge].PointsNumber();
+            //         for (unsigned int i_node = 0; i_node < number_of_points; i_node++)
+            //         {
+            //             if ((*it_elem).GetGeometry().Edges()[i_edge][i_node].IsDefined(INTERFACE) == true)  
+            //             {
+            //                 if ((*it_elem).GetGeometry().Edges()[i_edge][i_node].Is(INTERFACE) == true)  
+            //                 {
+            //                     count++;
+            //                 }
+            //             }
+            //         }
+                    
+            //         if (count == number_of_points)
+            //         {
+            //             std::string Edgecondition_name = condition_name;
+            //             cond_id += 1; // NOTE: To paralellize be careful with this ID
+            //             if (number_of_points == 2)
+            //             {
+            //                 Edgecondition_name.append("Condition2D2N");
+            //                 Edgecondition_name.append(final_string);
+                            
+            //                 CreateNewCondition(rInterfacePart, *(it_elem.base()), (*it_elem).GetGeometry().Edges()[i_edge], cond_id, Edgecondition_name);
+            //                 cond_counter ++;
+            //             }
+            //             else
+            //             {                            
+            //                 if (simplest_geometry == false)
+            //                 {
+            //                     Edgecondition_name.append("Condition2D3N"); 
+            //                     Edgecondition_name.append(final_string); 
+                                
+            //                     CreateNewCondition(rInterfacePart, *(it_elem.base()), (*it_elem).GetGeometry().Edges()[i_edge], cond_id, Edgecondition_name);
+            //                     cond_counter ++;
+            //                 }
+            //                 else
+            //                 {
+            //                     Edgecondition_name.append("Condition2D2N"); 
+            //                     Edgecondition_name.append(final_string); 
 
+            //                     Line2D2< Node<3> > lin_1((*it_elem).GetGeometry().Edges()[i_edge](0), (*it_elem).GetGeometry().Edges()[i_edge](1));
+            //                     CreateNewCondition(rInterfacePart, *(it_elem.base()), lin_1, cond_id, Edgecondition_name);
+            //                     cond_counter ++;
+            //                     cond_id += 1;
+            //                     Line2D2< Node<3> > lin_2((*it_elem).GetGeometry().Edges()[i_edge](1), (*it_elem).GetGeometry().Edges()[i_edge](2));
+            //                     CreateNewCondition(rInterfacePart, *(it_elem.base()), lin_2, cond_id, Edgecondition_name);
+            //                     cond_counter ++;
+            //                 }
+            //             }
+            //         }
+            //     }
+
+
+
+
+            // std::string condition_name = InterfaceParameters["condition_name"].GetString();
+            // condition_name.append("MapperCondition");
+
+            std::string condition_name = "NearestNeighborMapperCondition3D1N";
+
+            std::string final_string;
+
+            unsigned int cond_counter = 0;
+
+            if (InterfaceParameters["use_nodes"].GetBool()) // For node-based mappers, e.g. Nearest Neighbor Mapper
+            {
+                Condition::NodesArrayType temp_condition_nodes;
+                final_string = "1N";
+                for (ModelPart::NodesContainerType::const_iterator it_node = mrModelPart.GetCommunicator().LocalMesh().NodesBegin(); 
+                    it_node != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); ++it_node)
+                {
+                    temp_condition_nodes.clear();
+                    temp_condition_nodes.push_back( *(it_node).base()); // TODO make more efficient, w/o reallocation of memmory all the time!
+                    CreateNewNodeCondition(temp_condition_nodes, cond_counter, condition_name);
+                    ++cond_counter;
+                }
+            }
+            else // using the "Geometry" of the Conditions or Elements that are used to construct the Interface
+            {
+
+            }
+        }
+
+        void CreateNewNodeCondition(
+            Condition::NodesArrayType& rNode, // This is always only one node!
+            const unsigned int CondId,
+            const std::string ConditionName
+            )
+        {
+            KRATOS_TRY;
+        
+            Condition const & rCondition = KratosComponents<Condition>::Get(ConditionName);
+            Condition::Pointer p_cond = Condition::Pointer(rCondition.Create(CondId, rNode, mpInterfaceModelPart->pGetProperties(0)));
+            mpInterfaceModelPart->AddCondition(p_cond);
+            
+            KRATOS_CATCH("");
         }
             
         ///@} 

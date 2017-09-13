@@ -92,9 +92,9 @@ public:
     MapperCommunicator(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,
                        Parameters JsonParameters) :
         mrModelPartOrigin(rModelPartOrigin),
-        mrModelPartDestination(rModelPartDestination),
         mJsonParameters(JsonParameters)
-    {
+        {
+        mpModelPartDestination = &rModelPartDestination;
         CheckAndValidateJson(0);
 
         mInitialSearchRadius = mJsonParameters["search_radius"].GetDouble();
@@ -121,7 +121,6 @@ public:
 
     virtual void InitializeOrigin(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeOrigin)
     {
-
         mpInterfaceObjectManagerOrigin = InterfaceObjectManagerBase::Pointer(
                                              new InterfaceObjectManagerSerial(mrModelPartOrigin, MyPID(),
                                                      TotalProcesses(),
@@ -138,11 +137,19 @@ public:
         mInterfaceObjectTypeOrigin = InterfaceObjectTypeOrigin;
     }
 
-    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination)
+    // TODO Improve how the destination ModelPart is handeled
+    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination)
     {
+        InitializeDestination(InterfaceObjectTypeDestination, mpModelPartDestination);
+    }
+
+    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination, 
+                                       ModelPart* pModelPart)
+    {
+        mpModelPartDestination = pModelPart;
 
         mpInterfaceObjectManagerDestination = InterfaceObjectManagerBase::Pointer(
-                new InterfaceObjectManagerSerial(mrModelPartDestination, MyPID(),
+                new InterfaceObjectManagerSerial(*mpModelPartDestination, MyPID(),
                         TotalProcesses(),
                         InterfaceObjectTypeDestination,
                         mEchoLevel,
@@ -165,6 +172,7 @@ public:
 
     void UpdateInterface(Kratos::Flags& rOptions, double InitialSearchRadius)
     {
+        // TODO warning this does currently not work for the matrix based mappers bcs the destination MP is outdated!
         if (rOptions.Is(MapperFlags::REMESHED))   // recompute the managers and the search structure
         {
             InitializeOrigin(mInterfaceObjectTypeOrigin);
@@ -186,7 +194,7 @@ public:
         if (InitialSearchRadius < 0.0f)
         {
             InitialSearchRadius = MapperUtilities::ComputeSearchRadius(mrModelPartOrigin,
-                                  mrModelPartDestination);
+                                  *mpModelPartDestination);
         }
         mInitialSearchRadius = InitialSearchRadius; // update the search radius
 
@@ -203,6 +211,14 @@ public:
     virtual void TransferVariableData(std::function<array_1d<double, 3>(InterfaceObject*, const std::vector<double>&)> FunctionPointerOrigin,
                                       std::function<void(InterfaceObject*, array_1d<double, 3>)> FunctionPointerDestination,
                                       const Variable< array_1d<double, 3> >& rOriginVariable)
+    {
+        ExchangeDataLocal(FunctionPointerOrigin, FunctionPointerDestination);
+    }
+
+
+
+    virtual void TransferVariableDataNEW(std::function<Vector(InterfaceObject*, const std::vector<double>&)> FunctionPointerOrigin,
+                                      std::function<void(InterfaceObject*, Vector)> FunctionPointerDestination)
     {
         ExchangeDataLocal(FunctionPointerOrigin, FunctionPointerDestination);
     }
@@ -276,7 +292,7 @@ protected:
     ///@name Protected member Variables
     ///@{
     ModelPart& mrModelPartOrigin;
-    ModelPart& mrModelPartDestination;
+    ModelPart* mpModelPartDestination;
 
     InterfaceObjectManagerBase::Pointer mpInterfaceObjectManagerOrigin;
     InterfaceObjectManagerBase::Pointer mpInterfaceObjectManagerDestination;
@@ -445,7 +461,7 @@ private:
         if (compute_search_radius)
         {
             double search_radius = MapperUtilities::ComputeSearchRadius(mrModelPartOrigin,
-                                   mrModelPartDestination,
+                                   *mpModelPartDestination,
                                    mJsonParameters["echo_level"].GetInt());
             mJsonParameters["search_radius"].SetDouble(search_radius);
 
@@ -462,16 +478,16 @@ private:
     }
 
     // CommRank is used as input bcs the MyPID function of the non-MPI MapperCommunicator is used
-    // since this function is called before the MapperMPICommunicato is initialized
+    // since this function is called before the MapperMPICommunicator is initialized
     void CheckInterfaceModelParts(const int CommRank)
     {
         const int num_nodes_origin = MapperUtilities::ComputeNumberOfNodes(mrModelPartOrigin);
         const int num_conditions_origin = MapperUtilities::ComputeNumberOfConditions(mrModelPartOrigin);
         const int num_elements_origin = MapperUtilities::ComputeNumberOfElements(mrModelPartOrigin);
 
-        const int num_nodes_destination = MapperUtilities::ComputeNumberOfNodes(mrModelPartDestination);
-        const int num_conditions_destination = MapperUtilities::ComputeNumberOfConditions(mrModelPartDestination);
-        const int num_elements_destination = MapperUtilities::ComputeNumberOfElements(mrModelPartDestination);
+        const int num_nodes_destination = MapperUtilities::ComputeNumberOfNodes(*mpModelPartDestination);
+        const int num_conditions_destination = MapperUtilities::ComputeNumberOfConditions(*mpModelPartDestination);
+        const int num_elements_destination = MapperUtilities::ComputeNumberOfElements(*mpModelPartDestination);
 
         // Check if the ModelPart contains entities
         if (num_nodes_origin + num_conditions_origin + num_elements_origin < 1)
@@ -504,7 +520,7 @@ private:
 
         if (mEchoLevel >= 2) {
             std::vector<double> model_part_origin_bbox = MapperUtilities::ComputeModelPartBoundingBox(mrModelPartOrigin);
-            std::vector<double> model_part_destination_bbox = MapperUtilities::ComputeModelPartBoundingBox(mrModelPartDestination);
+            std::vector<double> model_part_destination_bbox = MapperUtilities::ComputeModelPartBoundingBox(*mpModelPartDestination);
 
             bool bbox_overlapping = MapperUtilities::ComputeBoundingBoxIntersection(
                                                         model_part_origin_bbox,

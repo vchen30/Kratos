@@ -73,9 +73,7 @@ public:
     enum InterfaceObjectConstructionType
     {
         Node_Coords,
-        Condition_Center,
-        Condition_Gauss_Point,
-        // Point or Coordinates or sth => for Contact => create with list of points/coords,
+        Condition_Center
     };
 
     ///@}

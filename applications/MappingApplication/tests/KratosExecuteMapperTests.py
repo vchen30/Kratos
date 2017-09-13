@@ -85,9 +85,9 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
                                                 mapper_settings["interface_submodel_part_destination"].GetString())
 
         # Initialize Mapper
-        self.mapper = MapperFactory(self.model_part_origin,
-                                    self.model_part_destination,
-                                    mapper_settings)
+        self.mapper = MapperFactoryNew.CreateMapper(self.model_part_origin,
+                                                    self.model_part_destination,
+                                                    mapper_settings)
         
         if (self.set_up_test_1):
             self.PrintValuesForJson() # needed to set up the test
@@ -131,7 +131,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Adding Values
         self.mapper.Map(variable_origin,
                         variable_destination,
-                        MapperFactory.ADD_VALUES)
+                        Mapper.ADD_VALUES)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -146,7 +146,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Swaping the sign of the Values
         self.mapper.Map(variable_origin,
                         variable_destination,
-                        MapperFactory.SWAP_SIGN)
+                        Mapper.SWAP_SIGN)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -162,7 +162,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Swaping the sign of the Values
         self.mapper.Map(variable_origin,
                         variable_destination,
-                        MapperFactory.ADD_VALUES | MapperFactory.SWAP_SIGN)
+                        Mapper.ADD_VALUES | Mapper.SWAP_SIGN)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -182,7 +182,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # # to conserve the sum of quantities aka conservative mapping
         # self.mapper.Map(variable_origin,
         #                                  variable_destination,
-        #                                  MapperFactory.CONSERVATIVE)
+        #                                  Mapper.CONSERVATIVE)
 
         # if (self.GiD_output):
         #     self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -231,7 +231,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Adding Values
         self.mapper.InverseMap(variable_origin,
                                variable_destination,
-                               MapperFactory.ADD_VALUES)
+                               Mapper.ADD_VALUES)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_origin,
@@ -247,7 +247,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Swaping the sign of the Values and adding them
         self.mapper.InverseMap(variable_origin,
                                variable_destination,
-                               MapperFactory.ADD_VALUES | MapperFactory.SWAP_SIGN)
+                               Mapper.ADD_VALUES | Mapper.SWAP_SIGN)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_origin,
@@ -260,7 +260,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
                          map_value)
 
 
-        self.mapper.UpdateInterface(MapperFactory.REMESHED)
+        self.mapper.UpdateInterface(Mapper.REMESHED)
 
     def TestMapConstantVectorValues(self, output_time):
         map_value = [15.99, -2.88, 3.123]
@@ -296,7 +296,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Adding Values
         self.mapper.Map(variable_origin,
                         variable_destination,
-                        MapperFactory.ADD_VALUES)
+                        Mapper.ADD_VALUES)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -312,7 +312,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Swaping the sign of the Values
         self.mapper.Map(variable_origin,
                         variable_destination,
-                        MapperFactory.SWAP_SIGN)
+                        Mapper.SWAP_SIGN)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_destination,
@@ -358,7 +358,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # Adding Values
         self.mapper.InverseMap(variable_origin,
                                variable_destination,
-                               MapperFactory.ADD_VALUES)
+                               Mapper.ADD_VALUES)
 
         if (self.GiD_output):
             self.WriteNodalResultsCustom(self.gid_io_origin,
@@ -377,7 +377,7 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         # # to conserve the sum of quantities aka conservative mapping
         # self.mapper.InverseMap(variable_origin,
         #                                         variable_destination,
-        #                                         MapperFactory.CONSERVATIVE)
+        #                                         Mapper.CONSERVATIVE)
 
         # if (self.GiD_output):
         #     self.WriteNodalResultsCustom(self.gid_io_origin,
@@ -559,17 +559,17 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         node.SetSolutionStepValue(variable, nodal_values[nodal_coords])
 
 
-    def CheckValues(self, model_part, variable, value_mapped):
+    def CheckValues(self, model_part, variable, value_expected):
         for node in model_part.Nodes:
             if (self.parallel_execution):
                 if (node.GetSolutionStepValue(PARTITION_INDEX) == mpi.rank):
-                    self.CheckValuesExec(node, variable, value_mapped)
+                    self.CheckValuesExec(node, variable, value_expected)
             else:
-                self.CheckValuesExec(node, variable, value_mapped)
+                self.CheckValuesExec(node, variable, value_expected)
 
-    def CheckValuesExec(self, node, variable, value_mapped):
-        value_expected = node.GetSolutionStepValue(variable)
-        self.assertAlmostEqualCustom(value_mapped,value_expected)
+    def CheckValuesExec(self, node, variable, value_expected):
+        value_mapped = node.GetSolutionStepValue(variable)
+        self.assertAlmostEqualCustom(value_expected, value_mapped)
 
 
     def CheckValuesPrescribed(self, model_part, variable, nodal_values):
@@ -584,15 +584,15 @@ class KratosExecuteMapperTests(KratosUnittest.TestCase):
         value_mapped = node.GetSolutionStepValue(variable)
         nodal_coords = (node.X, node.Y, node.Z)
         value_expected = nodal_values[nodal_coords]
-        self.assertAlmostEqualCustom(value_mapped,value_expected)
+        self.assertAlmostEqualCustom(value_expected, value_mapped)
 
 
-    def assertAlmostEqualCustom(self, value_mapped, value_expected):
+    def assertAlmostEqualCustom(self, value_expected, value_mapped):
         if (isinstance(value_mapped, float) or isinstance(value_mapped, int)): # Variable is a scalar
             self.assertAlmostEqual(value_mapped,value_expected,4)
         else: # Variable is a vector
             for i in range(0,3):
-              self.assertAlmostEqual(value_mapped[i],value_expected[i],4)       
+              self.assertAlmostEqual(value_expected[i],value_mapped[i],4)       
 
 
     ##### IO related Functions #####

@@ -170,11 +170,12 @@ Condition::Pointer NearestNeighborMapperCondition::Clone(IndexType NewId, NodesA
  */
 void NearestNeighborMapperCondition::EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
-    if (rResult.size() != number_of_nodes)
-        rResult.resize(number_of_nodes, false);
+    if (rResult.size() != 2)
+        rResult.resize(2, false);
 
-    // @{ KRATOS_CONDITION_ECUATION_ID_DOFS }
+    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
+    // rResult[1] = 0;//mNeighborIDs[0]; // ID on Origin. This is written by the Communicator
+    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**
@@ -221,6 +222,9 @@ void NearestNeighborMapperCondition::CalculateLocalSystem(
  */
 void NearestNeighborMapperCondition::CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo)
 {
+    // For now I save the information in a Column vector
+    rLeftHandSideMatrix.resize(1,1); // TODO do it like this? And if so, I think this fct needs another argument
+    rLeftHandSideMatrix(0,0) = 1.0;//mNeighborWeights[0];
 }
 
 /**
@@ -369,6 +373,7 @@ void NearestNeighborMapperCondition::CalculateDampingMatrix(MatrixType &rDamping
  */
 int NearestNeighborMapperCondition::Check(const ProcessInfo &rCurrentProcessInfo)
 {
+    // TODO implement this properly, e.g. check for registered variables
 
     KRATOS_TRY
 
@@ -377,7 +382,7 @@ int NearestNeighborMapperCondition::Check(const ProcessInfo &rCurrentProcessInfo
         KRATOS_THROW_ERROR(std::logic_error, "NearestNeighborMapperCondition found with Id 0 or negative", "")
     }
 
-    if (this->GetGeometry().Area() <= 0)
+    if (this->GetGeometry().Area() <= 0) // TODO modify this
     {
         std::cout << "error on NearestNeighborMapperCondition -> " << this->Id() << std::endl;
         KRATOS_THROW_ERROR(std::logic_error, "Area cannot be less than or equal to 0", "")
@@ -406,6 +411,7 @@ std::string NearestNeighborMapperCondition::Info() const
 {
     std::stringstream buffer;
     buffer << "NearestNeighborMapperCondition #" << Id();
+    // buffer << " EQ-ID: " << GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); TODO remove this
     return buffer.str();
 }
 

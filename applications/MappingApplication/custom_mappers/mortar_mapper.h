@@ -186,7 +186,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void ExecuteMappingStep(Kratos::Flags MappingOptions) override
+    void ExecuteMappingStep(const Kratos::Flags& MappingOptions) override
     {
         if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
         {
@@ -265,6 +265,10 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void ExchangeInterfaceGeometryData() override
+    {
+    }
 
     ///@}
     ///@name Private  Access

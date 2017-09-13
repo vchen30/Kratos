@@ -77,6 +77,8 @@ class MappingMatrixBuilder
     typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
 
     typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+    
+    typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
     ///@}
     ///@name Life Cycle
@@ -116,7 +118,6 @@ class MappingMatrixBuilder
 
         // these ids are the positions in the global vectors and matrix
         int equation_id = GetStartEquationId(rModelPart);
-        std::cout << "Start Equation ID = " << equation_id << std::endl;
 
         for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
         {
@@ -137,35 +138,55 @@ class MappingMatrixBuilder
 
         if (Transposed) // pY = pAT * pX
         {
-            // TSparseSpace::TransposeMult(rA, rX, rY); // TODO uncommented for now
+            TSparseSpace::TransposeMult(rA, rX, rY); // TODO uncommented for now
         }
         else // pY = pA * pX
         { 
-            // TSparseSpace::Mult(rA, rX, rY); // TODO uncommented for now
+            TSparseSpace::Mult(rA, rX, rY); // TODO uncommented for now
         }
         
     }
 
+    // Variable is Scalar
     virtual void UpdateSystemVector(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) = 0;
+                                    TSystemVectorPointerType pB,
+                                    const Variable<double>& rVariable) = 0;
 
+    // Variable is Vector Component
+    virtual void UpdateSystemVector(ModelPart& rModelPart,
+                                    TSystemVectorPointerType pB,
+                                    const VectorComponentType& rVariable) = 0;
 
+    // Variable is Scalar
     virtual void Update(ModelPart& rModelPart,
                         TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) = 0;
+                        const Variable<double>& rVariable,
+                        const Kratos::Flags& MappingOptions,
+                        const double Factor) = 0;
+
+    // Variable is Vector Component
+    virtual void Update(ModelPart& rModelPart,
+                        TSystemVectorPointerType pB,
+                        const VectorComponentType& rVariable,
+                        const Kratos::Flags& MappingOptions,
+                        const double Factor) = 0;
 
 
     virtual void ResizeAndInitializeVectors(
         TSystemMatrixPointerType& pMdo,
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
-        const int size_origin,
-        const int size_destination) = 0;
+        const unsigned int size_origin,
+        const unsigned int size_destination) = 0;
 
 
     virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
                                     TSystemMatrixPointerType& pA) = 0;
+
+    virtual void ClearData(TSystemMatrixPointerType& pA) = 0;
+    virtual void ClearData(TSystemVectorPointerType& pB) = 0;
+    virtual void Clear(TSystemMatrixPointerType& pA) = 0;
+    virtual void Clear(TSystemVectorPointerType& pB) = 0;
 
 
 
@@ -282,6 +303,12 @@ class MappingMatrixBuilder
     // ) override
     // {
     // }
+
+    void Check()
+    {
+        // compute the row sum:
+
+    }
 
     ///@}
     ///@name Access

@@ -23,7 +23,7 @@
 
 // Project includes
 #include "includes/condition.h"
-#include "mapping_application.h"
+#include "mapping_application_variables.h"
 
 namespace Kratos
 {
@@ -319,6 +319,8 @@ class KRATOS_API(MAPPING_APPLICATION) BaseMapperCondition : public Condition
     ///@}
     ///@name Protected member Variables
     ///@{
+    std::vector<int> mNeighborIDs;
+    std::vector<double> mNeighborWeights;
 
     ///@}
     ///@name Protected Operators

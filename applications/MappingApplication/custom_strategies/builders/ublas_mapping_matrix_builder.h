@@ -80,6 +80,8 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
 
     typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+    
+    typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
     ///@}
     ///@name Life Cycle
@@ -102,41 +104,44 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     ///@{
         
     void UpdateSystemVector(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) override
+                            TSystemVectorPointerType pB,
+                            const Variable<double>& rVariable) override
     {
-        // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *pB;
-        int index = 0;
-        for (auto& node : rModelPart.Nodes())
-        {
-            // Jordi how to make this work?
-            // r_b[index] = node.FastGetSolutionStepValue(rVariable);
-            ++index;
-        }
+        TUpdateSystemVector(rModelPart, pB, rVariable);
+    }
+
+    void UpdateSystemVector(ModelPart& rModelPart,
+                            TSystemVectorPointerType pB,
+                            const VectorComponentType& rVariable) override
+    {
+        TUpdateSystemVector(rModelPart, pB, rVariable);
+    }
+
+
+    void Update(ModelPart& rModelPart,
+                TSystemVectorPointerType pB,
+                const Variable<double>& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
+    {
+        TUpdate(rModelPart, pB, rVariable, MappingOptions, Factor);
     }
 
     void Update(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
-                        const Variable<double>& rVariable) override
+                TSystemVectorPointerType pB,
+                const VectorComponentType& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
     {
-        // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *pB;
-        int index = 0;
-        for (auto& node : rModelPart.Nodes())
-        {
-            // Jordi how to make this work?
-            // node.FastGetSolutionStepValue(rVariable) = r_b[index];
-            ++index;
-        }
+        TUpdate(rModelPart, pB, rVariable, MappingOptions, Factor);        
     }
 
     void ResizeAndInitializeVectors(
         TSystemMatrixPointerType& pMdo,
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
-        const int size_origin,
-        const int size_destination) override
+        const unsigned int size_origin,
+        const unsigned int size_destination) override
     {
         
         if (!pMdo) //if the pointer is not initialized initialize it to an empty matrix
@@ -164,7 +169,7 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         if (Mdo.size1() == 0) //if the matrix is not initialized
         {
             Mdo.resize(size_destination, size_origin, false);
-            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo); // TODO Jordi is this needed?
         }
         else
         {
@@ -172,7 +177,7 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
             {
                 KRATOS_WATCH("it should not come here!!!!!!!! ... this is SLOW");
                 Mdo.resize(size_destination, size_origin, true);
-                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo); // TODO Jordi is this needed?
             }
         }
 
@@ -181,15 +186,29 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
 
         if (Qd.size() != size_destination)
             Qd.resize(size_destination, false);
-        
-        KRATOS_WATCH("Done with the resizing stuff")
 
     }
 
     void BuildMappingMatrix(ModelPart::Pointer pModelPart,
-                                    TSystemMatrixPointerType& pA) override
+                            TSystemMatrixPointerType& pA) override
     {
+        TSystemMatrixType& rA = *pA;
+        ProcessInfo& r_current_process_info = pModelPart->GetProcessInfo();
 
+        // contributions to the system
+        LocalSystemMatrixType LHS_Contribution = LocalSystemMatrixType(0, 0);
+        
+        // vector containing the localization in the system of the different terms
+        Element::EquationIdVectorType equation_id;
+
+        for (auto& r_cond : pModelPart->GetCommunicator().LocalMesh().Conditions())
+        {
+            r_cond.CalculateLeftHandSide(LHS_Contribution, r_current_process_info);
+            r_cond.EquationIdVector(equation_id, r_current_process_info);
+
+            AssembleLHS(rA, LHS_Contribution, equation_id);
+        }
+        TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false);
     }
 
     // /**
@@ -306,6 +325,29 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     // {
     // }
 
+    // TODO check if those functions do what they are supposed to do!
+    // TODO do these two methods even make much of a difference?
+    // I have to Initialize the size of the vector again anyway ...
+    virtual void ClearData(TSystemMatrixPointerType& pA) override
+    {
+        TSystemMatrixType& rA = *pA;
+        TSparseSpace::ClearData(rA);
+    }
+    virtual void ClearData(TSystemVectorPointerType& pB) override
+    {
+        TSystemVectorType& rB = *pB;
+        TSparseSpace::ClearData(rB);
+    }
+    virtual void Clear(TSystemMatrixPointerType& pA) override
+    {
+        TSparseSpace::Clear(pA);
+    }
+    virtual void Clear(TSystemVectorPointerType& pB) override
+    {
+        TSparseSpace::Clear(pB);
+    }
+
+
     ///@}
     ///@name Access
     ///@{
@@ -399,6 +441,92 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     ///@}
     ///@name Private Operations
     ///@{
+
+    template< class TVarType>
+    void TUpdateSystemVector(ModelPart& rModelPart,
+                             TSystemVectorPointerType pB,
+                             const TVarType& rVariable) 
+    {
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *pB;
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
+        {
+            // Jordi is this ok? => Done differently in some BuilderAndSolvers
+            r_b[index] = node.FastGetSolutionStepValue(rVariable);
+            ++index;
+        }
+        TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", r_b);
+    }
+
+    template< class TVarType>
+    void TUpdate(ModelPart& rModelPart,
+                 TSystemVectorPointerType pB,
+                 const TVarType& rVariable,
+                 const Kratos::Flags& MappingOptions,
+                 const double Factor) 
+    {
+        // Jordi how to do this conversion nicely?
+        TSystemVectorType& r_b = *pB;
+        TSparseSpace::WriteMatrixMarketVector("Update", r_b);        
+
+        int index = 0;
+        for (auto& node : rModelPart.Nodes())
+        {
+            if (MappingOptions.Is(MapperFlags::ADD_VALUES))
+            {
+                // Jordi is this ok? => Done differently in some BuilderAndSolvers
+                node.FastGetSolutionStepValue(rVariable) += r_b[index] * Factor;
+            }
+            else
+            {
+                // Jordi is this ok? => Done differently in some BuilderAndSolvers
+                node.FastGetSolutionStepValue(rVariable) = r_b[index] * Factor;
+            }
+            ++index;
+        }
+    }
+
+    void AssembleLHS(
+        TSystemMatrixType& A,
+        LocalSystemMatrixType& LHS_Contribution,
+        Condition::EquationIdVectorType& EquationId
+    )
+    {
+        const unsigned int local_size = LHS_Contribution.size1();
+        int equation_id_destination;
+        int equation_id_origin;
+        
+        for (unsigned int i = 0; i < local_size ; ++i)
+        {
+            for (unsigned int j = 0; j < local_size ; ++j)
+            {
+                equation_id_destination = EquationId[i];
+                equation_id_origin = EquationId[i + local_size];
+
+                // std::cout << "equation_id_destination: " << equation_id_destination << " ;; equation_id_origin: " 
+                //           << equation_id_origin << " ;; LHS_Contribution(i,j): " << LHS_Contribution(i,j) << std::endl;
+
+                A(equation_id_destination, equation_id_origin) += LHS_Contribution(i,j);
+            }
+        }
+
+
+        // unsigned int local_size = LHS_Contribution.size1();
+
+        // for (unsigned int i_local = 0; i_local < local_size; i_local++)
+        // {
+        //     unsigned int i_global = EquationId[i_local];
+
+        //     for (unsigned int j_local = 0; j_local < local_size; j_local++)
+        //     {
+        //         unsigned int j_global = EquationId[j_local];
+
+        //         A(i_global, j_global) += LHS_Contribution(i_local, j_local);
+        //     }
+        // }
+
+    }
 
     ///@}
     ///@name Private  Access

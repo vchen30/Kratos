@@ -199,19 +199,19 @@ private:
 
     const NearestElementMapperCondition   mNearestElementMapperCondition2D2NLine; // 2D-Line
     const NearestElementMapperCondition   mNearestElementMapperCondition3D2NLine; // 3D-Line
-    const NearestElementMapperCondition   mNearestElementMapperCondition2D3NTri;  // 2D-Tri
-    const NearestElementMapperCondition   mNearestElementMapperCondition3D3NTri;  // 3D-Tri
-    const NearestElementMapperCondition   mNearestElementMapperCondition2D4NQuad; // 2D-Quad
-    const NearestElementMapperCondition   mNearestElementMapperCondition3D4NQuad; // 3D-Quad
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D3NSurface;  // 2D-Tri
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D3NSurface;  // 3D-Tri
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D4NSurface; // 2D-Quad
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D4NSurface; // 3D-Quad
     const NearestElementMapperCondition   mNearestElementMapperCondition3D4N;     // Tetra
     const NearestElementMapperCondition   mNearestElementMapperCondition3D8N;     // Hexa
 
     const MortarMapperCondition   mMortarMapperCondition2D2NLine; // 2D-Line
     const MortarMapperCondition   mMortarMapperCondition3D2NLine; // 3D-Line
-    const MortarMapperCondition   mMortarMapperCondition2D3NTri;  // 2D-Tri
-    const MortarMapperCondition   mMortarMapperCondition3D3NTri;  // 3D-Tri
-    const MortarMapperCondition   mMortarMapperCondition2D4NQuad; // 2D-Quad
-    const MortarMapperCondition   mMortarMapperCondition3D4NQuad; // 3D-Quad
+    const MortarMapperCondition   mMortarMapperCondition2D3NSurface;  // 2D-Tri
+    const MortarMapperCondition   mMortarMapperCondition3D3NSurface;  // 3D-Tri
+    const MortarMapperCondition   mMortarMapperCondition2D4NSurface; // 2D-Quad
+    const MortarMapperCondition   mMortarMapperCondition3D4NSurface; // 3D-Quad
     const MortarMapperCondition   mMortarMapperCondition3D4N;     // Tetra
     const MortarMapperCondition   mMortarMapperCondition3D8N;     // Hexa
 

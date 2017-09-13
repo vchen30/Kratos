@@ -85,25 +85,21 @@ public:
                                 Parameters rJsonParameters) : MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>(
                                 i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
-        KRATOS_WATCH("NearestNeighborMapperMatrix Constructor")
-
         this->mInterfaceParameters = Parameters( R"(
         {
-            "condition_name" : "nearest_neighbor",
+            "condition_name" : "NearestNeighborMapperCondition",
             "use_nodes"      : true
         }  )" );
+        
         this->GenerateInterfaceModelPart();
 
-        KRATOS_WATCH("Before Communicator Access")
-        KRATOS_WATCH(this->mpInterfaceModelPart)
-        std::cout << this->mpInterfaceModelPart << std::endl;
-        std::cout << "Rank " << this->mpInterfaceModelPart->GetCommunicator().MyPID() << ", num_local_nodes = " 
-                  << this->mpInterfaceModelPart->GetCommunicator().LocalMesh().NumberOfNodes() << std::endl;
+        // std::cout << "Rank " << this->mpInterfaceModelPart->GetCommunicator().MyPID() << ", num_local_nodes = " 
+        //           << this->mpInterfaceModelPart->GetCommunicator().LocalMesh().NumberOfNodes() << std::endl;
 
-        KRATOS_WATCH("After Communicator Access")
+        // std::cout << (*this->mpInterfaceModelPart) << std::endl;
 
         this->mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
-        this->mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
+        this->mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords, &*(this->mpInterfaceModelPart));        
         this->mpMapperCommunicator->Initialize();
 
         this->ComputeMappingMatrix();
@@ -222,6 +218,42 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void ExchangeInterfaceGeometryData() override
+    {
+
+        // Creating the function pointers for the InterfaceObjects
+        // auto function_pointer_origin = std::bind(&GetValueOfNode,
+        //                                std::placeholders::_1,
+        //                                std::placeholders::_2);
+
+        // auto function_pointer_destination = std::bind(&SetValueOfNode,
+        //                                     std::placeholders::_1,
+        //                                     std::placeholders::_2);
+
+        this->mpMapperCommunicator->TransferVariableDataNEW(&GetValueOfNode, // TODO pass by ref or not?
+            &SetValueOfNode);
+    }
+
+    static Vector GetValueOfNode(InterfaceObject* pInterfaceObject, //TODO const
+                          const std::vector<double>& rShapeFunctionValues)
+    {
+        Node<3>* p_base_node = static_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
+        Vector equation_ids(1);
+        equation_ids[0] = p_base_node->GetValue(MAPPING_MATRIX_EQUATION_ID);
+        return equation_ids;
+    }
+
+
+    static void SetValueOfNode(InterfaceObject* pInterfaceObject,
+                               const Vector& rValue)
+    {
+        Node<3>* p_base_node = static_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
+
+        p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+    }
 
     ///@}
     ///@name Private  Access

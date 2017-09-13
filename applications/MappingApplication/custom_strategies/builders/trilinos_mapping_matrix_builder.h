@@ -81,6 +81,8 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
 
     typedef typename TDenseSpace::VectorType LocalSystemVectorType;
+    
+    typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
     ///@}
     ///@name Life Cycle
@@ -103,8 +105,8 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@{
 
     void UpdateSystemVector(ModelPart& rModelPart,
-            TSystemVectorPointerType pB,
-            const Variable<double>& rVariable) override
+                            TSystemVectorPointerType pB,
+                            const Variable<double>& rVariable) override
     {
         // inline static void AssembleRHS(
         //     VectorType& b,
@@ -133,9 +135,18 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         // TSparseSpace::AssembleRHS(rB, local_contribution, equation_ids); // TODO uncommented for now
     }
 
+    void UpdateSystemVector(ModelPart& rModelPart,
+                            TSystemVectorPointerType pB,
+                            const VectorComponentType& rVariable) override
+    {
+
+    }
+
     void Update(ModelPart& rModelPart,
-        TSystemVectorPointerType pB,
-        const Variable<double>& rVariable) override
+                TSystemVectorPointerType pB,
+                const Variable<double>& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
     {
         TSystemVectorType& rB = *pB;
         int index = 0;
@@ -148,14 +159,23 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         }
     }
 
+    void Update(ModelPart& rModelPart,
+                TSystemVectorPointerType pB,
+                const VectorComponentType& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
+    {
+
+    }
+
 
 
     void ResizeAndInitializeVectors(
         TSystemMatrixPointerType& pMdo,
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
-        const int size_origin,
-        const int size_destination) override
+        const unsigned int size_origin,
+        const unsigned int size_destination) override
     {
         
     }
@@ -166,6 +186,26 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
                                     TSystemMatrixPointerType& pA) override
     {
         
+    }
+
+    // TODO check if those functions do what they are supposed to do!
+    virtual void ClearData(TSystemMatrixPointerType& pA) override
+    {
+        TSystemMatrixType& rA = *pA;
+        TSparseSpace::ClearData(rA);
+    }
+    virtual void ClearData(TSystemVectorPointerType& pB) override
+    {
+        TSystemVectorType& rB = *pB;
+        TSparseSpace::SetToZero(rB);
+    }
+    virtual void Clear(TSystemMatrixPointerType& pA) override
+    {
+        TSparseSpace::Clear(pA);
+    }
+    virtual void Clear(TSystemVectorPointerType& pB) override
+    {
+        TSparseSpace::Clear(pB);
     }
 
     ///@}

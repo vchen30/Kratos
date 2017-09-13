@@ -50,26 +50,26 @@ namespace Kratos
 {
 
 KratosMappingApplication::KratosMappingApplication() :
-    mNearestNeighborMapperCondition2D1N( 0, Element::GeometryType::Pointer( new Point2D <Node<3> >( Element::GeometryType::PointsArrayType( 1 ) ) ) ),
-    mNearestNeighborMapperCondition3D1N( 0, Element::GeometryType::Pointer( new Point3D <Node<3> >( Element::GeometryType::PointsArrayType( 1 ) ) ) ),
+    mNearestNeighborMapperCondition2D1N( 0, Condition::GeometryType::Pointer( new Point2D <Node<3> >( Condition::GeometryType::PointsArrayType( 1 ) ) ) ),
+    mNearestNeighborMapperCondition3D1N( 0, Condition::GeometryType::Pointer( new Point3D <Node<3> >( Condition::GeometryType::PointsArrayType( 1 ) ) ) ),
     
-    mNearestElementMapperCondition2D2NLine( 0, Element::GeometryType::Pointer(new Line2D2 <Node<3> >(Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mNearestElementMapperCondition3D2NLine( 0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mNearestElementMapperCondition2D3NTri( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
-    mNearestElementMapperCondition3D3NTri( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
-    mNearestElementMapperCondition2D4NQuad( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mNearestElementMapperCondition3D4NQuad( 0, Element::GeometryType::Pointer( new Quadrilateral3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mNearestElementMapperCondition3D4N( 0, Element::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mNearestElementMapperCondition3D8N( 0, Element::GeometryType::Pointer( new Hexahedra3D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
+    mNearestElementMapperCondition2D2NLine( 0, Condition::GeometryType::Pointer(new Line2D2 <Node<3> >(Condition::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mNearestElementMapperCondition3D2NLine( 0, Condition::GeometryType::Pointer(new Line3D2 <Node<3> >(Condition::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mNearestElementMapperCondition2D3NSurface( 0, Condition::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Condition::GeometryType::PointsArrayType( 3 ) ) ) ),
+    mNearestElementMapperCondition3D3NSurface( 0, Condition::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Condition::GeometryType::PointsArrayType( 3 ) ) ) ),
+    mNearestElementMapperCondition2D4NSurface( 0, Condition::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mNearestElementMapperCondition3D4NSurface( 0, Condition::GeometryType::Pointer( new Quadrilateral3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mNearestElementMapperCondition3D4N( 0, Condition::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mNearestElementMapperCondition3D8N( 0, Condition::GeometryType::Pointer( new Hexahedra3D8 <Node<3> >( Condition::GeometryType::PointsArrayType( 8 ) ) ) ),
 
-    mMortarMapperCondition2D2NLine( 0, Element::GeometryType::Pointer(new Line2D2 <Node<3> >(Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mMortarMapperCondition3D2NLine( 0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mMortarMapperCondition2D3NTri( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
-    mMortarMapperCondition3D3NTri( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
-    mMortarMapperCondition2D4NQuad( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mMortarMapperCondition3D4NQuad( 0, Element::GeometryType::Pointer( new Quadrilateral3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mMortarMapperCondition3D4N( 0, Element::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
-    mMortarMapperCondition3D8N( 0, Element::GeometryType::Pointer( new Hexahedra3D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) )
+    mMortarMapperCondition2D2NLine( 0, Condition::GeometryType::Pointer(new Line2D2 <Node<3> >(Condition::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mMortarMapperCondition3D2NLine( 0, Condition::GeometryType::Pointer(new Line3D2 <Node<3> >(Condition::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mMortarMapperCondition2D3NSurface( 0, Condition::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Condition::GeometryType::PointsArrayType( 3 ) ) ) ),
+    mMortarMapperCondition3D3NSurface( 0, Condition::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Condition::GeometryType::PointsArrayType( 3 ) ) ) ),
+    mMortarMapperCondition2D4NSurface( 0, Condition::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mMortarMapperCondition3D4NSurface( 0, Condition::GeometryType::Pointer( new Quadrilateral3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mMortarMapperCondition3D4N( 0, Condition::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
+    mMortarMapperCondition3D8N( 0, Condition::GeometryType::Pointer( new Hexahedra3D8 <Node<3> >( Condition::GeometryType::PointsArrayType( 8 ) ) ) )
 { }
 
 void KratosMappingApplication::Register()
@@ -99,7 +99,13 @@ void KratosMappingApplication::Register()
 
     // Needed to exchange Information abt the found neighbors (i.e. only for debugging)
     KRATOS_REGISTER_VARIABLE( MAPPING_MATRIX_EQUATION_ID )
+    KRATOS_REGISTER_VARIABLE( MAPPING_MATRIX_EQUATION_ID_ORIGIN )
+    KRATOS_REGISTER_VARIABLE( MAPPING_MATRIX_EQUATION_ID_VECTOR )
     KRATOS_REGISTER_VARIABLE( NEIGHBOR_RANK )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( NEIGHBOR_COORDINATES )
+
+    // Registering the mapper Conditions
+    KRATOS_REGISTER_CONDITION( "NearestNeighborMapperCondition2D1N", mNearestNeighborMapperCondition2D1N )
+    KRATOS_REGISTER_CONDITION( "NearestNeighborMapperCondition3D1N", mNearestNeighborMapperCondition3D1N )
 }
 }  // namespace Kratos.

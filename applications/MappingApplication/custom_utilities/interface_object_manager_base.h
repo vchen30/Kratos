@@ -470,11 +470,14 @@ protected:
         {
             InitializeInterfaceNodeManager(rModelPart);
         }
-        else if (InterfaceObjectType == MapperUtilities::Condition_Center ||
-                 InterfaceObjectType == MapperUtilities::Condition_Gauss_Point)
+        else if (InterfaceObjectType == MapperUtilities::Condition_Center)
         {
             InitializeInterfaceGeometryObjectManager(rModelPart, ApproximationTolerance);
         }
+        // else if (InterfaceObjectType == MapperUtilities::Condition_Corners)
+        // {
+        //     InitializeInterfaceGeometryObjectCornersManager(rModelPart);
+        // }
         else
         {
             KRATOS_ERROR << "Type of interface object construction not implemented" << std::endl;
@@ -557,22 +560,83 @@ private:
 
     void InitializeInterfaceGeometryObjectManager(ModelPart& rModelPart, const double ApproximationTolerance)
     {
-        mInterfaceObjects.reserve(rModelPart.GetCommunicator().LocalMesh().NumberOfConditions());
+        mInterfaceObjects.clear();
 
-        for (auto& condition : rModelPart.GetCommunicator().LocalMesh().Conditions())
-        {
-            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(condition.GetGeometry(),
-                                        ApproximationTolerance,
-                                        mEchoLevel) ));
-        }
-        for (auto& element : rModelPart.GetCommunicator().LocalMesh().Elements())
-        {
-            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(element.GetGeometry(),
-                                        ApproximationTolerance,
-                                        mEchoLevel) ));
-        }
-        
+        const unsigned int num_elements_local = rModelPart.GetCommunicator().LocalMesh().NumberOfElements();
+        const unsigned int num_conditions_local = rModelPart.GetCommunicator().LocalMesh().NumberOfConditions();
+
+        // check for valid input
+        KRATOS_ERROR_IF(num_elements_local > 0 && num_conditions_local > 0) << "Input has both Elements and Conditions, "
+                                                                            << "which is not permited!"
+                                                                            << std::endl;
+
+        if (num_elements_local > 0) 
+        {  
+            mInterfaceObjects.reserve(num_elements_local); // This is the exact size
+
+            CreateInterfaceGeometryObjectsFromGeometryCenter(rModelPart.GetCommunicator().LocalMesh().Elements(),
+                                                             ApproximationTolerance);
+        } 
+        else if (num_conditions_local > 0) 
+        { 
+            mInterfaceObjects.reserve(num_conditions_local); // This is the exact size
+
+            CreateInterfaceGeometryObjectsFromGeometryCenter(rModelPart.GetCommunicator().LocalMesh().Conditions(), 
+                                                             ApproximationTolerance);
+        } 
     }
+
+    template <typename T>
+    void CreateInterfaceGeometryObjectsFromGeometryCenter(const T& rEntityContainer, const double ApproximationTolerance)
+    {
+        for (auto& r_entity : rEntityContainer)
+        {
+            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(r_entity.GetGeometry(),
+                                                                                              ApproximationTolerance,
+                                                                                              mEchoLevel) ));
+        }
+    }
+
+    // void InitializeInterfaceGeometryObjectCornersManager(ModelPart& rModelPart)
+    // {
+    //     mInterfaceObjects.clear();
+
+    //     const unsigned int num_elements_local = rModelPart.GetCommunicator().LocalMesh().NumberOfElements();
+    //     const unsigned int num_conditions_local = rModelPart.GetCommunicator().LocalMesh().NumberOfConditions();
+
+    //     // check for valid input
+    //     KRATOS_ERROR_IF(num_elements_local > 0 && num_conditions_local > 0) << "Input has both Elements and Conditions, "
+    //                                                                         << "which is not permited!"
+    //                                                                         << std::endl;
+
+    //     if (num_elements_local > 0) 
+    //     { 
+    //         const unsigned int size_factor = rModelPart.GetCommunicator().LocalMesh().ElementsBegin()->GetGeometry().PointsNumber(); 
+    //         mInterfaceObjects.reserve(size_factor * num_elements_local); // use an approximation for memory allocation
+
+    //         CreateInterfaceNodesFromGeometryCorners(rModelPart.GetCommunicator().LocalMesh().Elements());
+    //     } 
+    //     else if (num_conditions_local > 0) 
+    //     { 
+    //         const unsigned int size_factor = rModelPart.GetCommunicator().LocalMesh().ConditionsBegin()->GetGeometry().PointsNumber(); 
+    //         mInterfaceObjects.reserve(size_factor * num_conditions_local); // use an approximation for memory allocation
+
+    //         CreateInterfaceNodesFromGeometryCorners(rModelPart.GetCommunicator().LocalMesh().Conditions());
+    //     } 
+    // }
+
+    // template <typename T>
+    // void CreateInterfaceNodesFromGeometryCorners(const T& rEntityContainer)
+    // {
+    //     for (auto& r_entity : rEntityContainer)
+    //     {
+    //         for (unsigned int i = 0; i < r_entity.GetGeometry().PointsNumber(); ++i)
+    //         {
+    //             mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceNode(r_entity.GetGeometry().GetPoint(i), mEchoLevel) ));
+    //         }
+    //     }
+    // }
+
 
     ///@}
     ///@name Private  Access
