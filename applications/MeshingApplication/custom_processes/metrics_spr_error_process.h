@@ -58,7 +58,7 @@ namespace Kratos
 //template<unsigned int TDim, class TVarType>  
 template<unsigned int TDim> 
 class ComputeSPRErrorSolMetricProcess
-    : public Process
+    //: public Process
 {
 public:
 
@@ -111,7 +111,7 @@ public:
         {
             "minimal_size"                        : 0.1,
             "maximal_size"                        : 10.0, 
-            "error"                               : 0.05
+            "error"                               : 0.1
         })" );
         ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
          
@@ -158,9 +158,9 @@ public:
      * We initialize the metrics of the MMG sol using the Hessian metric matrix approach
      */
     
-    virtual void Execute()
+    virtual double Execute()
     {
-        CalculateSuperconvergentPatchRecovery();
+        return CalculateSuperconvergentPatchRecovery();
 
     }
     
@@ -252,7 +252,7 @@ private:
     Interpolation mInterpolation;            // The interpolation type
     
 
-    void CalculateSuperconvergentPatchRecovery()
+    double CalculateSuperconvergentPatchRecovery()
     {
         /************************************************************************
         --1-- calculate superconvergent stresses (at the nodes) --1--
@@ -299,8 +299,8 @@ private:
         --2-- calculate error estimation and new element size (for each element) --2--
         ******************************************************************************/
         //loop over all elements: 
-        double error_overall_squared=0;
-        double energy_norm_overall_squared=0;
+        double error_overall=0;
+        double energy_norm_overall=0;
 
         //compute the error estimate per element
         for(ModelPart::ElementsContainerType::iterator i_elements = mThisModelPart.Elements().begin() ; i_elements != mThisModelPart.Elements().end(); i_elements++) 
@@ -310,7 +310,7 @@ private:
             double error_energy_norm=0;
             for(unsigned int i=0;i<error_integration_point.size();i++)
                 error_energy_norm += error_integration_point[i];
-            error_overall_squared += error_energy_norm;
+            error_overall += error_energy_norm;
             error_energy_norm= sqrt(error_energy_norm);
             i_elements->SetValue(ELEMENT_ERROR,error_energy_norm);
             std::cout<<"element_error:"<<error_energy_norm<<std::endl;
@@ -321,23 +321,26 @@ private:
             double energy_norm=0;
             for(unsigned int i=0;i<strain_energy.size();i++)
                 energy_norm += 2*strain_energy[i];
-            energy_norm_overall_squared += energy_norm;
+            energy_norm_overall += energy_norm;
             energy_norm= sqrt(energy_norm);
             std::cout<<"energy norm:"<<energy_norm<<std::endl;
         }
-        std::cout<<"overall error norm (squared):"<<error_overall_squared<<std::endl;
-        std::cout<<"overall energy norm (squarde):"<<energy_norm_overall_squared<<std::endl;
+        error_overall = sqrt(error_overall);
+        energy_norm_overall = sqrt(energy_norm_overall);
+        std::cout<<"overall error norm :"<<error_overall<<std::endl;
+        std::cout<<"overall energy norm :"<<energy_norm_overall<<std::endl;
         
         //compute new element size
         for(ModelPart::ElementsContainerType::iterator i_elements = mThisModelPart.Elements().begin() ; i_elements != mThisModelPart.Elements().end(); i_elements++) 
         {
             //compute the current element size h
-            i_elements->CalculateElementSize();
+            //i_elements->CalculateElementSize();
+            ComputeElementSize(i_elements);
 
             //compute new element size
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall_squared+error_overall_squared)/mThisModelPart.Elements().size())*0.05;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
             std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
             i_elements->SetValue(ELEMENT_H,new_element_size);
             std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
@@ -367,6 +370,7 @@ private:
 
             std::cout<<"metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
         }
+        return error_overall;
     }
     //calculates the recovered stress at a node 
     // i_node: the node for which the recovered stress should be calculated
@@ -420,6 +424,15 @@ private:
         }
     }
 
+    // set the element size. The element size is defined as the diameter of the smallest ball containing the element
+    void ComputeElementSize(ModelPart::ElementsContainerType::iterator pElement){
+
+        // triangular elements
+        if (pElement->GetGeometry().size()==3){
+        pElement->SetValue(ELEMENT_H,2*pElement->GetGeometry().Circumradius());
+        }
+        
+    }
     /// Assignment operator.
     ComputeSPRErrorSolMetricProcess& operator=(ComputeSPRErrorSolMetricProcess const& rOther);
 

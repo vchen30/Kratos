@@ -40,7 +40,7 @@ KRATOS_CREATE_VARIABLE(double, AVERAGE_NODAL_ERROR); // The average nodal error
 KRATOS_CREATE_VARIABLE(double, ANISOTROPIC_RATIO);   // The anisotropic aspect ratio
 KRATOS_CREATE_VARIABLE(Vector3, AUXILIAR_GRADIENT);  // An auxiliar gradient needed to compute the metric
 KRATOS_CREATE_VARIABLE(Vector,  AUXILIAR_HESSIAN);   // An auxiliar hessian needed to compute the metric
-KRATOS_CREATE_VARIABLE(Vector,  MMG_METRIC);         // The condensed metric used to remesh with MMG utility
+//KRATOS_CREATE_VARIABLE(Vector,  MMG_METRIC);         // The condensed metric used to remesh with MMG utility
 KRATOS_CREATE_VARIABLE(double, ERROR_ESTIMATE);      // The nodal error estimate calculated by superconvergent patch recovery
 
 KratosMeshingApplication::KratosMeshingApplication():
@@ -60,7 +60,7 @@ void KratosMeshingApplication::Register()
     KRATOS_REGISTER_VARIABLE(ANISOTROPIC_RATIO);    // The anisotropic aspect ratio
     KRATOS_REGISTER_VARIABLE(AUXILIAR_GRADIENT);    // An auxiliar gradient needed to compute the metric
     KRATOS_REGISTER_VARIABLE(AUXILIAR_HESSIAN);     // An auxiliar hessian needed to compute the metric
-    KRATOS_REGISTER_VARIABLE(MMG_METRIC);           // The condensed metric used to remesh with MMG utility
+    //KRATOS_REGISTER_VARIABLE(MMG_METRIC);           // The condensed metric used to remesh with MMG utility
     KRATOS_REGISTER_VARIABLE(ERROR_ESTIMATE);       // The nodal error estimate calculated by superconvergent patch recovery
     KRATOS_REGISTER_ELEMENT("TestElement2D", mTestElement2D);
     KRATOS_REGISTER_ELEMENT("TestElement3D", mTestElement3D);

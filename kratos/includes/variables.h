@@ -183,6 +183,7 @@ namespace Kratos
     KRATOS_DEFINE_VARIABLE(Vector, RECOVERED_STRESS)
     KRATOS_DEFINE_VARIABLE(double, ELEMENT_H)
     KRATOS_DEFINE_VARIABLE(double, ELEMENT_ERROR)
+    KRATOS_DEFINE_VARIABLE(Vector, MMG_METRIC)
     
     
     //for PFEM fluids application:

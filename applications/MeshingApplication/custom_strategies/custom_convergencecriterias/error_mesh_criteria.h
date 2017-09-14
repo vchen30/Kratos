@@ -287,23 +287,21 @@ public:
                 std::cout << "The error due to the mesh size: " << mesh_error << " is bigger than the tolerance prescribed: " << mErrorTolerance << ". Remeshing required" << std::endl;
                 std::cout << "AVERAGE_NODAL_ERROR: " << rModelPart.GetProcessInfo()[AVERAGE_NODAL_ERROR] << std::endl;
             }
-            
+            double estimated_error = 0;
             // Computing metric
             if (mDimension == 2)
             {
                 MetricFastInit<2> MetricInit = MetricFastInit<2>(mThisModelPart);
-                MetricInit.Execute();
-//                 ComputeErrorSolMetricProcess<2> ComputeMetric = ComputeErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]); // DEPRECATED
-                 ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-                 ComputeMetric.Execute();
+                MetricInit.Execute();           
+                ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+                estimated_error = ComputeMetric.Execute();
             }
             else
             {
                 MetricFastInit<3> MetricInit = MetricFastInit<3>(mThisModelPart);
                 MetricInit.Execute();
-//                 ComputeErrorSolMetricProcess<3> ComputeMetric = ComputeErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]); // DEPRECATED
-                 ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-                 ComputeMetric.Execute();
+                ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+                estimated_error = ComputeMetric.Execute();
             }
             
             // Remeshing

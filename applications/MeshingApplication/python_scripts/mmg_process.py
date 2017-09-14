@@ -100,11 +100,11 @@ class MmgProcess(KratosMultiphysics.Process):
             mesh_dependent_constant = self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble()
             if (mesh_dependent_constant == 0.0):
                 self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].SetDouble(0.5 * (self.dim/(self.dim + 1))**2.0)
-        elif (self.strategy == "Error"):
-            self.metric_variable = self.__generate_variable_list_from_input(self.params["hessian_strategy_parameters"]["metric_variable"])
-            mesh_dependent_constant = self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble()
-            if (mesh_dependent_constant == 0.0):
-                self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].SetDouble(0.5 * (self.dim/(self.dim + 1))**2.0)
+        #elif (self.strategy == "Error"):
+        #    self.metric_variable = self.__generate_variable_list_from_input(self.params["hessian_strategy_parameters"]["metric_variable"])
+        #    mesh_dependent_constant = self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble()
+        #    if (mesh_dependent_constant == 0.0):
+        #        self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].SetDouble(0.5 * (self.dim/(self.dim + 1))**2.0)
 
         # Calculate NODAL_H
         self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.Model[self.model_part_name])
@@ -297,19 +297,19 @@ class MmgProcess(KratosMultiphysics.Process):
             #                self.Model[self.model_part_name],
             #                current_metric_variable,
             #                hessian_parameters))  
-            spr_parameters = KratosMultiphysics.Parameters("""{}""")
-            spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
-            spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
-            spr_parameters.AddValue("error",self.params["error_parameters"]["interpolation_error"])
+            #spr_parameters = KratosMultiphysics.Parameters("""{}""")
+            #spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
+            #spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
+            #spr_parameters.AddValue("error",self.params["error_parameters"]["interpolation_error"])
             
-            if (self.dim == 2):
-                self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-                    self.Model[self.model_part_name],
-                    spr_parameters))
-            else:
-                self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-                    self.Model[self.model_part_name],
-                    spr_parameters))                          
+            #if (self.dim == 2):
+            #    self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
+            #        self.Model[self.model_part_name],
+            #        spr_parameters))
+            #else:
+            #    self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
+            #        self.Model[self.model_part_name],
+            #        spr_parameters))                          
 
     def _CreateGradientProcess(self):
         # We compute the scalar value gradient

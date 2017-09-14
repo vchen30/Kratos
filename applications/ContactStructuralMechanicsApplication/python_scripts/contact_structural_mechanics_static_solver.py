@@ -40,7 +40,9 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "ensure_contact": false,
                 "adaptative_strategy": false,
                 "split_factor": 10.0,
-                "max_number_splits": 3
+                "max_number_splits": 3,
+                "adaptive_remeshing": false,
+                "remeshing_max_iterations" : 3
             }
         }
         """)
@@ -282,6 +284,8 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"])
         newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"])
         newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])
+        newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"])
+        newton_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_max_iterations"])
         return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategy(computing_model_part, 
                                                                                                mechanical_scheme, 
                                                                                                linear_solver, 
