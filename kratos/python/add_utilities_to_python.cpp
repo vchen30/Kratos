@@ -49,6 +49,7 @@
 
 #include "utilities/python_function_callback_utility.h"
 #include "utilities/interval_utility.h"
+#include "utilities/table_stream_utility.h"
 #include "utilities/exact_mortar_segmentation_utility.h"
 #include "utilities/process_factory_utility.h" 
 
@@ -330,6 +331,11 @@ void AddUtilitiesToPython()
     .def("GetIntervalBegin", &IntervalUtility::GetIntervalBegin)
     .def("GetIntervalEnd", &IntervalUtility::GetIntervalEnd)
     .def("IsInInterval", &IntervalUtility ::IsInInterval)
+    ;
+    
+    // Adding table from table stream to python
+    class_<TableStreamUtility>("TableStreamUtility", init<>())
+    .def(init< bool >())
     ;
     
     // Exact integration (for testing)
