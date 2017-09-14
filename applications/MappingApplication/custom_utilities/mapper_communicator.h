@@ -137,17 +137,8 @@ public:
         mInterfaceObjectTypeOrigin = InterfaceObjectTypeOrigin;
     }
 
-    // TODO Improve how the destination ModelPart is handeled
-    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination)
+    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination)
     {
-        InitializeDestination(InterfaceObjectTypeDestination, mpModelPartDestination);
-    }
-
-    virtual void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination, 
-                                       ModelPart* pModelPart)
-    {
-        mpModelPartDestination = pModelPart;
-
         mpInterfaceObjectManagerDestination = InterfaceObjectManagerBase::Pointer(
                 new InterfaceObjectManagerSerial(*mpModelPartDestination, MyPID(),
                         TotalProcesses(),
@@ -242,6 +233,11 @@ public:
             std::cout  << "MAPPER TIMER: \"" << rMapperName << "\", \"" << rFunctionName
                        << "\" took " <<  rElapsedTime << " seconds" << std::endl;
         }
+    }
+
+    void pSetModelpartDestination(ModelPart* pModelPart)
+    {
+        mpModelPartDestination = pModelPart;
     }
 
     ///@}

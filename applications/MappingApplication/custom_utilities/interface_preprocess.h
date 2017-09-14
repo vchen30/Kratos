@@ -34,14 +34,11 @@
 #include "geometries/point_2d.h"
 #include "geometries/point_3d.h"
 #include "geometries/line_2d_2.h"
-#include "geometries/line_2d_3.h"
 #include "geometries/line_3d_2.h"
-#include "geometries/line_3d_3.h"
+#include "geometries/triangle_2d_3.h"
 #include "geometries/triangle_3d_3.h"
-#include "geometries/triangle_3d_6.h"
 #include "geometries/quadrilateral_3d_4.h"
-#include "geometries/quadrilateral_3d_8.h"
-#include "geometries/quadrilateral_3d_9.h"
+#include "geometries/quadrilateral_2d_4.h"
 
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 #include "custom_utilities/parallel_fill_communicator.h"
@@ -230,9 +227,10 @@ namespace Kratos
 
         Parameters mDefaultParameters = Parameters( R"(
         {
-            "condition_name" : "",
-            "use_nodes"      : false
+            "mapper_condition_name" : "",
+            "use_nodes"      : true
         }  )" );
+        // Use "use_nodes" if the geometry on the destination is not needed
             
             
         ///@} 
@@ -248,7 +246,7 @@ namespace Kratos
         {
             InterfaceParameters.RecursivelyValidateAndAssignDefaults(mDefaultParameters);
 
-            KRATOS_ERROR_IF(InterfaceParameters["condition_name"].GetString() == "") 
+            KRATOS_ERROR_IF(InterfaceParameters["mapper_condition_name"].GetString() == "") 
                 << "Condition name for Interface-ModelPart not specified" << std::endl;
         }
 
@@ -325,19 +323,15 @@ namespace Kratos
 
 
 
-            // std::string condition_name = InterfaceParameters["condition_name"].GetString();
-            // condition_name.append("MapperCondition");
-
-            std::string condition_name = "NearestNeighborMapperCondition3D1N";
-
-            std::string final_string;
+            std::string condition_name = InterfaceParameters["mapper_condition_name"].GetString();
+            condition_name.append("3D"); // TODO how to select 2D or 3D? Jordi
 
             unsigned int cond_counter = 0;
 
             if (InterfaceParameters["use_nodes"].GetBool()) // For node-based mappers, e.g. Nearest Neighbor Mapper
             {
                 Condition::NodesArrayType temp_condition_nodes;
-                final_string = "1N";
+                condition_name.append("1N");
                 for (ModelPart::NodesContainerType::const_iterator it_node = mrModelPart.GetCommunicator().LocalMesh().NodesBegin(); 
                     it_node != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); ++it_node)
                 {

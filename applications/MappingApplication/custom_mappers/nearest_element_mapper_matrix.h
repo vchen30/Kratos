@@ -13,8 +13,8 @@
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
 
-#if !defined(KRATOS_NEAREST_NEIGHBOR_MAPPER_MATRIX_H_INCLUDED )
-#define  KRATOS_NEAREST_NEIGHBOR_MAPPER_MATRIX_H_INCLUDED
+#if !defined(KRATOS_NEAREST_ELEMENT_MAPPER_MATRIX_H_INCLUDED )
+#define  KRATOS_NEAREST_ELEMENT_MAPPER_MATRIX_H_INCLUDED
 
 // System includes
 
@@ -49,7 +49,7 @@ namespace Kratos
 template <class TMappingMatrixBuilder,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
 >
-class NearestNeighborMapperMatrix : public MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>
+class NearestElementMapperMatrix : public MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>
 {
 public:
 
@@ -58,8 +58,8 @@ public:
 
     ///@}
     ///@name Pointer Definitions
-    /// Pointer definition of NearestNeighborMapperMatrix
-    KRATOS_CLASS_POINTER_DEFINITION(NearestNeighborMapperMatrix);
+    /// Pointer definition of NearestElementMapperMatrix
+    KRATOS_CLASS_POINTER_DEFINITION(NearestElementMapperMatrix);
     
     typedef TMappingMatrixBuilder TMappingMatrixBuilderType;
 
@@ -81,15 +81,15 @@ public:
     ///@name Life Cycle
     ///@{
 
-    NearestNeighborMapperMatrix(ModelPart& i_model_part_origin, ModelPart& i_model_part_destination,
+    NearestElementMapperMatrix(ModelPart& i_model_part_origin, ModelPart& i_model_part_destination,
                                 Parameters rJsonParameters) : MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>(
                                 i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
         this->mInterfaceParameters = Parameters( R"(
         {
-            "mapper_condition_name" : "NearestNeighborMapperCondition",
+            "mapper_condition_name" : "NearestElementMapperCondition",
             "use_nodes"      : true
-        }  )" );
+        }  )" ); // Nodes are used bcs the geometry of the destination is not necessary for this mapper
         
         this->GenerateInterfaceModelPart();
 
@@ -101,7 +101,7 @@ public:
     }
 
     /// Destructor.
-    virtual ~NearestNeighborMapperMatrix() { }
+    virtual ~NearestElementMapperMatrix() { }
 
     ///@}
     ///@name Operators
@@ -120,7 +120,7 @@ public:
         // It is constructed with the order of the model_parts changed!
         if (!this->mpInverseMapper)
         {
-            this->mpInverseMapper = Mapper::Pointer( new NearestNeighborMapperMatrix(this->mrModelPartDestination,
+            this->mpInverseMapper = Mapper::Pointer( new NearestElementMapperMatrix(this->mrModelPartDestination,
                                                                                      this->mrModelPartOrigin,
                                                                                      this->mJsonParameters) );
         }
@@ -136,7 +136,7 @@ public:
         // It is constructed with the order of the model_parts changed!
         if (!this->mpInverseMapper)
         {
-            this->mpInverseMapper = Mapper::Pointer( new NearestNeighborMapperMatrix(this->mrModelPartDestination,
+            this->mpInverseMapper = Mapper::Pointer( new NearestElementMapperMatrix(this->mrModelPartDestination,
                                                                                      this->mrModelPartOrigin,
                                                                                      this->mJsonParameters) );
         }
@@ -158,13 +158,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const override
     {
-        return "NearestNeighborMapperMatrix";
+        return "NearestElementMapperMatrix";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "NearestNeighborMapperMatrix";
+        rOStream << "NearestElementMapperMatrix";
     }
 
     /// Print object's data.
@@ -275,14 +275,14 @@ private:
     ///@{
 
     /// Assignment operator.
-    // NearestNeighborMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& operator=(NearestNeighborMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver> const& rOther);
+    // NearestElementMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& operator=(NearestElementMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver> const& rOther);
 
     /// Copy constructor.
-    //NearestNeighborMapperMatrix(NearestNeighborMapperMatrix const& rOther);
+    //NearestElementMapperMatrix(NearestElementMapperMatrix const& rOther);
 
     ///@}
 
-}; // Class NearestNeighborMapperMatrix
+}; // Class NearestElementMapperMatrix
 
 ///@name Type Definitions
 ///@{
@@ -297,7 +297,7 @@ private:
 
 
 // inline std::istream & operator >>(std::istream& rIStream,
-//                                   NearestNeighborMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& rThis)
+//                                   NearestElementMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& rThis)
 // {
 //     return rIStream;
 // }
@@ -305,7 +305,7 @@ private:
 /// output stream function
 
 // inline std::ostream & operator <<(std::ostream& rOStream,
-//                                   const NearestNeighborMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& rThis)
+//                                   const NearestElementMapperMatrix<TSparseSpace, TDenseSpace, TLinearSolver>& rThis)
 // {
 //     rThis.PrintInfo(rOStream);
 //     rOStream << std::endl;
@@ -318,4 +318,4 @@ private:
 ///@} addtogroup block
 }  // namespace Kratos.
 
-#endif // KRATOS_NEAREST_NEIGHBOR_MAPPER_MATRIX_H_INCLUDED  defined
+#endif // KRATOS_NEAREST_ELEMENT_MAPPER_MATRIX_H_INCLUDED  defined

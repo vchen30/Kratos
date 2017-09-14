@@ -269,7 +269,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    Mapper::Pointer mpInverseMapper;
 
     ///@}
     ///@name Private Operators

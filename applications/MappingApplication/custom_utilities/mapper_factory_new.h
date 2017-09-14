@@ -41,6 +41,7 @@
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
 #include "custom_mappers/nearest_neighbor_mapper_matrix.h"
+#include "custom_mappers/nearest_element_mapper_matrix.h"
 #include "custom_mappers/mortar_mapper.h"
 
 
@@ -224,7 +225,32 @@ public:
                     r_interface_model_part_destination,
                     JsonParameters);
 #endif
-        } 
+        } else if (mapper_type == "NearestElementMatrixBased") 
+        {
+            // Jordi What would be the best way to select the execution and the space?
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+            if (MapperUtilities::TotalProcesses() > 1) // parallel execution, i.e. mpi imported in python
+            {
+                mapper = new NearestElementMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>(
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
+                        JsonParameters);
+            }
+            else
+            {
+                mapper = new NearestElementMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+                        r_interface_model_part_origin,
+                        r_interface_model_part_destination,
+                        JsonParameters);
+            }
+
+#else
+            mapper = new NearestElementMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>(
+                    r_interface_model_part_origin,
+                    r_interface_model_part_destination,
+                    JsonParameters);
+#endif
+        }
         else if (mapper_type == "Mortar") 
         {
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation

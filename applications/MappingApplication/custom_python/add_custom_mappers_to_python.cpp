@@ -46,6 +46,7 @@
 #include "custom_mappers/nearest_element_mapper.h"
 
 #include "custom_mappers/nearest_neighbor_mapper_matrix.h"
+#include "custom_mappers/nearest_element_mapper_matrix.h"
 #include "custom_mappers/mortar_mapper.h"
 
 #include "custom_utilities/mapper_factory_new.h"
@@ -62,7 +63,7 @@ namespace Kratos
 namespace Python
 {
 
-// Wrapper functions for taking a default argument for the flags
+// Wrapper functions for taking a default argument for the flags // TODO inline? Jordi
 void UpdateInterface(Mapper& dummy)
 {
     Kratos::Flags dummy_flags = Kratos::Flags();
@@ -219,11 +220,15 @@ void  AddCustomMappersToPython()
         // Matrix-based Mappers
         class_<NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
                bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+        class_<NearestElementMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
+               bases<Mapper>, boost::noncopyable>("NearestElementMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
         class_<MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
                bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
         class_<NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+        class_<NearestElementMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+            bases<Mapper>, boost::noncopyable>("NearestElementMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
         class_<MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 #endif

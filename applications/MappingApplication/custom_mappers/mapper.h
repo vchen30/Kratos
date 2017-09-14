@@ -182,6 +182,9 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
+
+    Mapper::Pointer mpInverseMapper;
+
     ModelPart& mrModelPartOrigin;
     ModelPart& mrModelPartDestination;
 
@@ -219,7 +222,7 @@ protected:
         mrModelPartDestination(rModelPartDestination),
         mJsonParameters(JsonParameters)
     {
-
+        mpInverseMapper.reset(); // explicitly specified to be safe
         ComputeNumberOfNodesAndConditions();
 
         // Create the mapper communicator

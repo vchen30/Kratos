@@ -310,6 +310,7 @@ protected:
     {   
         this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
         this->mpInterfaceModelPart = this->mpInterfacePreprocessor->pGetInterfaceModelPart();
+        this->mpMapperCommunicator->pSetModelpartDestination(&*(this->mpInterfaceModelPart));
     }
 
     template< class TVarType>

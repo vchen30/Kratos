@@ -101,16 +101,16 @@ class MapperTestsFactory(KratosUnittest.TestCase):
                 self.test_object.SetUpMapper(file_name)
 
                 self.test_object.TestMapConstantScalarValues(1.0)
-                # self.test_object.TestInverseMapConstantScalarValues(2.0)
+                self.test_object.TestInverseMapConstantScalarValues(2.0)
 
                 self.test_object.TestMapConstantVectorValues(3.0)
-                # self.test_object.TestInverseMapConstantVectorValues(4.0)
+                self.test_object.TestInverseMapConstantVectorValues(4.0)
 
                 self.test_object.TestMapNonConstantScalarValues(5.0)
-                # self.test_object.TestInverseMapNonConstantScalarValues(6.0)
+                self.test_object.TestInverseMapNonConstantScalarValues(6.0)
 
                 self.test_object.TestMapNonConstantVectorValues(7.0)
-                # self.test_object.TestInverseMapNonConstantVectorValues(8.0)
+                self.test_object.TestInverseMapNonConstantVectorValues(8.0)
 
                 print("succssful") # this is only printed in case the test fails
 

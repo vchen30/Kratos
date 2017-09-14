@@ -105,11 +105,8 @@ public:
         mInterfaceObjectTypeOrigin = InterfaceObjectTypeOrigin;
     }
 
-    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination,
-                               ModelPart* pModelPart) override
+    void InitializeDestination(MapperUtilities::InterfaceObjectConstructionType InterfaceObjectTypeDestination) override
     {
-        mpModelPartDestination = pModelPart;
-
         mpInterfaceObjectManagerDestination = InterfaceObjectManagerParallel::Pointer(
                 new InterfaceObjectManagerParallel(*mpModelPartDestination, MyPID(),
                         TotalProcesses(),
