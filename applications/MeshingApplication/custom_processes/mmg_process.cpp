@@ -654,20 +654,12 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         }
     }
     
-    // We copy the MainModelPart to the ComputationalModelPart // NOTE: Remove this if you figure out how to remesh consistently the nodes
-    NodesArrayType& node_array = mrThisModelPart.Nodes();
-    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddNodes(node_array.begin(), node_array.end());
-    ConditionsArrayType& condition_array = mrThisModelPart.Conditions();
-    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddConditions(condition_array.begin(), condition_array.end());
-    ElementsArrayType& element_array = mrThisModelPart.Elements();
-    mrThisModelPart.GetSubModelPart(mColors[1][0]).AddElements(element_array.begin(), element_array.end());
-    
     // We add nodes, conditions and elements to the sub model parts
     for (auto & color_list : mColors)
     {
         const int key = color_list.first;
         
-        if (key != 0 && key != 1) // NOTE: key == 0 is the MainModelPart and key == 1 is the ComputationalModelPart (this one is not necessary if you figure out how to remesh consistently the nodes)
+        if (key != 0) // NOTE: key == 0 is the MainModelPart
         {
             for (auto sub_model_part_name : color_list.second)
             {      
