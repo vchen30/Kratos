@@ -37,9 +37,9 @@
 // Utilities
 #include "utilities/variable_utils.h"
 #if !defined(_WIN32)
-	#include "custom_utilities/color_utilities.h"
+	#include "utilities/color_utilities.h"
 #endif
-#include "custom_utilities/process_factory_utility.h"
+#include "utilities/process_factory_utility.h"
 
 // TODO: Extend the descriptions
 
@@ -81,15 +81,17 @@ class ResidualBasedNewtonRaphsonContactStrategyRemeshing :
     public ResidualBasedNewtonRaphsonContactStrategy< TSparseSpace, TDenseSpace, TLinearSolver >
 {
 public:
-    /*
+    
     typedef ConvergenceCriteria<TSparseSpace, TDenseSpace> TConvergenceCriteriaType;
     
-    /** Counted pointer of ClassName 
-    KRATOS_CLASS_POINTER_DEFINITION( ResidualBasedNewtonRaphsonContactStrategy );
-
+    /** Counted pointer of ClassName*/ 
+    KRATOS_CLASS_POINTER_DEFINITION( ResidualBasedNewtonRaphsonContactStrategyRemeshing );
+    
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>            StrategyBaseType;
     
     typedef ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
+
+    typedef ResidualBasedNewtonRaphsonContactStrategy<TSparseSpace, TDenseSpace, TLinearSolver> ContactBaseType;
     
     typedef typename BaseType::TBuilderAndSolverType                        TBuilderAndSolverType;
 
@@ -118,7 +120,7 @@ public:
     typedef ModelPart::ConditionsContainerType                                ConditionsArrayType;
     
     typedef boost::shared_ptr<ProcessFactoryUtility>                            ProcessesListType;
-    */
+    
     /**
      * Default constructor 
      * @param rModelPart: The model part of the problem
@@ -131,7 +133,7 @@ public:
      * @param MoveMeshFlag: The flag that allows to move the mesh
      */
     
-    ResidualBasedNewtonRaphsonContactStrategy override(
+    ResidualBasedNewtonRaphsonContactStrategyRemeshing(
         ModelPart& rModelPart,
         typename TSchemeType::Pointer pScheme,
         typename TLinearSolver::Pointer pNewLinearSolver,
@@ -141,30 +143,37 @@ public:
         bool ReformDofSetAtEachStep = false,
         bool MoveMeshFlag = false,
         Parameters ThisParameters =  Parameters(R"({})"),
+        Parameters ThisRemeshingParameters = Parameters(R"({})"),
         ProcessesListType pMyProcesses = nullptr
     )
-        : ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, pScheme, pNewLinearSolver, pNewConvergenceCriteria, MaxIterations, CalculateReactions, ReformDofSetAtEachStep, MoveMeshFlag),
-        mpMyProcesses(pMyProcesses)
+        : ResidualBasedNewtonRaphsonContactStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, pScheme, pNewLinearSolver, pNewConvergenceCriteria, MaxIterations, CalculateReactions, ReformDofSetAtEachStep, MoveMeshFlag, ThisParameters, pMyProcesses)
+        //ContactBaseType::mpMyProcesses(pMyProcesses)
     {
         KRATOS_TRY;
-
-        mConvergenceCriteriaEchoLevel = pNewConvergenceCriteria->GetEchoLevel();
+        //ContactBaseType::mpMyProcesses = pMyProcesses;
+        //ContactBaseType::mConvergenceCriteriaEchoLevel = pNewConvergenceCriteria->GetEchoLevel();
         
-        Parameters DefaultParameters = Parameters(R"(
+        /*Parameters DefaultParameters = Parameters(R"(
         {
             "adaptative_strategy"              : false,
             "split_factor"                     : 10.0,
-            "max_number_splits"                : 3,
-            "adaptive_remeshing"              : false,
+            "max_number_splits"                : 3
             "remeshing_max_iterations"         : 3
         })" );
 
         ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
-        
-        mAdaptativeStrategy = ThisParameters["adaptative_strategy"].GetBool();
-        mSplitFactor = ThisParameters["split_factor"].GetDouble();
-        mMaxNumberSplits = ThisParameters["max_number_splits"].GetInt();
+        */
 
+        Parameters DefaultRemeshingParameters = Parameters(R"(
+        {
+            "remeshing_max_iterations"         : 3
+        })" );
+
+        ThisRemeshingParameters.ValidateAndAssignDefaults(DefaultRemeshingParameters);
+
+        mRemeshingMaxIterations = ThisRemeshingParameters["remeshing_max_iterations"].GetInt();
+        
+    
         KRATOS_CATCH("");
     }
 
@@ -180,7 +189,7 @@ public:
      * @param MoveMeshFlag: The flag that allows to move the mesh
      */
     
-    ResidualBasedNewtonRaphsonContactStrategy override(
+    ResidualBasedNewtonRaphsonContactStrategyRemeshing(
         ModelPart& rModelPart,
         typename TSchemeType::Pointer pScheme,
         typename TLinearSolver::Pointer pNewLinearSolver,
@@ -191,30 +200,33 @@ public:
         bool ReformDofSetAtEachStep = false,
         bool MoveMeshFlag = false,
         Parameters ThisParameters =  Parameters(R"({})"),
+        Parameters ThisRemeshingParameters =  Parameters(R"({})"),
         ProcessesListType pMyProcesses = nullptr                                      
         )
-        : ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, pScheme, pNewLinearSolver, pNewConvergenceCriteria, pNewBuilderAndSolver, MaxIterations, CalculateReactions, ReformDofSetAtEachStep, MoveMeshFlag ),
-        mpMyProcesses(pMyProcesses)
+        : ResidualBasedNewtonRaphsonContactStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, pScheme, pNewLinearSolver, pNewConvergenceCriteria, pNewBuilderAndSolver, MaxIterations, CalculateReactions, ReformDofSetAtEachStep, MoveMeshFlag, ThisParameters, pMyProcesses )
+        //ContactBaseType::mpMyProcesses(pMyProcesses)
     {
         KRATOS_TRY;
-
-        mConvergenceCriteriaEchoLevel = pNewConvergenceCriteria->GetEchoLevel();
+        /*
+        ContactBaseType::mConvergenceCriteriaEchoLevel = pNewConvergenceCriteria->GetEchoLevel();
         
         Parameters DefaultParameters = Parameters(R"(
         {
             "adaptative_strategy"              : false,
             "split_factor"                     : 10.0,
-            "max_number_splits"                : 3,
-            "adaptive_remeshing"              : false,
+            "max_number_splits"                : 3
             "remeshing_max_iterations"         : 3
         })" );
 
-        ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
+        ThisParameters.ValidateAndAssignDefaults(DefaultParameters);*/
         
-        mAdaptativeStrategy = ThisParameters["adaptative_strategy"].GetBool();
-        mSplitFactor = ThisParameters["split_factor"].GetDouble();
-        mMaxNumberSplits = ThisParameters["max_number_splits"].GetInt();
-        mAdaptiveRemeshing = ThisParameters["adaptive_remeshing"].GetBool();
+        Parameters DefaultRemeshingParameters = Parameters(R"(
+        {
+            "remeshing_max_iterations"         : 3
+        })" );
+
+        ThisRemeshingParameters.ValidateAndAssignDefaults(DefaultRemeshingParameters);
+
         mRemeshingMaxIterations = ThisParameters["remeshing_max_iterations"].GetInt();
 
         KRATOS_CATCH("");
@@ -224,7 +236,7 @@ public:
      * Destructor.
      */
     
-    ~ResidualBasedNewtonRaphsonContactStrategy() override
+    ~ResidualBasedNewtonRaphsonContactStrategyRemeshing()
     = default;
     
     //******************** OPERATIONS ACCESSIBLE FROM THE INPUT: ************************//
@@ -270,7 +282,78 @@ public:
     
     bool SolveSolutionStep() override
     {
-//         bool is_converged = BaseType::SolveSolutionStep(); // FIXME: Requires to separate the non linear iterations 
+        bool remeshing_necessary = true;
+        unsigned int remeshing_iterator = 0;
+        bool is_converged;
+        while(remeshing_necessary == true && remeshing_iterator++ < mRemeshingMaxIterations)
+        {
+            is_converged = ContactBaseType::SolveSolutionStep();
+
+            //initialize metric
+            MetricFastInit<2> MetricInit = MetricFastInit<2>(StrategyBaseType::GetModelPart());
+            MetricInit.Execute();
+            ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(StrategyBaseType::GetModelPart());
+            double error_percentage;
+            error_percentage = ComputeMetric.Execute();
+            
+            if(error_percentage >0.11)
+            {
+            
+                // Remeshing
+                Parameters RemeshingParameters = Parameters(R"(
+                {
+                    "filename"                             : "out",
+                    "framework"                            : "Eulerian",
+                    "internal_variables_parameters"        :
+                    {
+                        "allocation_size"                      : 1000, 
+                        "bucket_size"                          : 4, 
+                        "search_factor"                        : 2, 
+                        "interpolation_type"                   : "LST",
+                        "internal_variable_interpolation_list" :[]
+                    },
+                "save_external_files"              : false,
+                "max_number_of_searchs"            : 1000,
+                "echo_level"                       : 3,
+                "step_data_size"                   : 0,
+                "buffer_size"                      : 0
+                })" );
+                #ifdef INCLUDE_MMG
+                    if (mDimension == 2)
+                    {
+                        MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
+                        MmgRemesh.Execute();
+                    }
+                    else
+                    {
+                        //!!not yet implemented
+                        //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
+                        //MmgRemesh.Execute();
+                    }
+                #else 
+                    KRATOS_ERROR << "Please compile with MMG to use this utility" << std::endl;
+                #endif
+
+                
+                //mFindNodalH.Execute();
+                
+                // Processes initialization
+                ContactBaseType::mpMyProcesses->ExecuteInitialize();
+                // Processes before the loop
+                ContactBaseType::mpMyProcesses->ExecuteBeforeSolutionLoop();
+                // Processes of initialize the solution step
+                ContactBaseType::mpMyProcesses->ExecuteInitializeSolutionStep();
+                
+                // We set the model part as modified
+                StrategyBaseType::GetModelPart().Set(MODIFIED, true);
+            }
+            else
+            {
+                remeshing_necessary = false;
+            }
+        }
+        /*
+//      bool is_converged = BaseType::SolveSolutionStep(); // FIXME: Requires to separate the non linear iterations 
         bool is_converged = BaseSolveSolutionStep();
         
         // Plots a warning if the maximum number of iterations is exceeded
@@ -325,7 +408,7 @@ public:
                         
                         this_process_info.SetCurrentTime(current_time); // Reduces the time step
                         
-                        FinalizeSolutionStep();
+                        ContactBaseType::FinalizeSolutionStep();
                     }
                     else
                     {
@@ -357,11 +440,11 @@ public:
                     mFinalizeWasPerformed = false;
                     
                     // We repeat the solve with the new DELTA_TIME
-                    Initialize();
-                    InitializeSolutionStep();
+                    ContactBaseType::Initialize();
+                    ContactBaseType::InitializeSolutionStep();
                     BaseType::Predict();
                     inside_the_split_is_converged = BaseType::SolveSolutionStep();
-                    FinalizeSolutionStep();
+                    ContactBaseType::FinalizeSolutionStep();
                     
                     // We execute the processes after the non-linear iteration
                     if (mpMyProcesses != nullptr)
@@ -382,12 +465,12 @@ public:
             // Plots a warning if the maximum number of iterations and splits are exceeded
             if (is_converged == false)
             {
-                MaxIterationsAndSplitsExceeded();
+                ContactBaseType::MaxIterationsAndSplitsExceeded();
             }
             
             // Restoring original DELTA_TIME
             this_process_info[DELTA_TIME] = original_delta_time;
-        }
+        */
 
         return is_converged;
     }
@@ -418,17 +501,17 @@ protected:
     ///@{
     
     // ADAPTATIVE STRATEGY PARAMETERS
-    bool mAdaptativeStrategy;         // If consider time split
-    bool mFinalizeWasPerformed;       // If the FinalizeSolutionStep has been already performed
-    double mSplitFactor;              // Number by one the delta time is split
-    ProcessesListType mpMyProcesses;  // The processes list
-    unsigned int mMaxNumberSplits;    // Maximum number of splits
+    //bool mAdaptativeStrategy;         // If consider time split
+    //bool mFinalizeWasPerformed;       // If the FinalizeSolutionStep has been already performed
+    //double mSplitFactor;              // Number by one the delta time is split
+    //ProcessesListType mpMyProcesses;  // The processes list
+    //unsigned int mMaxNumberSplits;    // Maximum number of splits
     
     // REMESHING PARAMETERS
-    bool mAdaptiveRemeshing;          // if adaptive remeshing is activated
+    //bool mAdaptiveRemeshing;          // if adaptive remeshing is activated
     int mRemeshingMaxIterations;       // max number of adaptive remeshing loops
     // OTHER PARAMETERS
-    int mConvergenceCriteriaEchoLevel; // The echo level of the convergence criteria
+    //int mConvergenceCriteriaEchoLevel; // The echo level of the convergence criteria
 
     ///@}
     ///@name Protected Operators
@@ -437,7 +520,7 @@ protected:
     /**
      * Solves the current step. This function returns true if a solution has been found, false otherwise.
      */
-    
+    /*
     bool BaseSolveSolutionStep()
     {
         // Pointers needed in the solution
@@ -596,7 +679,7 @@ protected:
                 ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(StrategyBaseType::GetModelPart());
                 ComputeMetric.Execute();
             }
-            /*
+            
             else
             {
                 // !!! not yet implemented!!!
@@ -606,7 +689,7 @@ protected:
                 MetricInit.Execute();
                 ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mrModelPart);
                 ComputeMetric.Execute();
-            }*/
+            }
             
             // Remeshing
             Parameters RemeshingParameters = Parameters(R"(
@@ -684,14 +767,14 @@ protected:
         }
 
         return is_converged;
-    }
+    }*/
     
     /**
      * Performs all the required operations that should be done (for each step) 
      * before solving the solution step.
      * A member variable should be used as a flag to make sure this function is called only once per step.
      */
-        
+    /*   
     void InitializeSolutionStep() override
     {
         BaseType::InitializeSolutionStep();
@@ -702,7 +785,7 @@ protected:
     /**
      * Here the database is updated
      */
-     
+    /*
     void UpdateDatabase(
         TSystemMatrixType& A,
         TSystemVectorType& Dx,
@@ -718,7 +801,7 @@ protected:
     /**
      * Here the time step is splitted
      */
-    
+    /*
     double SplitTimeStep(
         double& AuxDeltaTime,
         double& CurrentTime
@@ -744,7 +827,7 @@ protected:
     /**
      * This method moves bak the mesh to the previous position
      */
-    
+    /*
     void UnMoveMesh()
     {
         KRATOS_TRY;
@@ -772,7 +855,7 @@ protected:
     /**
      * This method prints information after solving the problem
      */
-    
+    /*
     void CoutSolvingProblem()
     {
         if (mConvergenceCriteriaEchoLevel != 0)
@@ -784,7 +867,7 @@ protected:
     /**
      * This method prints information after split the increment of time
      */
-        
+    /*   
     void CoutSplittingTime(const double AuxDeltaTime)
     {
         if (mConvergenceCriteriaEchoLevel > 0 && StrategyBaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
@@ -808,7 +891,7 @@ protected:
     /**
      * This method prints information after reach the max number of interations
      */
-    
+    /*
     void MaxIterationsExceeded() override
     {
         if (mConvergenceCriteriaEchoLevel > 0 && StrategyBaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
@@ -826,7 +909,7 @@ protected:
     /**
      * This method prints information after reach the max number of interations and splits
      */
-        
+      /*  
     void MaxIterationsAndSplitsExceeded()
     {
         if (mConvergenceCriteriaEchoLevel > 0 && StrategyBaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
@@ -841,7 +924,7 @@ protected:
             #endif
             std::cout << "|----------------------------------------------------|" << std::endl;
         }
-    }
+    }*/
 
     ///@}
     ///@name Protected Operations
@@ -864,7 +947,7 @@ protected:
      * Copy constructor.
      */
     
-    ResidualBasedNewtonRaphsonContactStrategy(const ResidualBasedNewtonRaphsonContactStrategy& Other)
+    ResidualBasedNewtonRaphsonContactStrategyRemeshing(const ResidualBasedNewtonRaphsonContactStrategyRemeshing& Other)
     {
     };
 
@@ -900,7 +983,7 @@ private:
     ///@{
     ///@}
 
-}; /* Class ResidualBasedNewtonRaphsonContactStrategy */
+}; /* Class ResidualBasedNewtonRaphsonContactStrategyRemeshing */
 ///@}
 ///@name Type Definitions
 ///@{

@@ -22,14 +22,6 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "includes/variables.h"
-#include "custom_processes/metric_fast_init_process.h"
-#include "custom_processes/metrics_spr_error_process.h"
-//#include "meshing_application.h"
-
-
-#ifdef INCLUDE_MMG
-    #include "custom_processes/mmg_process.h"
-#endif
 
 // Strategies
 #include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
@@ -55,10 +47,6 @@ namespace Kratos {
 ///@}
 ///@name  Enum's
 ///@{
-    #if !defined(REMESHING_UTILITIES)
-    #define REMESHING_UTILITIES
-        enum RemeshingUtilities {MMG = 0};
-    #endif
         
 ///@}
 ///@name  Functions
@@ -153,9 +141,7 @@ public:
         {
             "adaptative_strategy"              : false,
             "split_factor"                     : 10.0,
-            "max_number_splits"                : 3,
-            "adaptive_remeshing"              : false,
-            "remeshing_max_iterations"         : 3
+            "max_number_splits"                : 3
         })" );
 
         ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
@@ -203,9 +189,7 @@ public:
         {
             "adaptative_strategy"              : false,
             "split_factor"                     : 10.0,
-            "max_number_splits"                : 3,
-            "adaptive_remeshing"              : false,
-            "remeshing_max_iterations"         : 3
+            "max_number_splits"                : 3
         })" );
 
         ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
@@ -213,8 +197,6 @@ public:
         mAdaptativeStrategy = ThisParameters["adaptative_strategy"].GetBool();
         mSplitFactor = ThisParameters["split_factor"].GetDouble();
         mMaxNumberSplits = ThisParameters["max_number_splits"].GetInt();
-        mAdaptiveRemeshing = ThisParameters["adaptive_remeshing"].GetBool();
-        mRemeshingMaxIterations = ThisParameters["remeshing_max_iterations"].GetInt();
 
         KRATOS_CATCH("");
     }
@@ -423,9 +405,6 @@ protected:
     ProcessesListType mpMyProcesses;  // The processes list
     unsigned int mMaxNumberSplits;    // Maximum number of splits
     
-    // REMESHING PARAMETERS
-    bool mAdaptiveRemeshing;          // if adaptive remeshing is activated
-    int mRemeshingMaxIterations;       // max number of adaptive remeshing loops
     // OTHER PARAMETERS
     int mConvergenceCriteriaEchoLevel; // The echo level of the convergence criteria
 
@@ -496,56 +475,39 @@ protected:
             is_converged = BaseType::mpConvergenceCriteria->PostCriteria(StrategyBaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
         }
 
-        // adaptive mesh refinement: 
-        //executed after each iteraltion loop if the estimated error is not below a certain limit and if the max number of refinements is not reached
 
-        if(mAdaptativeStrategy == false){
-            // execute refinement loop only once
-            mRemeshingMaxIterations = 1;}
-        bool remeshing_necessary = true;
-        unsigned int remeshing_iterator = 0;
-        while (remeshing_necessary == true && remeshing_iterator++ < mRemeshingMaxIterations){
+        //Iteration Cicle... performed only for NonLinearProblems
+        while (is_converged == false &&
+                iteration_number++<BaseType::mMaxIterationNumber)
+        {
+            //setting the number of iteration
+            StrategyBaseType::GetModelPart().GetProcessInfo()[NL_ITERATION_NUMBER] = iteration_number;
 
-            //Iteration Cicle... performed only for NonLinearProblems
-            while (is_converged == false &&
-                    iteration_number++<BaseType::mMaxIterationNumber)
+            pScheme->InitializeNonLinIteration(StrategyBaseType::GetModelPart(), A, Dx, b);
+
+            // To be able to calculate the current gap and recalulate the penalty
+            if (StrategyBaseType::GetModelPart().GetProcessInfo()[ADAPT_PENALTY] == true)
             {
-                //setting the number of iteration
-                StrategyBaseType::GetModelPart().GetProcessInfo()[NL_ITERATION_NUMBER] = iteration_number;
+                TSparseSpace::SetToZero(b);
+                pBuilderAndSolver->BuildRHS(pScheme, StrategyBaseType::GetModelPart(), b);
+            }
+                    
+            is_converged = BaseType::mpConvergenceCriteria->PreCriteria(StrategyBaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
 
-                pScheme->InitializeNonLinIteration(StrategyBaseType::GetModelPart(), A, Dx, b);
-
-                // To be able to calculate the current gap and recalulate the penalty
-                if (StrategyBaseType::GetModelPart().GetProcessInfo()[ADAPT_PENALTY] == true)
+            //call the linear system solver to find the correction mDx for the
+            //it is not called if there is no system to solve
+            if (SparseSpaceType::Size(Dx) != 0)
+            {
+                if (StrategyBaseType::mRebuildLevel > 1 || StrategyBaseType::mStiffnessMatrixIsBuilt == false )
                 {
-                    TSparseSpace::SetToZero(b);
-                    pBuilderAndSolver->BuildRHS(pScheme, StrategyBaseType::GetModelPart(), b);
-                }
-                        
-                is_converged = BaseType::mpConvergenceCriteria->PreCriteria(StrategyBaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
-
-                //call the linear system solver to find the correction mDx for the
-                //it is not called if there is no system to solve
-                if (SparseSpaceType::Size(Dx) != 0)
-                {
-                    if (StrategyBaseType::mRebuildLevel > 1 || StrategyBaseType::mStiffnessMatrixIsBuilt == false )
+                    if( BaseType::GetKeepSystemConstantDuringIterations() == false)
                     {
-                        if( BaseType::GetKeepSystemConstantDuringIterations() == false)
-                        {
-                            //A = 0.00;
-                            TSparseSpace::SetToZero(A);
-                            TSparseSpace::SetToZero(Dx);
-                            TSparseSpace::SetToZero(b);
+                        //A = 0.00;
+                        TSparseSpace::SetToZero(A);
+                        TSparseSpace::SetToZero(Dx);
+                        TSparseSpace::SetToZero(b);
 
-                            pBuilderAndSolver->BuildAndSolve(pScheme, StrategyBaseType::GetModelPart(), A, Dx, b);
-                        }
-                        else
-                        {
-                            TSparseSpace::SetToZero(Dx);
-                            TSparseSpace::SetToZero(b);
-
-                            pBuilderAndSolver->BuildRHSAndSolve(pScheme, StrategyBaseType::GetModelPart(), A, Dx, b);
-                        }
+                        pBuilderAndSolver->BuildAndSolve(pScheme, StrategyBaseType::GetModelPart(), A, Dx, b);
                     }
                     else
                     {
@@ -557,104 +519,43 @@ protected:
                 }
                 else
                 {
-                    std::cout << "ATTENTION: no free DOFs!! " << std::endl;
+                    TSparseSpace::SetToZero(Dx);
+                    TSparseSpace::SetToZero(b);
+
+                    pBuilderAndSolver->BuildRHSAndSolve(pScheme, StrategyBaseType::GetModelPart(), A, Dx, b);
                 }
-
-                // Debugging info
-                BaseType::EchoInfo(iteration_number);
-            
-                // Updating the results stored in the database
-                UpdateDatabase(A, Dx, b, StrategyBaseType::MoveMeshFlag());
-
-                pScheme->FinalizeNonLinIteration(StrategyBaseType::GetModelPart(), A, Dx, b);
-
-                residual_is_updated = false;
-
-                if (is_converged == true)
-                {
-
-                    if (BaseType::mpConvergenceCriteria->GetActualizeRHSflag() == true)
-                    {
-                        TSparseSpace::SetToZero(b);
-
-                        pBuilderAndSolver->BuildRHS(pScheme, StrategyBaseType::GetModelPart(), b);
-                        residual_is_updated = true;
-                        //std::cout << "mb is calculated" << std::endl;
-                    }
-
-                    is_converged = BaseType::mpConvergenceCriteria->PostCriteria(StrategyBaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
-                }
-            }//end nonlinear iteration loop
-            // error estimation
-            //if (mDimension == 2)
-            if (true)
-            {
-                //metric initialization
-                MetricFastInit<2> MetricInit = MetricFastInit<2>(StrategyBaseType::GetModelPart());
-                MetricInit.Execute();
-                ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(StrategyBaseType::GetModelPart());
-                ComputeMetric.Execute();
             }
-            /*
             else
             {
-                // !!! not yet implemented!!!
-                // Dummy procedure for further developments
-                //metric initialization
-                MetricFastInit<3> MetricInit = MetricFastInit<3>(mrModelPart);
-                MetricInit.Execute();
-                ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mrModelPart);
-                ComputeMetric.Execute();
-            }*/
-            
-            // Remeshing
-            Parameters RemeshingParameters = Parameters(R"(
-            {
-                "filename"                             : "out",
-                "framework"                            : "Eulerian",
-                "internal_variables_parameters"        :
-                {
-                    "allocation_size"                      : 1000, 
-                    "bucket_size"                          : 4, 
-                    "search_factor"                        : 2, 
-                    "interpolation_type"                   : "LST",
-                    "internal_variable_interpolation_list" :[]
-                },
-            "save_external_files"              : false,
-            "max_number_of_searchs"            : 1000,
-            "echo_level"                       : 3,
-            "step_data_size"                   : 0,
-            "buffer_size"                      : 0
-            })" );
-            #ifdef INCLUDE_MMG
-                if (mDimension == 2)
-                {
-                    MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
-                    MmgRemesh.Execute();
-                }
-                else
-                {
-                    //!!not yet implemented
-                    //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
-                    //MmgRemesh.Execute();
-                }
-            #else 
-                KRATOS_ERROR << "Please compile with MMG to use this utility" << std::endl;
-            #endif
+                std::cout << "ATTENTION: no free DOFs!! " << std::endl;
+            }
 
-            
-            //mFindNodalH.Execute();
-            
-            // Processes initialization
-            mpMyProcesses->ExecuteInitialize();
-            // Processes before the loop
-            mpMyProcesses->ExecuteBeforeSolutionLoop();
-            // Processes of initialize the solution step
-            mpMyProcesses->ExecuteInitializeSolutionStep();
-            
-            // We set the model part as modified
-            StrategyBaseType::GetModelPart().Set(MODIFIED, true);
-    }//end remeshing loop
+            // Debugging info
+            BaseType::EchoInfo(iteration_number);
+        
+            // Updating the results stored in the database
+            UpdateDatabase(A, Dx, b, StrategyBaseType::MoveMeshFlag());
+
+            pScheme->FinalizeNonLinIteration(StrategyBaseType::GetModelPart(), A, Dx, b);
+
+            residual_is_updated = false;
+
+            if (is_converged == true)
+            {
+
+                if (BaseType::mpConvergenceCriteria->GetActualizeRHSflag() == true)
+                {
+                    TSparseSpace::SetToZero(b);
+
+                    pBuilderAndSolver->BuildRHS(pScheme, StrategyBaseType::GetModelPart(), b);
+                    residual_is_updated = true;
+                    //std::cout << "mb is calculated" << std::endl;
+                }
+
+                is_converged = BaseType::mpConvergenceCriteria->PostCriteria(StrategyBaseType::GetModelPart(), pBuilderAndSolver->GetDofSet(), A, Dx, b);
+            }
+        }
+
 
         //plots a warning if the maximum number of iterations is exceeded
         if (iteration_number >= BaseType::mMaxIterationNumber && StrategyBaseType::GetModelPart().GetCommunicator().MyPID() == 0)

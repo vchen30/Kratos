@@ -370,7 +370,7 @@ private:
 
             std::cout<<"metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
         }
-        return error_overall;
+        return error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
     }
     //calculates the recovered stress at a node 
     // i_node: the node for which the recovered stress should be calculated
