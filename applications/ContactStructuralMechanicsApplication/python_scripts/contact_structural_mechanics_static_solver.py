@@ -3,8 +3,6 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsApplication
 import KratosMultiphysics.ContactStructuralMechanicsApplication as ContactStructuralMechanicsApplication
-import KratosMultiphysics.MeshingApplication as MeshingApplication
-
 
 # Check that KratosMultiphysics was imported in the main script
 KratosMultiphysics.CheckForPreviousImport()
@@ -43,9 +41,6 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "ensure_contact": false,
                 "adaptative_strategy": false,
                 "split_factor": 10.0,
-                "max_number_splits": 3,
-                "adaptive_remeshing": false,
-                "remeshing_max_iterations" : 3,
                 "max_number_splits": 3,
                 "contact_displacement_relative_tolerance": 1.0e-4,
                 "contact_displacement_absolute_tolerance": 1.0e-9,
@@ -112,7 +107,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         super().Initialize() # The mechanical solver is created here.
         
     def AddProcessesList(self, processes_list):
-        self.processes_list = ContactStructuralMechanicsApplication.ProcessFactoryUtility(processes_list)
+        self.processes_list = KratosMultiphysics.ProcessFactoryUtility(processes_list)
         
     def _create_convergence_criterion(self):
         # Create an auxiliary Kratos parameters object to store the convergence settings.
@@ -152,11 +147,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                     if(self.settings["line_search"].GetBool()):
                         mechanical_solver = self._create_contact_line_search_strategy()
                     else:
-                        if (self.contact_settings["adaptive_remeshing"].GetBool() == True):
-                            mechanical_solver = self._create_contact_newton_raphson_strategy_meshing()
-                        else:
-                            mechanical_solver = self._create_contact_newton_raphson_strategy()
-
+                        mechanical_solver = self._create_contact_newton_raphson_strategy()
                 else:
                     mechanical_solver = self._create_newton_raphson_strategy()
                     
@@ -200,32 +191,5 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                                                                                                self.settings["reform_dofs_at_each_step"].GetBool(), 
                                                                                                self.settings["move_mesh_flag"].GetBool(),
                                                                                                newton_parameters,
-                                                                                               self.processes_list
-                                                                                               )
-
-    def _create_contact_newton_raphson_strategy_meshing(self):
-        computing_model_part = self.GetComputingModelPart()
-        mechanical_scheme = self.get_solution_scheme()
-        linear_solver = self.get_linear_solver()
-        mechanical_convergence_criterion = self.get_convergence_criterion()
-        builder_and_solver = self.get_builder_and_solver()
-        newton_parameters = KratosMultiphysics.Parameters("""{}""")
-        remeshing_parameters = KratosMultiphysics.Parameters("""{}""")
-        newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"])
-        newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"])
-        newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])
-        #newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"])
-        remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_max_iterations"])
-        return MeshingApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part, 
-                                                                                               mechanical_scheme, 
-                                                                                               linear_solver, 
-                                                                                               mechanical_convergence_criterion, 
-                                                                                               builder_and_solver, 
-                                                                                               self.settings["max_iteration"].GetInt(), 
-                                                                                               self.settings["compute_reactions"].GetBool(), 
-                                                                                               self.settings["reform_dofs_at_each_step"].GetBool(), 
-                                                                                               self.settings["move_mesh_flag"].GetBool(),
-                                                                                               newton_parameters,
-                                                                                               remeshing_parameters,
                                                                                                self.processes_list
                                                                                                )

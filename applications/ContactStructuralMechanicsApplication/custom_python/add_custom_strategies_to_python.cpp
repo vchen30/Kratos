@@ -18,7 +18,6 @@
 
 // Project includes
 #include "includes/define.h"
-#include "custom_utilities/process_factory_utility.h"
 #include "custom_python/add_custom_strategies_to_python.h"
 #include "spaces/ublas_space.h"
 
@@ -26,7 +25,6 @@
 #include "solving_strategies/strategies/solving_strategy.h"
 #include "custom_strategies/custom_strategies/line_search_contact_strategy.h"
 #include "custom_strategies/custom_strategies/residualbased_newton_raphson_contact_strategy.h"
-#include "custom_strategies/custom_strategies/residualbased_newton_raphson_contact_strategy_remeshing.h"
 
 // Schemes
 #include "solving_strategies/schemes/scheme.h"
@@ -72,7 +70,6 @@ void  AddCustomStrategiesToPython()
         
     // Custom strategy types
     typedef ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType , LinearSolverType >  ResidualBasedNewtonRaphsonContactStrategyType;
-    typedef ResidualBasedNewtonRaphsonContactStrategyRemeshing< SparseSpaceType, LocalSpaceType , LinearSolverType >  ResidualBasedNewtonRaphsonContactStrategyRemeshingType;    
     typedef LineSearchContactStrategy< SparseSpaceType, LocalSpaceType , LinearSolverType >  LineSearchContactStrategyType;
     
     // Custom scheme types
@@ -103,18 +100,7 @@ void  AddCustomStrategiesToPython()
             .def("SetKeepSystemConstantDuringIterations", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::SetKeepSystemConstantDuringIterations)
             .def("GetKeepSystemConstantDuringIterations", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::GetKeepSystemConstantDuringIterations)
             ;
-
-    class_< ResidualBasedNewtonRaphsonContactStrategyRemeshingType, bases< ResidualBasedNewtonRaphsonContactStrategyType >, boost::noncopyable >
-            ("ResidualBasedNewtonRaphsonContactStrategy", init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, ConvergenceCriteriaType::Pointer, unsigned int, bool, bool, bool, Parameters, Parameters >())
-            .def(init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, ConvergenceCriteriaType::Pointer, unsigned int, bool, bool, bool, Parameters,Parameters, ProcessesListType>())
-            .def(init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, ConvergenceCriteriaType::Pointer, BuilderAndSolverType::Pointer, unsigned int, bool, bool, bool, Parameters, Parameters >())
-            .def(init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, ConvergenceCriteriaType::Pointer, BuilderAndSolverType::Pointer, unsigned int, bool, bool, bool, Parameters, Parameters, ProcessesListType>())
-            //.def("SetMaxIterationNumber", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::SetMaxIterationNumber)
-            //.def("GetMaxIterationNumber", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::GetMaxIterationNumber)
-            //.def("SetKeepSystemConstantDuringIterations", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::SetKeepSystemConstantDuringIterations)
-            //.def("GetKeepSystemConstantDuringIterations", &ResidualBasedNewtonRaphsonContactStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::GetKeepSystemConstantDuringIterations)
-            ;
-
+            
     // Line search Contact Strategy      
     class_< LineSearchContactStrategyType, bases< BaseSolvingStrategyType >, boost::noncopyable >
             ("LineSearchContactStrategy", init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, ConvergenceCriteriaType::Pointer, unsigned int, bool, bool, bool, Parameters >())
