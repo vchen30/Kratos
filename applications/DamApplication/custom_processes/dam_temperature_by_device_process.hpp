@@ -11,8 +11,8 @@
 //
 //
 
-#if !defined(KRATOS_DAM_CONSTRUCTION_PROCESS )
-#define  KRATOS_DAM_CONSTRUCTION_PROCESS
+#if !defined(KRATOS_DAM_TEMPERATURE_BY_DEVICE_PROCESS )
+#define  KRATOS_DAM_TEMPERATURE_BY_DEVICE_PROCESS
 
 #include <cmath>
 
@@ -27,18 +27,20 @@
 namespace Kratos
 {
 
-class DamConstructionProcess : public Process
+class DamTemperaturebyDeviceProcess : public Process
 {
     
 public:
 
-    KRATOS_CLASS_POINTER_DEFINITION(DamConstructionProcess);
+    KRATOS_CLASS_POINTER_DEFINITION(DamTemperaturebyDeviceProcess);
+
+    typedef Table<double,double> TableType;  
     
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     /// Constructor
-    DamConstructionProcess(ModelPart& rModelPart,
-                                Parameters rParameters
+    DamTemperaturebyDeviceProcess(ModelPart& rModelPart,
+                                Parameters& rParameters
                                 ) : Process(Flags()) , mrModelPart(rModelPart)
     {
         KRATOS_TRY
@@ -48,30 +50,37 @@ public:
             {
                 "model_part_name":"PLEASE_CHOOSE_MODEL_PART_NAME",
                 "mesh_id": 0,
-                "is_fixed"                                         : false,
-                "Gravity_Direction"                                : "Y",
-                "Reservoir_Bottom_Coordinate_in_Gravity_Direction" : 0.0,
-                "Height_Dam"                                       : 0.0,
-                "Number_of_phases"                                 : 0.0
+                "variable_name": "PLEASE_PRESCRIBE_VARIABLE_NAME",
+                "is_fixed"          : false,
+                "value"             : 0.0,
+                "table"             : 0,
+                "position"          : [0.0,0.0,0.0]
             }  )" );
         
         // Some values need to be mandatorily prescribed since no meaningful default value exist. For this reason try accessing to them
         // So that an error is thrown if they don't exist
-        rParameters["Number_of_phases"];
+        rParameters["value"];
+        rParameters["variable_name"];
         rParameters["model_part_name"];
 
         // Now validate agains defaults -- this also ensures no type mismatch
         rParameters.ValidateAndAssignDefaults(default_parameters);
-        
-        mMeshId = rParameters["mesh_id"].GetInt();
-        mIsFixed = rParameters["is_fixed"].GetBool();
-        mGravityDirection = rParameters["Gravity_Direction"].GetString();
-        mReferenceCoordinate = rParameters["Reservoir_Bottom_Coordinate_in_Gravity_Direction"].GetDouble();
-        mHeight = rParameters["Height_Dam"].GetDouble();
-        mPhases = rParameters["Number_of_phases"].GetDouble();
 
+        mMeshId = rParameters["mesh_id"].GetInt();
+        mVariableName = rParameters["variable_name"].GetString();
+        mIsFixed = rParameters["is_fixed"].GetBool();
+        mValue = rParameters["value"].GetDouble();
+        // Getting the values of the device coordinates
+        mDeviceCoordinates.resize(3,false);
+        mDeviceCoordinates[0] = rParameters["position"][0].GetDouble();
+        mDeviceCoordinates[1] = rParameters["position"][1].GetDouble();
+        mDeviceCoordinates[2] = rParameters["position"][2].GetDouble();
+        
         mTimeUnitConverter = mrModelPart.GetProcessInfo()[TIME_UNIT_CONVERTER];
-  
+        mTableId = rParameters["table"].GetInt();
+        
+        if(mTableId != 0)
+            mpTable = mrModelPart.pGetTable(mTableId);
 
         KRATOS_CATCH("");
     }
@@ -79,89 +88,81 @@ public:
     ///------------------------------------------------------------------------------------
     
     /// Destructor
-    virtual ~DamConstructionProcess() {}
-
+    virtual ~DamTemperaturebyDeviceProcess() {}
+  
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    void ExecuteInitialize()
+    void ExecuteInitializeSolutionStep()
     {
-        KRATOS_TRY;
         
+        KRATOS_TRY;
+
         const int nelements = mrModelPart.GetMesh(mMeshId).Elements().size();
+        Variable<double> var = KratosComponents< Variable<double> >::Get(mVariableName);
+        bool IsInside = false;
+        array_1d<double,3> LocalCoordinates;       
+        Element::Pointer pSelectedElement;
+
+        // Getting the values of table in case that it exist        
+        if(mTableId != 0 )
+        { 
+            double time = mrModelPart.GetProcessInfo()[TIME];
+            time = time/mTimeUnitConverter;
+            mValue = mpTable->GetValue(time);
+        }
 
         if (nelements != 0)
         {
             ModelPart::ElementsContainerType::iterator el_begin = mrModelPart.ElementsBegin();
-            
-            #pragma omp parallel for
+            int PointsNumber = 0;
+
             for(int k = 0; k<nelements; k++)
             {
                 ModelPart::ElementsContainerType::iterator it = el_begin + k;
-                it->Set(ACTIVE,false);
+                pSelectedElement = (*(it.base()));
+                IsInside = pSelectedElement->GetGeometry().IsInside(mDeviceCoordinates,LocalCoordinates);
+                if(IsInside) break; 
             }
-
-        }
-        
-        KRATOS_CATCH("");
-    }
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 
-    void ExecuteInitializeSolutionStep()
-    {
-            
-            KRATOS_TRY;
-            
-            const int nelements = mrModelPart.GetMesh(mMeshId).Elements().size();
-            int direction;
-            
-            if( mGravityDirection == "X")
-                direction = 0;
-            else if( mGravityDirection == "Y")
-                direction = 1;
-            else
-                direction = 2;
-
-            double time = mrModelPart.GetProcessInfo()[TIME];
-            time = time/mTimeUnitConverter;
-
-            double current_height = mReferenceCoordinate + (mHeight/mPhases)*time;
-
-            if (nelements != 0)
+            if(IsInside==false)
             {
-                ModelPart::ElementsContainerType::iterator el_begin = mrModelPart.ElementsBegin();
-                
-                #pragma omp parallel for
                 for(int k = 0; k<nelements; k++)
                 {
                     ModelPart::ElementsContainerType::iterator it = el_begin + k;
-                    const Geometry< Node<3> >& geom = it->GetGeometry();
-                    array_1d<double,3> central_position = geom.Center();
-
-                    if((central_position(direction) >= mReferenceCoordinate) && (central_position(direction) <= current_height) )
-                    {
-                        it->Set(ACTIVE, true);
-                    }
+                    pSelectedElement = (*(it.base()));
+                    IsInside = pSelectedElement->GetGeometry().IsInside(mDeviceCoordinates,LocalCoordinates,1.0e-5);
+                    if(IsInside) break;
                 }
             }
-            
-            KRATOS_CATCH("");
+            if(IsInside == false)
+            {
+                KRATOS_ERROR << "ERROR!!, PLEASE REPEAT THE SEARCH " << std::endl;
+            }
+
+            PointsNumber = pSelectedElement->GetGeometry().PointsNumber();
+
+            for(int j = 0; j < PointsNumber; j++)
+            {
+                    pSelectedElement->GetGeometry().GetPoint(j).FastGetSolutionStepValue(var) = mValue;
+                    pSelectedElement->GetGeometry().GetPoint(j).Fix(var);
+            }    
+        }
+    
+        KRATOS_CATCH("");
     }
-   
 
 ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
+
     /// Turn back information as a string.
     std::string Info() const
     {
-        return "DamConstructionProcess";
+        return "DamTemperaturebyDeviceProcess";
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const
     {
-        rOStream << "DamConstructionProcess";
+        rOStream << "DamTemperaturebyDeviceProcess";
     }
 
     /// Print object's data.
@@ -177,30 +178,32 @@ protected:
 
     ModelPart& mrModelPart;
     std::size_t mMeshId;
-    std::string mGravityDirection;
+    std::string mVariableName;
     bool mIsFixed;
-    double mReferenceCoordinate;
-    double mHeight;
-    double mPhases;
+    double mValue;
+    array_1d<double,3> mDeviceCoordinates;
     double mTimeUnitConverter;
+    TableType::Pointer mpTable;
+    int mTableId; 
+    
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 private:
 
     /// Assignment operator.
-    DamConstructionProcess& operator=(DamConstructionProcess const& rOther);
+    DamTemperaturebyDeviceProcess& operator=(DamTemperaturebyDeviceProcess const& rOther);
 
 };//Class
 
 
 /// input stream function
 inline std::istream& operator >> (std::istream& rIStream,
-                                  DamConstructionProcess& rThis);
+                                DamTemperaturebyDeviceProcess& rThis);
 
 /// output stream function
 inline std::ostream& operator << (std::ostream& rOStream,
-                                  const DamConstructionProcess& rThis)
+                                  const DamTemperaturebyDeviceProcess& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -211,4 +214,5 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 } /* namespace Kratos.*/
 
-#endif /* KRATOS_DAM_CONSTRUCTION_PROCESS defined */
+#endif /* KRATOS_DAM_TEMPERATURE_BY_DEVICE_PROCESS defined */
+
