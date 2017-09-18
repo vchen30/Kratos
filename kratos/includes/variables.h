@@ -186,7 +186,6 @@ namespace Kratos
     KRATOS_DEFINE_VARIABLE(double, ELEMENT_ERROR)
     KRATOS_DEFINE_VARIABLE(Vector, MMG_METRIC)
     
-    
     //for PFEM fluids application:
     KRATOS_DEFINE_VARIABLE( double, NODAL_AREA )
 
