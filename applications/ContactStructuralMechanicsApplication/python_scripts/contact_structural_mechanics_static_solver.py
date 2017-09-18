@@ -46,7 +46,6 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "max_number_splits": 3,
                 "adaptive_remeshing": false,
                 "remeshing_max_iterations" : 3,
-                "max_number_splits": 3,
                 "contact_displacement_relative_tolerance": 1.0e-4,
                 "contact_displacement_absolute_tolerance": 1.0e-9,
                 "contact_residual_relative_tolerance": 1.0e-4,
