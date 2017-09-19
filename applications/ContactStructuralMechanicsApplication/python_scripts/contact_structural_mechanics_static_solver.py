@@ -205,20 +205,20 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                                                                                                self.processes_list
                                                                                                )
     
-        def _create_contact_newton_raphson_strategy_meshing(self): 
-            computing_model_part = self.GetComputingModelPart() 
-            mechanical_scheme = self.get_solution_scheme() 
-            linear_solver = self.get_linear_solver() 
-            mechanical_convergence_criterion = self.get_convergence_criterion() 
-            builder_and_solver = self.get_builder_and_solver() 
-            newton_parameters = KratosMultiphysics.Parameters("""{}""") 
-            remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
-            newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
-            newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
-            newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"]) 
-            #newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"]) 
-            remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
-            return MeshingApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
+    def _create_contact_newton_raphson_strategy_meshing(self): 
+        computing_model_part = self.GetComputingModelPart() 
+        mechanical_scheme = self.get_solution_scheme() 
+        linear_solver = self.get_linear_solver() 
+        mechanical_convergence_criterion = self.get_convergence_criterion() 
+        builder_and_solver = self.get_builder_and_solver() 
+        newton_parameters = KratosMultiphysics.Parameters("""{}""") 
+        remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
+        newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
+        newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
+        newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"]) 
+        #newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"]) 
+        remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
+        return MeshingApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
                                                                                                 mechanical_scheme,  
                                                                                                 linear_solver,  
                                                                                                 mechanical_convergence_criterion,  
