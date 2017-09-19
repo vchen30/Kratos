@@ -22,11 +22,14 @@
 #include "includes/model_part.h"
 #include "meshing_application.h"
 #include "includes/kratos_parameters.h"
+#include "solving_strategies/schemes/scheme.h"
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
+#include "utilities/process_factory_utility.h"
 // Processes
 #include "processes/find_nodal_h_process.h"
 #include "custom_processes/metric_fast_init_process.h"
-#include "custom_processes/metrics_error_process.h"
+#include "custom_processes/metrics_spr_error_process.h"
+// #include "custom_processes/metrics_error_process.h" // DEPRECATED
 #ifdef INCLUDE_MMG
     #include "custom_processes/mmg_process.h"
 #endif
@@ -42,7 +45,7 @@ namespace Kratos
 ///@}
 ///@name Type Definitions
 ///@{
-
+    
 ///@}
 ///@name  Enum's
 ///@{
@@ -71,21 +74,21 @@ public:
 
     KRATOS_CLASS_POINTER_DEFINITION( ErrorMeshCriteria );
 
-    typedef ConvergenceCriteria< TSparseSpace, TDenseSpace > BaseType;
+    typedef ConvergenceCriteria< TSparseSpace, TDenseSpace >       BaseType;
 
-    typedef TSparseSpace                              SparseSpaceType;
+    typedef TSparseSpace                                    SparseSpaceType;
 
-    typedef typename BaseType::TDataType                    TDataType;
+    typedef typename BaseType::TDataType                          TDataType;
 
-    typedef typename BaseType::DofsArrayType            DofsArrayType;
+    typedef typename BaseType::DofsArrayType                  DofsArrayType;
 
-    typedef typename BaseType::TSystemMatrixType    TSystemMatrixType;
+    typedef typename BaseType::TSystemMatrixType          TSystemMatrixType;
 
-    typedef typename BaseType::TSystemVectorType    TSystemVectorType;
+    typedef typename BaseType::TSystemVectorType          TSystemVectorType;
     
-    typedef ModelPart::ConditionsContainerType    ConditionsArrayType;
+    typedef ModelPart::ConditionsContainerType          ConditionsArrayType;
     
-    typedef ModelPart::NodesContainerType              NodesArrayType;
+    typedef ModelPart::NodesContainerType                    NodesArrayType;
     
     typedef std::size_t                                             KeyType;
     
@@ -100,19 +103,22 @@ public:
     /// Default constructors
     ErrorMeshCriteria(
         ModelPart& rThisModelPart,
-        Parameters ThisParameters = Parameters(R"({})")
+        Parameters ThisParameters = Parameters(R"({})"),
+        ProcessesListType pMyProcesses = nullptr
         )
         : ConvergenceCriteria< TSparseSpace, TDenseSpace >(),
           mThisModelPart(rThisModelPart),
           mDimension(rThisModelPart.GetProcessInfo()[DOMAIN_SIZE]),
           mThisParameters(ThisParameters),
-          mFindNodalH(FindNodalHProcess(mThisModelPart))
+          mFindNodalH(FindNodalHProcess(mThisModelPart)),
+          mpMyProcesses(pMyProcesses)
     {
-        Parameters DefaultParameters = Parameters(R"(
+        Parameters default_parameters = Parameters(R"(
         {
             "error_mesh_tolerance" : 1.0e-3,
             "error_mesh_constant" : 1.0e-3,
             "remeshing_utility"   : "MMG",
+            "strategy"            : "Error",
             "remeshing_parameters": 
             {
                 "filename"                             : "out",
@@ -133,22 +139,22 @@ public:
             {
                 "minimal_size"                        : 0.1,
                 "maximal_size"                        : 10.0, 
-                "enforce_current"                     : true
+                "error"                               : 0.05
             }
         })" );
         
-        mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
+        mThisParameters.ValidateAndAssignDefaults(default_parameters);
         
         mErrorTolerance = mThisParameters["error_mesh_tolerance"].GetDouble();
         mConstantError = mThisParameters["error_mesh_constant"].GetDouble();
         mRemeshingUtilities = ConvertRemeshUtil(mThisParameters["remeshing_utility"].GetString());
         
-        #if !defined(INCLUDE_MMG)
-            if (mRemeshingUtilities == MMG)
-            {
-                KRATOS_ERROR << "YOU CAN USE MMG LIBRARY. CHECK YOUR COMPILATION" << std::endl;
-            }
-        #endif
+    #if !defined(INCLUDE_MMG)
+        if (mRemeshingUtilities == MMG)
+        {
+            KRATOS_ERROR << "YOU CAN USE MMG LIBRARY. CHECK YOUR COMPILATION" << std::endl;
+        }
+    #endif
     }
 
     ///Copy constructor 
@@ -190,25 +196,25 @@ public:
         mFindNodalH.Execute();
                 
         // We initialize the check
-        bool ConvergedError = true;
+        bool converged_error = true;
         
         // We initialize the total error
-        double TotalErrorPow2 = 0.0;
-        double CurrentSolPow2 = 0.0;
+        double total_error_pow2 = 0.0;
+        double current_sol_pow2 = 0.0;
         
         // Iterate in the nodes
-        NodesArrayType& NodesArray = rModelPart.Nodes();
-        int numNodes = NodesArray.end() - NodesArray.begin();
+        NodesArrayType& nodes_array = rModelPart.Nodes();
+        const int num_nodes = nodes_array.end() - nodes_array.begin();
         
 //         #pragma omp parallel for // FIXME: Parallel not working
-        for(int i = 0; i < numNodes; i++) 
+        for(int i = 0; i < num_nodes; i++) 
         {
-            auto itNode = NodesArray.begin() + i;
+            auto it_node = nodes_array.begin() + i;
             
-            double MainDoFNodalError = 0.0;           
-            double OtherDoFNodalError = 0.0;        
+            double main_dof_nodal_error = 0.0;           
+            double other_dof_nodal_error = 0.0;        
             
-            Node<3>::DofsContainerType& NodeDofs = (itNode)->GetDofs();
+            Node<3>::DofsContainerType& NodeDofs = (it_node)->GetDofs();
 
             SizeType dof_id;
 //             TDataType DofValue;
@@ -217,68 +223,68 @@ public:
             {
                 if (itDof->IsFree())
                 {
-                    DoFId = itDof->EquationId();
+                    dof_id = itDof->EquationId();
 //                     DofValue = itDof->GetSolutionStepValue(0);
                     
                     KeyType CurrVar = itDof->GetVariable().Key();
                     if ((CurrVar == DISPLACEMENT_X) || (CurrVar == DISPLACEMENT_Y) || (CurrVar == DISPLACEMENT_Z) || (CurrVar == VELOCITY_X) || (CurrVar == VELOCITY_Y) || (CurrVar == VELOCITY_Z))
                     {
-                        MainDoFNodalError += b[DoFId] * b[DoFId];
+                        main_dof_nodal_error += b[dof_id] * b[dof_id];
                     }
                     else
                     {
-                        OtherDoFNodalError += b[DoFId] * b[DoFId];
+                        other_dof_nodal_error += b[dof_id] * b[dof_id];
                     }
                 }
 //                 else
 //                 {
 // //                     const double Reaction = itDof->GetSolutionStepReactionValue();
 // // //                     #pragma omp atomic
-// //                     CurrentSolPow2 += Reaction * Reaction;
+// //                     current_sol_pow2 += Reaction * Reaction;
 //                     
-//                     DoFId = itDof->EquationId();
+//                     dof_id = itDof->EquationId();
 //             
 // //                     #pragma omp atomic
-//                     CurrentSolPow2 += b[DoFId] * b[DoFId];
+//                     current_sol_pow2 += b[dof_id] * b[dof_id];
 //                 }
             }
         
-            const double NodalH = itNode->FastGetSolutionStepValue(NODAL_H);
+            const double nodal_h = it_node->FastGetSolutionStepValue(NODAL_H);
             
-            const double NodalError = NodalH * NodalH * std::sqrt(MainDoFNodalError) + NodalH * std::sqrt(OtherDoFNodalError);
-            itNode->SetValue(NODAL_ERROR, NodalError);
+            const double nodal_error = nodal_h * nodal_h * std::sqrt(main_dof_nodal_error) + nodal_h * std::sqrt(other_dof_nodal_error);
+            it_node->SetValue(NODAL_ERROR, nodal_error);
             
 //             #pragma omp atomic
-            TotalErrorPow2 += (NodalError * NodalError);
+            total_error_pow2 += (nodal_error * nodal_error);
         }
         
         // Setting the average nodal error
-        rModelPart.GetProcessInfo()[AVERAGE_NODAL_ERROR] = mErrorTolerance * std::sqrt((CurrentSolPow2 + TotalErrorPow2)/numNodes);
+        rModelPart.GetProcessInfo()[AVERAGE_NODAL_ERROR] = mErrorTolerance * std::sqrt((current_sol_pow2 + total_error_pow2)/num_nodes);
         
 //         // Debug
-//         KRATOS_WATCH(CurrentSolPow2)
-//         KRATOS_WATCH(TotalErrorPow2)
+//         KRATOS_WATCH(current_sol_pow2)
+//         KRATOS_WATCH(total_error_pow2)
         
         // Final check
-        const double MeshError = mConstantError * std::sqrt(TotalErrorPow2);
-//         const double MeshError = std::sqrt(TotalErrorPow2/(CurrentSolPow2 + TotalErrorPow2));
-        if (MeshError > mErrorTolerance)
+        const double mesh_error = mConstantError * std::sqrt(total_error_pow2);
+//         const double mesh_error = std::sqrt(total_error_pow2/(current_sol_pow2 + total_error_pow2));
+        if (mesh_error > mErrorTolerance)
         {
-            ConvergedError = false;
+            converged_error = false;
         }
     
-        if (ConvergedError == true)
+        if (converged_error == true)
         {
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "The error due to the mesh size: " << MeshError << " is under the tolerance prescribed: " << mErrorTolerance << ". No remeshing required" << std::endl;
+                std::cout << "The error due to the mesh size: " << mesh_error << " is under the tolerance prescribed: " << mErrorTolerance << ". No remeshing required" << std::endl;
             }
         }
         else
         {
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "The error due to the mesh size: " << MeshError << " is bigger than the tolerance prescribed: " << mErrorTolerance << ". Remeshing required" << std::endl;
+                std::cout << "The error due to the mesh size: " << mesh_error << " is bigger than the tolerance prescribed: " << mErrorTolerance << ". Remeshing required" << std::endl;
                 std::cout << "AVERAGE_NODAL_ERROR: " << rModelPart.GetProcessInfo()[AVERAGE_NODAL_ERROR] << std::endl;
             }
             double estimated_error = 0;
@@ -334,7 +340,7 @@ public:
             rModelPart.Set(MODIFIED, true);
         }
         
-        return ConvergedError;
+        return converged_error;
     }
     
     /**
@@ -419,15 +425,17 @@ private:
     ///@name Member Variables
     ///@{
 
-    ModelPart& mThisModelPart;              // The model part where the refinement is computed
-    const unsigned int mDimension;          // The dimension of the problem
-    Parameters mThisParameters;             // The parameters
+    ModelPart& mThisModelPart;                 // The model part where the refinement is computed
+    const unsigned int mDimension;             // The dimension of the problem
+    Parameters mThisParameters;                // The parameters
     
-    FindNodalHProcess mFindNodalH;          // The process to copmpute NODAL_H
-    RemeshingUtilities mRemeshingUtilities; // The remeshing utilities to use
+    FindNodalHProcess mFindNodalH;             // The process to copmpute NODAL_H
+    RemeshingUtilities mRemeshingUtilities;    // The remeshing utilities to use
     
-    double mErrorTolerance;                 // The error tolerance considered
-    double mConstantError;                  // The constant considered in the remeshing process
+    double mErrorTolerance;                    // The error tolerance considered
+    double mConstantError;                     // The constant considered in the remeshing process
+    
+    ProcessesListType mpMyProcesses;           // The processes list
     
     ///@}
     ///@name Private Operators

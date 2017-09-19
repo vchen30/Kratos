@@ -24,6 +24,7 @@
 #include "custom_processes/metrics_levelset_process.h"
 #include "custom_processes/metrics_hessian_process.h"
 #include "custom_processes/metrics_error_process.h"
+#include "custom_processes/metrics_spr_error_process.h"
 // #include "custom_processes/nodal_values_interpolation_process.h"
 #include "custom_processes/internal_variables_interpolation_process.h"
 // #include "custom_processes/set_h_map_process.h"

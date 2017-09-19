@@ -218,7 +218,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"]) 
         #newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"]) 
         remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
-        return MeshingApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
+        return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
                                                                                                 mechanical_scheme,  
                                                                                                 linear_solver,  
                                                                                                 mechanical_convergence_criterion,  
