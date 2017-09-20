@@ -26,8 +26,6 @@ class ImplicitMechanicalSolver(structural_mechanics_implicit_dynamic_solver.Impl
     """
     def __init__(self, main_model_part, custom_settings): 
         
-        self.main_model_part = main_model_part    
-        
         ##settings string in json format
         contact_settings = KratosMultiphysics.Parameters("""
         {
@@ -55,16 +53,10 @@ class ImplicitMechanicalSolver(structural_mechanics_implicit_dynamic_solver.Impl
         self.contact_settings = contact_settings["contact_settings"]
 
         # Construct the base solver.
-        super().__init__(self.main_model_part, self.settings)
+        super().__init__(main_model_part, self.settings)
         
         # Setting reactions true by default
         self.settings["compute_reactions"].SetBool(True)
-        
-        # Setting echo level
-        self.echo_level =  self.settings["echo_level"].GetInt()
-    
-        # Initialize the processes list
-        self.processes_list = None
         
         print("Construction of ContactMechanicalSolver finished")
 
@@ -104,9 +96,6 @@ class ImplicitMechanicalSolver(structural_mechanics_implicit_dynamic_solver.Impl
     
     def Initialize(self):
         super().Initialize()
-    
-    def AddProcessesList(self, processes_list):
-        self.processes_list = KratosMultiphysics.ProcessFactoryUtility(processes_list)
     
     def _create_convergence_criterion(self):
         # Create an auxiliary Kratos parameters object to store the convergence settings.

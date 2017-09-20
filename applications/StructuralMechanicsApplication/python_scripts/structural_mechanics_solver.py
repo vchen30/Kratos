@@ -91,6 +91,10 @@ class MechanicalSolver(object):
 
         #TODO: shall obtain the computing_model_part from the MODEL once the object is implemented
         self.main_model_part = main_model_part
+        
+        # Initialize the processes list
+        self.processes_list = None
+        
         print("::[MechanicalSolver]:: Construction finished")
 
     def AddVariables(self):
@@ -230,6 +234,9 @@ class MechanicalSolver(object):
 
     def Check(self):
         self.get_mechanical_solver().Check()
+
+    def AddProcessesList(self, processes_list):
+        self.processes_list = KratosMultiphysics.ProcessFactoryUtility(processes_list)
 
     #### Specific internal functions ####
 
