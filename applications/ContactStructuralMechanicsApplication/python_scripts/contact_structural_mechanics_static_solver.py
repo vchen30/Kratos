@@ -43,8 +43,6 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "adaptative_strategy": false,
                 "split_factor": 10.0,
                 "max_number_splits": 3,
-                "adaptive_remeshing": false,
-                "remeshing_max_iterations" : 3,
                 "contact_displacement_relative_tolerance": 1.0e-4,
                 "contact_displacement_absolute_tolerance": 1.0e-9,
                 "contact_residual_relative_tolerance": 1.0e-4,
@@ -215,8 +213,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
         newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
         newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
-        newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"]) 
-        #newton_parameters.AddValue("adaptive_remeshing",self.contact_settings["adaptive_remeshing"]) 
+        newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])  
         remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
         return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
                                                                                                 mechanical_scheme,  

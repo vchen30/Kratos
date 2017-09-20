@@ -227,8 +227,8 @@ public:
 
         ThisRemeshingParameters.ValidateAndAssignDefaults(DefaultRemeshingParameters);
 
-        mRemeshingMaxIterations = ThisParameters["remeshing_max_iterations"].GetInt();
-
+        //mRemeshingMaxIterations = ThisParameters["remeshing_max_iterations"].GetInt();
+        mRemeshingMaxIterations =3;
         KRATOS_CATCH("");
     }
 
@@ -318,6 +318,7 @@ public:
                 "step_data_size"                   : 0,
                 "buffer_size"                      : 0
                 })" );
+                
                 #ifdef INCLUDE_MMG
                     if (mDimension == 2)
                     {
@@ -331,7 +332,7 @@ public:
                         //MmgRemesh.Execute();
                     }
                 #else 
-                    KRATOS_ERROR << "Please compile with MMG to use this utility" << std::endl;
+                    KRATOS_ERROR << "Please compile with MMGc to use this utility" << std::endl;
                 #endif
 
                 
