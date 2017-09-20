@@ -312,29 +312,28 @@ public:
                         "interpolation_type"                   : "LST",
                         "internal_variable_interpolation_list" :[]
                     },
-                "save_external_files"              : false,
-                "max_number_of_searchs"            : 1000,
-                "echo_level"                       : 3,
-                "step_data_size"                   : 0,
-                "buffer_size"                      : 0
+                    "save_external_files"              : false,
+                    "max_number_of_searchs"            : 1000,
+                    "echo_level"                       : 3,
+                    "step_data_size"                   : 0,
+                    "buffer_size"                      : 0
                 })" );
                 
-                #ifdef INCLUDE_MMG
-                    if (mDimension == 2)
-                    {
-                        MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
-                        MmgRemesh.Execute();
-                    }
-                    else
-                    {
-                        //!!not yet implemented
-                        //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
-                        //MmgRemesh.Execute();
-                    }
-                #else 
-                    KRATOS_ERROR << "Please compile with MMGc to use this utility" << std::endl;
-                #endif
-
+            #ifdef INCLUDE_MMG
+                if (StrategyBaseType::GetModelPart().GetProcessInfo()[DOMAIN_SIZE] == 2)
+                {
+                    MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
+                    MmgRemesh.Execute();
+                }
+                else
+                {
+                    //!!not yet implemented
+                    //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
+                    //MmgRemesh.Execute();
+                }
+            #else 
+                KRATOS_ERROR << "Please compile with MMGc to use this utility" << std::endl;
+            #endif
                 
                 //mFindNodalH.Execute();
                 
