@@ -322,26 +322,25 @@ public:
                     "buffer_size"                      : 0
                 })" );
                 
-                #ifdef INCLUDE_MMG
-                    //if (mDimension == 2)
-                    if (true)
-                    {
-                        //MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(), RemeshingParameters); 
-                        //MmgRemesh.Execute();
-                        ExecuteRemeshing<2> MmgRemesh = ExecuteRemeshing<2>(StrategyBaseType::GetModelPart(), RemeshingParameters);
-                        MmgRemesh.Execute();
-                    }
-                    else
-                    {
-                        //!!not yet implemented
-                        //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
-                        //MmgRemesh.Execute();
-                    }
-                #else 
-                    KRATOS_ERROR << "Please compile with MMGc to use this utility" << std::endl;
-                #endif
+            #ifdef INCLUDE_MMG_CONTACT
+                //if (mDimension == 2)
+                if (true)
+                {
+                    //MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(), RemeshingParameters); 
+                    //MmgRemesh.Execute();
+                    ExecuteRemeshing<2> MmgRemesh = ExecuteRemeshing<2>(StrategyBaseType::GetModelPart(), RemeshingParameters);
+                    MmgRemesh.Execute();
+                }
+                else
+                {
+                    //!!not yet implemented
+                    //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
+                    //MmgRemesh.Execute();
+                }
+            #else 
+                KRATOS_ERROR << "Please compile with MMGc to use this utility" << std::endl;
+            #endif
 
-                
                 //mFindNodalH.Execute();
                 
                 // Processes initialization
@@ -717,21 +716,21 @@ protected:
             "step_data_size"                   : 0,
             "buffer_size"                      : 0
             })" );
-            #ifdef INCLUDE_MMG
-                if (mDimension == 2)
-                {
-                    MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
-                    MmgRemesh.Execute();
-                }
-                else
-                {
-                    //!!not yet implemented
-                    //MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
-                    //MmgRemesh.Execute();
-                }
-            #else 
-                KRATOS_ERROR << "Please compile with MMG to use this utility" << std::endl;
-            #endif
+        #ifdef INCLUDE_MMG_CONTACT
+            if (mDimension == 2)
+            {
+                MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
+                MmgRemesh.Execute();
+            }
+            else
+            {
+                !!not yet implemented
+                MmgProcess<3> MmgRemesh = MmgProcess<3>(mThisModelPart, mThisParameters["remeshing_parameters"]); 
+                MmgRemesh.Execute();
+            }
+        #else 
+            KRATOS_ERROR << "Please compile with MMG to use this utility" << std::endl;
+        #endif
 
             
             //mFindNodalH.Execute();

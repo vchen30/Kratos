@@ -149,12 +149,12 @@ public:
         mConstantError = mThisParameters["error_mesh_constant"].GetDouble();
         mRemeshingUtilities = ConvertRemeshUtil(mThisParameters["remeshing_utility"].GetString());
         
-    #if !defined(INCLUDE_MMG)
-        if (mRemeshingUtilities == MMG)
-        {
-            KRATOS_ERROR << "YOU CAN USE MMG LIBRARY. CHECK YOUR COMPILATION" << std::endl;
-        }
-    #endif
+#if !defined(INCLUDE_MMG)
+    if (mRemeshingUtilities == MMG)
+    {
+        KRATOS_ERROR << "YOU CANNOT USE MMG LIBRARY. CHECK YOUR COMPILATION" << std::endl;
+    }
+#endif
     }
 
     ///Copy constructor 
