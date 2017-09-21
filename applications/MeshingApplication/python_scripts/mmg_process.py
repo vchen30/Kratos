@@ -2,18 +2,17 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the Kratos Library
 import KratosMultiphysics as KratosMultiphysics
 import KratosMultiphysics.MeshingApplication as MeshingApplication
-import os
-import math
+
 from json_utilities import *
 import json
-KratosMultiphysics.CheckForPreviousImport()
+import os
 
+KratosMultiphysics.CheckForPreviousImport()
 
 def Factory(settings, Model):
     if(type(settings) != KratosMultiphysics.Parameters):
         raise Exception("Expected input shall be a Parameters object, encapsulating a json string")
     return MmgProcess(Model, settings["Parameters"])
-
 
 class MmgProcess(KratosMultiphysics.Process):
 
@@ -43,10 +42,6 @@ class MmgProcess(KratosMultiphysics.Process):
                 "metric_variable"                  : ["DISTANCE"],
                 "interpolation_error"              : 0.04,
                 "mesh_dependent_constant"          : 0.0
-            },
-            "error_parameters"              :{
-                "initial_run"                  : true,
-                "interpolation_error"          : 0.004
             },
             "enforce_current"                  : true,
             "initial_step"                     : 1,
@@ -100,12 +95,7 @@ class MmgProcess(KratosMultiphysics.Process):
             mesh_dependent_constant = self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble()
             if (mesh_dependent_constant == 0.0):
                 self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].SetDouble(0.5 * (self.dim/(self.dim + 1))**2.0)
-        #elif (self.strategy == "Error"):
-        #    self.metric_variable = self.__generate_variable_list_from_input(self.params["hessian_strategy_parameters"]["metric_variable"])
-        #    mesh_dependent_constant = self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble()
-        #    if (mesh_dependent_constant == 0.0):
-        #        self.params["hessian_strategy_parameters"]["mesh_dependent_constant"].SetDouble(0.5 * (self.dim/(self.dim + 1))**2.0)
-
+        
         # Calculate NODAL_H
         self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.Model[self.model_part_name])
         self.find_nodal_h.Execute()
@@ -131,10 +121,10 @@ class MmgProcess(KratosMultiphysics.Process):
                 mean = stat.mean(nodal_h_values)
                 stdev = stat.stdev(nodal_h_values)
                 prob = (self.params["automatic_remesh_parameters"]["min_size_current_percentage"].GetDouble())/100
-                self.params["minimal_size"].SetDouble(normvalf(prob, mean, stdev))
+                self.params["minimal_size"].SetDouble(_normvalf(prob, mean, stdev))
 
                 prob = (self.params["automatic_remesh_parameters"]["max_size_current_percentage"].GetDouble())/100
-                self.params["maximal_size"].SetDouble(normvalf(prob, mean, stdev))
+                self.params["maximal_size"].SetDouble(_normvalf(prob, mean, stdev))
 
         # Anisotropic remeshing parameters
         self.anisotropy_remeshing = self.params["anisotropy_remeshing"].GetBool()
@@ -194,17 +184,11 @@ class MmgProcess(KratosMultiphysics.Process):
             if self.step_frequency > 0:
                 if self.step >= self.step_frequency:
                     if self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.TIME_STEPS] >= self.initial_step:
-                        if (self.strategy != "Error"):
-                            self._ExecuteRefinement()
-                            self.step = 0  # Reset
+                        self._ExecuteRefinement()
+                        self.step = 0  # Reset
 
-                                
     def ExecuteFinalizeSolutionStep(self):
-        if (self.strategy == "Error"):
-            if (self.params["error_parameters"]["initial_run"].GetBool() == True):
-                self.params["error_parameters"]["initial_run"].SetBool(False)
-                self._ExecuteRefinement()
-        
+        pass
 
     def ExecuteBeforeOutputStep(self):
         pass
@@ -266,50 +250,6 @@ class MmgProcess(KratosMultiphysics.Process):
                             self.Model[self.model_part_name],
                             current_metric_variable,
                             hessian_parameters))
-        elif (self.strategy == "Error"):
-            #hessian_parameters = KratosMultiphysics.Parameters("""{}""")
-            #hessian_parameters.AddValue("minimal_size",self.params["minimal_size"])
-            #hessian_parameters.AddValue("maximal_size",self.params["maximal_size"])
-            #hessian_parameters.AddValue("enforce_current",self.params["enforce_current"])
-            #hessian_parameters.AddValue("hessian_strategy_parameters",self.params["hessian_strategy_parameters"])
-            #hessian_parameters.AddValue("anisotropy_remeshing",self.params["anisotropy_remeshing"])
-            #hessian_parameters.AddValue("anisotropy_parameters",self.params["anisotropy_parameters"])
-            #for current_metric_variable in self.metric_variable:
-            #    if (type(current_metric_variable) is KratosMultiphysics.Array1DComponentVariable):
-            #        if (self.dim == 2):
-            #            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-            #                self.Model[self.model_part_name],
-            #                current_metric_variable,
-            #                hessian_parameters))
-            #        else:
-            #            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-            #                self.Model[self.model_part_name],
-            #                current_metric_variable,
-            #                hessian_parameters))
-            #    else:
-            #        if (self.dim == 2):
-            #            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-            #                self.Model[self.model_part_name],
-            #                current_metric_variable,
-            #                hessian_parameters))
-            #        else:
-            #            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-            #                self.Model[self.model_part_name],
-            #                current_metric_variable,
-            #                hessian_parameters))  
-            #spr_parameters = KratosMultiphysics.Parameters("""{}""")
-            #spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
-            #spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
-            #spr_parameters.AddValue("error",self.params["error_parameters"]["interpolation_error"])
-            
-            #if (self.dim == 2):
-            #    self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-            #        self.Model[self.model_part_name],
-            #        spr_parameters))
-            #else:
-            #    self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-            #        self.Model[self.model_part_name],
-            #        spr_parameters))                          
 
     def _CreateGradientProcess(self):
         # We compute the scalar value gradient
@@ -335,7 +275,6 @@ class MmgProcess(KratosMultiphysics.Process):
             metric_process.Execute()
 
         print("Remeshing")
-        #if (self.strategy != "Error"):
         self.MmgProcess.Execute()
 
         if (self.strategy == "LevelSet"):
@@ -373,59 +312,41 @@ class MmgProcess(KratosMultiphysics.Process):
           if isinstance(val,float):
               variable_list.append(aux_var)
           else:
-            if (self.strategy == "Hessian"):
-                variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_X" ))
-                variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Y" ))
-                if (self.dim == 3):
-                    variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Z" ))
-            elif (self.strategy == "Error"):
-                variable_list.append(aux_var)       
+              variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_X" ))
+              variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Y" ))
+              if (self.dim == 3):
+                variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Z" ))
+
       return variable_list
 
-def linear_interpolation(x, x_list, y_list):
-    ind_inf = 0
-    ind_sup = -1
-    x_inf = x_list[ind_inf]
-    x_sup = x_list[ind_sup]
+def _linear_interpolation(x, x_list, y_list):
+    tb = KratosMultiphysics.PiecewiseLinearTable()
     for i in range(len(x_list)):
-        if x_list[i] <= x:
-            ind_inf = i
-            x_inf = x_list[ind_inf]
-        if x_list[-(1 + i)] >= x:
-            ind_sup = -(1 + i)
-            x_sup = x_list[ind_sup]
+        tb.AddRow(x_list[i], y_list[i])
+        
+    return tb.GetNearestValue(x)
 
-    if (x_sup - x_inf == 0):
-        y = y_list[ind_inf]
-    else:
-        prop_sup = (x - x_inf)/(x_sup - x_inf)
-        prop_inf = 1.0 - prop_sup
-        y = y_list[ind_inf] * prop_inf + y_list[ind_sup] * prop_sup
-
-    return y
-
-
-def normpdf(x, mean, sd):
+def _normpdf(x, mean, sd):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     data = read_external_json(dir_path+"/normal_distribution.json")
     z = (x-mean)/sd
     z_list = data["Z"]
     prob_list = data["Prob"]
     if (z > 0):
-        prob = linear_interpolation(z, z_list, prob_list)
+        prob = _linear_interpolation(z, z_list, prob_list)
     else:
-        prob = 1.0 - linear_interpolation(-z, z_list, prob_list)
+        prob = 1.0 - _linear_interpolation(-z, z_list, prob_list)
     return prob
 
 
-def normvalf(prob, mean, sd):
+def _normvalf(prob, mean, sd):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     data = read_external_json(dir_path+"/normal_distribution.json")
     z_list = data["Z"]
     prob_list = data["Prob"]
     if (prob >= 0.5):
-        z = linear_interpolation(prob, prob_list, z_list)
+        z = _linear_interpolation(prob, prob_list, z_list)
     else:
-        z = - linear_interpolation(1.0 - prob, prob_list, z_list)
+        z = - _linear_interpolation(1.0 - prob, prob_list, z_list)
     x = z * sd + mean
     return x
