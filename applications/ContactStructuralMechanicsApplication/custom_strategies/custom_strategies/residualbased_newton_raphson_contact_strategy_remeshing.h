@@ -22,13 +22,16 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "includes/variables.h"
-#include "custom_processes/metric_fast_init_process.h"
-#include "custom_processes/metrics_spr_error_process.h"
 //#include "meshing_application.h"
 
 
 #ifdef INCLUDE_MMG
     #include "custom_processes/mmg_process.h"
+    #include "custom_processes/metric_fast_init_process.h"
+    #include "custom_processes/metrics_spr_error_process.h"
+    #include "meshing_application.h"
+    #include "processes/find_nodal_h_process.h"
+    #include "custom_utilities/execute_remeshing.h"
 #endif
 
 // Strategies
@@ -303,7 +306,7 @@ public:
                 Parameters RemeshingParameters = Parameters(R"(
                 {
                     "filename"                             : "out",
-                    "framework"                            : "Eulerian",
+                    "framework"                            : "Lagrangian",
                     "internal_variables_parameters"        :
                     {
                         "allocation_size"                      : 1000, 
@@ -323,7 +326,9 @@ public:
                     //if (mDimension == 2)
                     if (true)
                     {
-                        MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(),RemeshingParameters); 
+                        //MmgProcess<2> MmgRemesh = MmgProcess<2>(StrategyBaseType::GetModelPart(), RemeshingParameters); 
+                        //MmgRemesh.Execute();
+                        ExecuteRemeshing<2> MmgRemesh = ExecuteRemeshing<2>(StrategyBaseType::GetModelPart(), RemeshingParameters);
                         MmgRemesh.Execute();
                     }
                     else
