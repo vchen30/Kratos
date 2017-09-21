@@ -7,8 +7,8 @@
 //
 //README::::look to the key word "VERSION" if you want to find all the points where you have to change something so that you can pass from a kdtree to a bin data search structure;
 
-#if !defined(EXECUTE_REMESHING )
-#define  EXECUTE_REMESHING
+// #if !defined(EXECUTE_REMESHING )
+// #define  EXECUTE_REMESHING
 
 // /* External includes */
 // #include "boost/smart_ptr.hpp"
@@ -24,12 +24,10 @@
 #include "includes/model_part.h"
 #include "includes/kratos_parameters.h"
 
-
-#include "meshing_application.h"
-#include "custom_processes/mmg_process.h"
-
-
-
+// #include "meshing_application.h"
+#ifdef INCLUDE_MMG
+    #include "custom_processes/mmg_process.h"
+#endif
 
 
 namespace Kratos
@@ -50,8 +48,10 @@ ExecuteRemeshing(ModelPart& mp, Parameters params = Parameters(R"({})")): mThisM
 
 void Execute()
 {
-    //MmgProcess<TDim> MmgRemesh = MmgProcess<TDim>(mThisModelPart, mThisParameters); 
-    //MmgRemesh.Execute();
+#ifdef INCLUDE_MMG
+    auto MmgRemesh = MmgProcess<TDim>(mThisModelPart, mThisParameters); 
+    MmgRemesh.Execute();
+#endif
 }
 private:
 ModelPart mThisModelPart;
@@ -62,6 +62,6 @@ Parameters mThisParameters;
 
 }  // namespace Kratos.
 
-#endif // KRATOS_PROJECTION  defined 
+// #endif // KRATOS_PROJECTION  defined 
 
 

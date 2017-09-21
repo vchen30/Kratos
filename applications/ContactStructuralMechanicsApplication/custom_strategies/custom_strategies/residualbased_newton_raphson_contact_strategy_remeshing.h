@@ -26,14 +26,14 @@
 
 
 #ifdef INCLUDE_MMG
-    #include "custom_processes/mmg_process.h"
-    #include "custom_processes/metric_fast_init_process.h"
-    #include "custom_processes/metrics_spr_error_process.h"
-    #include "meshing_application.h"
-    #include "processes/find_nodal_h_process.h"
-    #include "custom_utilities/execute_remeshing.h"
+    #include "../MeshingApplication/custom_processes/mmg_process.h"
 #endif
-
+#include "../MeshingApplication/custom_processes/metric_fast_init_process.h"
+#include "../MeshingApplication/custom_processes/metrics_spr_error_process.h"
+#include "../MeshingApplication/meshing_application.h"
+#include "processes/find_nodal_h_process.h"
+#include "../MeshingApplication/custom_utilities/execute_remeshing.h"
+    
 // Strategies
 #include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
 
