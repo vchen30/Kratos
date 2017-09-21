@@ -25,7 +25,7 @@
 //#include "meshing_application.h"
 
 
-#ifdef INCLUDE_MMG
+#ifdef INCLUDE_MMG_CONTACT
     #include "../MeshingApplication/custom_processes/mmg_process.h"
 #endif
 #include "../MeshingApplication/custom_processes/metric_fast_init_process.h"
