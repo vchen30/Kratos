@@ -192,6 +192,7 @@ public:
         const TSystemVectorType& b
     ) override
     {
+        /*
         // We recompute the NODAL_H
         mFindNodalH.Execute();
                 
@@ -267,8 +268,26 @@ public:
         
         // Final check
         const double mesh_error = mConstantError * std::sqrt(total_error_pow2);
-//         const double mesh_error = std::sqrt(total_error_pow2/(current_sol_pow2 + total_error_pow2));
-        if (mesh_error > mErrorTolerance)
+//         const double mesh_error = std::sqrt(total_error_pow2/(current_sol_pow2 + total_error_pow2));*/
+            // Computing metric
+        // We initialize the check
+        bool converged_error = true;
+        double estimated_error = 0;
+        if (mDimension == 2)
+        {
+            MetricFastInit<2> MetricInit = MetricFastInit<2>(mThisModelPart);
+            MetricInit.Execute();           
+            ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+            estimated_error = ComputeMetric.Execute();
+        }
+        else
+        {
+            MetricFastInit<3> MetricInit = MetricFastInit<3>(mThisModelPart);
+            MetricInit.Execute();
+            ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+            estimated_error = ComputeMetric.Execute();
+        }
+        if (estimated_error > 0.21)
         {
             converged_error = false;
         }
@@ -277,31 +296,15 @@ public:
         {
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "The error due to the mesh size: " << mesh_error << " is under the tolerance prescribed: " << mErrorTolerance << ". No remeshing required" << std::endl;
+                std::cout << "The error due to the mesh size: " << estimated_error << " is under the tolerance prescribed: " << "0.12" << ". No remeshing required" << std::endl;
             }
         }
         else
         {
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "The error due to the mesh size: " << mesh_error << " is bigger than the tolerance prescribed: " << mErrorTolerance << ". Remeshing required" << std::endl;
+                std::cout << "The error due to the mesh size: " << estimated_error << " is bigger than the tolerance prescribed: " << "0.12" << ". Remeshing required" << std::endl;
                 std::cout << "AVERAGE_NODAL_ERROR: " << rModelPart.GetProcessInfo()[AVERAGE_NODAL_ERROR] << std::endl;
-            }
-            double estimated_error = 0;
-            // Computing metric
-            if (mDimension == 2)
-            {
-                MetricFastInit<2> MetricInit = MetricFastInit<2>(mThisModelPart);
-                MetricInit.Execute();           
-                ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-                estimated_error = ComputeMetric.Execute();
-            }
-            else
-            {
-                MetricFastInit<3> MetricInit = MetricFastInit<3>(mThisModelPart);
-                MetricInit.Execute();
-                ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-                estimated_error = ComputeMetric.Execute();
             }
             
             // Remeshing

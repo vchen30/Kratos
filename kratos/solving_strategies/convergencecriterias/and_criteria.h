@@ -215,7 +215,8 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
-
+    typename ConvergenceCriteria < TSparseSpace, TDenseSpace >::Pointer mpFirstCriterion;
+    typename ConvergenceCriteria < TSparseSpace, TDenseSpace >::Pointer mpSecondCriterion;
     ///@}
     ///@name Protected Operators
     ///@{
@@ -247,8 +248,6 @@ private:
     ///@name Member Variables
     ///@{
     
-    typename ConvergenceCriteria < TSparseSpace, TDenseSpace >::Pointer mpFirstCriterion;
-    typename ConvergenceCriteria < TSparseSpace, TDenseSpace >::Pointer mpSecondCriterion;
 
     ///@}
     ///@name Private Operators

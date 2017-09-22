@@ -45,10 +45,35 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "contact_displacement_absolute_tolerance": 1.0e-9,
                 "contact_residual_relative_tolerance": 1.0e-4,
                 "contact_residual_absolute_tolerance": 1.0e-9,
+                "adaptive_remeshing": false,
                 "remeshing_parameters":
                 {
-                    "adaptive_remeshing": false, 
-                    "remeshing_max_iterations" : 3
+                    "error_mesh_tolerance" : 1.0e-3,
+                    "error_mesh_constant" : 1.0e-3,
+                    "remeshing_utility"   : "MMG",
+                    "strategy"            : "Error",
+                    "remeshing_parameters": 
+                        {
+                            "filename"                             : "out",
+                            "framework"                            : "Lagrangian",
+                            "internal_variables_parameters"        :
+                            {
+                                "allocation_size"                      : 1000, 
+                                "bucket_size"                          : 4, 
+                                "search_factor"                        : 2, 
+                                "interpolation_type"                   : "LST",
+                                "internal_variable_interpolation_list" :[]
+                            },
+                            "save_external_files"              : false,
+                            "max_number_of_searchs"            : 1000,
+                            "echo_level"                       : 3
+                        },
+            "error_strategy_parameters": 
+            {
+                "minimal_size"                        : 0.1,
+                "maximal_size"                        : 10.0, 
+                "error"                               : 0.05
+            }
                 }
             }
         }
@@ -124,7 +149,12 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         conv_params.AddValue("print_convergence_criterion",self.contact_settings["print_convergence_criterion"])
         conv_params.AddValue("ensure_contact",self.contact_settings["ensure_contact"])
         import contact_convergence_criteria_factory
-        convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params)
+        if (self.contact_settings["adaptive_remeshing"] == False):
+            convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params)
+        else:
+            conv_params.AddValue("remeshing", self.contact_settings["remeshing_parameters"])
+            convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params,self.GetComputingModelPart(),self.contact_settings["remeshing_parameters"], self.processes_list)
+
         return convergence_criterion.mechanical_convergence_criterion
         
     def _create_mechanical_solver(self):
@@ -142,10 +172,12 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                     if(self.settings["line_search"].GetBool()):
                         mechanical_solver = self._create_contact_line_search_strategy()
                     else:
-                        if (self.contact_settings["remeshing_parameters"]["adaptive_remeshing"].GetBool() == True): 
-                            mechanical_solver = self._create_contact_newton_raphson_strategy_meshing() 
-                        else: 
-                            mechanical_solver = self._create_contact_newton_raphson_strategy() 
+                        #if (self.contact_settings["remeshing_parameters"]["adaptive_remeshing"].GetBool() == True): 
+                        #    mechanical_solver = self._create_contact_newton_raphson_strategy_meshing() 
+                        #else: 
+                        #    mechanical_solver = self._create_contact_newton_raphson_strategy()
+                        mechanical_solver = self._create_contact_newton_raphson_strategy()
+     
                 else:
                     mechanical_solver = self._create_newton_raphson_strategy()
                     
@@ -192,28 +224,28 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                                                                                                self.processes_list
                                                                                                )
     
-    def _create_contact_newton_raphson_strategy_meshing(self): 
-        computing_model_part = self.GetComputingModelPart() 
-        mechanical_scheme = self.get_solution_scheme() 
-        linear_solver = self.get_linear_solver() 
-        mechanical_convergence_criterion = self.get_convergence_criterion() 
-        builder_and_solver = self.get_builder_and_solver() 
-        newton_parameters = KratosMultiphysics.Parameters("""{}""") 
-        remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
-        newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
-        newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
-        newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])  
-        remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
-        return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
-                                                                                                mechanical_scheme,  
-                                                                                                linear_solver,  
-                                                                                                mechanical_convergence_criterion,  
-                                                                                                builder_and_solver,  
-                                                                                                self.settings["max_iteration"].GetInt(),  
-                                                                                                self.settings["compute_reactions"].GetBool(),  
-                                                                                                self.settings["reform_dofs_at_each_step"].GetBool(),  
-                                                                                                self.settings["move_mesh_flag"].GetBool(), 
-                                                                                                newton_parameters, 
-                                                                                                remeshing_parameters, 
-                                                                                                self.processes_list 
-                                                                                                )
+    #def _create_contact_newton_raphson_strategy_meshing(self): 
+        #computing_model_part = self.GetComputingModelPart() 
+        #mechanical_scheme = self.get_solution_scheme() 
+        #linear_solver = self.get_linear_solver() 
+        #mechanical_convergence_criterion = self.get_convergence_criterion() 
+        #builder_and_solver = self.get_builder_and_solver() 
+        #newton_parameters = KratosMultiphysics.Parameters("""{}""") 
+        #remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
+        #newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
+        #newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
+        #newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])  
+        #remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
+        #return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
+        #                                                                                        mechanical_scheme,  
+        #                                                                                        linear_solver,  
+        #                                                                                        mechanical_convergence_criterion,  
+        #                                                                                        builder_and_solver,  
+        #                                                                                       self.settings["max_iteration"].GetInt(),  
+        #                                                                                        self.settings["compute_reactions"].GetBool(),  
+        #                                                                                        self.settings["reform_dofs_at_each_step"].GetBool(),  
+        #                                                                                        self.settings["move_mesh_flag"].GetBool(), 
+        #                                                                                        newton_parameters, 
+        #                                                                                        remeshing_parameters, 
+        #                                                                                        self.processes_list 
+        #                                                                                        )

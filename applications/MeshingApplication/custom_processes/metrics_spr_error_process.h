@@ -271,12 +271,12 @@ private:
         ModelPart::NodesContainerType& rNodes = mThisModelPart.Nodes();
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
-            std::cout << "Node: " << i_nodes->Id() << " has " << neighbour_size << " neighbouring elements: " << std::endl;
+            //std::cout << "Node: " << i_nodes->Id() << " has " << neighbour_size << " neighbouring elements: " << std::endl;
             Vector sigma_recovered(3,0);
             if(neighbour_size>2){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
                 i_nodes->SetValue(RECOVERED_STRESS,sigma_recovered);
-                std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
+                //std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
             else{
                 for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
@@ -313,7 +313,7 @@ private:
             error_overall += error_energy_norm;
             error_energy_norm= sqrt(error_energy_norm);
             i_elements->SetValue(ELEMENT_ERROR,error_energy_norm);
-            std::cout<<"element_error:"<<error_energy_norm<<std::endl;
+            //std::cout<<"element_error:"<<error_energy_norm<<std::endl;
 
 
             std::vector<double> strain_energy;
@@ -323,7 +323,7 @@ private:
                 energy_norm += 2*strain_energy[i];
             energy_norm_overall += energy_norm;
             energy_norm= sqrt(energy_norm);
-            std::cout<<"energy norm:"<<energy_norm<<std::endl;
+            //std::cout<<"energy norm:"<<energy_norm<<std::endl;
         }
         error_overall = sqrt(error_overall);
         energy_norm_overall = sqrt(energy_norm_overall);
@@ -341,9 +341,9 @@ private:
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
             new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
-            std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
+            //std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
             i_elements->SetValue(ELEMENT_H,new_element_size);
-            std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
+            //std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
         }
 
         /******************************************************************************
@@ -368,7 +368,7 @@ private:
             i_nodes->SetValue(MMG_METRIC,metric);
 
 
-            std::cout<<"metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
+            //std::cout<<"metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
         }
         return error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
     }
@@ -389,12 +389,12 @@ private:
         Matrix b(3,3,0); 
         Matrix p_k(1,3,0);
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
-            std::cout << "\tElement: " << i_elements->Id() << std::endl;
+            //std::cout << "\tElement: " << i_elements->Id() << std::endl;
             i_elements->GetValueOnIntegrationPoints(variable_stress,stress_vector,mThisModelPart.GetProcessInfo());
             i_elements->GetValueOnIntegrationPoints(variable_coordinates,coordinates_vector,mThisModelPart.GetProcessInfo());
 
-            std::cout << "\tstress: " << stress_vector[0] << std::endl;
-            std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
+            //std::cout << "\tstress: " << stress_vector[0] << std::endl;
+            //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
             Matrix sigma(1,3);
             for(int j=0;j<3;j++)
                 sigma(0,j)=stress_vector[0][j];

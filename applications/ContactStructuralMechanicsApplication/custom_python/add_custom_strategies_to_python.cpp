@@ -33,6 +33,7 @@
 // Convergence criterias
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/mortar_and_criteria.h"
+#include "custom_strategies/custom_convergencecriterias/remeshing_and_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/mesh_tying_mortar_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/alm_frictionless_mortar_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/alm_frictional_mortar_criteria.h"
@@ -84,7 +85,9 @@ void  AddCustomStrategiesToPython()
     typedef DisplacementLagrangeMultiplierContactCriteria< SparseSpaceType,  LocalSpaceType > DisplacementLagrangeMultiplierContactCriteriaType;
     typedef DisplacementLagrangeMultiplierMixedContactCriteria< SparseSpaceType,  LocalSpaceType > DisplacementLagrangeMultiplierMixedContactCriteriaType;
     typedef DisplacementLagrangeMultiplierResidualContactCriteria< SparseSpaceType,  LocalSpaceType > DisplacementLagrangeMultiplierResidualContactCriteriaType;
-    
+    typedef RemeshingAndConvergenceCriteria< SparseSpaceType,  LocalSpaceType > RemeshingAndConvergenceCriteriaType;
+
+
     // Custom builder and solvers types
     
     //********************************************************************
@@ -207,6 +210,16 @@ void  AddCustomStrategiesToPython()
             .def(init< double, double, double, double, bool, TablePrinterPointerType, bool >())
             ;
             
+    // Remeshing and Criterion
+    class_< RemeshingAndConvergenceCriteriaType,
+            bases< ConvergenceCriteriaType >, boost::noncopyable >
+            (
+            "RemeshingAndConvergenceCriteria", 
+            init<ConvergenceCriteriaPointer, ConvergenceCriteriaPointer>())
+            .def(init<ConvergenceCriteriaPointer, ConvergenceCriteriaPointer,TablePrinterPointerType>())
+            .def(init<ConvergenceCriteriaPointer, ConvergenceCriteriaPointer,TablePrinterPointerType, bool>())
+            ;
+
     //********************************************************************
     //*************************BUILDER AND SOLVER*************************
     //********************************************************************
