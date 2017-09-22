@@ -83,6 +83,8 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     
     typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
+    typedef ModelPart::NodeIterator NodeIterator;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -104,36 +106,36 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     ///@{
         
     void UpdateSystemVector(ModelPart& rModelPart,
-                            TSystemVectorPointerType pB,
+                            TSystemVectorType& rB,
                             const Variable<double>& rVariable) override
     {
-        TUpdateSystemVector(rModelPart, pB, rVariable);
+        TUpdateSystemVector(rModelPart, rB, rVariable);
     }
 
     void UpdateSystemVector(ModelPart& rModelPart,
-                            TSystemVectorPointerType pB,
+                            TSystemVectorType& rB,
                             const VectorComponentType& rVariable) override
     {
-        TUpdateSystemVector(rModelPart, pB, rVariable);
+        TUpdateSystemVector(rModelPart, rB, rVariable);
     }
 
 
     void Update(ModelPart& rModelPart,
-                TSystemVectorPointerType pB,
+                TSystemVectorType& rB,
                 const Variable<double>& rVariable,
                 const Kratos::Flags& MappingOptions,
                 const double Factor) override
     {
-        TUpdate(rModelPart, pB, rVariable, MappingOptions, Factor);
+        TUpdate(rModelPart, rB, rVariable, MappingOptions, Factor);
     }
 
     void Update(ModelPart& rModelPart,
-                TSystemVectorPointerType pB,
+                TSystemVectorType& rB,
                 const VectorComponentType& rVariable,
                 const Kratos::Flags& MappingOptions,
                 const double Factor) override
     {
-        TUpdate(rModelPart, pB, rVariable, MappingOptions, Factor);        
+        TUpdate(rModelPart, rB, rVariable, MappingOptions, Factor);        
     }
 
     void ResizeAndInitializeVectors(
@@ -169,7 +171,8 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         if (Mdo.size1() == 0) //if the matrix is not initialized
         {
             Mdo.resize(size_destination, size_origin, false);
-            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo); // TODO Jordi is this needed?
+            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+            ConstructMatrixStructure();
         }
         else
         {
@@ -177,22 +180,20 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
             {
                 KRATOS_WATCH("it should not come here!!!!!!!! ... this is SLOW");
                 Mdo.resize(size_destination, size_origin, true);
-                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo); // TODO Jordi is this needed?
+                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+                ConstructMatrixStructure();
             }
         }
 
-        if (Qo.size() != size_origin)
-            Qo.resize(size_origin, false);
+        if (Qo.size() != size_origin) Qo.resize(size_origin, false);
 
-        if (Qd.size() != size_destination)
-            Qd.resize(size_destination, false);
+        if (Qd.size() != size_destination) Qd.resize(size_destination, false);
 
     }
 
     void BuildMappingMatrix(ModelPart::Pointer pModelPart,
-                            TSystemMatrixPointerType& pA) override
+                            TSystemMatrixType& rA) override
     {
-        TSystemMatrixType& rA = *pA;
         ProcessInfo& r_current_process_info = pModelPart->GetProcessInfo();
 
         // contributions to the system
@@ -444,46 +445,50 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
 
     template< class TVarType>
     void TUpdateSystemVector(ModelPart& rModelPart,
-                             TSystemVectorPointerType pB,
+                             TSystemVectorType& rB,
                              const TVarType& rVariable) 
     {
-        // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *pB;
-        int index = 0;
-        for (auto& node : rModelPart.Nodes())
+        const int num_nodes = rModelPart.NumberOfNodes();
+        NodeIterator it_begin = rModelPart.NodesBegin();
+
+        #pragma omp parallel for // Don't modify, this is best suitable for this case
+        for(int i = 0; i<num_nodes; i++)
         {
-            // Jordi is this ok? => Done differently in some BuilderAndSolvers
-            r_b[index] = node.FastGetSolutionStepValue(rVariable);
-            ++index;
+            NodeIterator it = it_begin + i;
+            rB[i] = it->FastGetSolutionStepValue(rVariable);
         }
-        TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", r_b);
+
+        // for (auto& node : rModelPart.Nodes())
+        // {
+        //     // Jordi is this ok? => Done differently in some BuilderAndSolvers
+        //     rB[index] = node.FastGetSolutionStepValue(rVariable);
+        //     ++index;
+        // }
+
+        TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", rB);
     }
 
     template< class TVarType>
     void TUpdate(ModelPart& rModelPart,
-                 TSystemVectorPointerType pB,
+                 TSystemVectorType& rB,
                  const TVarType& rVariable,
                  const Kratos::Flags& MappingOptions,
                  const double Factor) 
     {
-        // Jordi how to do this conversion nicely?
-        TSystemVectorType& r_b = *pB;
-        TSparseSpace::WriteMatrixMarketVector("Update", r_b);        
+        TSparseSpace::WriteMatrixMarketVector("Update", rB); // TODO remove at some point  
 
-        int index = 0;
-        for (auto& node : rModelPart.Nodes())
+        const int num_nodes = rModelPart.NumberOfNodes();
+        NodeIterator it_begin = rModelPart.NodesBegin();
+
+        #pragma omp parallel for // Don't modify, this is best suitable for this case
+        for(int i = 0; i<num_nodes; i++)
         {
-            if (MappingOptions.Is(MapperFlags::ADD_VALUES))
-            {
-                // Jordi is this ok? => Done differently in some BuilderAndSolvers
-                node.FastGetSolutionStepValue(rVariable) += r_b[index] * Factor;
-            }
+            NodeIterator it = it_begin + i;
+
+            if (MappingOptions.Is(MapperFlags::ADD_VALUES)) 
+                it->FastGetSolutionStepValue(rVariable) += rB[i] * Factor;
             else
-            {
-                // Jordi is this ok? => Done differently in some BuilderAndSolvers
-                node.FastGetSolutionStepValue(rVariable) = r_b[index] * Factor;
-            }
-            ++index;
+                it->FastGetSolutionStepValue(rVariable) = rB[i] * Factor;
         }
     }
 
@@ -526,6 +531,11 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         //     }
         // }
 
+    }
+
+    void ConstructMatrixStructure()
+    {
+        // TODO implement this function
     }
 
     ///@}

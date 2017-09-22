@@ -100,39 +100,56 @@ public:
 
     void UpdateInterface(Kratos::Flags MappingOptions, double SearchRadius)
     {
-        // mpMapperCommunicator->UpdateInterface(MappingOptions, SearchRadius);
-        // if (mpInverseMapper)
-        // {
-        //     mpInverseMapper->UpdateInterface(MappingOptions, SearchRadius);
-        // }
+        mpMapperCommunicator->UpdateInterface(MappingOptions, SearchRadius);
+        
+        if (mpInverseMapper) mpInverseMapper->UpdateInterface(MappingOptions, SearchRadius);
 
-        // if (MappingOptions.Is(MapperFlags::REMESHED))
-        // {
-        //     ComputeNumberOfNodesAndConditions();
-        // }
+        if (MappingOptions.Is(MapperFlags::REMESHED)) ComputeNumberOfNodesAndConditions();
 
         UpdateInterfaceSpecific(MappingOptions);
     }
 
-    /* This function maps from Origin to Destination */
+    /**
+    This function maps from Origin to Destination, SCALAR version
+    */
     virtual void Map(const Variable<double>& rOriginVariable,
                      const Variable<double>& rDestinationVariable,
                      Kratos::Flags MappingOptions) = 0;
 
-    /* This function maps from Origin to Destination */
+    /**
+    This function maps from Origin to Destination, VECTOR version
+    */
     virtual void Map(const Variable< array_1d<double, 3> >& rOriginVariable,
                      const Variable< array_1d<double, 3> >& rDestinationVariable,
                      Kratos::Flags MappingOptions) = 0;
 
-    /* This function maps from Destination to Origin */
+    /**
+    This function maps from Destination to Origin, SCALAR version
+    Implementation can be overridden in derived classes
+    */
     virtual void InverseMap(const Variable<double>& rOriginVariable,
                             const Variable<double>& rDestinationVariable,
-                            Kratos::Flags MappingOptions) = 0;
+                            Kratos::Flags MappingOptions)
+    {
+        // Construct the inverse mapper if it hasn't been done before
+        if (!mpInverseMapper) InitializeInverseMapper();
 
-    /* This function maps from Destination to Origin */
+        mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+    }
+
+    /**
+    This function maps from Destination to Origin, VECTOR version
+    Implementation can be overridden in derived classes
+    */
     virtual void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
                             const Variable< array_1d<double, 3> >& rDestinationVariable,
-                            Kratos::Flags MappingOptions) = 0;
+                            Kratos::Flags MappingOptions)
+    {
+        // Construct the inverse mapper if it hasn't been done before
+        if (!mpInverseMapper) InitializeInverseMapper();
+
+        mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+    }
 
     MapperCommunicator::Pointer pGetMapperCommunicator()
     {
@@ -214,6 +231,12 @@ protected:
     This function can be overridden by derived classes to do additional things
     */
     virtual void UpdateInterfaceSpecific(Kratos::Flags MappingOptions) {}
+
+    /**
+    This function must be implemented by every mapper to initialize the inverse mapper
+    The InverseMapper is constructed with the order of the model_parts switched!
+    */
+    virtual void InitializeInverseMapper() = 0;
 
     // Constructor, can only be called by derived classes (actual mappers)
     Mapper(ModelPart& rModelPartOrigin, ModelPart& rModelPartDestination,

@@ -111,38 +111,6 @@ public:
     ///@name Operations
     ///@{
 
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable<double>& rOriginVariable,
-                    const Variable<double>& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-        // Construct the inverse mapper if it hasn't been done before
-        // It is constructed with the order of the model_parts changed!
-        if (!this->mpInverseMapper)
-        {
-            this->mpInverseMapper = Mapper::Pointer( new NearestNeighborMapperMatrix(this->mrModelPartDestination,
-                                                                                     this->mrModelPartOrigin,
-                                                                                     this->mJsonParameters) );
-        }
-        this->mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
-    }
-
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
-                    const Variable< array_1d<double, 3> >& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-        // Construct the inverse mapper if it hasn't been done before
-        // It is constructed with the order of the model_parts changed!
-        if (!this->mpInverseMapper)
-        {
-            this->mpInverseMapper = Mapper::Pointer( new NearestNeighborMapperMatrix(this->mrModelPartDestination,
-                                                                                     this->mrModelPartOrigin,
-                                                                                     this->mJsonParameters) );
-        }
-        this->mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions); 
-    }
-
     ///@}
     ///@name Access
     ///@{
@@ -225,6 +193,13 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void InitializeInverseMapper() override
+    {
+        this->mpInverseMapper = Mapper::Pointer( new NearestNeighborMapperMatrix(this->mrModelPartDestination,
+                                                                                 this->mrModelPartOrigin,
+                                                                                 this->mJsonParameters) );
+    }
 
     void ExchangeInterfaceGeometryData() override
     {

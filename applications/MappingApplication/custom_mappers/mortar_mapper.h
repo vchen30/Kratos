@@ -85,8 +85,6 @@ public:
                           Parameters rJsonParameters) : MapperMatrixBased<TMappingMatrixBuilder, TLinearSolver>(
                                   i_model_part_origin, i_model_part_destination, rJsonParameters)
     {
-        KRATOS_WATCH("Mortar Mapper Constructor")
-        // mpMapperStrategy->InitializeMortar();
 
 
 
@@ -186,17 +184,17 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void ExecuteMappingStep(const Kratos::Flags& MappingOptions) override
+    void ExecuteMappingStep(const Kratos::Flags& MappingOptions) override // TODO move to private?
     {
         if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
         {
             // mpBuilderAndSolver->SystemSolve(mpMdd, mpQtmp, this->mpQd); // Jordi the trilinos call also wants a modelpart!
             const bool transpose_flag = true;
-            this->mpMappingMatrixBuilder->Multiply(this->mpMdo, this->mpQd, this->mpQo, transpose_flag);
+            this->mpMappingMatrixBuilder->Multiply(*(this->mpMdo), *(this->mpQd), *(this->mpQo), transpose_flag);
         }
         else
         {
-            this->mpMappingMatrixBuilder->Multiply(this->mpMdo, this->mpQo, this->mpQd);
+            this->mpMappingMatrixBuilder->Multiply(*(this->mpMdo), *(this->mpQo), *(this->mpQd));
             // mpBuilderAndSolver->SystemSolve(mpMdd, this->mpQd, mpQtmp); // Jordi the trilinos call also wants a modelpart!
         }
 
@@ -266,8 +264,17 @@ private:
     ///@name Private Operations
     ///@{
 
+    void InitializeInverseMapper() override
+    {
+        this->mpInverseMapper = Mapper::Pointer( new MortarMapper(this->mrModelPartDestination,
+                                                                  this->mrModelPartOrigin,
+                                                                  this->mJsonParameters) );
+    }
+
     void ExchangeInterfaceGeometryData() override
     {
+        // 1. Step: Exchange MAPPING_MATRIX_EQUATION_ID, nodal weights and Geometries
+        // 2. Step Do the Integration with Vicentes Utility and store the results in the MapperConditions for the assembly
     }
 
     ///@}

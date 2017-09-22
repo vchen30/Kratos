@@ -7,6 +7,8 @@ import KratosMultiphysics.KratosUnittest as KratosUnittest
 # Import the tests o test_classes to create the suits
 from generalTests import KratosMappingGeneralTests
 
+from test_patch_test_mapper import TestPatchTestMappers as TTestPatchTestMappers
+
 from SmallTests import NearestNeighborTest_1 as TNearestNeighborTest_1
 from SmallTests import NearestElementTest2D_1 as TNearestElementTest2D_1
 from SmallTests import MapperTests as TMapperTests
@@ -31,6 +33,11 @@ def AssambleTestSuites():
     # smallSuite will contain the following tests:
     # - testSmallExample
     smallSuite = suites['small']
+    smallSuite.addTest(TTestPatchTestMappers('test_nearest_neighbor_mapper'))
+    smallSuite.addTest(TTestPatchTestMappers('test_nearest_neighbor_mapper_matrix_based'))
+    smallSuite.addTest(TTestPatchTestMappers('test_nearest_element_mapper'))
+    smallSuite.addTest(TTestPatchTestMappers('test_nearest_element_mapper_matrix_based'))
+    smallSuite.addTest(TTestPatchTestMappers('test_mortar_mapper'))
     smallSuite.addTest(TNearestNeighborTest_1('test_execution'))
     smallSuite.addTest(TNearestElementTest2D_1('test_execution'))
     smallSuite.addTest(TMapperTests('test_execution'))
@@ -48,6 +55,7 @@ def AssambleTestSuites():
     allSuite = suites['all']
     allSuite.addTests(
         KratosUnittest.TestLoader().loadTestsFromTestCases([
+            TTestPatchTestMappers,
             TNearestElementTest2D_1,
             TNearestNeighborTest_1,
             TMapperTests

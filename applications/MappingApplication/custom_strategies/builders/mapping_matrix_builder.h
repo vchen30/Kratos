@@ -125,55 +125,52 @@ class MappingMatrixBuilder
         node.SetValue(MAPPING_MATRIX_EQUATION_ID, equation_id); // TODO replace with sth faster?
         ++equation_id;
         }
+
+        // TODO synchronization of this varibale for MPI case
     }
 
-    void Multiply(TSystemMatrixPointerType& pA,
-                  TSystemVectorPointerType& pX,
-                  TSystemVectorPointerType& pY,
+    void Multiply(TSystemMatrixType& rA,
+                  TSystemVectorType& rX,
+                  TSystemVectorType& rY,
                   const bool Transposed = false)
-    {   
-        TSystemMatrixType& rA = *pA;
-        TSystemVectorType& rX = *pX;
-        TSystemVectorType& rY = *pY;
-
-        if (Transposed) // pY = pAT * pX
+    {   if (Transposed) // rY = rA^T * rX
         {
-            TSparseSpace::TransposeMult(rA, rX, rY); // TODO uncommented for now
+            TSparseSpace::TransposeMult(rA, rX, rY);
         }
-        else // pY = pA * pX
+        else // rY = rA * rX
         { 
-            TSparseSpace::Mult(rA, rX, rY); // TODO uncommented for now
+            TSparseSpace::Mult(rA, rX, rY);
         }
         
     }
 
     // Variable is Scalar
     virtual void UpdateSystemVector(ModelPart& rModelPart,
-                                    TSystemVectorPointerType pB,
+                                    TSystemVectorType& rB,
                                     const Variable<double>& rVariable) = 0;
 
     // Variable is Vector Component
     virtual void UpdateSystemVector(ModelPart& rModelPart,
-                                    TSystemVectorPointerType pB,
+                                    TSystemVectorType& rB,
                                     const VectorComponentType& rVariable) = 0;
 
     // Variable is Scalar
     virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
+                        TSystemVectorType& rB,
                         const Variable<double>& rVariable,
                         const Kratos::Flags& MappingOptions,
                         const double Factor) = 0;
 
     // Variable is Vector Component
     virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorPointerType pB,
+                        TSystemVectorType& rB,
                         const VectorComponentType& rVariable,
                         const Kratos::Flags& MappingOptions,
                         const double Factor) = 0;
 
 
     virtual void ResizeAndInitializeVectors(
-        TSystemMatrixPointerType& pMdo,
+        TSystemMatrixPointerType& pMdo, // TODO is ok tp pass by ref? I think so, but chek again
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
         const unsigned int size_origin,
@@ -181,8 +178,10 @@ class MappingMatrixBuilder
 
 
     virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
-                                    TSystemMatrixPointerType& pA) = 0;
+                                    TSystemMatrixType& rA) = 0;
 
+    // TODO is ok tp pass by ref? I think so, but chek again
+    // these functions are needed for now bcs the spaces are not consistent
     virtual void ClearData(TSystemMatrixPointerType& pA) = 0;
     virtual void ClearData(TSystemVectorPointerType& pB) = 0;
     virtual void Clear(TSystemMatrixPointerType& pA) = 0;

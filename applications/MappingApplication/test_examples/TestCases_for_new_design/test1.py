@@ -28,7 +28,7 @@ def create_model_part(name, geom_range, number_nodes_per_rank, number_of_process
     # geom_range = [0,10]
     d_range = (geom_range[1] - geom_range[0]) / number_of_processors
     dx = d_range / (number_nodes_per_rank-1)
-    local_min = d_range * my_rank
+    local_min = geom_range[0] + d_range * my_rank
     create_line_conditions = True
 
     node_start_id = my_rank * number_nodes_per_rank
@@ -114,8 +114,8 @@ def barrier_custom():
 
 geom_range_origin = [0,10]
 geom_range_destination = [-10,10]
-number_nodes_per_rank_origin = 10
-number_nodes_per_rank_destination = 20
+number_nodes_per_rank_origin = 3
+number_nodes_per_rank_destination = 5
 print_custom("\n##### Creating the ModelParts #####\n\n")
 model_part_origin = create_model_part("origin", geom_range_origin, number_nodes_per_rank_origin, number_of_processors)
 model_part_destination = create_model_part("destination", geom_range_destination, number_nodes_per_rank_destination, number_of_processors)
@@ -210,6 +210,7 @@ print_custom("\n##### Creating the mappers with the MapperFactory #####\n\n")
 
 nearest_neighbor_matrix_mapper = KratosMapping.MapperFactoryNew.CreateMapper(model_part_origin, model_part_destination, nearest_neighbor_matrix_mapper_settings)
 nearest_neighbor_matrix_mapper.Map(KratosMultiphysics.PRESSURE, KratosMultiphysics.PRESSURE, KratosMapping.Mapper.CONSERVATIVE)
+# nearest_neighbor_matrix_mapper.InverseMap(KratosMultiphysics.PRESSURE, KratosMultiphysics.PRESSURE)
 # nearest_neighbor_matrix_mapper.UpdateInterface()
 # print_custom("\n\n")
 # barrier_custom()

@@ -105,7 +105,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@{
 
     void UpdateSystemVector(ModelPart& rModelPart,
-                            TSystemVectorPointerType pB,
+                            TSystemVectorType& rB,
                             const Variable<double>& rVariable) override
     {
         // inline static void AssembleRHS(
@@ -113,7 +113,6 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         //     Vector& RHS_Contribution,
         //     std::vector<std::size_t>& EquationId
         // )
-        TSystemVectorType& rB = *pB;
 
         const int num_local_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
 
@@ -136,31 +135,30 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     }
 
     void UpdateSystemVector(ModelPart& rModelPart,
-                            TSystemVectorPointerType pB,
+                            TSystemVectorType& pB,
                             const VectorComponentType& rVariable) override
     {
 
     }
 
     void Update(ModelPart& rModelPart,
-                TSystemVectorPointerType pB,
+                TSystemVectorType& rB,
                 const Variable<double>& rVariable,
                 const Kratos::Flags& MappingOptions,
                 const double Factor) override
     {
-        TSystemVectorType& rB = *pB;
-        int index = 0;
-        int global_equation_id;
-        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
-        {
-            global_equation_id = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
-            // node.FastGetSolutionStepValue(rVariable) = TSparseSpace::GetValue(rB, global_equation_id); // or index?
-            ++index; // needed?
-        }
+        // int index = 0;
+        // int global_equation_id;
+        // for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
+        // {
+        //     // global_equation_id = node.FastGetSolutionStepValue(MAPPING_MATRIX_EQUATION_ID);
+        //     // node.FastGetSolutionStepValue(rVariable) = TSparseSpace::GetValue(rB, global_equation_id); // or index?
+        //     ++index; // needed?
+        // }
     }
 
     void Update(ModelPart& rModelPart,
-                TSystemVectorPointerType pB,
+                TSystemVectorType& rB,
                 const VectorComponentType& rVariable,
                 const Kratos::Flags& MappingOptions,
                 const double Factor) override
@@ -183,7 +181,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 
 
     void BuildMappingMatrix(ModelPart::Pointer pModelPart,
-                                    TSystemMatrixPointerType& pA) override
+                            TSystemMatrixType& rA) override
     {
         
     }

@@ -130,6 +130,7 @@ namespace Kratos
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
             if (MapperUtilities::TotalProcesses() > 1)
             {
+                // TODO check if this is actually necessary
                 // Set the MPICommunicator
                 std::cout << "Doing the ParallelFillCommunicator stuff" << std::endl;
                 ParallelFillCommunicator parallel_fill_communicator(*mpInterfaceModelPart);
@@ -254,9 +255,14 @@ namespace Kratos
         {
             // Store pointers to all interface nodes
             unsigned int nodes_counter = 0;
+
+            // TODO ptr iterator? => see builderandsolver
+            const int num_nodes_local = mrModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+            mpInterfaceModelPart->Nodes().reserve(num_nodes_local);
+
             for (ModelPart::NodesContainerType::const_iterator node_it = mrModelPart.NodesBegin(); node_it != mrModelPart.NodesEnd(); ++node_it)
             {
-                mpInterfaceModelPart->Nodes().push_back( *(node_it.base()) ); // TODO resize? I know the size in advance...
+                mpInterfaceModelPart->Nodes().push_back( *(node_it.base()) );
                 ++nodes_counter;
             }
         }
@@ -320,7 +326,8 @@ namespace Kratos
             //         }
             //     }
 
-
+            
+            // TODO Reserve the size of the conditions, since I know it beforehand
 
 
             std::string condition_name = InterfaceParameters["mapper_condition_name"].GetString();
@@ -328,7 +335,7 @@ namespace Kratos
 
             unsigned int cond_counter = 0;
 
-            if (InterfaceParameters["use_nodes"].GetBool()) // For node-based mappers, e.g. Nearest Neighbor Mapper
+            if (InterfaceParameters["use_nodes"].GetBool()) // For mappers which don't depend on teh destination geometry, e.g. Nearest Neighbor Mapper or Nearest Element
             {
                 Condition::NodesArrayType temp_condition_nodes;
                 condition_name.append("1N");

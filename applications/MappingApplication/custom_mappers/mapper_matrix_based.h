@@ -116,15 +116,25 @@ public:
              const Variable<double>& rDestinationVariable,
              Kratos::Flags MappingOptions) override
     {
-        InitializeMappingStep<>(KratosComponents< Variable<double> >::Get(rOriginVariable.Name()), 
-                                KratosComponents< Variable<double> >::Get(rDestinationVariable.Name()), 
-                                MappingOptions);
-        
-        ExecuteMappingStep(MappingOptions);
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!!
+            MappingOptions.Set(MapperFlags::USE_TRANSPOSE); // TODO test this!!!
 
-        FinalizeMappingStep<>(KratosComponents< Variable<double> >::Get(rOriginVariable.Name()), 
-                              KratosComponents< Variable<double> >::Get(rDestinationVariable.Name()), 
-                              MappingOptions);
+            InverseMap(rOriginVariable, rDestinationVariable, MappingOptions);
+        }
+        else
+        {
+            InitializeMappingStep<>(rOriginVariable, 
+                                    rDestinationVariable, 
+                                    MappingOptions);
+            
+            ExecuteMappingStep(MappingOptions);
+
+            FinalizeMappingStep<>(rOriginVariable, 
+                                rDestinationVariable, 
+                                MappingOptions);
+        }
     }
 
     /* This function maps from Origin to Destination */
@@ -132,46 +142,56 @@ public:
              const Variable< array_1d<double, 3> >& rDestinationVariable,
              Kratos::Flags MappingOptions) override
     {
-        VectorComponentType var_component_x_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_X"));
-        VectorComponentType var_component_y_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_Y"));
-        VectorComponentType var_component_z_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_Z"));
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!!
+            MappingOptions.Set(MapperFlags::USE_TRANSPOSE); // TODO test this!!!
 
-        VectorComponentType var_component_x_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_X"));
-        VectorComponentType var_component_y_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_Y"));
-        VectorComponentType var_component_z_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_Z"));
+            InverseMap(rOriginVariable, rDestinationVariable, MappingOptions);
+        }
+        else
+        {
+            VectorComponentType var_component_x_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_X"));
+            VectorComponentType var_component_y_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_Y"));
+            VectorComponentType var_component_z_origin = KratosComponents< VectorComponentType >::Get(rOriginVariable.Name()+std::string("_Z"));
 
-        // X-Component
-        InitializeMappingStep< VectorComponentType>(var_component_x_origin , 
+            VectorComponentType var_component_x_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_X"));
+            VectorComponentType var_component_y_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_Y"));
+            VectorComponentType var_component_z_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_Z"));
+
+            // X-Component
+            InitializeMappingStep<VectorComponentType>(var_component_x_origin, 
                                                     var_component_x_destination,
                                                     MappingOptions);
 
-        ExecuteMappingStep(MappingOptions);
+            ExecuteMappingStep(MappingOptions);
 
-        FinalizeMappingStep< VectorComponentType>(var_component_x_origin, 
-                                                  var_component_x_destination,  
-                                                  MappingOptions);
-        
-        // Y-Component
-        InitializeMappingStep< VectorComponentType>(var_component_y_origin , 
+            FinalizeMappingStep<VectorComponentType>(var_component_x_origin, 
+                                                    var_component_x_destination,  
+                                                    MappingOptions);
+            
+            // Y-Component
+            InitializeMappingStep<VectorComponentType>(var_component_y_origin, 
                                                     var_component_y_destination,
                                                     MappingOptions);
 
-        ExecuteMappingStep(MappingOptions);
-        
-        FinalizeMappingStep< VectorComponentType>(var_component_y_origin, 
-                                                  var_component_y_destination,  
-                                                  MappingOptions);
+            ExecuteMappingStep(MappingOptions);
+            
+            FinalizeMappingStep<VectorComponentType>(var_component_y_origin, 
+                                                    var_component_y_destination,  
+                                                    MappingOptions);
 
-        // Z-Component
-        InitializeMappingStep< VectorComponentType>(var_component_z_origin , 
+            // Z-Component
+            InitializeMappingStep<VectorComponentType>(var_component_z_origin, 
                                                     var_component_z_destination,
                                                     MappingOptions);
 
-        ExecuteMappingStep(MappingOptions);
-        
-        FinalizeMappingStep< VectorComponentType>(var_component_z_origin, 
-                                                  var_component_z_destination,  
-                                                  MappingOptions);
+            ExecuteMappingStep(MappingOptions);
+            
+            FinalizeMappingStep<VectorComponentType>(var_component_z_origin, 
+                                                    var_component_z_destination,  
+                                                    MappingOptions);
+        }
     }
 
     /* This function maps from Destination to Origin */
@@ -179,7 +199,20 @@ public:
                     const Variable<double>& rDestinationVariable,
                     Kratos::Flags MappingOptions) override
     {
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!!
+            MappingOptions.Set(MapperFlags::USE_TRANSPOSE); // TODO test this!!!
 
+            Map(rOriginVariable, rDestinationVariable, MappingOptions);
+        }
+        else
+        {
+            // Construct the inverse mapper if it hasn't been done before
+            if (!mpInverseMapper) InitializeInverseMapper();
+            
+            mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+        }
     }
 
     /* This function maps from Destination to Origin */
@@ -187,7 +220,20 @@ public:
                     const Variable< array_1d<double, 3> >& rDestinationVariable,
                     Kratos::Flags MappingOptions) override
     {
-        
+        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        {
+            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!!
+            MappingOptions.Set(MapperFlags::USE_TRANSPOSE); // TODO test this!!!
+
+            Map(rOriginVariable, rDestinationVariable, MappingOptions);
+        }
+        else
+        {
+            // Construct the inverse mapper if it hasn't been done before
+            if (!mpInverseMapper) InitializeInverseMapper();
+            
+            mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+        }        
     }
 
     TSystemMatrixType& GetSystemMatrix()
@@ -260,13 +306,14 @@ protected:
     ///@{
 
     virtual void UpdateInterfaceSpecific(Kratos::Flags MappingOptions) override {
+        // TODO do the same for the InverseMapper(?)
         if (MappingOptions.Is(MapperFlags::REMESHED))
         {
             GenerateInterfaceModelPart();
-
-            mpMappingMatrixBuilder->Clear(mpMdo);
-            mpMappingMatrixBuilder->Clear(mpQo);
-            mpMappingMatrixBuilder->Clear(mpQd);
+            
+            mpMappingMatrixBuilder->ClearData(mpMdo);
+            mpMappingMatrixBuilder->ClearData(mpQo);
+            mpMappingMatrixBuilder->ClearData(mpQd);
 
             InitializeMappingMatrix();
             ComputeMappingMatrix();
@@ -300,7 +347,7 @@ protected:
     {
         this->ExchangeInterfaceGeometryData();
         
-        mpMappingMatrixBuilder->BuildMappingMatrix(mpInterfaceModelPart, mpMdo);
+        mpMappingMatrixBuilder->BuildMappingMatrix(mpInterfaceModelPart, *mpMdo);
     }
 
     /**
@@ -308,8 +355,8 @@ protected:
     */
     void GenerateInterfaceModelPart()
     {   
-        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
-        this->mpInterfaceModelPart = this->mpInterfacePreprocessor->pGetInterfaceModelPart();
+        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters); // return pointer?
+        this->mpInterfaceModelPart = this->mpInterfacePreprocessor->pGetInterfaceModelPart();  //TODO .swap()
         this->mpMapperCommunicator->pSetModelpartDestination(&*(this->mpInterfaceModelPart));
     }
 
@@ -318,26 +365,26 @@ protected:
                                const TVarType& rVarDestination,
                                const Kratos::Flags& MappingOptions)
     {
-        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE)) // TODO replace this with USE_TRANSPOSE!
         {
-            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartDestination, mpQd, rVarDestination);
+            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartDestination, *mpQd, rVarDestination);
         }
         else
         {
-            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartOrigin, mpQo, rVarOrigin);
+            mpMappingMatrixBuilder->UpdateSystemVector(mrModelPartOrigin, *mpQo, rVarOrigin);
         }
     }
 
     virtual void ExecuteMappingStep(const Kratos::Flags& MappingOptions) // Override this class in Mortar
     {
-        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE))
         {
             const bool transpose_flag = true;
-            mpMappingMatrixBuilder->Multiply(mpMdo, mpQd, mpQo, transpose_flag);
+            mpMappingMatrixBuilder->Multiply(*mpMdo, *mpQd, *mpQo, transpose_flag);
         }
         else
         {
-            mpMappingMatrixBuilder->Multiply(mpMdo, mpQo, mpQd);
+            mpMappingMatrixBuilder->Multiply(*mpMdo, *mpQo, *mpQd);
         }
     }
 
@@ -349,14 +396,14 @@ protected:
         double factor = 1.0f;
         ProcessMappingOptions(MappingOptions, factor);
 
-        if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
+        if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE))
         {
 
-            mpMappingMatrixBuilder->Update(mrModelPartOrigin, mpQo, rVarOrigin, MappingOptions, factor);
+            mpMappingMatrixBuilder->Update(mrModelPartOrigin, *mpQo, rVarOrigin, MappingOptions, factor);
         }
         else
         {
-            mpMappingMatrixBuilder->Update(mrModelPartDestination, mpQd, rVarDestination, MappingOptions, factor);
+            mpMappingMatrixBuilder->Update(mrModelPartDestination, *mpQd, rVarDestination, MappingOptions, factor);
         }
     }
 

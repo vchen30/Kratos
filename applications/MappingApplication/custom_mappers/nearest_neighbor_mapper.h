@@ -162,38 +162,6 @@ public:
                 rOriginVariable);
     }
 
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable<double>& rOriginVariable,
-                    const Variable<double>& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-        // Construct the inverse mapper if it hasn't been done before
-        // It is constructed with the order of the model_parts changed!
-        if (!mpInverseMapper)
-        {
-            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mrModelPartDestination,
-                                               mrModelPartOrigin,
-                                               mJsonParameters) );
-        }
-        mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
-    }
-
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
-                    const Variable< array_1d<double, 3> >& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-        // Construct the inverse mapper if it hasn't been done before
-        // It is constructed with the order of the model_parts changed!
-        if (!mpInverseMapper)
-        {
-            mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mrModelPartDestination,
-                                               mrModelPartOrigin,
-                                               mJsonParameters) );
-        }
-        mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
-    }
-
     ///@}
     ///@name Access
     ///@{
@@ -277,6 +245,13 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void InitializeInverseMapper() override
+    {
+        mpInverseMapper = Mapper::Pointer( new NearestNeighborMapper(mrModelPartDestination,
+                                                                     mrModelPartOrigin,
+                                                                     mJsonParameters) );
+    }
 
     template <typename T>
     static T GetValueOfNode(InterfaceObject* pInterfaceObject, //TODO const
