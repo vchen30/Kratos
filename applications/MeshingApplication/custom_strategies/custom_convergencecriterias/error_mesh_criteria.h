@@ -330,6 +330,9 @@ public:
                 KRATOS_ERROR << "Not an alternative utility" << std::endl;
             }
             
+            // We set the model part as modified
+            rModelPart.Set(MODIFIED, true);
+            
             mFindNodalH.Execute();
             
             // Processes initialization
@@ -338,9 +341,9 @@ public:
             mpMyProcesses->ExecuteBeforeSolutionLoop();
             // Processes of initialize the solution step
             mpMyProcesses->ExecuteInitializeSolutionStep();
-            
-            // We set the model part as modified
-            rModelPart.Set(MODIFIED, true);
+
+            // We reset the model part as modified
+            rModelPart.Set(MODIFIED, false);
         }
         
         return converged_error;
