@@ -591,7 +591,7 @@ private:
     {
         for (auto& r_entity : rEntityContainer)
         {
-            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(r_entity.GetGeometry(),
+            mInterfaceObjects.push_back(InterfaceObject::Pointer( new InterfaceGeometryObject(r_entity,
                                                                                               ApproximationTolerance,
                                                                                               mEchoLevel) ));
         }

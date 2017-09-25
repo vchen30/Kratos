@@ -254,7 +254,7 @@ private:
         BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
         KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
 
-        p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+        // p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
     }
 
     ///@}

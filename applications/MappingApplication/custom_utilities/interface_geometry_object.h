@@ -72,21 +72,21 @@ public:
     ///@{
 
     /// Default constructor.
-    InterfaceGeometryObject(Geometry<Node<3>>& rGeometry, const double ApproximationTolerance, const int EchoLevel) :
-        mpGeometry(&rGeometry),
+    InterfaceGeometryObject(GeometricalObject& rGeometricalObject, const double ApproximationTolerance, const int EchoLevel) :
+        mpGeometricalObject(&rGeometricalObject),
         mApproximationTolerance(ApproximationTolerance)
     {
         SetCoordinates();
     
-        mGeometryFamily = mpGeometry->GetGeometryFamily();
+        mGeometryFamily = mpGeometricalObject->GetGeometry().GetGeometryFamily();
         KRATOS_ERROR_IF(mGeometryFamily == GeometryData::Kratos_Point) 
             << "Elements/Conditions with point-based geometries cannot be used with interpolative "
             << "Mapping, use the Nearest Neighbor Mapper instead!" << std::endl;
     
-        mNumPoints = mpGeometry->PointsNumber();
+        mNumPoints = mpGeometricalObject->GetGeometry().PointsNumber();
         KRATOS_ERROR_IF(mNumPoints == 0) << "Number of Points cannot be zero" << std::endl;
     
-        mpPoint = &(mpGeometry->GetPoint(0)); // used for debugging
+        mpPoint = &(mpGeometricalObject->GetGeometry().GetPoint(0)); // used for debugging
     
         mEchoLevel = EchoLevel;
     }
@@ -104,9 +104,9 @@ public:
     ///@name Operations
     ///@{
 
-    Geometry<Node<3>>* pGetBase()
+    GeometricalObject* pGetBase()
     {
-        return mpGeometry;
+        return mpGeometricalObject;
     }
 
     bool EvaluateResult(const array_1d<double, 3>& rGlobalCoords,
@@ -122,21 +122,21 @@ public:
         if (mGeometryFamily == GeometryData::Kratos_Linear
                 && mNumPoints == 2)   // I am a linear line condition
         {
-            is_inside = MapperUtilities::ProjectPointToLine(mpGeometry, rGlobalCoords,
+            is_inside = MapperUtilities::ProjectPointToLine(&(mpGeometricalObject->GetGeometry()), rGlobalCoords,
                         projection_local_coords,
                         projection_distance);
         }
         else if (mGeometryFamily == GeometryData::Kratos_Triangle
                  && mNumPoints == 3)   // I am a linear triangular condition
         {
-            is_inside = MapperUtilities::ProjectPointToTriangle(mpGeometry, rGlobalCoords,
+            is_inside = MapperUtilities::ProjectPointToTriangle(&(mpGeometricalObject->GetGeometry()), rGlobalCoords,
                         projection_local_coords,
                         projection_distance);
         }
         else if (mGeometryFamily == GeometryData::Kratos_Quadrilateral
                  && mNumPoints == 4)   // I am a linear quadrilateral condition
         {
-            is_inside = MapperUtilities::ProjectPointToQuadrilateral(mpGeometry, rGlobalCoords,
+            is_inside = MapperUtilities::ProjectPointToQuadrilateral(&(mpGeometricalObject->GetGeometry()), rGlobalCoords,
                         projection_local_coords,
                         projection_distance);
         }
@@ -144,7 +144,7 @@ public:
                  mGeometryFamily == GeometryData::Kratos_Prism ||
                  mGeometryFamily == GeometryData::Kratos_Hexahedra)   // Volume Mapping
         {
-            is_inside = MapperUtilities::PointLocalCoordinatesInVolume(mpGeometry, rGlobalCoords,
+            is_inside = MapperUtilities::PointLocalCoordinatesInVolume(&(mpGeometricalObject->GetGeometry()), rGlobalCoords,
                         projection_local_coords,
                         projection_distance);
         }
@@ -173,7 +173,7 @@ public:
                 rShapeFunctionValues.resize(mNumPoints);
                 for (int i = 0; i < mNumPoints; ++i)
                 {
-                    rShapeFunctionValues[i] = mpGeometry->ShapeFunctionValue(i, projection_local_coords);
+                    rShapeFunctionValues[i] = mpGeometricalObject->GetGeometry().ShapeFunctionValue(i, projection_local_coords);
                 }
                 is_closer = true;
             }
@@ -191,7 +191,7 @@ public:
         for (int i = 0; i < mNumPoints; ++i)
         {
             distance_point = MapperUtilities::ComputeDistance(rGlobalCoords,
-                             mpGeometry->GetPoint(i).Coordinates());
+                             mpGeometricalObject->GetGeometry().GetPoint(i).Coordinates());
 
             if (distance_point < rMinDistance && distance_point <= mApproximationTolerance)
             {
@@ -330,7 +330,7 @@ private:
     ///@name Member Variables
     ///@{
 
-    Geometry<Node<3>>* mpGeometry;
+    GeometricalObject* mpGeometricalObject;
     Node<3>* mpPoint;
     GeometryData::KratosGeometryFamily mGeometryFamily;
     int mNumPoints; 
@@ -347,7 +347,7 @@ private:
 
     void SetCoordinates() override
     {
-        this->Coordinates() = mpGeometry->Center();
+        this->Coordinates() = mpGeometricalObject->GetGeometry().Center();
     }
 
 

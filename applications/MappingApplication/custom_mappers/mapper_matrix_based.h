@@ -23,6 +23,7 @@
 // Project includes
 #include "mapper.h"
 #include "custom_utilities/interface_preprocess.h"
+#include "custom_conditions/base_mapper_condition.h"
 // #include "custom_strategies/builders/mapping_matrix_builder.h"
 // #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 // #include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
