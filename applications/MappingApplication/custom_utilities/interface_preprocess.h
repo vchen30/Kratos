@@ -117,6 +117,10 @@ namespace Kratos
             // Create a new / overwrite the InterfaceModelpart
             mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
 
+            mpInterfaceModelPart->GetMesh().Clear(); // TODO make make use of this, by not crating a new ModelPart each time but recycling the old one
+            
+
+
             // mDimension = mrModelPart.GetProcessInfo[DOMAIN_SIZE]
 
             // create dummy properties // TODO is this ok? Or is there a case where I cannot do this?            
@@ -258,6 +262,7 @@ namespace Kratos
 
             // TODO ptr iterator? => see builderandsolver
             const int num_nodes_local = mrModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+
             mpInterfaceModelPart->Nodes().reserve(num_nodes_local);
 
             for (ModelPart::NodesContainerType::const_iterator node_it = mrModelPart.NodesBegin(); node_it != mrModelPart.NodesEnd(); ++node_it)
@@ -343,7 +348,7 @@ namespace Kratos
                     it_node != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); ++it_node)
                 {
                     temp_condition_nodes.clear();
-                    temp_condition_nodes.push_back( *(it_node).base()); // TODO make more efficient, w/o reallocation of memmory all the time!
+                    temp_condition_nodes.push_back( *(it_node).base()); // TODO make more efficient, w/o reallocation of memory all the time!
                     CreateNewNodeCondition(temp_condition_nodes, cond_counter, condition_name);
                     ++cond_counter;
                 }

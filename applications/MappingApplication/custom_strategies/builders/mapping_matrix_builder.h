@@ -23,6 +23,7 @@
 
 // Project includes
 #include "includes/define.h"
+#include "custom_conditions/mortar_mapper_condition.h"
 #include "mapping_application_variables.h"
 
 namespace Kratos
@@ -85,7 +86,7 @@ class MappingMatrixBuilder
     ///@{
 
     /// Default constructor.
-    MappingMatrixBuilder() {
+    MappingMatrixBuilder(const int EchoLevel) {
 
         if (TSparseSpace::IsDistributed())
         {
@@ -95,6 +96,7 @@ class MappingMatrixBuilder
         {
             std::cout << "Using the UBLAS Space" << std::endl;            
         }
+        mEchoLevel = EchoLevel;
     }
 
     /// Destructor.
@@ -126,7 +128,7 @@ class MappingMatrixBuilder
         ++equation_id;
         }
 
-        // TODO synchronization of this varibale for MPI case
+        rModelPart.GetCommunicator().SynchronizeVariable(MAPPING_MATRIX_EQUATION_ID);
     }
 
     void Multiply(TSystemMatrixType& rA,
@@ -177,7 +179,7 @@ class MappingMatrixBuilder
         const unsigned int size_destination) = 0;
 
 
-    virtual void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+    virtual void BuildMappingMatrix(ModelPart& rModelPart,
                                     TSystemMatrixType& rA) = 0;
 
     // TODO is ok tp pass by ref? I think so, but chek again
@@ -348,6 +350,8 @@ class MappingMatrixBuilder
     ///@}
     ///@name Protected member Variables
     ///@{
+
+    int mEchoLevel = 0;
 
     ///@}
     ///@name Protected Operators

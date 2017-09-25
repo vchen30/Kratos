@@ -93,7 +93,7 @@ public:
     MapperMatrixBased(ModelPart &rModelPartOrigin, ModelPart &rModelpartDestination,
                       Parameters rJsonParameters) : Mapper(rModelPartOrigin, rModelpartDestination, rJsonParameters)
     {
-        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType());
+        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType(this->mEchoLevel));
 
         mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination) );
 
@@ -222,7 +222,7 @@ public:
     {
         if (MappingOptions.Is(MapperFlags::CONSERVATIVE))
         {
-            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!!
+            MappingOptions.Reset(MapperFlags::CONSERVATIVE); // TODO test this!!! => seems to work
             MappingOptions.Set(MapperFlags::USE_TRANSPOSE); // TODO test this!!!
 
             Map(rOriginVariable, rDestinationVariable, MappingOptions);
@@ -347,7 +347,7 @@ protected:
     {
         this->ExchangeInterfaceGeometryData();
         
-        mpMappingMatrixBuilder->BuildMappingMatrix(mpInterfaceModelPart, *mpMdo);
+        mpMappingMatrixBuilder->BuildMappingMatrix(*mpInterfaceModelPart, *mpMdo);
     }
 
     /**

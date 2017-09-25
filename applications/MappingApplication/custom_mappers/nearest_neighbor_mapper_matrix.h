@@ -237,6 +237,26 @@ private:
         p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
     }
 
+    static Vector GetValueOfNodeNew(InterfaceObject* pInterfaceObject, //TODO const
+                          const std::vector<double>& rShapeFunctionValues)
+    {
+        BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
+        // Vector equation_ids(1);
+        // equation_ids[0] = p_base_node->GetValue(MAPPING_MATRIX_EQUATION_ID);
+        // return equation_ids;
+    }
+
+
+    static void SetValueOfNodeNew(InterfaceObject* pInterfaceObject,
+                               const Vector& rValue)
+    {
+        BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
+
+        p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+    }
+
     ///@}
     ///@name Private  Access
     ///@{

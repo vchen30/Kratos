@@ -106,6 +106,22 @@ class KRATOS_API(MAPPING_APPLICATION) BaseMapperCondition : public Condition
     ///@name Operations
     ///@{
 
+    virtual void CalculateMappingWeights(VectorType& rLocalSystem) {}
+
+    virtual void EquationIdVectorOrigin(EquationIdVectorType & rResult) {}
+
+    virtual void EquationIdVectorDestination(EquationIdVectorType & rResult) {}
+
+    void SetNeighborIDVector(std::vector<int>& rNeighborIDs)
+    {
+        mNeighborIDs = rNeighborIDs;
+    }
+
+    void SetNeighborWeightVector(std::vector<double>& rNeighborWeights)
+    {
+        mNeighborWeights = rNeighborWeights;
+    }
+
     /**
    * CONDITIONS inherited from this class have to implement next
    * Create and Clone methods: MANDATORY

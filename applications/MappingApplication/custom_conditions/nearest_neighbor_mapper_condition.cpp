@@ -107,6 +107,32 @@ NearestNeighborMapperCondition &NearestNeighborMapperCondition::operator=(Neares
 ///@name Operations
 ///@{
 
+
+
+void NearestNeighborMapperCondition::CalculateMappingWeights(VectorType& rLocalSystem)
+{
+    // For now I save the information in a Column vector
+    if (rLocalSystem.size() != 1) rLocalSystem.resize(1, false);
+
+    // The weight of a NearestNeighborMapper is always 1!
+    rLocalSystem[0] = 1.0; //mNeighborWeights[0];
+}
+
+void NearestNeighborMapperCondition::EquationIdVectorOrigin(EquationIdVectorType & rResult)
+{
+    if (rResult.size() != 1) rResult.resize(1, false);
+
+    // rResult[0] = 0;//mNeighborIDs[0]; // ID on Origin. This is written by the Communicator
+    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR)[0]; // ID on Origin. This is written by the Communicator
+}
+
+void NearestNeighborMapperCondition::EquationIdVectorDestination(EquationIdVectorType & rResult)
+{
+    if (rResult.size() != 1) rResult.resize(1, false);
+
+    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
+}
+
 /**
  * CONDITIONS inherited from this class have to implement next
  * Create and Clone methods: MANDATORY

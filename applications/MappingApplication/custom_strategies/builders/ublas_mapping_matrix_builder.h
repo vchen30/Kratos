@@ -84,13 +84,16 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
     typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
     typedef ModelPart::NodeIterator NodeIterator;
+    typedef ModelPart::ConditionIterator ConditionIterator;
+    typedef Condition::EquationIdVectorType EquationIdVectorType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    UblasMappingMatrixBuilder() {
+    UblasMappingMatrixBuilder(const int EchoLevel) : MappingMatrixBuilder<TSparseSpace, TDenseSpace>(EchoLevel)
+    {
         KRATOS_ERROR_IF(TSparseSpace::IsDistributed()) << "WRONG SPACE!" << std::endl;        
     }
 
@@ -191,25 +194,35 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
 
     }
 
-    void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+    void BuildMappingMatrix(ModelPart& rModelPart,
                             TSystemMatrixType& rA) override
     {
-        ProcessInfo& r_current_process_info = pModelPart->GetProcessInfo();
-
         // contributions to the system
-        LocalSystemMatrixType LHS_Contribution = LocalSystemMatrixType(0, 0);
+        LocalSystemVectorType mapper_system_weights = LocalSystemVectorType(0);
         
-        // vector containing the localization in the system of the different terms
-        Element::EquationIdVectorType equation_id;
+        // vectors containing the localization in the system of the different terms
+        EquationIdVectorType equation_ids_origin;
+        EquationIdVectorType equation_ids_destination;
 
-        for (auto& r_cond : pModelPart->GetCommunicator().LocalMesh().Conditions())
+
+        const int num_conditions = rModelPart.NumberOfConditions();
+        ConditionIterator it_begin = rModelPart.ConditionsBegin();
+
+        // #pragma omp parallel for // TODO check if this works, i.e. if I write the same positions several times!
+        for(int i = 0; i < num_conditions; i++)
         {
-            r_cond.CalculateLeftHandSide(LHS_Contribution, r_current_process_info);
-            r_cond.EquationIdVector(equation_id, r_current_process_info);
+            ConditionIterator it = it_begin + i;
 
-            AssembleLHS(rA, LHS_Contribution, equation_id);
+            BaseMapperCondition* p_cond = dynamic_cast<BaseMapperCondition*>(&*it);
+
+            p_cond->CalculateMappingWeights(mapper_system_weights);
+            p_cond->EquationIdVectorOrigin(equation_ids_origin);
+            p_cond->EquationIdVectorDestination(equation_ids_destination);
+
+            Assemble(rA, mapper_system_weights, equation_ids_origin, equation_ids_destination);
         }
-        TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false);
+
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false); // TODO change Level to sth higher later
     }
 
     // /**
@@ -452,7 +465,7 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         NodeIterator it_begin = rModelPart.NodesBegin();
 
         #pragma omp parallel for // Don't modify, this is best suitable for this case
-        for(int i = 0; i<num_nodes; i++)
+        for (int i = 0; i<num_nodes; i++)
         {
             NodeIterator it = it_begin + i;
             rB[i] = it->FastGetSolutionStepValue(rVariable);
@@ -465,7 +478,7 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         //     ++index;
         // }
 
-        TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", rB);
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", rB); // TODO change Level to sth higher later
     }
 
     template< class TVarType>
@@ -475,13 +488,13 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
                  const Kratos::Flags& MappingOptions,
                  const double Factor) 
     {
-        TSparseSpace::WriteMatrixMarketVector("Update", rB); // TODO remove at some point  
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketVector("Update", rB); // TODO change Level to sth higher later
 
         const int num_nodes = rModelPart.NumberOfNodes();
         NodeIterator it_begin = rModelPart.NodesBegin();
 
         #pragma omp parallel for // Don't modify, this is best suitable for this case
-        for(int i = 0; i<num_nodes; i++)
+        for (int i = 0; i<num_nodes; i++)
         {
             NodeIterator it = it_begin + i;
 
@@ -492,29 +505,41 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         }
     }
 
-    void AssembleLHS(
-        TSystemMatrixType& A,
-        LocalSystemMatrixType& LHS_Contribution,
-        Condition::EquationIdVectorType& EquationId
+    void Assemble(
+        TSystemMatrixType& rA,
+        LocalSystemVectorType& rMapperSystemWeights,
+        EquationIdVectorType& rEquationIdsOrigin,
+        EquationIdVectorType& rEquationIdsDestination
     )
     {
-        const unsigned int local_size = LHS_Contribution.size1();
-        int equation_id_destination;
-        int equation_id_origin;
-        
-        for (unsigned int i = 0; i < local_size ; ++i)
+        const unsigned int local_size = rMapperSystemWeights.size();
+        // TODO wrap these checks in debug?
+        KRATOS_ERROR_IF_NOT(rEquationIdsOrigin.size() == local_size) << "Wrong Size!" << std::endl;
+        KRATOS_ERROR_IF_NOT(rEquationIdsDestination.size() == local_size) << "Wrong Size!" << std::endl;
+
+        // No openmp here, is done at higher level! => but maybe protect the writing with atomic?
+        for (unsigned int i = 0; i < local_size; ++i)
         {
-            for (unsigned int j = 0; j < local_size ; ++j)
-            {
-                equation_id_destination = EquationId[i];
-                equation_id_origin = EquationId[i + local_size];
-
-                // std::cout << "equation_id_destination: " << equation_id_destination << " ;; equation_id_origin: " 
-                //           << equation_id_origin << " ;; LHS_Contribution(i,j): " << LHS_Contribution(i,j) << std::endl;
-
-                A(equation_id_destination, equation_id_origin) += LHS_Contribution(i,j);
-            }
+            rA(rEquationIdsDestination[i], rEquationIdsOrigin[i]) += rMapperSystemWeights[i];  // Big Question: "=" or "+=" ??? TODO
         }
+
+        // const unsigned int local_size = LHS_Contribution.size1();
+        // int equation_id_destination;
+        // int equation_id_origin;
+        
+        // for (unsigned int i = 0; i < local_size ; ++i)
+        // {
+        //     for (unsigned int j = 0; j < local_size ; ++j)
+        //     {
+        //         equation_id_destination = EquationId[i];
+        //         equation_id_origin = EquationId[i + local_size];
+
+        //         // std::cout << "equation_id_destination: " << equation_id_destination << " ;; equation_id_origin: " 
+        //         //           << equation_id_origin << " ;; LHS_Contribution(i,j): " << LHS_Contribution(i,j) << std::endl;
+
+        //         A(equation_id_destination, equation_id_origin) += LHS_Contribution(i,j);
+        //     }
+        // }
 
 
         // unsigned int local_size = LHS_Contribution.size1();

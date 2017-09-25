@@ -22,6 +22,7 @@
 
 // Project includes
 #include "mapper_matrix_based.h"
+#include "utilities/exact_mortar_segmentation_utility.h"
 
 
 namespace Kratos
@@ -112,22 +113,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable<double>& rOriginVariable,
-                    const Variable<double>& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-
-    }
-
-    /* This function maps from Destination to Origin */
-    void InverseMap(const Variable< array_1d<double, 3> >& rOriginVariable,
-                    const Variable< array_1d<double, 3> >& rDestinationVariable,
-                    Kratos::Flags MappingOptions) override
-    {
-        
-    }
 
     ///@}
     ///@name Access

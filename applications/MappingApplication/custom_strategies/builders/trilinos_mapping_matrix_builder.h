@@ -89,7 +89,8 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     ///@{
 
     /// Default constructor.
-    TrilinosMappingMatrixBuilder() {
+    TrilinosMappingMatrixBuilder(const int EchoLevel) : MappingMatrixBuilder<TSparseSpace, TDenseSpace>(EchoLevel)
+    {
         KRATOS_ERROR_IF_NOT(TSparseSpace::IsDistributed()) << "WRONG SPACE!" << std::endl;
     }
 
@@ -180,7 +181,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 
 
 
-    void BuildMappingMatrix(ModelPart::Pointer pModelPart,
+    void BuildMappingMatrix(ModelPart& rModelPart,
                             TSystemMatrixType& rA) override
     {
         
