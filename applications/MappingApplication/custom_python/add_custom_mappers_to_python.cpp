@@ -185,8 +185,8 @@ void  AddCustomMappersToPython()
         = &Mapper::InverseMap;
     
     // Exposing the base class of the Mappers to Python, but without constructor
-    class_< Mapper, boost::noncopyable > mapper 
-        = class_< Mapper, boost::noncopyable >("Mapper", no_init)
+    class_< Mapper, Mapper::Pointer, boost::noncopyable > mapper 
+        = class_< Mapper, Mapper::Pointer, boost::noncopyable >("Mapper", no_init)
             .def("UpdateInterface",  pUpdateInterface)
             .def("UpdateInterface",  pUpdateInterfaceOptions)
             .def("UpdateInterface",  pUpdateInterfaceSearchRadius)
@@ -236,7 +236,7 @@ void  AddCustomMappersToPython()
     
     // Exposing the MapperFactory
     class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
-    .def("CreateMapper", &MapperFactoryNew::CreateMapper, return_value_policy<manage_new_object>())
+    .def("CreateMapper", &MapperFactoryNew::CreateMapper)
     .staticmethod("CreateMapper")
     ;
     /*

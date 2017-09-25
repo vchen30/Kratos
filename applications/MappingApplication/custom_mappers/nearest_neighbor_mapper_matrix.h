@@ -214,7 +214,7 @@ private:
         //                                     std::placeholders::_2);
 
         this->mpMapperCommunicator->TransferVariableDataNEW(&GetValueOfNode, // TODO pass by ref or not?
-            &SetValueOfNode);
+            &SetValueOfNodeOld);
     }
 
     static Vector GetValueOfNode(InterfaceObject* pInterfaceObject, //TODO const
@@ -228,33 +228,28 @@ private:
     }
 
 
-    static void SetValueOfNode(InterfaceObject* pInterfaceObject,
+    static void SetValueOfNodeOld(InterfaceObject* pInterfaceObject,
                                const Vector& rValue)
     {
-        Node<3>* p_base_node = static_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        Node<3>* p_base_node = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
         KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
 
         p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
     }
 
-    static Vector GetValueOfNodeNew(InterfaceObject* pInterfaceObject, //TODO const
-                          const std::vector<double>& rShapeFunctionValues)
-    {
-        BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
-        KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
-        // Vector equation_ids(1);
-        // equation_ids[0] = p_base_node->GetValue(MAPPING_MATRIX_EQUATION_ID);
-        // return equation_ids;
-    }
 
-
-    static void SetValueOfNodeNew(InterfaceObject* pInterfaceObject,
+    static void SetValueOfNode(InterfaceObject* pInterfaceObject,
                                const Vector& rValue)
     {
-        BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
-        KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
+        // BaseMapperCondition* p_base_condition = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        // KRATOS_ERROR_IF_NOT(p_base_condition) << "Base Pointer is nullptr!!!" << std::endl;
 
-        // p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+        // // p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+        // std::vector<int> equation_ids(rValue.size());
+        // for (unsigned int i=0; i< rValue.size(); ++i)
+        //     equation_ids[i] = rValue[i];
+
+        // p_base_condition->SetNeighborIDVector(equation_ids);
     }
 
     ///@}
