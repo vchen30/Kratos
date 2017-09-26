@@ -198,12 +198,9 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
                             TSystemMatrixType& rA) override
     {
         // contributions to the system
-        LocalSystemVectorType mapper_system_weights = LocalSystemVectorType(0);
-        
-        // vectors containing the localization in the system of the different terms
-        EquationIdVectorType equation_ids_origin;
-        EquationIdVectorType equation_ids_destination;
+        LocalSystemMatrixType mapper_local_system = LocalSystemMatrixType(0,0);
 
+        ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo(); 
 
         const int num_conditions = rModelPart.NumberOfConditions();
         ConditionIterator it_begin = rModelPart.ConditionsBegin();
@@ -211,15 +208,11 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         // #pragma omp parallel for // TODO check if this works, i.e. if I write the same positions several times!
         for(int i = 0; i < num_conditions; i++)
         {
-            ConditionIterator it = it_begin + i;
+            ConditionIterator cond_it = it_begin + i;
 
-            BaseMapperCondition* p_cond = dynamic_cast<BaseMapperCondition*>(&*it);
+            cond_it->CalculateLeftHandSide(mapper_local_system, r_current_process_info);
 
-            // p_cond->CalculateMappingWeights(mapper_system_weights);
-            // p_cond->EquationIdVectorOrigin(equation_ids_origin);
-            // p_cond->EquationIdVectorDestination(equation_ids_destination);
-
-            // Assemble(rA, mapper_system_weights, equation_ids_origin, equation_ids_destination);
+            Assemble(rA, mapper_local_system);
         }
 
         if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false); // TODO change Level to sth higher later
@@ -491,23 +484,18 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         }
     }
 
-    void Assemble(
-        TSystemMatrixType& rA,
-        LocalSystemVectorType& rMapperSystemWeights,
-        EquationIdVectorType& rEquationIdsOrigin,
-        EquationIdVectorType& rEquationIdsDestination
-    )
+    void Assemble(TSystemMatrixType& rA, LocalSystemMatrixType& rLocalSystem)
     {
-        const unsigned int local_size = rMapperSystemWeights.size();
-        // TODO wrap these checks in debug?
-        KRATOS_ERROR_IF_NOT(rEquationIdsOrigin.size() == local_size) << "Wrong Size!" << std::endl;
-        KRATOS_ERROR_IF_NOT(rEquationIdsDestination.size() == local_size) << "Wrong Size!" << std::endl;
+        /* The format of "rLocalSystem" is:
+        1. Row: Weight
+        2. Row: MAPPING_MATRIX_ID on Destination
+        3. Row: MAPPING_MATRIX_ID on Origin */
+
+        const unsigned int local_size = rLocalSystem.size2(); // for 
 
         // No openmp here, is done at higher level! => but maybe protect the writing with atomic?
         for (unsigned int i = 0; i < local_size; ++i)
-        {
-            rA(rEquationIdsDestination[i], rEquationIdsOrigin[i]) += rMapperSystemWeights[i];  // Big Question: "=" or "+=" ??? TODO
-        }
+            rA(rLocalSystem(1,i) , rLocalSystem(2,i)) += rLocalSystem(0,i);  // Big Question: "=" or "+=" ??? TODO
 
         // const unsigned int local_size = LHS_Contribution.size1();
         // int equation_id_destination;

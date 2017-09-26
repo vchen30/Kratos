@@ -345,8 +345,6 @@ class KRATOS_API(MAPPING_APPLICATION) BaseMapperCondition : public Condition
     ///@}
     ///@name Protected member Variables
     ///@{
-    std::vector<int> mNeighborIDs;
-    std::vector<double> mNeighborWeights;
 
     ///@}
     ///@name Protected Operators

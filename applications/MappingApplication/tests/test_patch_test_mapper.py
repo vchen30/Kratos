@@ -299,62 +299,62 @@ class TestPatchTestMappers(KratosUnittest.TestCase):
         # self._execute_non_constant_value_test(results_conservative, KratosMapping.Mapper.CONSERVATIVE)
         
 
-    def test_nearest_element_mapper_matrix_based(self):
-        mapper_name = "NearestElementMatrixBased"
+    # def test_nearest_element_mapper_matrix_based(self):
+    #     mapper_name = "NearestElementMatrixBased"
         
-        map_results_scalar = [0.2, 0.6, 1.0, 1.8, 7.6/3]
-        map_results_vector     = [(0.0,0.1,-0.3), (0.4,0.5,0.1), (0.8,0.9,0.5), (1.6,1.7,1.3), (7/3,7.3/3,6.1/3)]
-        inverse_map_results_scalar     = [-0.3, 1.95, 10.1/3, 3.7]
-        inverse_map_results_vector     = [(0.0,-0.1,0.4), (2.25,2.15,2.65), (11/3,10.7/3,12.2/3), (4.0,3.9,4.4)]
+    #     map_results_scalar = [0.2, 0.6, 1.0, 1.8, 7.6/3]
+    #     map_results_vector     = [(0.0,0.1,-0.3), (0.4,0.5,0.1), (0.8,0.9,0.5), (1.6,1.7,1.3), (7/3,7.3/3,6.1/3)]
+    #     inverse_map_results_scalar     = [-0.3, 1.95, 10.1/3, 3.7]
+    #     inverse_map_results_vector     = [(0.0,-0.1,0.4), (2.25,2.15,2.65), (11/3,10.7/3,12.2/3), (4.0,3.9,4.4)]
         
-        map_results_scalar_conservative = [0.2, 0.0, 1.0, 0.0, 1.8+7.6/3]
-        map_results_vector_conservative     = [(0.0,0.1,-0.3), (0.0,0.0,0.0), (0.8,0.9,0.5), (0.0,0.0,0.0), (1.6+7/3,1.7+7.3/3,1.3+6.1/3)]
-        inverse_map_results_scalar_conservative     = [999, 1.95, 999, 0.0]
-        inverse_map_results_vector_conservative     = [(999,999,999), (2.25,2.15,2.65), (999,999,999), (0.0,0.0,0.0)]
+    #     map_results_scalar_conservative = [0.2, 0.0, 1.0, 0.0, 1.8+7.6/3]
+    #     map_results_vector_conservative     = [(0.0,0.1,-0.3), (0.0,0.0,0.0), (0.8,0.9,0.5), (0.0,0.0,0.0), (1.6+7/3,1.7+7.3/3,1.3+6.1/3)]
+    #     inverse_map_results_scalar_conservative     = [999, 1.95, 999, 0.0]
+    #     inverse_map_results_vector_conservative     = [(999,999,999), (2.25,2.15,2.65), (999,999,999), (0.0,0.0,0.0)]
 
-        results = [map_results_scalar, map_results_vector]
-        results.extend([inverse_map_results_scalar, inverse_map_results_vector])
+    #     results = [map_results_scalar, map_results_vector]
+    #     results.extend([inverse_map_results_scalar, inverse_map_results_vector])
 
-        results_conservative = [map_results_scalar_conservative, map_results_vector_conservative]
-        results_conservative.extend([inverse_map_results_scalar_conservative, inverse_map_results_vector_conservative])
+    #     results_conservative = [map_results_scalar_conservative, map_results_vector_conservative]
+    #     results_conservative.extend([inverse_map_results_scalar_conservative, inverse_map_results_vector_conservative])
 
-        self._create_mapper(mapper_name)
+    #     self._create_mapper(mapper_name)
 
-        # self._execute_constant_value_test()
+    #     # self._execute_constant_value_test()
 
-        # self._execute_non_constant_value_test(results)
+    #     # self._execute_non_constant_value_test(results)
         
-        # # Test conservative Mapping
-        # self._execute_non_constant_value_test(results_conservative, KratosMapping.Mapper.CONSERVATIVE) # TODO check the values!
+    #     # # Test conservative Mapping
+    #     # self._execute_non_constant_value_test(results_conservative, KratosMapping.Mapper.CONSERVATIVE) # TODO check the values!
         
 
-    def test_mortar_mapper(self):
-        mapper_name = "Mortar"
+    # def test_mortar_mapper(self):
+    #     mapper_name = "Mortar"
         
-        map_results_scalar = [0.2, 0.2, 1.2, 2.2, 2.2]
-        map_results_vector     = [(0.0,0.1,-0.3), (0.0,0.1,-0.3), (1.0,1.1,0.7), (2.0,2.1,1.7), (2.0,2.1,1.7)]
-        inverse_map_results_scalar     = [-0.3, 1.7, 3.7, 3.7]
-        inverse_map_results_vector     = [(0.0,-0.1,0.4), (2.0,1.9,2.4), (4.0,3.9,4.4), (4.0,3.9,4.4)]
+    #     map_results_scalar = [0.2, 0.2, 1.2, 2.2, 2.2]
+    #     map_results_vector     = [(0.0,0.1,-0.3), (0.0,0.1,-0.3), (1.0,1.1,0.7), (2.0,2.1,1.7), (2.0,2.1,1.7)]
+    #     inverse_map_results_scalar     = [-0.3, 1.7, 3.7, 3.7]
+    #     inverse_map_results_vector     = [(0.0,-0.1,0.4), (2.0,1.9,2.4), (4.0,3.9,4.4), (4.0,3.9,4.4)]
         
-        map_results_scalar_conservative = [0.2, 0.0, 1.2, 0.0, 5.4]
-        map_results_vector_conservative     = [(0.0,0.1,-0.3), (0.0,0.0,0.0), (1.0,1.1,0.7), (0.0,0.0,0.0), (5.0,5.2,4.4)]
-        inverse_map_results_scalar_conservative     = [0.4, 1.7, 6.4, 0.0]
-        inverse_map_results_vector_conservative     = [(1.0,0.8,1.8), (2.0,1.9,2.4), (7.0,6.8,7.8), (0.0,0.0,0.0)]
+    #     map_results_scalar_conservative = [0.2, 0.0, 1.2, 0.0, 5.4]
+    #     map_results_vector_conservative     = [(0.0,0.1,-0.3), (0.0,0.0,0.0), (1.0,1.1,0.7), (0.0,0.0,0.0), (5.0,5.2,4.4)]
+    #     inverse_map_results_scalar_conservative     = [0.4, 1.7, 6.4, 0.0]
+    #     inverse_map_results_vector_conservative     = [(1.0,0.8,1.8), (2.0,1.9,2.4), (7.0,6.8,7.8), (0.0,0.0,0.0)]
 
-        results = [map_results_scalar, map_results_vector]
-        results.extend([inverse_map_results_scalar, inverse_map_results_vector])
+    #     results = [map_results_scalar, map_results_vector]
+    #     results.extend([inverse_map_results_scalar, inverse_map_results_vector])
 
-        results_conservative = [map_results_scalar_conservative, map_results_vector_conservative]
-        results_conservative.extend([inverse_map_results_scalar_conservative, inverse_map_results_vector_conservative])
+    #     results_conservative = [map_results_scalar_conservative, map_results_vector_conservative]
+    #     results_conservative.extend([inverse_map_results_scalar_conservative, inverse_map_results_vector_conservative])
 
-        self._create_mapper(mapper_name)
+    #     self._create_mapper(mapper_name)
 
-        # self._execute_constant_value_test()
+    #     # self._execute_constant_value_test()
 
-        # self._execute_non_constant_value_test(results)
+    #     # self._execute_non_constant_value_test(results)
         
-        # # Test conservative Mapping
-        # self._execute_non_constant_value_test(results_conservative, KratosMapping.Mapper.CONSERVATIVE)
+    #     # # Test conservative Mapping
+    #     # self._execute_non_constant_value_test(results_conservative, KratosMapping.Mapper.CONSERVATIVE)
 
 
 if __name__ == '__main__':

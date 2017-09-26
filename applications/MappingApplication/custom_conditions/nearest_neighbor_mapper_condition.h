@@ -136,14 +136,6 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
    */
     Condition::Pointer Clone(IndexType NewId, NodesArrayType const &ThisNodes) const;
 
-    /**
-   * this determines the condition equation ID vector for all condition
-   * DOFs
-   * @param rResult: the condition equation ID vector
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo);
-
 
     /**
    * CONDITIONS inherited from this class have to implement next

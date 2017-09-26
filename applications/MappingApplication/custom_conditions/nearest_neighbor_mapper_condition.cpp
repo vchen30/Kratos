@@ -164,22 +164,6 @@ Condition::Pointer NearestNeighborMapperCondition::Clone(IndexType NewId, NodesA
 }
 
 /**
- * this determines the condition equation ID vector for all conditional
- * DOFs
- * @param rResult: the condition equation ID vector
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo)
-{
-    if (rResult.size() != 2)
-        rResult.resize(2, false);
-
-    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-    
-    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
-}
-
-/**
  * this is called during the assembling process in order
  * to calculate the condition left hand side matrix only
  * @param rLeftHandSideMatrix: the condition left hand side matrix
@@ -187,8 +171,11 @@ void NearestNeighborMapperCondition::EquationIdVector(EquationIdVectorType &rRes
  */
 void NearestNeighborMapperCondition::CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo)
 {
-    rLeftHandSideMatrix.resize(1,1); // TODO do it like this? And if so, I think this fct needs another argument
-    rLeftHandSideMatrix(0,0) = 1.0;
+    rLeftHandSideMatrix.resize(3,1); // TODO do it like this? And if so, I think this fct needs another argument
+    
+    rLeftHandSideMatrix(0,0) = 1.0; // Weight
+    rLeftHandSideMatrix(1,0) = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
+    rLeftHandSideMatrix(2,0) = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**
