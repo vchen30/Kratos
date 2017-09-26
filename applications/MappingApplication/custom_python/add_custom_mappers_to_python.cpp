@@ -26,33 +26,16 @@
 #include <boost/python.hpp>
 
 // Project includes
-#include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
-
-#include "spaces/ublas_space.h" // Always needed, for "LocalSpaceType"
-
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-#include "trilinos_space.h"
-#include "Epetra_FEVector.h"
-#endif
-
-#include "includes/kratos_parameters.h"
-#include "custom_utilities/mapper_flags.h"
-
 #include "custom_python/add_custom_mappers_to_python.h"
-
-#include "custom_mappers/mapper.h"
-#include "custom_mappers/nearest_neighbor_mapper.h"
-#include "custom_mappers/nearest_element_mapper.h"
-
-#include "custom_mappers/nearest_neighbor_mapper_matrix.h"
-#include "custom_mappers/nearest_element_mapper_matrix.h"
-#include "custom_mappers/mortar_mapper.h"
 
 #include "custom_utilities/mapper_factory_new.h"
 
 #include "custom_strategies/builders/ublas_mapping_matrix_builder.h"
+
+
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "trilinos_space.h"
+#include "Epetra_FEVector.h"
 #include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
 #endif
 
@@ -233,21 +216,11 @@ void  AddCustomMappersToPython()
             bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 #endif
 
-    
     // Exposing the MapperFactory
     class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)
     .def("CreateMapper", &MapperFactoryNew::CreateMapper)
     .staticmethod("CreateMapper")
     ;
-    /*
-    Jordi
-    This should work according to "https://wiki.python.org/moin/boost.python/HowTo", search for "manage_new_object"
-    see also "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/exposing.html", search for "ownership"
-    and "http://www.boost.org/doc/libs/1_61_0/libs/python/doc/html/tutorial/tutorial/functions.html#tutorial.functions.call_policies", search for "manage_new_object"
-    UPDATE it works, but only if the MapperFactory returns a raw pointer to the mapper (i.e. Mapper::Pointer as return type does not work)
-    */
-    
-
 }
 
 }  // namespace Python.

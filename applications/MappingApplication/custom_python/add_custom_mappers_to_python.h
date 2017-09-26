@@ -33,6 +33,25 @@
 
 // Project includes
 #include "includes/define.h"
+#include "spaces/ublas_space.h" // Always needed, for "LocalSpaceType"
+#include "linear_solvers/linear_solver.h"
+#include "includes/kratos_parameters.h"
+
+// Mapper Aux stuff
+#include "custom_utilities/mapper_flags.h"
+#include "custom_strategies/builders/ublas_mapping_matrix_builder.h"
+
+// Mapper base class
+#include "custom_mappers/mapper.h"
+
+// Matrix-free Mappers
+#include "custom_mappers/nearest_neighbor_mapper.h"
+#include "custom_mappers/nearest_element_mapper.h"
+
+// Matrix-based Mappers
+#include "custom_mappers/nearest_neighbor_mapper_matrix.h"
+#include "custom_mappers/nearest_element_mapper_matrix.h"
+#include "custom_mappers/mortar_mapper.h"
 
 
 namespace Kratos
