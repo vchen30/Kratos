@@ -96,7 +96,11 @@ public:
     {
         mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType(this->mEchoLevel));
 
-        mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination) );
+        mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
+        this->mpMapperCommunicator->pSetModelpartDestination(&*(this->mpInterfaceModelPart));        
+
+        mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination,
+                                                                                        this->mpInterfaceModelPart) );
 
         InitializeMappingMatrix();
     }
@@ -356,9 +360,7 @@ protected:
     */
     void GenerateInterfaceModelPart()
     {   
-        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters); // return pointer?
-        this->mpInterfaceModelPart = this->mpInterfacePreprocessor->pGetInterfaceModelPart();  //TODO .swap()
-        this->mpMapperCommunicator->pSetModelpartDestination(&*(this->mpInterfaceModelPart));
+        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
     }
 
     template< class TVarType>

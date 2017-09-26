@@ -86,8 +86,8 @@ namespace Kratos
         ///@{ 
         
         /// Default constructor.
-        InterfacePreprocess(ModelPart& rModelPart) : 
-            mrModelPart(rModelPart)
+        InterfacePreprocess(ModelPart& rModelPart, const ModelPart::Pointer& pModelPart) : 
+            mrModelPart(rModelPart), mpInterfaceModelPart(pModelPart)
         {
             
         }
@@ -105,20 +105,11 @@ namespace Kratos
         ///@name Operations
         ///@{
 
-        ModelPart::Pointer pGetInterfaceModelPart()
-        {
-            return mpInterfaceModelPart;
-        }
-
         void GenerateInterfacePart(Parameters InterfaceParameters)
         {
-            CheckAndValidateParameters(InterfaceParameters);      
+            CheckAndValidateParameters(InterfaceParameters);  
 
-            // Create a new / overwrite the InterfaceModelpart
-            mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
-
-            mpInterfaceModelPart->GetMesh().Clear(); // TODO make make use of this, by not crating a new ModelPart each time but recycling the old one
-            
+            mpInterfaceModelPart->GetMesh().Clear(); // Clear the ModelPart          
 
 
             // mDimension = mrModelPart.GetProcessInfo[DOMAIN_SIZE]
@@ -340,7 +331,7 @@ namespace Kratos
 
             unsigned int cond_counter = 0;
 
-            if (InterfaceParameters["use_nodes"].GetBool()) // For mappers which don't depend on teh destination geometry, e.g. Nearest Neighbor Mapper or Nearest Element
+            if (InterfaceParameters["use_nodes"].GetBool()) // For mappers which don't depend on the destination geometry, e.g. Nearest Neighbor Mapper or Nearest Element
             {
                 Condition::NodesArrayType temp_condition_nodes;
                 condition_name.append("1N");
@@ -355,6 +346,7 @@ namespace Kratos
             }
             else // using the "Geometry" of the Conditions or Elements that are used to construct the Interface
             {
+                // Use pGetGeometry to not copy the geometry!
 
             }
         }
@@ -373,7 +365,25 @@ namespace Kratos
             
             KRATOS_CATCH("");
         }
+        
+        void CreateNewGeometryCondition(
+            Condition::NodesArrayType& rNode, // This is always only one node!
+            const unsigned int CondId,
+            const std::string ConditionName
+            )
+        {
+            KRATOS_TRY;
+        
+            Condition const & rCondition = KratosComponents<Condition>::Get(ConditionName);
+            Condition::Pointer p_cond = Condition::Pointer(rCondition.Create(CondId, rNode, mpInterfaceModelPart->pGetProperties(0)));
+            mpInterfaceModelPart->AddCondition(p_cond);
             
+            KRATOS_CATCH("");
+        }
+
+
+
+
         ///@} 
         ///@name Private  Access 
         ///@{ 
