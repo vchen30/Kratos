@@ -61,6 +61,8 @@ namespace Python
 {
 
 void AddCustomMappersToPython();
+void AddCustomMappersMPIToPython();
+
 
 }  // namespace Python.
 

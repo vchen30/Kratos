@@ -25,6 +25,32 @@
 #include "includes/condition.h"
 #include "mapping_application_variables.h"
 
+
+/*
+Exchange Format:
+(Matrix) MAPPER_NEIGHBOR_INFORMATION
+
+NN: 1x1, entry is the MAPPING_MATRIX_EQUATION_ID
+
+NN: 2xN:
+    1. Row: MAPPING_MATRIX_EQUATION_ID's
+    2. Row: Corresponding Shape Function Weights
+
+Mortar: 
+    1. Entry is Enum of KratosGeometryType => then I know the type and the number of points nP
+    Entry 2-nP: MAPPING_MATRIX_EQUATION_ID's
+    Remaining Entries: X/Y/Z- Coordinates of the Corner Points of the Geometry
+
+
+
+
+
+
+*/
+
+
+
+
 namespace Kratos
 {
 

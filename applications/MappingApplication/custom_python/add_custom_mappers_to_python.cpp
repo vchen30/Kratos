@@ -27,17 +27,8 @@
 
 // Project includes
 #include "custom_python/add_custom_mappers_to_python.h"
-
 #include "custom_utilities/mapper_factory_new.h"
-
 #include "custom_strategies/builders/ublas_mapping_matrix_builder.h"
-
-
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-#include "trilinos_space.h"
-#include "Epetra_FEVector.h"
-#include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
-#endif
 
 
 namespace Kratos
@@ -47,26 +38,26 @@ namespace Python
 {
 
 // Wrapper functions for taking a default argument for the flags // TODO inline? Jordi
-void UpdateInterface(Mapper& dummy)
+inline void UpdateInterface(Mapper& dummy)
 {
     Kratos::Flags dummy_flags = Kratos::Flags();
     double dummy_search_radius = -1.0f;
     dummy.UpdateInterface(dummy_flags, dummy_search_radius);
 }
 
-void UpdateInterface(Mapper& dummy, Kratos::Flags options)
+inline void UpdateInterface(Mapper& dummy, Kratos::Flags options)
 {
     double dummy_search_radius = -1.0f;
     dummy.UpdateInterface(options, dummy_search_radius);
 }
 
-void UpdateInterface(Mapper& dummy, double search_radius)
+inline void UpdateInterface(Mapper& dummy, double search_radius)
 {
     Kratos::Flags dummy_flags = Kratos::Flags();
     dummy.UpdateInterface(dummy_flags, search_radius);
 }
 
-void Map(Mapper& dummy,
+inline void Map(Mapper& dummy,
          const Variable<double>& origin_variable,
          const Variable<double>& destination_variable)
 {
@@ -74,7 +65,7 @@ void Map(Mapper& dummy,
     dummy.Map(origin_variable, destination_variable, dummy_flags);
 }
 
-void Map(Mapper& dummy,
+inline void Map(Mapper& dummy,
          const Variable< array_1d<double, 3> >& origin_variable,
          const Variable< array_1d<double, 3> >& destination_variable)
 {
@@ -82,7 +73,7 @@ void Map(Mapper& dummy,
     dummy.Map(origin_variable, destination_variable, dummy_flags);
 }
 
-void InverseMap(Mapper& dummy,
+inline void InverseMap(Mapper& dummy,
                 const Variable<double>& origin_variable,
                 const Variable<double>& destination_variable)
 {
@@ -90,7 +81,7 @@ void InverseMap(Mapper& dummy,
     dummy.InverseMap(origin_variable, destination_variable, dummy_flags);
 }
 
-void InverseMap(Mapper& dummy,
+inline void InverseMap(Mapper& dummy,
                 const Variable< array_1d<double, 3> >& origin_variable,
                 const Variable< array_1d<double, 3> >& destination_variable)
 {
@@ -106,13 +97,6 @@ void  AddCustomMappersToPython()
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     typedef LinearSolver<SerialSparseSpaceType, LocalSpaceType> SerialLinearSolverType; // for Mortar
     typedef UblasMappingMatrixBuilder<SerialSparseSpaceType, LocalSpaceType> SerialMappingMatrixBuilderType;
-
-// Overwrite the SparseSpaceType in case of mpi-parallel execution
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-    typedef TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector> TrilinosSparseSpaceType;
-    typedef LinearSolver<TrilinosSparseSpaceType, LocalSpaceType> TrilinosLinearSolverType; // for Mortar
-    typedef TrilinosMappingMatrixBuilder<TrilinosSparseSpaceType, LocalSpaceType> TrilinosMappingMatrixBuilderType;
-#endif
 
     void (*pUpdateInterface)(Mapper &)
         = &UpdateInterface;
@@ -195,26 +179,18 @@ void  AddCustomMappersToPython()
     // This would circumvent problems with the wrong space being selected
 
     // Exposing the Mappers
-        // Matrix-free Mappers
-        class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
-        ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
-        class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
-        ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
-        // Matrix-based Mappers
-        class_<NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
-               bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<NearestElementMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
-               bases<Mapper>, boost::noncopyable>("NearestElementMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
-               bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        class_<NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+    // Matrix-free Mappers
+    class_< NearestNeighborMapper, bases<Mapper>, boost::noncopyable>
+    ("NearestNeighborMapper", init<ModelPart&, ModelPart&, Parameters>());
+    class_< NearestElementMapper, bases<Mapper>, boost::noncopyable>
+    ("NearestElementMapper", init<ModelPart&, ModelPart&, Parameters>());
+    // Matrix-based Mappers
+    class_<NearestNeighborMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<NearestElementMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+    class_<NearestElementMapperMatrix<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("NearestElementMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
-        class_<MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+    class_<MortarMapper<SerialMappingMatrixBuilderType, SerialLinearSolverType>,
             bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
-#endif
 
     // Exposing the MapperFactory
     class_< MapperFactoryNew, boost::noncopyable>("MapperFactoryNew", no_init)

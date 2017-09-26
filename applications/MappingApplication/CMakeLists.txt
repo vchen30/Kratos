@@ -25,6 +25,11 @@ set( KRATOS_MAPPING_APPLICATION_SOURCES
 set(KRATOS_MAPPING_APPLICATION_EXTRA_LIBS "")
 ## If we have mpi support, use it
 if(${MPI_NEEDED} MATCHES ON )
+    set( KRATOS_MAPPING_APPLICATION_SOURCES ${KRATOS_MAPPING_APPLICATION_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_mappers_mpi_to_python.cpp
+    )
+
+
     # This is only true if Metis and Trilinos are compiled, right?
     # Jordi is this the correct way of including trilinos?
 

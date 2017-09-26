@@ -22,19 +22,14 @@
 
 // System includes
 
-#if defined(KRATOS_PYTHON)
 // External includes
 #include <boost/python.hpp>
 
-
 // Project includes
-#include "includes/define.h"
-#include "mapping_application.h"
-#include "mapping_application_variables.h"
 #include "custom_python/add_custom_mappers_to_python.h"
-#include "custom_python/add_custom_strategies_to_python.h"
-#include "custom_python/add_custom_utilities_to_python.h"
-#include "custom_python/add_custom_processes_to_python.h"
+#include "trilinos_space.h"
+#include "Epetra_FEVector.h"
+#include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
 
 
 namespace Kratos
@@ -43,36 +38,26 @@ namespace Kratos
 namespace Python
 {
 
-using namespace boost::python;
-
-
-
-BOOST_PYTHON_MODULE(KratosMappingApplication)
+void  AddCustomMappersMPIToPython()
 {
+    using namespace boost::python;
 
-    class_<KratosMappingApplication,
-           KratosMappingApplication::Pointer,
-           bases<KratosApplication>, boost::noncopyable >("KratosMappingApplication")
-           ;
+    typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-    AddCustomMappersToPython();
-    AddCustomStrategiesToPython();
-    AddCustomUtilitiesToPython();
-    AddCustomProcessesToPython();
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-    AddCustomMappersMPIToPython();
-#endif
+    typedef TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector> TrilinosSparseSpaceType;
+    typedef LinearSolver<TrilinosSparseSpaceType, LocalSpaceType> TrilinosLinearSolverType; // for Mortar
+    typedef TrilinosMappingMatrixBuilder<TrilinosSparseSpaceType, LocalSpaceType> TrilinosMappingMatrixBuilderType;
 
-    //registering variables in python
-
-//	KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_AREA);
-
+    
+    class_<NearestNeighborMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+        bases<Mapper>, boost::noncopyable>("NearestNeighborMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+    class_<NearestElementMapperMatrix<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+        bases<Mapper>, boost::noncopyable>("NearestElementMapperMatrix", init<ModelPart &, ModelPart &, Parameters>());
+    class_<MortarMapper<TrilinosMappingMatrixBuilderType, TrilinosLinearSolverType>,
+        bases<Mapper>, boost::noncopyable>("MortarMapper", init<ModelPart &, ModelPart &, Parameters>());
 
 }
 
-
 }  // namespace Python.
 
-}  // namespace Kratos.
-
-#endif // KRATOS_PYTHON defined
+} // Namespace Kratos
