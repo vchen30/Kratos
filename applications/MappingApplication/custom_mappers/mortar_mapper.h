@@ -78,6 +78,12 @@ public:
 
     typedef typename TMappingMatrixBuilderType::LocalSystemVectorType LocalSystemVectorType;
 
+    typedef size_t SizeType;
+
+    typedef Node<3> NodeType;
+
+    typedef Geometry<NodeType> GeometryType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -258,9 +264,45 @@ private:
 
     void ExchangeInterfaceGeometryData() override
     {
-        // 1. Step: Exchange MAPPING_MATRIX_EQUATION_ID, nodal weights and Geometries
-        // 2. Step Do the Integration with Vicentes Utility and store the results in the MapperConditions for the assembly
+        this->mpMapperCommunicator->TransferVariableDataNEW(&GetGeometryInformation, // TODO pass by ref or not?
+            &SetValueOfNode);
     }
+
+    static Vector GetGeometryInformation(InterfaceObject* pInterfaceObject, //TODO const
+                          const std::vector<double>& rShapeFunctionValues)
+    {
+        GeometricalObject* p_base_geometrical_object = static_cast<InterfaceGeometryObject*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_geometrical_object) << "Base Pointer is nullptr!!!" << std::endl;
+        
+        GeometryType& r_geom = p_base_geometrical_object->GetGeometry();
+        const SizeType num_points = r_geom.PointsNumber();
+
+        Vector geom_information(4*num_points + 1);
+        geom_information[0] = r_geom.GetGeometryFamily(); // Save the enum for the later reconstruction
+
+        // "Serializing" the Geometry
+        for (SizeType i=0; i<num_points; ++i)
+        {
+            NodeType& r_node = r_geom.GetPoint(i);
+            
+            geom_information[4*i+1] = r_node.GetValue(MAPPING_MATRIX_EQUATION_ID);
+            geom_information[4*i+2] = r_node.X();
+            geom_information[4*i+3] = r_node.Y();
+            geom_information[4*i+4] = r_node.Z();
+        }
+
+        return geom_information;
+    }
+
+    static void SetValueOfNode(InterfaceObject* pInterfaceObject,
+                               const Vector& rValue)
+    {
+        Node<3>* p_base_node = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
+
+        p_base_node->SetValue(MAPPER_NEIGHBOR_INFORMATION, rValue);
+    }
+
 
     ///@}
     ///@name Private  Access

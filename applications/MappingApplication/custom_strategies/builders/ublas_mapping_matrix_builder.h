@@ -215,11 +215,11 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
 
             BaseMapperCondition* p_cond = dynamic_cast<BaseMapperCondition*>(&*it);
 
-            p_cond->CalculateMappingWeights(mapper_system_weights);
-            p_cond->EquationIdVectorOrigin(equation_ids_origin);
-            p_cond->EquationIdVectorDestination(equation_ids_destination);
+            // p_cond->CalculateMappingWeights(mapper_system_weights);
+            // p_cond->EquationIdVectorOrigin(equation_ids_origin);
+            // p_cond->EquationIdVectorDestination(equation_ids_destination);
 
-            Assemble(rA, mapper_system_weights, equation_ids_origin, equation_ids_destination);
+            // Assemble(rA, mapper_system_weights, equation_ids_origin, equation_ids_destination);
         }
 
         if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false); // TODO change Level to sth higher later
@@ -419,13 +419,6 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
         return 0;
     }
 
-    /**
-    This function does nothing in the serial case
-    It exists such that the BuildRHS only exists in this
-    class and can therefore be templated
-    */
-    // virtual void GlobalAssembleVector(TSystemVectorType& b) {}
-
     ///@}
     ///@name Protected  Access
     ///@{
@@ -470,13 +463,6 @@ class UblasMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDen
             NodeIterator it = it_begin + i;
             rB[i] = it->FastGetSolutionStepValue(rVariable);
         }
-
-        // for (auto& node : rModelPart.Nodes())
-        // {
-        //     // Jordi is this ok? => Done differently in some BuilderAndSolvers
-        //     rB[index] = node.FastGetSolutionStepValue(rVariable);
-        //     ++index;
-        // }
 
         if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", rB); // TODO change Level to sth higher later
     }

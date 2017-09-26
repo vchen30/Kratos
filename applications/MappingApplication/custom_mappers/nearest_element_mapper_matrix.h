@@ -77,6 +77,12 @@ public:
 
     typedef typename TMappingMatrixBuilderType::LocalSystemVectorType LocalSystemVectorType;
 
+    typedef size_t SizeType;
+
+    typedef Node<3> NodeType;
+
+    typedef Geometry<NodeType> GeometryType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -203,38 +209,37 @@ private:
 
     void ExchangeInterfaceGeometryData() override
     {
-
-        // Creating the function pointers for the InterfaceObjects
-        // auto function_pointer_origin = std::bind(&GetValueOfNode,
-        //                                std::placeholders::_1,
-        //                                std::placeholders::_2);
-
-        // auto function_pointer_destination = std::bind(&SetValueOfNode,
-        //                                     std::placeholders::_1,
-        //                                     std::placeholders::_2);
-
-        this->mpMapperCommunicator->TransferVariableDataNEW(&GetValueOfNode, // TODO pass by ref or not?
+        this->mpMapperCommunicator->TransferVariableDataNEW(&GetGeometryInformation, // TODO pass by ref or not?
             &SetValueOfNode);
     }
 
-    static Vector GetValueOfNode(InterfaceObject* pInterfaceObject, //TODO const
+    static Vector GetGeometryInformation(InterfaceObject* pInterfaceObject, //TODO const
                           const std::vector<double>& rShapeFunctionValues)
     {
-        Node<3>* p_base_node = static_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
-        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
-        Vector equation_ids(1);
-        equation_ids[0] = p_base_node->GetValue(MAPPING_MATRIX_EQUATION_ID);
-        return equation_ids;
-    }
+        GeometricalObject* p_base_geometrical_object = static_cast<InterfaceGeometryObject*>(pInterfaceObject)->pGetBase();
+        KRATOS_ERROR_IF_NOT(p_base_geometrical_object) << "Base Pointer is nullptr!!!" << std::endl;
+        
+        GeometryType& r_geom = p_base_geometrical_object->GetGeometry();
+        const SizeType num_points = r_geom.PointsNumber();
 
+        Vector geom_information(2*num_points);
+
+        for (SizeType i=0; i<num_points; ++i)
+        {
+            geom_information[2*i] = r_geom.GetPoint(i).GetValue(MAPPING_MATRIX_EQUATION_ID);
+            geom_information[2*i+1] = rShapeFunctionValues[i];
+        }
+
+        return geom_information;
+    }
 
     static void SetValueOfNode(InterfaceObject* pInterfaceObject,
                                const Vector& rValue)
     {
-        Node<3>* p_base_node = static_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
+        Node<3>* p_base_node = dynamic_cast<InterfaceNode*>(pInterfaceObject)->pGetBase();
         KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
 
-        p_base_node->SetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR, rValue);
+        p_base_node->SetValue(MAPPER_NEIGHBOR_INFORMATION, rValue);
     }
 
     ///@}

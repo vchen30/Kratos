@@ -104,12 +104,6 @@ class KRATOS_API(MAPPING_APPLICATION) NearestElementMapperCondition : public Bas
     ///@name Operations
     ///@{
 
-    void CalculateMappingWeights(VectorType& rLocalSystem) override {}
-
-    void EquationIdVectorOrigin(EquationIdVectorType & rResult) override {}
-
-    void EquationIdVectorDestination(EquationIdVectorType & rResult) override {}  
-
     /**
    * CONDITIONS inherited from this class have to implement next
    * Create and Clone methods: MANDATORY

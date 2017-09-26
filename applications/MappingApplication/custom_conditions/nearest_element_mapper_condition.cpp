@@ -170,11 +170,20 @@ Condition::Pointer NearestElementMapperCondition::Clone(IndexType NewId, NodesAr
  */
 void NearestElementMapperCondition::EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
-    if (rResult.size() != number_of_nodes)
-        rResult.resize(number_of_nodes, false);
+    const SizeType num_points = GetGeometry().PointsNumber();
 
-    // @{ KRATOS_CONDITION_ECUATION_ID_DOFS }
+    if (rResult.size() != 2*num_points)
+        rResult.resize(2*num_points, false);
+
+    for (SizeType i=0; i < num_points; ++i)
+    {
+        rResult[i] = GetGeometry().GetPoint(i).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
+        rResult[i+1] = GetGeometry().GetPoint(i).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
+    }
+
+    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
+    
+    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**

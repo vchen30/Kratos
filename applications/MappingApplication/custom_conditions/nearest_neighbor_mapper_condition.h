@@ -104,12 +104,6 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
     ///@name Operations
     ///@{
 
-    void CalculateMappingWeights(VectorType& rLocalSystem) override;
-
-    void EquationIdVectorOrigin(EquationIdVectorType & rResult) override;
-
-    void EquationIdVectorDestination(EquationIdVectorType & rResult) override;
-
     /**
    * CONDITIONS inherited from this class have to implement next
    * Create and Clone methods: MANDATORY
@@ -150,12 +144,6 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
    */
     virtual void EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo);
 
-    /**
-   * determines the condition list of DOFs
-   * @param rConditionDofList: the list of DOFs
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void GetDofList(DofsVectorType &rConditionDofList, ProcessInfo &CurrentProcessInfo);
 
     /**
    * CONDITIONS inherited from this class have to implement next
@@ -164,18 +152,6 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
    * only once: MANDATORY
    */
 
-    /**
-   * this is called during the assembling process in order
-   * to calculate all condition contributions to the global system
-   * matrix and the right hand side
-   * @param rLeftHandSideMatrix: the condition left hand side matrix
-   * @param rRightHandSideVector: the condition right hand side
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateLocalSystem(
-        MatrixType &rLeftHandSideMatrix,
-        VectorType &rRightHandSideVector,
-        ProcessInfo &rCurrentProcessInfo);
 
     /**
    * this is called during the assembling process in order
@@ -185,98 +161,7 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
    */
     virtual void CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo);
 
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition right hand side vector only
-   * @param rRightHandSideVector: the condition right hand side vector
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateRightHandSide(VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo);
 
-    /**
-   * this is called during the assembling process in order
-   * to calculate the first derivatives contributions for the LHS and RHS
-   * @param rLeftHandSideMatrix: the condition left hand side matrix
-   * @param rRightHandSideVector: the condition right hand side
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateFirstDerivativesContributions(
-        MatrixType &rLeftHandSideMatrix,
-        VectorType &rRightHandSideVector,
-        ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition left hand side matrix for the first derivatives constributions
-   * @param rLeftHandSideMatrix: the condition left hand side matrix
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateFirstDerivativesLHS(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition right hand side vector for the first derivatives constributions
-   * @param rRightHandSideVector: the condition right hand side vector
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateFirstDerivativesRHS(VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * CONDITIONS inherited from this class must implement this methods
-   * if they need to add dynamic condition contributions
-   * note: second derivatives means the accelerations if the displacements are the dof of the analysis
-   * note: time integration parameters must be set in the rCurrentProcessInfo before calling these methods
-   * CalculateSecondDerivativesContributions,
-   * CalculateSecondDerivativesLHS, CalculateSecondDerivativesRHS methods are : OPTIONAL
-   */
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the second derivative contributions for the LHS and RHS
-   * @param rLeftHandSideMatrix: the condition left hand side matrix
-   * @param rRightHandSideVector: the condition right hand side
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateSecondDerivativesContributions(
-        MatrixType &rLeftHandSideMatrix,
-        VectorType &rRightHandSideVector,
-        ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition left hand side matrix for the second derivatives constributions
-   * @param rLeftHandSideMatrix: the condition left hand side matrix
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateSecondDerivativesLHS(
-        MatrixType &rLeftHandSideMatrix,
-        ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition right hand side vector for the second derivatives constributions
-   * @param rRightHandSideVector: the condition right hand side vector
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateSecondDerivativesRHS(
-        VectorType &rRightHandSideVector,
-        ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition mass matrix
-   * @param rMassMatrix: the condition mass matrix
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateMassMatrix(MatrixType &rMassMatrix, ProcessInfo &rCurrentProcessInfo);
-
-    /**
-   * this is called during the assembling process in order
-   * to calculate the condition damping matrix
-   * @param rDampingMatrix: the condition damping matrix
-   * @param rCurrentProcessInfo: the current process info instance
-   */
-    virtual void CalculateDampingMatrix(MatrixType &rDampingMatrix, ProcessInfo &rCurrentProcessInfo);
 
     /**
    * This method provides the place to perform checks on the completeness of the input

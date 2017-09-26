@@ -108,31 +108,6 @@ NearestNeighborMapperCondition &NearestNeighborMapperCondition::operator=(Neares
 ///@{
 
 
-
-void NearestNeighborMapperCondition::CalculateMappingWeights(VectorType& rLocalSystem)
-{
-    // For now I save the information in a Column vector
-    if (rLocalSystem.size() != 1) rLocalSystem.resize(1, false);
-
-    // The weight of a NearestNeighborMapper is always 1!
-    rLocalSystem[0] = 1.0; //mNeighborWeights[0];
-}
-
-void NearestNeighborMapperCondition::EquationIdVectorOrigin(EquationIdVectorType & rResult)
-{
-    if (rResult.size() != 1) rResult.resize(1, false);
-
-    // rResult[0] = 0;//mNeighborIDs[0]; // ID on Origin. This is written by the Communicator
-    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR)[0]; // ID on Origin. This is written by the Communicator
-}
-
-void NearestNeighborMapperCondition::EquationIdVectorDestination(EquationIdVectorType & rResult)
-{
-    if (rResult.size() != 1) rResult.resize(1, false);
-
-    rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-}
-
 /**
  * CONDITIONS inherited from this class have to implement next
  * Create and Clone methods: MANDATORY
@@ -200,44 +175,8 @@ void NearestNeighborMapperCondition::EquationIdVector(EquationIdVectorType &rRes
         rResult.resize(2, false);
 
     rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-    // rResult[1] = 0;//mNeighborIDs[0]; // ID on Origin. This is written by the Communicator
-    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID_VECTOR)[0]; // ID on Origin. This is written by the Communicator
-}
-
-/**
- * determines the condition equation list of DOFs
- * @param ConditionDofList: the list of DOFs
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::GetDofList(DofsVectorType &rConditionDofList, ProcessInfo &CurrentProcessInfo)
-{
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
-    if (rConditionDofList.size() != number_of_nodes)
-        rConditionDofList.resize(number_of_nodes);
-
-    // @{ KRATOS_CONDITION_LIST_DOFS }
-}
-
-/**
- * CONDITIONS inherited from this class have to implement next
- * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide methods
- * they can be managed internally with a private method to do the same calculations
- * only once: MANDATORY
- */
-
-/**
- * this is called during the assembling process in order
- * to calculate all condition contributions to the global system
- * matrix and the right hand side
- * @param rLeftHandSideMatrix: the condition left hand side matrix
- * @param rRightHandSideVector: the condition right hand side
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateLocalSystem(
-    MatrixType &rLeftHandSideMatrix,
-    VectorType &rRightHandSideVector,
-    ProcessInfo &rCurrentProcessInfo)
-{
+    
+    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**
@@ -248,144 +187,8 @@ void NearestNeighborMapperCondition::CalculateLocalSystem(
  */
 void NearestNeighborMapperCondition::CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo)
 {
-    // For now I save the information in a Column vector
     rLeftHandSideMatrix.resize(1,1); // TODO do it like this? And if so, I think this fct needs another argument
-    rLeftHandSideMatrix(0,0) = 1.0;//mNeighborWeights[0];
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition right hand side vector only
- * @param rRightHandSideVector: the condition right hand side vector
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateRightHandSide(VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo)
-{
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the first derivatives contributions for the LHS and RHS
- * @param rLeftHandSideMatrix: the condition left hand side matrix
- * @param rRightHandSideVector: the condition right hand side
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateFirstDerivativesContributions(
-    MatrixType &rLeftHandSideMatrix,
-    VectorType &rRightHandSideVector,
-    ProcessInfo &rCurrentProcessInfo)
-{
-
-    if (rLeftHandSideMatrix.size1() != 0)
-        rLeftHandSideMatrix.resize(0, 0, false);
-    if (rRightHandSideVector.size() != 0)
-        rRightHandSideVector.resize(0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition left hand side matrix for the first derivatives constributions
- * @param rLeftHandSideMatrix: the condition left hand side matrix
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateFirstDerivativesLHS(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo)
-{
-    if (rLeftHandSideMatrix.size1() != 0)
-        rLeftHandSideMatrix.resize(0, 0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition right hand side vector for the first derivatives constributions
- * @param rRightHandSideVector: the condition right hand side vector
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateFirstDerivativesRHS(VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo)
-{
-    if (rRightHandSideVector.size() != 0)
-        rRightHandSideVector.resize(0, false);
-}
-
-/**
- * CONDITION inherited from this class must implement this methods
- * if they need to add dynamic condition contributions
- * note: second derivatives means the accelerations if the displacements are the dof of the analysis
- * note: time integration parameters must be set in the rCurrentProcessInfo before calling these methods
- * CalculateSecondDerivativesContributions,
- * CalculateSecondDerivativesLHS, CalculateSecondDerivativesRHS methods are : OPTIONAL
- */
-
-/**
- * this is called during the assembling process in order
- * to calculate the second derivative contributions for the LHS and RHS
- * @param rLeftHandSideMatrix: the condition left hand side matrix
- * @param rRightHandSideVector: the condition right hand side
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateSecondDerivativesContributions(
-    MatrixType &rLeftHandSideMatrix,
-    VectorType &rRightHandSideVector,
-    ProcessInfo &rCurrentProcessInfo)
-{
-
-    if (rLeftHandSideMatrix.size1() != 0)
-        rLeftHandSideMatrix.resize(0, 0, false);
-    if (rRightHandSideVector.size() != 0)
-        rRightHandSideVector.resize(0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition left hand side matrix for the second derivatives constributions
- * @param rLeftHandSideMatrix: the condition left hand side matrix
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateSecondDerivativesLHS(
-    MatrixType &rLeftHandSideMatrix,
-    ProcessInfo &rCurrentProcessInfo)
-{
-
-    if (rLeftHandSideMatrix.size1() != 0)
-        rLeftHandSideMatrix.resize(0, 0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition right hand side vector for the second derivatives constributions
- * @param rRightHandSideVector: the condition right hand side vector
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateSecondDerivativesRHS(
-    VectorType &rRightHandSideVector,
-    ProcessInfo &rCurrentProcessInfo)
-{
-
-    if (rRightHandSideVector.size() != 0)
-        rRightHandSideVector.resize(0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition mass matrix
- * @param rMassMatrix: the condition mass matrix
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateMassMatrix(MatrixType &rMassMatrix, ProcessInfo &rCurrentProcessInfo)
-{
-    if (rMassMatrix.size1() != 0)
-        rMassMatrix.resize(0, 0, false);
-}
-
-/**
- * this is called during the assembling process in order
- * to calculate the condition damping matrix
- * @param rDampingMatrix: the condition damping matrix
- * @param rCurrentProcessInfo: the current process info instance
- */
-void NearestNeighborMapperCondition::CalculateDampingMatrix(MatrixType &rDampingMatrix, ProcessInfo &rCurrentProcessInfo)
-{
-    if (rDampingMatrix.size1() != 0)
-        rDampingMatrix.resize(0, 0, false);
+    rLeftHandSideMatrix(0,0) = 1.0;
 }
 
 /**
