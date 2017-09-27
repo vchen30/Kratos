@@ -13,19 +13,14 @@
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
 
-
-
 #if !defined(KRATOS_MAPPING_APPLICATION_H_INCLUDED )
 #define  KRATOS_MAPPING_APPLICATION_H_INCLUDED
-
 
 // System includes
 #include <string>
 #include <iostream>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"
@@ -35,7 +30,6 @@
 #include "custom_conditions/nearest_neighbor_mapper_condition.h"
 #include "custom_conditions/nearest_element_mapper_condition.h"
 #include "custom_conditions/mortar_mapper_condition.h"
-
 
 namespace Kratos
 {
