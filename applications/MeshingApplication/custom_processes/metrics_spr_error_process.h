@@ -313,7 +313,7 @@ private:
             error_overall += error_energy_norm;
             error_energy_norm= sqrt(error_energy_norm);
             i_elements->SetValue(ELEMENT_ERROR,error_energy_norm);
-            //std::cout<<"element_error:"<<error_energy_norm<<std::endl;
+            std::cout<<"element_error:"<<error_energy_norm<<std::endl;
 
 
             std::vector<double> strain_energy;
@@ -323,7 +323,7 @@ private:
                 energy_norm += 2*strain_energy[i];
             energy_norm_overall += energy_norm;
             energy_norm= sqrt(energy_norm);
-            //std::cout<<"energy norm:"<<energy_norm<<std::endl;
+            std::cout<<"energy norm:"<<energy_norm<<std::endl;
         }
         error_overall = sqrt(error_overall);
         energy_norm_overall = sqrt(energy_norm_overall);
@@ -368,7 +368,7 @@ private:
             i_nodes->SetValue(MMG_METRIC,metric);
 
 
-            //std::cout<<"metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
+            std::cout<<"node "<<i_nodes->Id()<<" has metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
         }
         return error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
     }

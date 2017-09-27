@@ -128,7 +128,7 @@ void  AddProcessesToPython()
         .def("Execute",&ComputeErrorSolMetricProcess<3>::Execute)
         ;
         
-        /*
+        
         //SPR_ERROR
         class_<ComputeSPRErrorSolMetricProcess<2>, bases<Process> >("ComputeSPRErrorSolMetricProcess2D", init<ModelPart&>())
         .def(init<ModelPart&, Parameters>())
@@ -138,7 +138,7 @@ void  AddProcessesToPython()
         class_<ComputeSPRErrorSolMetricProcess<3>, bases<Process> >("ComputeSPRErrorSolMetricProcess3D", init<ModelPart&>())
         .def(init<ModelPart&, Parameters>())
         .def("Execute",&ComputeSPRErrorSolMetricProcess<3>::Execute)
-        ;*/
+        ;
         
 
         /* MMG PROCESS */
