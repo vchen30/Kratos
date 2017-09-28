@@ -139,7 +139,7 @@ class convergence_criterion:
                 (self.mechanical_convergence_criterion).SetActualizeRHSFlag(True)
         
         # add remeshing criterion
-        if (convergence_criterion_parameters.Has("remeshing") == True):
-            Remeshing = MeshingApplication.ErrorMeshCriteria(model_part, adaptative_parameters, processes_list)
-            self.mechanical_convergence_criterion = ContactStructuralMechanicsApplication.RemeshingAndConvergenceCriteria(self.mechanical_convergence_criterion, Remeshing)
+        #if (convergence_criterion_parameters.Has("remeshing") == True):
+        #    Remeshing = MeshingApplication.ErrorMeshCriteria(model_part, adaptative_parameters, processes_list)
+        #    self.mechanical_convergence_criterion = ContactStructuralMechanicsApplication.RemeshingAndConvergenceCriteria(self.mechanical_convergence_criterion, Remeshing)
 

@@ -258,10 +258,10 @@ private:
         --1-- calculate superconvergent stresses (at the nodes) --1--
         ************************************************************************/
         
-        //std::vector<std::string> submodels;
-        //submodels= mThisModelPart.GetSubModelPartNames();
-        //for (std::vector<std::string>::const_iterator i = submodels.begin();i!=submodels.end();i++) 
-        //    std::cout << *i<<std::endl; 
+        std::vector<std::string> submodels;
+        submodels= mThisModelPart.GetSubModelPartNames();
+        for (std::vector<std::string>::const_iterator i = submodels.begin();i!=submodels.end();i++) 
+            std::cout << *i<<std::endl; 
         FindNodalNeighboursProcess findNeighbours(mThisModelPart);
         findNeighbours.Execute();
         //std::vector<Vector> stress_vector(1);
@@ -276,7 +276,7 @@ private:
             if(neighbour_size>2){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
                 i_nodes->SetValue(RECOVERED_STRESS,sigma_recovered);
-                //std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
+                std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
             else{
                 for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
