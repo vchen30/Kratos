@@ -13,7 +13,7 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/tetge
 # include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/msuite/src/malla )
 include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/tetMeshOpt )
 include_directories( ${CMAKE_SOURCE_DIR}/applications/StructuralMechanicsApplication ) 
-include_directories( ${CMAKE_SOURCE_DIR}/applications/ContactStructuralMechanicsApplication )
+#include_directories( ${CMAKE_SOURCE_DIR}/applications/ContactStructuralMechanicsApplication )
 
 #include pragmatic libraries if so selected
 if(PRAGMATIC_ACTIVATED MATCHES ON)

@@ -114,7 +114,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
         else:
             self.MmgProcess = MeshingApplication.MmgProcess3D(self.Model[self.model_part_name], mmg_parameters)
 
-        self.setContactNodes = MeshingApplication.SetNodalContact(self.Model[self.model_part_name])
+        #self.setContactNodes = MeshingApplication.SetNodalContact(self.Model[self.model_part_name])
 
     def ExecuteBeforeSolutionLoop(self):
         pass
@@ -166,7 +166,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
 
     def _ErrorCalculation (self):
 
-        self.setContactNodes.Execute()
+        #self.setContactNodes.Execute()
         # Initialize metric
         self.initialize_metric.Execute()
 

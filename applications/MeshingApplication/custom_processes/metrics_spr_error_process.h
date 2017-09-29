@@ -340,7 +340,7 @@ private:
             //compute new element size
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
             //std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
             i_elements->SetValue(ELEMENT_H,new_element_size);
             //std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;

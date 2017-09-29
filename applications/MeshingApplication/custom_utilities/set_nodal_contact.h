@@ -23,6 +23,8 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "includes/kratos_parameters.h"
+#include "includes/condition.h"
+#include "includes/mortar_classes.h"
 
 
 namespace Kratos
@@ -61,10 +63,13 @@ for(ModelPart::ConditionsContainerType::iterator i_condition = mThisModelPart.Co
     else
     {
         ModelPart::ConditionsContainerType conditions = mThisModelPart.GetSubModelPart("Contact_Part").Conditions();
-        for(ModelPart::ConditionsContainerType::iterator i_condition = conditions.begin(); i_condition!= conditions.end(); i_condition++)
+        for(auto i_condition = conditions.begin(); i_condition!= conditions.end(); i_condition++)
         {
-            //unsigned int pair_number;
-            //i_condition->GetPairNumber(pair_number);
+            unsigned int pair_number;
+            boost::shared_ptr<ConditionMap>& all_conditions_maps = i_condition->GetValue( MAPPING_PAIRS );
+            pair_number = all_conditions_maps->size();
+            std::cout<<"condition"<<i_condition->Id()<<" has "<<pair_number<<"master elements."<<std::endl;
+
         }
     }
 }

@@ -666,8 +666,12 @@ void MmgProcess<TDim>::ExecuteRemeshing()
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
                 
                 if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
-                if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
-                if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);
+                // in the case of a contact simulation: the contact conditions should not be updated:
+                // the conditions are here not part of the input but created during the solution itself
+                // keeping them leads to many issues 
+                if(sub_model_part_name != "Contact_Part"){
+                    if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
+                    if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);}
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);
                 if (color_elem_1.find(key) != color_elem_1.end()) r_sub_model_part.AddElements(color_elem_1[key]);
             }
