@@ -117,9 +117,12 @@ class ALMContactProcess(python_process.PythonProcess):
             
         # We avoid the following if we already have created the conditions 
         execute_initial_operations = True
-        if (computing_model_part.IsDefined(KratosMultiphysics.MODIFIED) == True):
-            if (computing_model_part.Is(KratosMultiphysics.MODIFIED) == True):
+        if (self.main_model_part.IsDefined(KratosMultiphysics.MODIFIED) == True):
+            if (self.main_model_part.Is(KratosMultiphysics.MODIFIED) == True):
                 execute_initial_operations = False
+                for cond in self.contact_model_part.Conditions:
+                    cond.SetValue(ContactStructuralMechanicsApplication.ELEMENT_POINTER, None)
+                
         if (execute_initial_operations == True): 
             # We recompute the normal at each iteration (false by default)
             self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
