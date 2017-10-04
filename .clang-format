@@ -1,0 +1,9 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+ReflowComments: false
+IndentWidth: 4
+NamespaceIndentation: None
+ReflowComments: false
+SortIncludes: false
+...
