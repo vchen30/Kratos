@@ -188,6 +188,9 @@ namespace Kratos
     KRATOS_DEFINE_VARIABLE(double, ELEMENT_H)
     KRATOS_DEFINE_VARIABLE(double, ELEMENT_ERROR)
     KRATOS_DEFINE_VARIABLE(Vector, MMG_METRIC)
+    KRATOS_DEFINE_VARIABLE(double, CONTACT_PRESSURE)
+    
+
     
     //for PFEM fluids application:
     KRATOS_DEFINE_VARIABLE( double, NODAL_AREA )

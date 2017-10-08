@@ -541,6 +541,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     int prop_id, is_required;
     
     /* CONDITIONS */ // TODO: ADD OMP
+    
     if (mpRefCondition.size() > 0)
     {
         unsigned int cond_id = 1;
@@ -669,7 +670,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
                 // in the case of a contact simulation: the contact conditions should not be updated:
                 // the conditions are here not part of the input but created during the solution itself
                 // keeping them leads to many issues 
-                if(sub_model_part_name != "Contact_Part"){
+                //if(sub_model_part_name != "Contact_Part"){
+                if (true){
                     if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
                     if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);}
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);

@@ -24,6 +24,7 @@
 
 //Utilities
 #include "custom_utilities/tree_contact_search.h"
+#include "custom_utilities/set_nodal_contact.h"
 
 namespace Kratos
 {
@@ -48,6 +49,11 @@ void  AddCustomUtilitiesToPython()
     .def("UpdateMortarConditions",&TreeContactSearch::UpdateMortarConditions)
     .def("CleanMortarConditions",&TreeContactSearch::CleanMortarConditions)
     .def("CheckMortarConditions",&TreeContactSearch::CheckMortarConditions)
+    ;
+
+    class_<SetNodalContact>("SetNodalContact", init<ModelPart&>())
+    .def(init<ModelPart&>())
+    .def("Execute",&SetNodalContact::Execute)
     ;
 }
 

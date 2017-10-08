@@ -57,7 +57,8 @@ class ALMContactProcess(python_process.PythonProcess):
                 "scaling"                 : false,
                 "verbosity"               : 1
             },
-            "debug_mode"                  : false
+            "debug_mode"                  : false,
+            "remeshing_with_contact_bc"   : false
         }
         """)
 
@@ -117,11 +118,11 @@ class ALMContactProcess(python_process.PythonProcess):
             
         # We avoid the following if we already have created the conditions 
         execute_initial_operations = True
-        if (self.main_model_part.IsDefined(KratosMultiphysics.MODIFIED) == True):
-            if (self.main_model_part.Is(KratosMultiphysics.MODIFIED) == True):
-                execute_initial_operations = False
-                for cond in self.contact_model_part.Conditions:
-                    cond.SetValue(ContactStructuralMechanicsApplication.ELEMENT_POINTER, None)
+        #if (self.main_model_part.IsDefined(KratosMultiphysics.MODIFIED) == True):
+        #    if (self.main_model_part.Is(KratosMultiphysics.MODIFIED) == True):
+        #        execute_initial_operations = False
+        #        for cond in self.contact_model_part.Conditions:
+        #            cond.SetValue(ContactStructuralMechanicsApplication.ELEMENT_POINTER, None)
                 
         if (execute_initial_operations == True): 
             # We recompute the normal at each iteration (false by default)
@@ -287,7 +288,9 @@ class ALMContactProcess(python_process.PythonProcess):
                self._debug_output(self.global_step, "")
         
     def ExecuteFinalizeSolutionStep(self):
-        pass
+        if (self.params["remeshing_with_contact_bc"].GetBool() == True):
+            self.set_contact_bc = ContactStructuralMechanicsApplication.SetNodalContact(self.main_model_part)
+            self.set_contact_bc.Execute()
 
     def ExecuteBeforeOutputStep(self):
         pass

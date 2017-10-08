@@ -31,7 +31,7 @@
 #include "custom_utilities/cutting_iso_app.h"
 #include "custom_utilities/tetrahedra_reconnect_utility.h"
 #include "utilities/split_tetrahedra.h"
-#include "custom_utilities/set_nodal_contact.h"
+
 
 #ifdef PRAGMATIC_ACTIVATED
     #include "external_includes/pragmatic_adapt_3d.h"
@@ -101,10 +101,6 @@ void AddCustomUtilitiesToPython()
 //            class_<GenerateModelPartUtilities, boost::noncopyable > ("GenerateModelPartUtilities", init< >())
 //                    .def("GenerateModelTemperaturePart", GenerateModelTemperaturePart);
 
-    class_<SetNodalContact>("SetNodalContact", init<ModelPart&>())
-    .def(init<ModelPart&>())
-    .def("Execute",&SetNodalContact::Execute)
-    ;
 
 
     class_<LocalRefineTriangleMesh, boost::noncopyable >
