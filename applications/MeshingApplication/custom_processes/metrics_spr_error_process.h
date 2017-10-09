@@ -21,7 +21,8 @@
 #include "utilities/openmp_utils.h"
 #include "meshing_application.h"
 #include "processes/find_nodal_neighbours_process.h"
-
+#include "linear_solvers/skyline_lu_factorization_solver.h"
+#include "spaces/ublas_space.h"
 namespace Kratos
 {
 ///@name Kratos Globals
@@ -272,6 +273,7 @@ private:
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
             //std::cout << "Node: " << i_nodes->Id() << " has " << neighbour_size << " neighbouring elements: " << std::endl;
+
             Vector sigma_recovered(3,0);
             if(neighbour_size>2){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
@@ -372,10 +374,38 @@ private:
         }
         return error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
     }
-    //calculates the recovered stress at a node 
+
+    void CalculatePatch(
+        ModelPart::NodesContainerType::iterator i_nodes,
+        ModelPart::NodesContainerType::iterator i_patch_node,
+        int neighbour_size,
+        Vector& rsigma_recovered)
+    {
+        // determine if contact BC has to be regarded
+        bool regard_contact;
+        regard_contact = i_patch_node->Has(CONTACT_PRESSURE);
+        if(regard_contact == false)
+        {
+            for( auto i_neighbour_nodes = i_patch_node->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_patch_node->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++) {
+                if (i_neighbour_nodes->Has(CONTACT_PRESSURE))
+                {
+                    regard_contact = true;
+                    break;
+                }
+            }
+        }
+        if (regard_contact == false)
+            CalculatePatchStandard(i_nodes, i_patch_node, neighbour_size, rsigma_recovered);
+        else
+            CalculatePatchContact(i_nodes, i_patch_node, neighbour_size, rsigma_recovered);
+
+    }
+
+    
+    //calculates the recovered stress at a node in the case of a standard patch without contact BC
     // i_node: the node for which the recovered stress should be calculated
     // i_patch_node: the center node of the patch
-    void CalculatePatch(
+    void CalculatePatchStandard(
         ModelPart::NodesContainerType::iterator i_nodes,
         ModelPart::NodesContainerType::iterator i_patch_node,
         int neighbour_size,
@@ -422,6 +452,109 @@ private:
             sigma = prod(p_k,coeff);
             rsigma_recovered = MatrixRow(sigma,0);
         }
+    }
+
+    //calculates the recovered stress at a node where contact BCs are regarded
+    // i_node: the node for which the recovered stress should be calculated
+    // i_patch_node: the center node of the patch
+
+    void CalculatePatchContact(
+        ModelPart::NodesContainerType::iterator i_nodes,
+        ModelPart::NodesContainerType::iterator i_patch_node,
+        int neighbour_size,
+        Vector& rsigma_recovered)
+    {
+        std::cout<<"contact i regarded"<<std::endl;
+        std::vector<Vector> stress_vector(1);
+        std::vector<array_1d<double,3>> coordinates_vector(1);
+        Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
+        Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
+        Matrix A(9,9,0);
+        Matrix b(9,1,0); 
+        Matrix p_k(3,9,0);
+        Matrix N_k(1,3,0);
+        Matrix T_k(1,3,0);
+        double penalty_normal = 10000;
+        double penalty_tangential = 10000;
+        // computation A and b
+        // PART 1: contributions from the neighboring elements
+        for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
+            //std::cout << "\tElement: " << i_elements->Id() << std::endl;
+            i_elements->GetValueOnIntegrationPoints(variable_stress,stress_vector,mThisModelPart.GetProcessInfo());
+            i_elements->GetValueOnIntegrationPoints(variable_coordinates,coordinates_vector,mThisModelPart.GetProcessInfo());
+
+            //std::cout << "\tstress: " << stress_vector[0] << std::endl;
+            //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
+            Matrix sigma(1,3);
+            for(int j=0;j<3;j++)
+                sigma(0,j)=stress_vector[0][j];
+            p_k(0,0)=1;
+            p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
+            p_k(0,2)=coordinates_vector[0][1]-i_patch_node->Y();
+            p_k(1,3)=1;
+            p_k(1,4)=coordinates_vector[0][0]-i_patch_node->X(); 
+            p_k(1,5)=coordinates_vector[0][1]-i_patch_node->Y();
+            p_k(2,6)=1;
+            p_k(2,7)=coordinates_vector[0][0]-i_patch_node->X(); 
+            p_k(2,8)=coordinates_vector[0][1]-i_patch_node->Y();
+               
+            A+=prod(trans(p_k),p_k);
+            b+=prod(trans(p_k),sigma);
+        }
+        // computing A and b
+        //PART 2: contributions from contact nodes: regard all nodes from the patch which are in contact
+        //patch center node:
+        if (i_patch_node->Has(CONTACT_PRESSURE)){
+            p_k(0,1)=0;
+            p_k(0,2)=0;
+            p_k(1,4)=0;
+            p_k(1,5)=0;
+            p_k(2,7)=0;
+            p_k(2,8)=0;
+            N_k(0,1) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
+            N_k(0,2) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1];
+            N_k(0,3) = 2*i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,1) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,2) = -i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,3) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1]-i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
+
+            A+= penalty_normal*prod(prod(prod(trans(p_k),trans(N_k)),N_k),p_k);
+            A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
+
+            b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
+        }
+
+        //neighboring nodes:
+        for( auto i_neighbour_nodes = i_patch_node->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_patch_node->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++) {
+            if (i_neighbour_nodes->Has(CONTACT_PRESSURE)){
+                p_k(0,1)= i_neighbour_nodes->X()-i_patch_node->X();
+                p_k(0,2)= i_neighbour_nodes->Y()-i_patch_node->Y();
+                p_k(1,4)= i_neighbour_nodes->X()-i_patch_node->X();;
+                p_k(1,5)= i_neighbour_nodes->Y()-i_patch_node->Y();
+                p_k(2,7)= i_neighbour_nodes->X()-i_patch_node->X();;
+                p_k(2,8)= i_neighbour_nodes->Y()-i_patch_node->Y();
+                N_k(0,1) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
+                N_k(0,2) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                N_k(0,3) = 2*i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,1) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,2) = -i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,3) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1]-i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
+
+                A+= penalty_normal*prod(prod(prod(trans(p_k),trans(N_k)),N_k),p_k);
+                A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
+
+                b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
+            }
+        }
+
+        // computing coefficients a: A*a=b
+        //UblasSpace<double,CompressedMatrix,Vector> U1 = UblasSpace<double, Matrix,Vector>();
+        //UblasSpace<double, Matrix,Vector> U2 = UblasSpace<double, Matrix,Vector>();
+        //LUSkylineFactorization< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>> solver = LUSkylineFactorization< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>>();
+        //CompressedMatrix compA = A.sparseView();
+        Vector coeff(9);
+        //solver.Solve(A,coeff,b);
+
     }
 
     // set the element size. The element size is defined as the diameter of the smallest ball containing the element
