@@ -25,7 +25,7 @@
 #include "includes/kratos_parameters.h"
 #include "includes/condition.h"
 #include "includes/mortar_classes.h"
-
+#include "custom_utilities/contact_utilities.h"
 
 namespace Kratos
 {
@@ -54,20 +54,32 @@ public:
                 i_nodes->SetValue(CONTACT_PRESSURE,i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE));
             }
         }   
-    
+        
         ModelPart::ConditionsContainerType conditions = mThisModelPart.Conditions();
         for(auto i_condition = conditions.begin(); i_condition!= conditions.end(); i_condition++)
         {
             unsigned int pair_number;
             boost::shared_ptr<ConditionMap>& all_conditions_maps = i_condition->GetValue( MAPPING_PAIRS );
             pair_number = all_conditions_maps->size();
-            std::cout<<"condition"<<i_condition->Id()<<" has "<<pair_number<<"master elements."<<std::endl;
+            std::cout<<"condition"<<i_condition->Id()<<" has "<<pair_number<<" master elements."<<std::endl;
             
+            for (auto i_master = all_conditions_maps->begin(); i_master != all_conditions_maps->end(); i_master++){
+                if (i_master->second == true){
+                    for(int i=0; i < i_master->first->GetGeometry().size(); i++){
+                        
+                        array_1d<double,3> i_nodes= i_master->first->GetGeometry()[i].Coordinates();
+                        // Projection of the master node to the slave node
+                        //ContactUtilities::FastProjectDirection()
+                    
+                    }
+                }
+            }
+
         }
     }
-}
+
 private:
-ModelPart mThisModelPart;
+    ModelPart mThisModelPart;
 };
 
 

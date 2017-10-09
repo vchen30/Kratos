@@ -289,7 +289,7 @@ class ALMContactProcess(python_process.PythonProcess):
         
     def ExecuteFinalizeSolutionStep(self):
         if (self.params["remeshing_with_contact_bc"].GetBool() == True):
-            self.set_contact_bc = ContactStructuralMechanicsApplication.SetNodalContact(self.main_model_part)
+            self.set_contact_bc = ContactStructuralMechanicsApplication.SetNodalContact(self.contact_model_part)
             self.set_contact_bc.Execute()
 
     def ExecuteBeforeOutputStep(self):

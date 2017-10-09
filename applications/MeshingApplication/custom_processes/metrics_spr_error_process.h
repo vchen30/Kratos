@@ -469,13 +469,14 @@ private:
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
         Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
-        Matrix A(9,9,0);
+        CompressedMatrix A(9,9,0);
         Matrix b(9,1,0); 
         Matrix p_k(3,9,0);
         Matrix N_k(1,3,0);
         Matrix T_k(1,3,0);
         double penalty_normal = 10000;
         double penalty_tangential = 10000;
+        Matrix sigma(3,1);
         // computation A and b
         // PART 1: contributions from the neighboring elements
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
@@ -485,9 +486,8 @@ private:
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            Matrix sigma(1,3);
             for(int j=0;j<3;j++)
-                sigma(0,j)=stress_vector[0][j];
+                sigma(j,0)=stress_vector[0][j];
             p_k(0,0)=1;
             p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
             p_k(0,2)=coordinates_vector[0][1]-i_patch_node->Y();
@@ -502,6 +502,7 @@ private:
             b+=prod(trans(p_k),sigma);
         }
         // computing A and b
+        Matrix A1(9,1,0), A2(1,9,0);
         //PART 2: contributions from contact nodes: regard all nodes from the patch which are in contact
         //patch center node:
         if (i_patch_node->Has(CONTACT_PRESSURE)){
@@ -511,15 +512,22 @@ private:
             p_k(1,5)=0;
             p_k(2,7)=0;
             p_k(2,8)=0;
-            N_k(0,1) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
-            N_k(0,2) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1];
-            N_k(0,3) = 2*i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
-            T_k(0,1) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
-            T_k(0,2) = -i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
-            T_k(0,3) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1]-i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
+            N_k(0,0) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
+            N_k(0,1) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1];
+            N_k(0,2) = 2*i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,0) = i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,1) = -i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[1];
+            T_k(0,2) = i_patch_node->GetValue(NORMAL)[1]*i_patch_node->GetValue(NORMAL)[1]-i_patch_node->GetValue(NORMAL)[0]*i_patch_node->GetValue(NORMAL)[0];
 
-            A+= penalty_normal*prod(prod(prod(trans(p_k),trans(N_k)),N_k),p_k);
-            A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
+            A1 = prod(trans(p_k),trans(N_k));
+            A2 = prod(N_k,p_k);
+            A+= penalty_normal*prod(A1, A2);
+
+            A1 = prod(trans(p_k),trans(T_k));
+            A2 = prod(T_k,p_k);
+            A+= penalty_tangential*prod(A1, A2);
+            //A+= penalty_normal*prod(prod(trans(p_k),trans(N_k)),prod(N_k,p_k));
+            //A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
 
             b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
         }
@@ -533,15 +541,20 @@ private:
                 p_k(1,5)= i_neighbour_nodes->Y()-i_patch_node->Y();
                 p_k(2,7)= i_neighbour_nodes->X()-i_patch_node->X();;
                 p_k(2,8)= i_neighbour_nodes->Y()-i_patch_node->Y();
-                N_k(0,1) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
-                N_k(0,2) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1];
-                N_k(0,3) = 2*i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
-                T_k(0,1) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
-                T_k(0,2) = -i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
-                T_k(0,3) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1]-i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
+                N_k(0,0) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
+                N_k(0,1) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                N_k(0,2) = 2*i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,0) = i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,1) = -i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[1];
+                T_k(0,2) = i_neighbour_nodes->GetValue(NORMAL)[1]*i_neighbour_nodes->GetValue(NORMAL)[1]-i_neighbour_nodes->GetValue(NORMAL)[0]*i_neighbour_nodes->GetValue(NORMAL)[0];
 
-                A+= penalty_normal*prod(prod(prod(trans(p_k),trans(N_k)),N_k),p_k);
-                A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
+                A1 = prod(trans(p_k),trans(N_k));
+                A2 = prod(N_k,p_k);
+                A+= penalty_normal*prod(A1, A2);
+
+                A1 = prod(trans(p_k),trans(T_k));
+                A2 = prod(T_k,p_k);
+                A+= penalty_tangential*prod(A1, A2);
 
                 b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
             }
@@ -550,11 +563,30 @@ private:
         // computing coefficients a: A*a=b
         //UblasSpace<double,CompressedMatrix,Vector> U1 = UblasSpace<double, Matrix,Vector>();
         //UblasSpace<double, Matrix,Vector> U2 = UblasSpace<double, Matrix,Vector>();
-        //LUSkylineFactorization< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>> solver = LUSkylineFactorization< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>>();
-        //CompressedMatrix compA = A.sparseView();
+        SkylineLUFactorizationSolver< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>> solver = SkylineLUFactorizationSolver< UblasSpace<double,CompressedMatrix,Vector>, UblasSpace<double,Matrix,Vector>>();
+        //std::cout<<A<<std::endl;
+        /*CompressedMatrix compA(9,9,81);// = A.sparseView();
+        for (unsigned i = 0; i < compA.size1 (); ++ i){
+            for (unsigned j = 0; j < compA.size2 (); ++ j)
+                compA (i, j) = 9 * i + j;
+        }*/
         Vector coeff(9);
-        //solver.Solve(A,coeff,b);
+        Vector b_vector = MatrixColumn(b,0);
+        solver.Solve(A,coeff,b_vector);
+                        
+        p_k(0,1)= i_nodes->X()-i_patch_node->X();
+        p_k(0,2)= i_nodes->Y()-i_patch_node->Y();
+        p_k(1,4)= i_nodes->X()-i_patch_node->X();;
+        p_k(1,5)= i_nodes->Y()-i_patch_node->Y();
+        p_k(2,7)= i_nodes->X()-i_patch_node->X();;
+        p_k(2,8)= i_nodes->Y()-i_patch_node->Y();
+        Matrix coeff_matrix(9,1);
+        for (unsigned int i=0; i<9; i++)
+            coeff_matrix(i,0)=coeff(i);
+        sigma = prod(p_k,coeff_matrix);
 
+        rsigma_recovered = MatrixColumn(sigma,0);
+        
     }
 
     // set the element size. The element size is defined as the diameter of the smallest ball containing the element
