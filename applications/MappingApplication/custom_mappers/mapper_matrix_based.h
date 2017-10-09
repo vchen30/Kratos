@@ -130,6 +130,7 @@ public:
         }
         else
         {
+            // TODO move these three steps to a function
             InitializeMappingStep<>(rOriginVariable, 
                                     rDestinationVariable, 
                                     MappingOptions);
@@ -382,7 +383,7 @@ protected:
     {
         if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE))
         {
-            const bool transpose_flag = true;
+            const bool transpose_flag = true; // constexpr?
             mpMappingMatrixBuilder->Multiply(*mpMdo, *mpQd, *mpQo, transpose_flag);
         }
         else
@@ -410,7 +411,7 @@ protected:
         }
     }
 
-    virtual void ExchangeInterfaceGeometryData() = 0;
+    virtual void ExchangeInterfaceGeometryData() = 0; // TODO make private and only virtual
 
     ///@}
     ///@name Protected  Access

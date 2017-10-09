@@ -226,6 +226,7 @@ private:
                 mEchoLevel,
                 global_bounding_boxes);
 
+        // TODO make proper deallocation => RAII
         int* local_comm_list = new int[mCommSize]();
         int* local_memory_size_array = new int[mCommSize]();
 

@@ -202,7 +202,7 @@ protected:
 
     Mapper::Pointer mpInverseMapper;
 
-    ModelPart& mrModelPartOrigin;
+    ModelPart& mrModelPartOrigin; // TODO const ref?
     ModelPart& mrModelPartDestination;
 
     Parameters mJsonParameters;
