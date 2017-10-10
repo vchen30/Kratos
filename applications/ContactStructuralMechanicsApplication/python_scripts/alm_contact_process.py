@@ -37,7 +37,7 @@ class ALMContactProcess(python_process.PythonProcess):
             "normal_variation"            : false,
             "pair_variation"              : true,
             "manual_ALM"                  : false,
-            "stiffness_factor"            : 10.0,
+            "stiffness_factor"            : 1.0,
             "penalty_scale_factor"        : 1.0,
             "use_scale_factor"            : true,
             "penalty"                     : 0.0,
@@ -47,7 +47,7 @@ class ALMContactProcess(python_process.PythonProcess):
             "use_exact_integration"       : true,
             "hard_clear_after_step"       : false,
             "database_step_update"        : 1,
-            "integration_order"           : 2,
+            "integration_order"           : 3,
             "predict_with_linear_solver"  : false,
             "max_gap_factor"              : 0.0,
             "linear_solver_settings"      : {
@@ -116,26 +116,26 @@ class ALMContactProcess(python_process.PythonProcess):
         else:
             computing_model_part.Set(KratosMultiphysics.SLIP, False)
             
-        # We avoid the following if we already have created the conditions 
-        execute_initial_operations = True
-        #if (self.main_model_part.IsDefined(KratosMultiphysics.MODIFIED) == True):
-        #    if (self.main_model_part.Is(KratosMultiphysics.MODIFIED) == True):
-        #        execute_initial_operations = False
-        #        for cond in self.contact_model_part.Conditions:
-        #            cond.SetValue(ContactStructuralMechanicsApplication.ELEMENT_POINTER, None)
-                
-        if (execute_initial_operations == True): 
-            # We recompute the normal at each iteration (false by default)
-            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
-            # We recompute the pairs at each iteration (true by default)
-            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_PAIR_VARIATION] = self.params["pair_variation"].GetBool()
-            # We set the max gap factor for the gap adaptation
-            max_gap_factor = self.params["max_gap_factor"].GetDouble()
-            if (max_gap_factor > 0.0):
-                self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = True
-            else:
-                self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = False
-            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.MAX_GAP_FACTOR] = max_gap_factor
+        # We recompute the normal at each iteration (false by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
+        # We recompute the pairs at each iteration (true by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_PAIR_VARIATION] = self.params["pair_variation"].GetBool()
+        # We set the max gap factor for the gap adaptation
+        max_gap_factor = self.params["max_gap_factor"].GetDouble()
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = (max_gap_factor > 0.0)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.MAX_GAP_FACTOR] = max_gap_factor
+        
+        # We set the value that scales in the tangent direction the penalty and scale parameter
+        if self.params["contact_type"].GetString() == "Frictional":
+            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.TANGENT_FACTOR] = self.params["tangent_factor"].GetDouble()
+        
+        # Copying the properties in the contact model part
+        self.contact_model_part.SetProperties(computing_model_part.GetProperties())
+        
+        # Setting the integration order and active check factor
+        for prop in computing_model_part.GetProperties():
+            prop[ContactStructuralMechanicsApplication.INTEGRATION_ORDER_CONTACT] = self.params["integration_order"].GetInt() 
+            prop[ContactStructuralMechanicsApplication.ACTIVE_CHECK_FACTOR] = self.params["active_check_factor"].GetDouble()
             
             # We set the value that scales in the tangent direction the penalty and scale parameter
             if self.params["contact_type"].GetString() == "Frictional":

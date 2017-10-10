@@ -111,7 +111,7 @@ public:
     ///@}
     ///@name Operators
     ///@{
-        
+    
     /**
      * Compute relative and absolute error.
      * @param rModelPart Reference to the ModelPart containing the contact problem.
@@ -130,8 +130,6 @@ public:
         const TSystemVectorType& b
         ) override
     {
-        BaseType::CalculateContactReactions(rModelPart, rDofSet, b);
-        
         // Defining the convergence
         unsigned int is_converged = 0;
         
@@ -172,8 +170,6 @@ public:
                 }
                 else
                 {
-                    (it_node)->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) = 0.0; // NOTE: To clear the value (can affect future iterations)
-                    
                     if ((it_node)->Is(ACTIVE) == true )
                     {
                         (it_node)->Set(ACTIVE, false);
