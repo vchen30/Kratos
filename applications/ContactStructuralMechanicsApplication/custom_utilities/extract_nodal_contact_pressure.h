@@ -7,8 +7,8 @@
 //
 //README::::look to the key word "VERSION" if you want to find all the points where you have to change something so that you can pass from a kdtree to a bin data search structure;
 
-// #if !defined(SET_NODAL_CONTACT )
-// #define  SET_NODAL_CONTACT
+// #if !defined(EXTRACT_NODAL_CONTACT_PRESSURE )
+// #define  EXTRACT_NODAL_CONTACT_PRESSURE
 
 // /* External includes */
 // #include "boost/smart_ptr.hpp"
@@ -25,20 +25,22 @@
 #include "includes/kratos_parameters.h"
 #include "includes/condition.h"
 #include "includes/mortar_classes.h"
-#include "custom_utilities/contact_utilities.h"
+#include "utilities/mortar_utilities.h"
 
 namespace Kratos
 {
 
 /*
-This class sets a boolean variable for all nodes which are in contact
+This class extracts the nodal contact pressure for the nodes in contact.
+For the slave body, the Lagrange Multiplier can be directly extracted,
+for the master body a projection has to be executed wich projects the slave body LM to the master side.
 */
 
-class SetNodalContact
+class ExtractNodalContactPressure
 {
 public:
 
-    SetNodalContact(ModelPart& mp): mThisModelPart (mp)
+    ExtractNodalContactPressure(ModelPart& mp): mThisModelPart (mp)
     {
     }
 
@@ -51,7 +53,8 @@ public:
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             if(i_nodes->Has(AUGMENTED_NORMAL_CONTACT_PRESSURE)== true){
                 std::cout<<"node "<<i_nodes->Id()<<" has contact pressure "<<i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)<<std::endl;
-                i_nodes->SetValue(CONTACT_PRESSURE,i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE));
+                if(i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)< 0)
+                    i_nodes->SetValue(CONTACT_PRESSURE,i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE));
             }
         }   
         
@@ -64,12 +67,23 @@ public:
             std::cout<<"condition"<<i_condition->Id()<<" has "<<pair_number<<" master elements."<<std::endl;
             
             for (auto i_master = all_conditions_maps->begin(); i_master != all_conditions_maps->end(); i_master++){
-                if (i_master->second == true){
+                if (i_master->second){
+                //if (true){
+                    std::cout<<"masterelement active:"<<i_master->second<<std::endl;
                     for(int i=0; i < i_master->first->GetGeometry().size(); i++){
                         
                         array_1d<double,3> i_nodes= i_master->first->GetGeometry()[i].Coordinates();
+                        PointType master_point = PointType(i_nodes);
+                        PointType slave_point = PointType(0);
+                        array_1d<double,3> local_coord = array_1d<double,3>(0);
+                        //array_1d<double, 3> normal_slave_element = Geometry::Normal()
                         // Projection of the master node to the slave node
-                        //ContactUtilities::FastProjectDirection()
+                        std::cout<<"Normal Master: "<<i_master->first->GetGeometry()[i].GetValue(NORMAL)<<std::endl;
+                        MortarUtilities::FastProjectDirection(i_condition->GetGeometry(),
+                                                            master_point,
+                                                            slave_point,
+                                                            i_master->first->GetGeometry()[i].GetValue(NORMAL),
+                                                            i_condition->GetGeometry().Normal(local_coord));
                     
                     }
                 }
@@ -86,6 +100,6 @@ private:
 
 }  // namespace Kratos.
 
-// #endif // KRATOS_PROJECTION  defined 
+// #endif // EXTRACT_NODAL_CONTACT_PRESSURE  defined 
 
 

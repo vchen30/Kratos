@@ -73,7 +73,8 @@ class RemeshingProcess(KratosMultiphysics.Process):
             },
             "save_external_files"              : false,
             "max_number_of_searchs"            : 1000,
-            "echo_level"                       : 3
+            "echo_level"                       : 3,
+            "execute_remeshing"                : false
         }
         """)
 
@@ -125,9 +126,11 @@ class RemeshingProcess(KratosMultiphysics.Process):
                                 
     def ExecuteFinalizeSolutionStep(self):
         self._ErrorCalculation()
-        if (self.estimated_error > 0.11):
+        if (self.estimated_error > 0.05):
             self._ExecuteRefinement()
-        
+
+
+            
 
     def ExecuteBeforeOutputStep(self):
         pass
@@ -144,6 +147,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
         spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
         spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
         spr_parameters.AddValue("error",self.params["error_parameters"]["interpolation_error"])
+        spr_parameters.AddValue("echo_level", self.params["echo_level"])
             
         if (self.dim == 2):
             self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
@@ -166,7 +170,6 @@ class RemeshingProcess(KratosMultiphysics.Process):
 
     def _ErrorCalculation (self):
 
-        #self.setContactNodes.Execute()
         # Initialize metric
         self.initialize_metric.Execute()
 

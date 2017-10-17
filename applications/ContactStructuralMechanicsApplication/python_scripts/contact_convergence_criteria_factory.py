@@ -7,22 +7,12 @@ import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsA
 import KratosMultiphysics.ContactStructuralMechanicsApplication as ContactStructuralMechanicsApplication
 import KratosMultiphysics.ExternalSolversApplication as ExternalSolversApplication
 
-try: 
-  import KratosMultiphysics.MeshingApplication as MeshingApplication 
-  missing_meshing_dependencies = False 
-  missing_application = '' 
-except ImportError as e: 
-    missing_meshing_dependencies = True 
-    # extract name of the missing application from the error message 
-    import re 
-    missing_application = re.search(r'''.*'KratosMultiphysics\.(.*)'.*''','{0}'.format(e)).group(1) 
-
 # Check that KratosMultiphysics was imported in the main script
 KratosMultiphysics.CheckForPreviousImport()
 
 # Convergence criteria class
 class convergence_criterion:
-    def __init__(self, convergence_criterion_parameters, model_part = None, adaptative_parameters = None, processes_list = None):
+    def __init__(self, convergence_criterion_parameters):
         # Note that all the convergence settings are introduced via a Kratos parameters object.
         
         if "Contact" in convergence_criterion_parameters["convergence_criterion"].GetString():
@@ -150,8 +140,4 @@ class convergence_criterion:
                 self.mechanical_convergence_criterion = KratosMultiphysics.AndCriteria( base_mechanical_convergence_criterion.mechanical_convergence_criterion, Mortar)
                 (self.mechanical_convergence_criterion).SetActualizeRHSFlag(True)
         
-        # add remeshing criterion
-        #if (convergence_criterion_parameters.Has("remeshing") == True):
-        #    Remeshing = MeshingApplication.ErrorMeshCriteria(model_part, adaptative_parameters, processes_list)
-        #    self.mechanical_convergence_criterion = ContactStructuralMechanicsApplication.RemeshingAndConvergenceCriteria(self.mechanical_convergence_criterion, Remeshing)
 

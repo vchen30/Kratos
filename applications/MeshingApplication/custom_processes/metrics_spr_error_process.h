@@ -90,53 +90,19 @@ public:
         //:mThisModelPart(rThisModelPart),
         //mVariable(rVariable)
     {               
-      /*  Parameters DefaultParameters = Parameters(R"(
-        {
-            "minimal_size"                        : 0.1,
-            "maximal_size"                        : 10.0, 
-            "enforce_current"                     : true, 
-            "hessian_strategy_parameters": 
-            { 
-                "interpolation_error"                  : 1.0e-6, 
-                "mesh_dependent_constant"              : 0.28125
-            }, 
-            "anisotropy_remeshing"                : true, 
-            "anisotropy_parameters":
-            {
-                "hmin_over_hmax_anisotropic_ratio"     : 1.0, 
-                "boundary_layer_max_distance"          : 1.0, 
-                "interpolation"                        : "Linear"
-            }
-        })" );*/
         Parameters DefaultParameters = Parameters(R"(
         {
             "minimal_size"                        : 0.1,
             "maximal_size"                        : 10.0, 
-            "error"                               : 0.1
+            "error"                               : 0.1,
+            "echo_level"                          : 0
         })" );
         ThisParameters.ValidateAndAssignDefaults(DefaultParameters);
          
         mMinSize = ThisParameters["minimal_size"].GetDouble();
         mMaxSize = ThisParameters["maximal_size"].GetDouble();
-        /*mEnforceCurrent = ThisParameters["enforce_current"].GetBool();
+        mEchoLevel = ThisParameters["echo_level"].GetInt();
         
-        // In case we have isotropic remeshing (default values)
-        if (ThisParameters["anisotropy_remeshing"].GetBool() == false)
-        {
-            mInterpError = DefaultParameters["hessian_strategy_parameters"]["interpolation_error"].GetDouble();
-            mMeshConstant = DefaultParameters["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble();
-            mAnisRatio = DefaultParameters["anisotropy_parameters"]["hmin_over_hmax_anisotropic_ratio"].GetDouble();
-            mBoundLayer = DefaultParameters["anisotropy_parameters"]["boundary_layer_max_distance"].GetDouble();
-            mInterpolation = ConvertInter(DefaultParameters["anisotropy_parameters"]["interpolation"].GetString());
-        }
-        else
-        {
-            mInterpError = ThisParameters["hessian_strategy_parameters"]["interpolation_error"].GetDouble();
-            mMeshConstant = ThisParameters["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble();
-            mAnisRatio = ThisParameters["anisotropy_parameters"]["hmin_over_hmax_anisotropic_ratio"].GetDouble();
-            mBoundLayer = ThisParameters["anisotropy_parameters"]["boundary_layer_max_distance"].GetDouble();
-            mInterpolation = ConvertInter(ThisParameters["anisotropy_parameters"]["interpolation"].GetString());
-        }*/
     }
     
     /// Destructor.
@@ -161,7 +127,7 @@ public:
     
     virtual double Execute()
     {
-        return CalculateSuperconvergentPatchRecovery();
+        return SuperconvergentPatchRecovery();
 
     }
     
@@ -251,18 +217,19 @@ private:
     double mAnisRatio;                       // The minimal anisotropic ratio (0 < ratio < 1)
     double mBoundLayer;                      // The boundary layer limit distance
     Interpolation mInterpolation;            // The interpolation type
+    int mEchoLevel;
     
 
-    double CalculateSuperconvergentPatchRecovery()
+    double SuperconvergentPatchRecovery()
     {
         /************************************************************************
         --1-- calculate superconvergent stresses (at the nodes) --1--
         ************************************************************************/
-        
-        std::vector<std::string> submodels;
-        submodels= mThisModelPart.GetSubModelPartNames();
-        for (std::vector<std::string>::const_iterator i = submodels.begin();i!=submodels.end();i++) 
-            std::cout << *i<<std::endl; 
+        if(mEchoLevel>2){
+            std::vector<std::string> submodels;
+            submodels= mThisModelPart.GetSubModelPartNames();
+            for (std::vector<std::string>::const_iterator i = submodels.begin();i!=submodels.end();i++) 
+                std::cout << *i<<std::endl;}
         FindNodalNeighboursProcess findNeighbours(mThisModelPart);
         findNeighbours.Execute();
         //std::vector<Vector> stress_vector(1);
@@ -278,7 +245,8 @@ private:
             if(neighbour_size>2){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
                 i_nodes->SetValue(RECOVERED_STRESS,sigma_recovered);
-                std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
+                if(mEchoLevel>2)
+                    std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
             else{
                 for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
@@ -315,7 +283,8 @@ private:
             error_overall += error_energy_norm;
             error_energy_norm= sqrt(error_energy_norm);
             i_elements->SetValue(ELEMENT_ERROR,error_energy_norm);
-            std::cout<<"element_error:"<<error_energy_norm<<std::endl;
+            if(mEchoLevel>2)
+                std::cout<<"element_error:"<<error_energy_norm<<std::endl;
 
 
             std::vector<double> strain_energy;
@@ -325,12 +294,16 @@ private:
                 energy_norm += 2*strain_energy[i];
             energy_norm_overall += energy_norm;
             energy_norm= sqrt(energy_norm);
-            std::cout<<"energy norm:"<<energy_norm<<std::endl;
+            if(mEchoLevel>2)
+                std::cout<<"energy norm:"<<energy_norm<<std::endl;
         }
         error_overall = sqrt(error_overall);
         energy_norm_overall = sqrt(energy_norm_overall);
-        std::cout<<"overall error norm :"<<error_overall<<std::endl;
-        std::cout<<"overall energy norm :"<<energy_norm_overall<<std::endl;
+        double error_percentage = error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
+        if(mEchoLevel>1){
+            std::cout<<"overall error norm :"<<error_overall<<std::endl;
+            std::cout<<"overall energy norm :"<<energy_norm_overall<<std::endl;
+            std::cout<<"error in percent: "<<error_percentage<<std::endl;}
         
         //compute new element size
         for(ModelPart::ElementsContainerType::iterator i_elements = mThisModelPart.Elements().begin() ; i_elements != mThisModelPart.Elements().end(); i_elements++) 
@@ -341,8 +314,15 @@ private:
 
             //compute new element size
             double new_element_size;
+            //old:
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
+            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
+            
+            //new: experiment
+            //new_element_size = i_elements->GetValue(ELEMENT_H)*i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
+            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
+            //new_element_size = sqrt(new_element_size);
             //std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
             i_elements->SetValue(ELEMENT_H,new_element_size);
             //std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
@@ -369,8 +349,8 @@ private:
             const Vector metric = MetricsMathUtils<TDim>::TensorToVector(metric_matrix);
             i_nodes->SetValue(MMG_METRIC,metric);
 
-
-            std::cout<<"node "<<i_nodes->Id()<<" has metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
+            if(mEchoLevel>2)
+                std::cout<<"node "<<i_nodes->Id()<<" has metric: "<<i_nodes->GetValue(MMG_METRIC)<<std::endl;
         }
         return error_overall/pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
     }
@@ -382,9 +362,9 @@ private:
         Vector& rsigma_recovered)
     {
         // determine if contact BC has to be regarded
-        bool regard_contact;
-        regard_contact = i_patch_node->Has(CONTACT_PRESSURE);
-        if(regard_contact == false)
+        bool regard_contact = i_nodes->Has(CONTACT_PRESSURE);
+        //regard_contact = i_patch_node->Has(CONTACT_PRESSURE);
+        /*if(regard_contact == false)
         {
             for( auto i_neighbour_nodes = i_patch_node->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_patch_node->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++) {
                 if (i_neighbour_nodes->Has(CONTACT_PRESSURE))
@@ -393,7 +373,7 @@ private:
                     break;
                 }
             }
-        }
+        }*/
         if (regard_contact == false)
             CalculatePatchStandard(i_nodes, i_patch_node, neighbour_size, rsigma_recovered);
         else
@@ -464,7 +444,8 @@ private:
         int neighbour_size,
         Vector& rsigma_recovered)
     {
-        std::cout<<"contact i regarded"<<std::endl;
+        if(mEchoLevel>1)
+            std::cout<<"contact i regarded"<<std::endl;
         std::vector<Vector> stress_vector(1);
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
@@ -503,6 +484,30 @@ private:
         }
         // computing A and b
         Matrix A1(9,1,0), A2(1,9,0);
+        
+        p_k(0,1)= i_nodes->X()-i_patch_node->X();
+        p_k(0,2)= i_nodes->Y()-i_patch_node->Y();
+        p_k(1,4)= i_nodes->X()-i_patch_node->X();;
+        p_k(1,5)= i_nodes->Y()-i_patch_node->Y();
+        p_k(2,7)= i_nodes->X()-i_patch_node->X();;
+        p_k(2,8)= i_nodes->Y()-i_patch_node->Y();
+        N_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
+        N_k(0,1) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1];
+        N_k(0,2) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+        T_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+        T_k(0,1) = -i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+        T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1]-i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
+
+        A1 = prod(trans(p_k),trans(N_k));
+        A2 = prod(N_k,p_k);
+        A+= penalty_normal*prod(A1, A2);
+
+        A1 = prod(trans(p_k),trans(T_k));
+        A2 = prod(T_k,p_k);
+        A+= penalty_tangential*prod(A1, A2);
+
+        //b= penalty_normal*prod(trans(p_k),trans(N_k))*i_nodes->GetValue(CONTACT_PRESSURE);
+        /*
         //PART 2: contributions from contact nodes: regard all nodes from the patch which are in contact
         //patch center node:
         if (i_patch_node->Has(CONTACT_PRESSURE)){
@@ -529,10 +534,11 @@ private:
             //A+= penalty_normal*prod(prod(trans(p_k),trans(N_k)),prod(N_k,p_k));
             //A+= penalty_tangential*prod(prod(prod(trans(p_k),trans(T_k)),T_k),p_k);
 
-            b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
+            b-= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
         }
 
         //neighboring nodes:
+        
         for( auto i_neighbour_nodes = i_patch_node->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_patch_node->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++) {
             if (i_neighbour_nodes->Has(CONTACT_PRESSURE)){
                 p_k(0,1)= i_neighbour_nodes->X()-i_patch_node->X();
@@ -556,9 +562,9 @@ private:
                 A2 = prod(T_k,p_k);
                 A+= penalty_tangential*prod(A1, A2);
 
-                b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_patch_node->GetValue(CONTACT_PRESSURE);
+                b+= penalty_normal*prod(trans(p_k),trans(N_k))*i_neighbour_node->GetValue(CONTACT_PRESSURE);
             }
-        }
+        }*/
 
         // computing coefficients a: A*a=b
         //UblasSpace<double,CompressedMatrix,Vector> U1 = UblasSpace<double, Matrix,Vector>();
@@ -586,6 +592,8 @@ private:
         sigma = prod(p_k,coeff_matrix);
 
         rsigma_recovered = MatrixColumn(sigma,0);
+        if(mEchoLevel>1)
+            std::cout<<"pressure: "<<prod(N_k,sigma)<<", LM: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
         
     }
 

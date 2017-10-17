@@ -96,7 +96,7 @@ void KratosContactStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_VARIABLE( DELTA_NORMAL )                                    // Directional derivative of the normal
     
     /* For ALM mortar condition */
-    KRATOS_REGISTER_VARIABLE( AUGMENTED_NORMAL_CONTACT_PRESSURE )               // The resultant augmented pressure in the normal direction
+    //KRATOS_REGISTER_VARIABLE( AUGMENTED_NORMAL_CONTACT_PRESSURE )               // The resultant augmented pressure in the normal direction
     KRATOS_REGISTER_VARIABLE( AUGMENTED_TANGENT_CONTACT_PRESSURE )              // The resultant augmented pressure in the tangent direction
     KRATOS_REGISTER_VARIABLE( TANGENT_FACTOR )                                  // The proportion between the tangent and normal penalty
     KRATOS_REGISTER_VARIABLE( CONSIDER_NORMAL_VARIATION )                       // A value used to check if consider normal variation or not

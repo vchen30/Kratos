@@ -313,31 +313,6 @@ public:
         ) override;
 
     /**
-     * Get the vector which contains the pointer to the master elements
-     * @return rValues: The values of interest (vector)
-     */
-    void GetPointerToMasterElement( 
-    std::vector<Condition::Pointer>& rConditions 
-    ){rConditions = mThisMasterElements;}
-
-    /**
-     * Get the vector which contains the information if the conditions are active
-     * @return rValues: The values of interest (vector)
-     */
-    void GetMasterElementActive( 
-    std::vector<bool>& rActive
-    ){rActive = mThisMasterElementsActive;}
-
-    /**
-     * Get the number of contact pairs
-     * @return rValues: The values of interest (vector)
-     */
-    void GetPairNumber( 
-    unsigned int rPairSize
-    ){rPairSize = mPairSize;}
-    
-
-    /**
      * Calculate a double Variable
      * @param rVariable: Internal values
      * @param rCurrentProcessInfo: The current process information

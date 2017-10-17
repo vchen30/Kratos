@@ -876,7 +876,7 @@ private:
                 Vector N;
                 Element::Pointer p_element;
 
-                const bool found = point_locator.FindPointOnMeshSimplified(it_node->Coordinates(), N, p_element, mAllocationSize);
+                const bool found = point_locator.FindPointOnMeshSimplified(it_node->Coordinates(), N, p_element, mAllocationSize,1e-3);
 
                 if (found == false)
                 {

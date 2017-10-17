@@ -1261,11 +1261,10 @@ private:
         const unsigned int num_nodes = static_cast<int>(nodes_array.size());
         
         unsigned int cond_counter = 0;
-        for(auto i_prop = rInterfacePart.PropertiesBegin(); i_prop != rInterfacePart.PropertiesEnd(); i_prop ++)
-        {std::cout<<"Properties: "<<i_prop->Info()<<std::endl;}
+        
         // We reorder the conditions
         unsigned int cond_id = ReorderConditions();
-
+        
         // Generate Conditions from original the edges that can be considered interface
         for (ModelPart::ElementsContainerType::const_iterator it_elem = rOriginPart.ElementsBegin(); it_elem != rOriginPart.ElementsEnd(); it_elem++)
         {

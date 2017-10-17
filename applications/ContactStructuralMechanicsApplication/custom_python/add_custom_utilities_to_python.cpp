@@ -24,7 +24,8 @@
 
 //Utilities
 #include "custom_utilities/tree_contact_search.h"
-#include "custom_utilities/set_nodal_contact.h"
+#include "custom_utilities/process_factory_utility.h"
+#include "custom_utilities/extract_nodal_contact_pressure.h"
 
 namespace Kratos
 {
@@ -50,10 +51,25 @@ void  AddCustomUtilitiesToPython()
     .def("CleanMortarConditions",&TreeContactSearch::CleanMortarConditions)
     .def("CheckMortarConditions",&TreeContactSearch::CheckMortarConditions)
     ;
+  
+    // Process Factory utility
+    class_<ProcessFactoryUtility>("ProcessFactoryUtility", init<boost::python::list&>())
+    .def(init< >())
+    .def("AddProcess",&ProcessFactoryUtility::AddProcess)
+    .def("AddProcesses",&ProcessFactoryUtility::AddProcesses)
+    .def("ExecuteInitialize",&ProcessFactoryUtility::ExecuteInitialize)
+    .def("ExecuteBeforeSolutionLoop",&ProcessFactoryUtility::ExecuteBeforeSolutionLoop)
+    .def("ExecuteInitializeSolutionStep",&ProcessFactoryUtility::ExecuteInitializeSolutionStep)
+    .def("ExecuteFinalizeSolutionStep",&ProcessFactoryUtility::ExecuteFinalizeSolutionStep)
+    .def("ExecuteBeforeOutputStep",&ProcessFactoryUtility::ExecuteBeforeOutputStep)
+    .def("ExecuteAfterOutputStep",&ProcessFactoryUtility::ExecuteAfterOutputStep)
+    .def("ExecuteFinalize",&ProcessFactoryUtility::ExecuteFinalize)
+    .def("Clear",&ProcessFactoryUtility::Clear)
+    ;
 
-    class_<SetNodalContact>("SetNodalContact", init<ModelPart&>())
+    class_<ExtractNodalContactPressure>("ExtractNodalContactPressure", init<ModelPart&>())
     .def(init<ModelPart&>())
-    .def("Execute",&SetNodalContact::Execute)
+    .def("Execute",&ExtractNodalContactPressure::Execute)
     ;
 }
 

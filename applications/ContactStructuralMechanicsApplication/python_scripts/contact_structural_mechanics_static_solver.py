@@ -3,7 +3,6 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsApplication
 import KratosMultiphysics.ContactStructuralMechanicsApplication as ContactStructuralMechanicsApplication
-import KratosMultiphysics.MeshingApplication as MeshingApplication
 
 # Check that KratosMultiphysics was imported in the main script
 KratosMultiphysics.CheckForPreviousImport()
@@ -28,6 +27,8 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
     """
     def __init__(self, main_model_part, custom_settings): 
         
+        self.main_model_part = main_model_part    
+        
         ##settings string in json format
         contact_settings = KratosMultiphysics.Parameters("""
         {
@@ -47,8 +48,6 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                 "contact_residual_relative_tolerance"    : 1.0e-4,
                 "contact_residual_absolute_tolerance"    : 1.0e-9
             }
-                }
-            }
         }
         """)
         
@@ -58,7 +57,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         self.contact_settings = contact_settings["contact_settings"]
 
         # Construct the base solver.
-        super().__init__(main_model_part, self.settings)
+        super().__init__(self.main_model_part, self.settings)
         
         # Setting reactions true by default
         self.settings["clear_storage"].SetBool(True)
@@ -66,6 +65,9 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
 
         # Setting echo level
         self.echo_level =  self.settings["echo_level"].GetInt()
+    
+        # Initialize the processes list
+        self.processes_list = None
         
         print("Construction of ContactMechanicalSolver finished")
         
@@ -106,6 +108,9 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
     def Initialize(self):
         super().Initialize() # The mechanical solver is created here.
         
+    def AddProcessesList(self, processes_list):
+        self.processes_list = ContactStructuralMechanicsApplication.ProcessFactoryUtility(processes_list)
+        
     def _create_convergence_criterion(self):
         # Create an auxiliary Kratos parameters object to store the convergence settings.
         conv_params = KratosMultiphysics.Parameters("{}")
@@ -127,12 +132,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
         conv_params.AddValue("print_convergence_criterion",self.contact_settings["print_convergence_criterion"])
         conv_params.AddValue("ensure_contact",self.contact_settings["ensure_contact"])
         import contact_convergence_criteria_factory
-        if (self.contact_settings["adaptive_remeshing"] == False):
-            convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params)
-        else:
-            conv_params.AddValue("remeshing", self.contact_settings["remeshing_parameters"])
-            convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params,self.GetComputingModelPart(),self.contact_settings["remeshing_parameters"], self.processes_list)
-
+        convergence_criterion = contact_convergence_criteria_factory.convergence_criterion(conv_params)
         return convergence_criterion.mechanical_convergence_criterion
         
     def _create_mechanical_solver(self):
@@ -150,12 +150,7 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                     if(self.settings["line_search"].GetBool()):
                         mechanical_solver = self._create_contact_line_search_strategy()
                     else:
-                        #if (self.contact_settings["remeshing_parameters"]["adaptive_remeshing"].GetBool() == True): 
-                        #    mechanical_solver = self._create_contact_newton_raphson_strategy_meshing() 
-                        #else: 
-                        #    mechanical_solver = self._create_contact_newton_raphson_strategy()
                         mechanical_solver = self._create_contact_newton_raphson_strategy()
-     
                 else:
                     mechanical_solver = self._create_newton_raphson_strategy()
                     
@@ -197,33 +192,8 @@ class StaticMechanicalSolver(structural_mechanics_static_solver.StaticMechanical
                                                                                                self.settings["max_iteration"].GetInt(), 
                                                                                                self.settings["compute_reactions"].GetBool(), 
                                                                                                self.settings["reform_dofs_at_each_step"].GetBool(), 
-                                                                                               self.settings["move_mesh_flag"].GetBool(),
+                                                                                               #self.settings["move_mesh_flag"].GetBool(),
+                                                                                               True,
                                                                                                newton_parameters,
                                                                                                self.processes_list
                                                                                                )
-    
-    #def _create_contact_newton_raphson_strategy_meshing(self): 
-        #computing_model_part = self.GetComputingModelPart() 
-        #mechanical_scheme = self.get_solution_scheme() 
-        #linear_solver = self.get_linear_solver() 
-        #mechanical_convergence_criterion = self.get_convergence_criterion() 
-        #builder_and_solver = self.get_builder_and_solver() 
-        #newton_parameters = KratosMultiphysics.Parameters("""{}""") 
-        #remeshing_parameters = KratosMultiphysics.Parameters("""{}""") 
-        #newton_parameters.AddValue("adaptative_strategy",self.contact_settings["adaptative_strategy"]) 
-        #newton_parameters.AddValue("split_factor",self.contact_settings["split_factor"]) 
-        #newton_parameters.AddValue("max_number_splits",self.contact_settings["max_number_splits"])  
-        #remeshing_parameters.AddValue("remeshing_max_iterations",self.contact_settings["remeshing_parameters"]["remeshing_max_iterations"]) 
-        #return ContactStructuralMechanicsApplication.ResidualBasedNewtonRaphsonContactStrategyRemeshing(computing_model_part,  
-        #                                                                                        mechanical_scheme,  
-        #                                                                                        linear_solver,  
-        #                                                                                        mechanical_convergence_criterion,  
-        #                                                                                        builder_and_solver,  
-        #                                                                                       self.settings["max_iteration"].GetInt(),  
-        #                                                                                        self.settings["compute_reactions"].GetBool(),  
-        #                                                                                        self.settings["reform_dofs_at_each_step"].GetBool(),  
-        #                                                                                        self.settings["move_mesh_flag"].GetBool(), 
-        #                                                                                        newton_parameters, 
-        #                                                                                        remeshing_parameters, 
-        #                                                                                        self.processes_list 
-        #                                                                                        )
