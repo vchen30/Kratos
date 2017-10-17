@@ -86,7 +86,8 @@ MmgProcess<TDim>::MmgProcess(
         "max_number_of_searchs"            : 1000,
         "echo_level"                       : 3,
         "step_data_size"                   : 0,
-        "buffer_size"                      : 0
+        "buffer_size"                      : 0,
+        "contact_model_part_name"          : "Contact_Part"
     })" );
     
     mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
@@ -1230,6 +1231,24 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         condition_nodes[0] = mrThisModelPart.pGetNode(edge_0);
         condition_nodes[1] = mrThisModelPart.pGetNode(edge_1);    
         
+        
+        // detect if the condition which is created is a contact condition
+        std::vector<int> key_contact;
+        for(auto & color_list : mColors){
+            for (auto sub_model_part_name : color_list.second)
+            if (sub_model_part_name == mThisParameters["contact_model_part_name"].GetString())
+                key_contact.push_back(color_list.first);
+        }
+
+        bool is_contact_condition = false;
+        for(auto i=key_contact.begin(); i != key_contact.end();i++)
+        {
+            if(PropId == *i)
+                is_contact_condition = true;
+        }
+
+
+        if (PropId!=0 && (is_contact_condition == false))
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
     else if (mEchoLevel > 2)
