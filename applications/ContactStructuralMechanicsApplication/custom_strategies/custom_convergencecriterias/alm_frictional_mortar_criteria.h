@@ -20,9 +20,7 @@
 #include "custom_utilities/contact_utilities.h"
 #include "utilities/table_stream_utility.h"
 #include "custom_strategies/custom_convergencecriterias/base_mortar_criteria.h"
-#if !defined(_WIN32)
-    #include "utilities/color_utilities.h"
-#endif
+#include "utilities/color_utilities.h"
 
 namespace Kratos
 {
@@ -132,8 +130,6 @@ public:
     {
         BaseType::PreCriteria(rModelPart, rDofSet, A, Dx, b);
         
-        ResetWeightedSlip(rModelPart);
-        
         return true;
     }
     
@@ -155,6 +151,9 @@ public:
         const TSystemVectorType& b
         ) override
     {
+        // We call the base class
+        BaseType::PostCriteria(rModelPart, rDofSet, A, Dx, b);
+        
         // Defining the convergence
         unsigned int is_converged_active = 0;
         unsigned int is_converged_slip = 0;
@@ -254,11 +253,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         table << BOLDFONT(FGRN("       Achieved"));
-                    #else
-                        table << "Achieved";
-                    #endif
                     }
                     else
                     {
@@ -269,11 +264,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         table << BOLDFONT(FRED("   Not achieved"));
-                    #else
-                        table << "Not achieved";
-                    #endif
                     }
                     else
                     {
@@ -284,11 +275,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         table << BOLDFONT(FGRN("       Achieved"));
-                    #else
-                        table << "Achieved";
-                    #endif
                     }
                     else
                     {
@@ -299,11 +286,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         table << BOLDFONT(FRED("   Not achieved"));
-                    #else
-                        table << "Not achieved";
-                    #endif
                     }
                     else
                     {
@@ -317,11 +300,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         std::cout << BOLDFONT("\tActive set") << " convergence is " << BOLDFONT(FGRN("achieved")) << std::endl;
-                    #else
-                        std::cout << "\tActive set convergence is achieved" << std::endl;
-                    #endif
                     }
                     else
                     {
@@ -332,11 +311,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         std::cout << BOLDFONT("\tActive set") << " convergence is " << BOLDFONT(FRED("not achieved")) << std::endl;
-                    #else
-                        std::cout << "\tActive set convergence is not achieved" << std::endl;
-                    #endif
                     }
                     else
                     {
@@ -348,11 +323,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         std::cout << BOLDFONT("\tSlip/stick set") << " convergence is " << BOLDFONT(FGRN("achieved")) << std::endl;
-                    #else
-                        std::cout << "\tSlip/stick set convergence is achieved" << std::endl;
-                    #endif
                     }
                     else
                     {
@@ -363,11 +334,7 @@ public:
                 {
                     if (mPrintingOutput == false)
                     {
-                    #if !defined(_WIN32)
                         std::cout << BOLDFONT("\tSlip/stick set") << " convergence is " << BOLDFONT(FRED("not achieved")) << std::endl;
-                    #else
-                        std::cout << "\tSlip/stick set  convergence is not achieved" << std::endl;
-                    #endif
                     }
                     else
                     {
@@ -508,13 +475,13 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-
+    
     /**
-     * This method resets the weighted slip in the nodes of the problem
+     * This method resets the weighted gap in the nodes of the problem
      * @param rModelPart Reference to the ModelPart containing the contact problem.
      */
     
-    void ResetWeightedSlip(ModelPart& rModelPart)
+    void ResetWeightedGap(ModelPart& rModelPart) override
     {       
         NodesArrayType& nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
@@ -524,6 +491,7 @@ protected:
         {
             auto it_node = nodes_array.begin() + i;
             
+            it_node->FastGetSolutionStepValue(WEIGHTED_GAP) = 0.0;
             it_node->FastGetSolutionStepValue(WEIGHTED_SLIP) = 0.0;
         }
     }

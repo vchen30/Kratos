@@ -19,6 +19,7 @@
 
 // Project includes
 #include "utilities/math_utils.h"
+#include "includes/enums.h"
 #include "includes/model_part.h"
 #include "geometries/point.h"
 #include "utilities/openmp_utils.h"
@@ -48,7 +49,7 @@ public:
     
     // General type definitions
     typedef Node<3>                                              NodeType;
-    typedef Point<3>                                            PointType;
+    typedef Point                                            PointType;
     typedef PointType::CoordinatesArrayType          CoordinatesArrayType;
     typedef Geometry<NodeType>                               GeometryType;
     typedef Geometry<PointType>                         GeometryPointType;
@@ -364,7 +365,7 @@ public:
      * @param Geom: The geometry of condition of interest
      */
 
-    static inline array_1d<double,3> GaussPointNormal(
+    static inline array_1d<double,3> GaussPointUnitNormal(
         const Vector& N,
         const GeometryType& Geom
         )
@@ -375,10 +376,14 @@ public:
             normal += N[i_node] * Geom[i_node].GetValue(NORMAL); 
         }
         
-        if (norm_2(normal) > std::numeric_limits<double>::epsilon())
-        {
-            normal = normal/norm_2(normal); // It is suppossed to be already unitary (just in case)
-        }
+        const double this_norm = norm_2(normal);
+        
+    #ifdef KRATOS_DEBUG
+        const bool not_zero_vector = (this_norm > std::numeric_limits<double>::epsilon());
+        if (not_zero_vector == false) KRATOS_ERROR << "Zero norm normal vector. Norm:" << this_norm << std::endl;
+    #endif
+        
+        normal /= this_norm;
         
         return normal;
     }

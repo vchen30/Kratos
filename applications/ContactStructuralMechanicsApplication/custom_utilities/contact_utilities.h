@@ -44,7 +44,7 @@ public:
     
     // General type definitions
     typedef Node<3>                                              NodeType;
-    typedef Point<3>                                            PointType;
+    typedef Point                                               PointType;
     typedef PointType::CoordinatesArrayType          CoordinatesArrayType;
     typedef Geometry<NodeType>                               GeometryType;
     typedef Geometry<PointType>                         GeometryPointType;
@@ -253,10 +253,11 @@ public:
                 
                 for (unsigned int i = 0; i < number_nodes; i++)
                 {
-                    #pragma omp atomic
-                    it_cond->GetGeometry()[i].GetValue(NODAL_AREA)        += rArea;
-                    #pragma omp critical
-                    noalias( it_cond->GetGeometry()[i].GetValue(NORMAL) ) += rArea * rNormal;
+                    auto& this_node = it_cond->GetGeometry()[i];
+                    this_node.SetLock();
+                    this_node.GetValue(NODAL_AREA)        += rArea;
+                    noalias( this_node.GetValue(NORMAL) ) += rArea * rNormal;
+                    this_node.UnSetLock();
                 }
             }
         }
@@ -512,12 +513,12 @@ public:
      * @return point: The center in u_n+1/2 (Newmark)
      */
     
-    static inline Point<3> GetHalfJumpCenter(
+    static inline PointType GetHalfJumpCenter(
         GeometryType& ThisGeometry,
         const double& DeltaTime
         )
     {
-        Point<3> center = ThisGeometry.Center();
+        PointType center = ThisGeometry.Center();
         
         // Initialize variables
         Vector N;
