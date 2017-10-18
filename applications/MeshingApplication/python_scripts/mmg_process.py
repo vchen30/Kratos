@@ -290,7 +290,6 @@ class MmgProcess(KratosMultiphysics.Process):
 
         # We need to set that the model part has been modified (later on we will act in consequence)
         self.Model[self.model_part_name].Set(KratosMultiphysics.MODIFIED, True)
-
         print("Remesh finished")
 
     def __generate_submodelparts_list_from_input(self,param):

@@ -1543,6 +1543,11 @@ void MmgProcess<TDim>::SaveSolutionToFile(const bool PostOutput)
 
     // Automatically save the solution 
     OutputSol(PostOutput, step);
+
+    // Save the mesh in an .mdpa format
+    if(PostOutput == true && step == 1)
+        OutputMdpa();
+
 }
 
 /***********************************************************************************/
@@ -1805,6 +1810,7 @@ void MmgProcess<2>::OutputMesh(
     {
         std::cout << "UNABLE TO SAVE MESH" << std::endl;
     }
+
 }
 
 /***********************************************************************************/
@@ -1838,6 +1844,33 @@ void MmgProcess<3>::OutputMesh(
         std::cout << "UNABLE TO SAVE MESH" << std::endl;
     }
 }
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template<>  
+void MmgProcess<2>::OutputMdpa(){
+    // save mesh in .mdpa format
+    std::ofstream output_file;
+    output_file.open(mStdStringFilename+"output.mdpa");
+    output_file<<"Begin Nodes\n";
+    int i=0;
+    for(auto i_nodes= mrThisModelPart.NodesBegin(); i_nodes != mrThisModelPart.NodesEnd(); i_nodes++){
+        i=i+1;
+        output_file<<i<<"  "<<i_nodes->X()<<"  "<<i_nodes->Y()<<"  "<<i_nodes->Z()<<"\n";
+    }
+    for(auto & color_list : mColors){
+            for (auto sub_model_part_name : color_list.second){
+                    output_file<<sub_model_part_name<<": "<<color_list.first<<"\n";
+        
+            }
+        }
+    output_file.close();
+
+}
+
+template<>  
+void MmgProcess<3>::OutputMdpa(){}
 
 /***********************************************************************************/
 /***********************************************************************************/

@@ -367,7 +367,7 @@ public:
             // Restoring original DELTA_TIME
             this_process_info[DELTA_TIME] = original_delta_time;
         }
-        
+
         return is_converged;
     }
         
