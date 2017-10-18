@@ -1233,23 +1233,18 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         
         
         // detect if the condition which is created is a contact condition
-        std::vector<int> key_contact;
-        for(auto & color_list : mColors){
-            for (auto sub_model_part_name : color_list.second)
-            if (sub_model_part_name == mThisParameters["contact_model_part_name"].GetString())
-                key_contact.push_back(color_list.first);
-        }
-
         bool is_contact_condition = false;
-        for(auto i=key_contact.begin(); i != key_contact.end();i++)
-        {
-            if(PropId == *i)
-                is_contact_condition = true;
+        for(auto & color_list : mColors){
+            for (auto sub_model_part_name : color_list.second){
+                if (sub_model_part_name == mThisParameters["contact_model_part_name"].GetString()){
+                    if(PropId == color_list.first)
+                        is_contact_condition = true;
+                }
+            }
         }
-
-
+        // skip the condition creation if the condition belongs to the main model part or to the contact part
         if (PropId!=0 && (is_contact_condition == false))
-        p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
+            p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
     else if (mEchoLevel > 2)
     {
