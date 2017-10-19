@@ -362,7 +362,7 @@ private:
         Vector& rsigma_recovered)
     {
         // determine if contact BC has to be regarded
-        bool regard_contact = i_nodes->Has(CONTACT_PRESSURE);
+        bool regard_contact = (i_nodes->GetValue(CONTACT_PRESSURE) != 0.0);
         //regard_contact = i_patch_node->Has(CONTACT_PRESSURE);
         /*if(regard_contact == false)
         {
@@ -432,6 +432,8 @@ private:
             sigma = prod(p_k,coeff);
             rsigma_recovered = MatrixRow(sigma,0);
         }
+        if(i_nodes->Id() == 1132)
+            std::cout<<"strange, no contact, contact pressure: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
     }
 
     //calculates the recovered stress at a node where contact BCs are regarded
@@ -506,7 +508,7 @@ private:
         A2 = prod(T_k,p_k);
         A+= penalty_tangential*prod(A1, A2);
 
-        //b= penalty_normal*prod(trans(p_k),trans(N_k))*i_nodes->GetValue(CONTACT_PRESSURE);
+        b= penalty_normal*prod(trans(p_k),trans(N_k))*i_nodes->GetValue(CONTACT_PRESSURE);
         /*
         //PART 2: contributions from contact nodes: regard all nodes from the patch which are in contact
         //patch center node:
@@ -593,7 +595,9 @@ private:
 
         rsigma_recovered = MatrixColumn(sigma,0);
         if(mEchoLevel>1)
-            std::cout<<"pressure: "<<prod(N_k,sigma)<<", LM: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
+            std::cout<<"recovered pressure: "<<prod(N_k,sigma)<<", LM: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
+        if(i_nodes->Id() == 1132)
+            std::cout<<"strange, contact, contact pressure: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
         
     }
 
