@@ -51,7 +51,7 @@ public:
         ModelPart::NodesContainerType& rNodes = mThisModelPart.Nodes();
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             if(i_nodes->Has(AUGMENTED_NORMAL_CONTACT_PRESSURE)== true){
-                std::cout<<"node "<<i_nodes->Id()<<" has contact pressure "<<i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)<<std::endl;
+                //std::cout<<"node "<<i_nodes->Id()<<" has contact pressure "<<i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)<<std::endl;
                 if(i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)!= 0)
                     i_nodes->SetValue(CONTACT_PRESSURE,i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE));
             }

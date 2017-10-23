@@ -369,6 +369,7 @@ public:
      * Get on rVariable a Vector Value from the Element Constitutive Law
      */
     void GetValueOnIntegrationPoints(const Variable<Vector>& rVariable, std::vector<Vector>& rValues, const ProcessInfo& rCurrentProcessInfo);
+    void GetValueOnIntegrationPoints(const Variable<array_1d<double,3>>& rVariable, std::vector<array_1d<double,3>>& rValues, const ProcessInfo& rCurrentProcessInfo);
 
     /**
      * Get on rVariable a Matrix Value from the Element Constitutive Law
@@ -561,6 +562,10 @@ public:
      */
     void CalculateOnIntegrationPoints(const Variable<Matrix >& rVariable, std::vector< Matrix >& rOutput, const ProcessInfo& rCurrentProcessInfo);
 
+/**
+     * returns the coordinates of the integration point
+     */
+    void CalculateOnIntegrationPoints(const Variable<array_1d<double,3>>& rVariable, std::vector<array_1d<double,3>>& rOutput, const ProcessInfo& rCurrentProcessInfo);
 
     //************************************************************************************
     //************************************************************************************

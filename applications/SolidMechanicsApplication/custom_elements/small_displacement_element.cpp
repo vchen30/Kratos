@@ -352,6 +352,14 @@ void SmallDisplacementElement::GetValueOnIntegrationPoints( const Variable<doubl
   if ( rVariable == VON_MISES_STRESS ){
         CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
   }
+
+  else if(rVariable == ERROR_INTEGRATION_POINT){
+      CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+  }
+
+  else if(rVariable == STRAIN_ENERGY){
+      CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+  }
   else{
     
     const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber( mThisIntegrationMethod );
@@ -412,6 +420,20 @@ void SmallDisplacementElement::GetValueOnIntegrationPoints( const Variable<Vecto
 
     }
 
+}
+
+void SmallDisplacementElement::GetValueOnIntegrationPoints( 
+        const Variable<array_1d<double, 3>>& rVariable, 
+        std::vector<array_1d<double, 3>>& rOutput, 
+        const ProcessInfo& rCurrentProcessInfo 
+        ){
+   const unsigned int& integration_points_number = mConstitutiveLawVector.size();
+    if ( rOutput.size() != integration_points_number )
+        rOutput.resize( integration_points_number ); 
+    
+    if(rVariable == INTEGRATION_COORDINATES)
+        CalculateOnIntegrationPoints( rVariable, rOutput, rCurrentProcessInfo );
+    
 }
 
 //***********************************GET MATRIX VALUE*********************************
@@ -2231,7 +2253,74 @@ void SmallDisplacementElement::CalculateOnIntegrationPoints( const Variable<doub
       
       
     }
+    else if (rVariable == ERROR_INTEGRATION_POINT){
+        double Thickness = 1.0;
+        const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+        const unsigned int number_of_nodes = GetGeometry().size();
+        const unsigned int strain_size = mConstitutiveLawVector[0]->GetStrainSize();
+
+        if( dimension == 2){
+	        if ( this->GetProperties().Has( THICKNESS ) )
+	            Thickness = GetProperties()[THICKNESS];
+        }
+
+        const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints( mThisIntegrationMethod );
+
+        GeneralVariables Variables;
+        this->InitializeGeneralVariables(Variables,rCurrentProcessInfo);
+        
+        ConstitutiveLaw::Parameters Values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
     
+        //set constitutive law flags:
+        Flags &ConstitutiveLawOptions=Values.GetOptions();
+
+        ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
+        //ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRAIN_ENERGY);
+        std::vector<Vector> sigma_FE_solution(integration_points.size());
+        Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
+        CalculateOnIntegrationPoints(variable_stress, sigma_FE_solution, rCurrentProcessInfo);
+
+        std::vector<Matrix> constitutive_tensor(integration_points.size());
+        Variable<Matrix> variable_const =CONSTITUTIVE_MATRIX;
+        CalculateOnIntegrationPoints(variable_const, constitutive_tensor, rCurrentProcessInfo);
+        
+
+        for ( unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++ )
+        {
+             
+            //compute element kinematics B, F, DN_DX ...
+            this->CalculateKinematics(Variables,PointNumber);
+            //to take in account previous step writing
+            //if( mFinalizedStep ){
+            //this->GetHistoricalVariables(Variables,PointNumber);
+            //}
+            //set general variables to constitutivelaw parameters
+            this->SetGeneralVariables(Variables,Values,PointNumber);
+            
+            //compute recovered stress for integration points
+            Vector sigma_recovered(strain_size,0);
+            for(int j=0;j<number_of_nodes;j++){
+                sigma_recovered += Variables.N[j]*this->GetGeometry()[j].GetValue(RECOVERED_STRESS);
+            }
+            //calculate error_sigma
+            Vector error_sigma(strain_size);
+            error_sigma = sigma_recovered - sigma_FE_solution[PointNumber];
+            std::cout<<"FE solution"<<sigma_FE_solution[PointNumber]<<std::endl;
+            std::cout<<"recovered solution"<<sigma_recovered<<std::endl;
+            
+            //compute stresses and constitutive parameters
+            //mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);
+            //mConstitutiveLawVector[PointNumber]->GetValue(STRAIN_ENERGY,StrainEnergy);
+            
+            //calculate inverse of material matrix
+            Matrix invD(strain_size,strain_size);
+            double detD;
+            MathUtils<double>::InvertMatrix(constitutive_tensor[PointNumber], invD,detD);
+                
+            //calculate error_energy 
+            rOutput[PointNumber]= Variables.detJ*Thickness*integration_points[PointNumber].Weight()*inner_prod(error_sigma,prod(invD,error_sigma));
+        }
+    }
     else
     {
 
@@ -2244,7 +2333,33 @@ void SmallDisplacementElement::CalculateOnIntegrationPoints( const Variable<doub
 
 //************************************************************************************
 //************************************************************************************
+void SmallDisplacementElement::CalculateOnIntegrationPoints( 
+        const Variable<array_1d<double, 3>>& rVariable, 
+        std::vector<array_1d<double, 3>>& rOutput, 
+        const ProcessInfo& rCurrentProcessInfo 
+        )
+    {
+        const GeometryType::IntegrationPointsArrayType &integration_points = GetGeometry().IntegrationPoints();
 
+        if (rVariable == INTEGRATION_COORDINATES)
+        {
+            const unsigned int number_of_nodes = GetGeometry().size();
+            const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+            const unsigned int strain_size = mConstitutiveLawVector[0]->GetStrainSize();
+
+            //KinematicVariables this_kinematic_variables(strain_size, dimension, number_of_nodes);
+            
+            for (unsigned int point_number = 0; point_number < integration_points.size(); point_number++)
+            {
+                Point global_point;
+                GetGeometry().GlobalCoordinates(global_point, integration_points[point_number]);
+                
+                rOutput[point_number] = global_point.Coordinates();
+            }
+        }
+    }
+//************************************************************************************
+//************************************************************************************
 void SmallDisplacementElement::CalculateOnIntegrationPoints( const Variable<Vector>& rVariable, std::vector<Vector>& rOutput, const ProcessInfo& rCurrentProcessInfo )
 {
 

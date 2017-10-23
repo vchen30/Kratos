@@ -23,6 +23,7 @@
 #include "processes/find_nodal_neighbours_process.h"
 #include "linear_solvers/skyline_lu_factorization_solver.h"
 #include "spaces/ublas_space.h"
+#include "utilities/geometry_utilities.h"
 namespace Kratos
 {
 ///@name Kratos Globals
@@ -54,7 +55,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-//// This class is can be used to compute the metrics of the model part with an Hessian approach
+//// This class is can be used to compute the metrics of the model part with a superconvergent patch recovery approach
 
 //template<unsigned int TDim, class TVarType>  
 template<unsigned int TDim> 
@@ -92,8 +93,8 @@ public:
     {               
         Parameters DefaultParameters = Parameters(R"(
         {
-            "minimal_size"                        : 0.1,
-            "maximal_size"                        : 10.0, 
+            "minimal_size"                        : 0.001,
+            "maximal_size"                        : 1.0, 
             "error"                               : 0.1,
             "echo_level"                          : 0
         })" );
@@ -225,35 +226,40 @@ private:
         /************************************************************************
         --1-- calculate superconvergent stresses (at the nodes) --1--
         ************************************************************************/
-        if(mEchoLevel>2){
-            std::vector<std::string> submodels;
-            submodels= mThisModelPart.GetSubModelPartNames();
-            for (std::vector<std::string>::const_iterator i = submodels.begin();i!=submodels.end();i++) 
-                std::cout << *i<<std::endl;}
+
         FindNodalNeighboursProcess findNeighbours(mThisModelPart);
         findNeighbours.Execute();
-        //std::vector<Vector> stress_vector(1);
-        //std::vector<array_1d<double,3>> coordinates_vector(1);
-        //ariable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
+
         //iteration over all nodes -- construction of patches
         ModelPart::NodesContainerType& rNodes = mThisModelPart.Nodes();
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
-            //std::cout << "Node: " << i_nodes->Id() << " has " << neighbour_size << " neighbouring elements: " << std::endl;
 
-            Vector sigma_recovered(3,0);
-            if(neighbour_size>2){ 
+            Vector sigma_recovered;
+            if (TDim == 2)
+                sigma_recovered.resize(3);
+            else if(TDim == 3)
+                sigma_recovered.resize(6);
+            
+            if(neighbour_size>TDim){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
                 i_nodes->SetValue(RECOVERED_STRESS,sigma_recovered);
                 if(mEchoLevel>2)
                     std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
             else{
-                for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
-                    Vector sigma_recovered_i(3);
+                //for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
+                for(auto i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
+                    
+                    Vector sigma_recovered_i;
+                    if (TDim == 2)
+                        sigma_recovered.resize(3);
+                    else if(TDim == 3)
+                        sigma_recovered.resize(6);
+
                     unsigned int count_i=0;
                     for(ModelPart::NodesContainerType::iterator i = rNodes.begin(); i!=rNodes.end(); i++){
-                        if (i->Id() == i_neighbour_nodes->Id() && i->GetValue(NEIGHBOUR_ELEMENTS).size()>2){
+                        if (i->Id() == i_neighbour_nodes->Id() && i->GetValue(NEIGHBOUR_ELEMENTS).size()>TDim){
                             CalculatePatch(i_nodes,i,neighbour_size,sigma_recovered_i);
                             count_i ++;
                         }
@@ -263,6 +269,8 @@ private:
                         sigma_recovered =sigma_recovered*(count_i-1)/count_i + sigma_recovered_i/count_i;
                 }
                 i_nodes->SetValue(RECOVERED_STRESS,sigma_recovered);
+                if(mEchoLevel>2)
+                    std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
        }
         /******************************************************************************
@@ -314,18 +322,17 @@ private:
 
             //compute new element size
             double new_element_size;
-            //old:
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
+            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
             
-            //new: experiment
-            //new_element_size = i_elements->GetValue(ELEMENT_H)*i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
-            //new_element_size = sqrt(new_element_size);
-            //std::cout<<"old element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
+            //set minimal and maximal element size
+            if(new_element_size<mMinSize)
+                new_element_size = mMinSize;
+            if(new_element_size >mMaxSize)
+                new_element_size = mMaxSize;
+
             i_elements->SetValue(ELEMENT_H,new_element_size);
-            //std::cout<<"new element size: "<<i_elements->GetValue(ELEMENT_H)<<std::endl;
         }
 
         /******************************************************************************
@@ -340,11 +347,12 @@ private:
                     h_min = i_neighbour_elements->GetValue(ELEMENT_H);
                 
             }
-            //std::cout<<"h_min: "<<h_min<<std::endl;
+
             // set metric
-            Matrix metric_matrix(2,2,0);
-            metric_matrix(0,0)=1/(h_min*h_min);
-            metric_matrix(1,1)=1/(h_min*h_min);
+            Matrix metric_matrix(TDim,TDim,0);
+            for(auto i=0;i<TDim;i++)
+                metric_matrix(i,i)=1/(h_min*h_min);
+
             // transform metric matrix to a vector
             const Vector metric = MetricsMathUtils<TDim>::TensorToVector(metric_matrix);
             i_nodes->SetValue(MMG_METRIC,metric);
@@ -395,45 +403,52 @@ private:
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
         Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
-        Matrix A(3,3,0);
-        Matrix b(3,3,0); 
-        Matrix p_k(1,3,0);
+        int sigma_size;
+        if(TDim == 2)
+            sigma_size = 3;
+        else if( TDim == 3)
+            sigma_size =6;
+        Matrix A(TDim+1,TDim+1,0);
+        Matrix b(TDim+1,sigma_size,0); 
+        Matrix p_k(1,TDim+1,0);
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
-            //std::cout << "\tElement: " << i_elements->Id() << std::endl;
+            
             i_elements->GetValueOnIntegrationPoints(variable_stress,stress_vector,mThisModelPart.GetProcessInfo());
             i_elements->GetValueOnIntegrationPoints(variable_coordinates,coordinates_vector,mThisModelPart.GetProcessInfo());
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            Matrix sigma(1,3);
-            for(int j=0;j<3;j++)
+            Matrix sigma(1,sigma_size);
+            for(int j=0;j<sigma_size;j++)
                 sigma(0,j)=stress_vector[0][j];
             p_k(0,0)=1;
             p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
-            p_k(0,2)=coordinates_vector[0][1]-i_patch_node->Y();   
+            p_k(0,2)=coordinates_vector[0][1]-i_patch_node->Y();
+            if(TDim == 3)
+                p_k(0,3)=coordinates_vector[0][2]-i_patch_node->Z();       
             A+=prod(trans(p_k),p_k);
             b+=prod(trans(p_k),sigma);
         }
-        Matrix invA(3,3);
+        Matrix invA(TDim+1,TDim+1);
         double det;
         MathUtils<double>::InvertMatrix(A,invA,det);
         //std::cout <<A<<std::endl;
         //std::cout <<invA<<std::endl;
         //std::cout << det<< std::endl;
 
-        Matrix coeff(3,3);
+        Matrix coeff(TDim+1,sigma_size);
         coeff = prod(invA,b);
-        if(neighbour_size > 2)
+        if(neighbour_size > TDim)
             rsigma_recovered = MatrixRow(coeff,0);
         else{
             p_k(0,1)=i_nodes->X()-i_patch_node->X(); 
             p_k(0,2)=i_nodes->Y()-i_patch_node->Y();
-            Matrix sigma(1,3);
+            if(TDim ==3)
+                p_k(0,3)=i_nodes->Z()-i_patch_node->Z();
+            Matrix sigma(1,sigma_size);
             sigma = prod(p_k,coeff);
             rsigma_recovered = MatrixRow(sigma,0);
         }
-        if(i_nodes->Id() == 1132)
-            std::cout<<"strange, no contact, contact pressure: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
     }
 
     //calculates the recovered stress at a node where contact BCs are regarded
@@ -446,20 +461,25 @@ private:
         int neighbour_size,
         Vector& rsigma_recovered)
     {
-        if(mEchoLevel>1)
-            std::cout<<"contact i regarded"<<std::endl;
         std::vector<Vector> stress_vector(1);
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
         Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
-        CompressedMatrix A(9,9,0);
-        Matrix b(9,1,0); 
-        Matrix p_k(3,9,0);
-        Matrix N_k(1,3,0);
-        Matrix T_k(1,3,0);
+        int sigma_size;
+        if(TDim == 2)
+            sigma_size = 3;
+        else if( TDim == 3)
+            sigma_size =6;
+
+        CompressedMatrix A((sigma_size*(TDim+1)),(sigma_size*(TDim+1)),0);
+        Matrix b((sigma_size*(TDim+1)),1,0); 
+        Matrix p_k(sigma_size,(sigma_size*(TDim+1)),0);
+        Matrix N_k(1,sigma_size,0);
+        Matrix T_k(1,sigma_size,0);
+        Matrix T_k2(1,sigma_size,0);  // in case of 3D: second tangential vector
         double penalty_normal = 10000;
         double penalty_tangential = 10000;
-        Matrix sigma(3,1);
+        Matrix sigma(sigma_size,1);
         // computation A and b
         // PART 1: contributions from the neighboring elements
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
@@ -469,37 +489,56 @@ private:
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            for(int j=0;j<3;j++)
+            for(int j=0;j<sigma_size;j++)
                 sigma(j,0)=stress_vector[0][j];
-            p_k(0,0)=1;
-            p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
-            p_k(0,2)=coordinates_vector[0][1]-i_patch_node->Y();
-            p_k(1,3)=1;
-            p_k(1,4)=coordinates_vector[0][0]-i_patch_node->X(); 
-            p_k(1,5)=coordinates_vector[0][1]-i_patch_node->Y();
-            p_k(2,6)=1;
-            p_k(2,7)=coordinates_vector[0][0]-i_patch_node->X(); 
-            p_k(2,8)=coordinates_vector[0][1]-i_patch_node->Y();
-               
+            
+            for (int j=0; j<sigma_size;j++){
+                p_k(j,j*(TDim+1))=1;
+                p_k(j,j*(TDim+1)+1)=coordinates_vector[0][0]-i_patch_node->X(); 
+                p_k(j,j*(TDim+1)+2)=coordinates_vector[0][1]-i_patch_node->Y();
+                if(TDim == 3)
+                    p_k(j,j*(TDim+1)+3)=coordinates_vector[0][2]-i_patch_node->Z();
+            }
             A+=prod(trans(p_k),p_k);
             b+=prod(trans(p_k),sigma);
         }
         // computing A and b
-        Matrix A1(9,1,0), A2(1,9,0);
+        Matrix A1((sigma_size*(TDim+1)),1,0), A2(1,(sigma_size*(TDim+1)),0);
+        for (int j=0; j<sigma_size;j++){
+            p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
+            p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
+            if(TDim == 3)
+                p_k(j,j*(TDim+1)+3)= i_nodes->Z()-i_patch_node->Z();
+        }
         
-        p_k(0,1)= i_nodes->X()-i_patch_node->X();
-        p_k(0,2)= i_nodes->Y()-i_patch_node->Y();
-        p_k(1,4)= i_nodes->X()-i_patch_node->X();;
-        p_k(1,5)= i_nodes->Y()-i_patch_node->Y();
-        p_k(2,7)= i_nodes->X()-i_patch_node->X();;
-        p_k(2,8)= i_nodes->Y()-i_patch_node->Y();
-        N_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
-        N_k(0,1) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1];
-        N_k(0,2) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-        T_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-        T_k(0,1) = -i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-        T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1]-i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
+        // set the normal and tangential vectors in Voigt Notation
+        for(int j=0;j<TDim;j++){
+        N_k(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(NORMAL)[j];
+        T_k(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(TANGENT_XI)[j];
+        if(TDim ==3)
+            T_k2(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(TANGENT_ETA)[j];
+        }
 
+        if(TDim ==2){
+            N_k(0,2) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+            T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
+            std::cout<<"Tangential vector old: "<<T_K<<", ";
+            T_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+            T_k(0,1) = -i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+            T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1]-i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
+            std::cout<<"Tangential vector xi: "<<T_k<<std::endl;
+        }
+        else if (TDim ==3){
+            N_k(0,3) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
+            N_k(0,4) = 2*i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[2];
+            N_k(0,5) = 2*i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(NORMAL)[0];
+            T_k(0,3) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
+            T_k(0,4) = i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[1]+i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[2];
+            T_k(0,5) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[2]+i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[0];
+            T_k2(0,3) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
+            T_k2(0,4) = i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[1]+i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[2];
+            T_k2(0,5) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[2]+i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[0];
+        }
         A1 = prod(trans(p_k),trans(N_k));
         A2 = prod(N_k,p_k);
         A+= penalty_normal*prod(A1, A2);
@@ -578,35 +617,38 @@ private:
             for (unsigned j = 0; j < compA.size2 (); ++ j)
                 compA (i, j) = 9 * i + j;
         }*/
-        Vector coeff(9);
+        Vector coeff(sigma_size*(TDim+1));
         Vector b_vector = MatrixColumn(b,0);
         solver.Solve(A,coeff,b_vector);
-                        
-        p_k(0,1)= i_nodes->X()-i_patch_node->X();
-        p_k(0,2)= i_nodes->Y()-i_patch_node->Y();
-        p_k(1,4)= i_nodes->X()-i_patch_node->X();;
-        p_k(1,5)= i_nodes->Y()-i_patch_node->Y();
-        p_k(2,7)= i_nodes->X()-i_patch_node->X();;
-        p_k(2,8)= i_nodes->Y()-i_patch_node->Y();
-        Matrix coeff_matrix(9,1);
-        for (unsigned int i=0; i<9; i++)
+
+        for (int j=0; j<sigma_size;j++){    
+            p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
+            p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
+            if (TDim ==3)
+                p_k(j,j*(TDim+1)+3)= i_nodes->Z()-i_patch_node->Z();
+        }
+        Matrix coeff_matrix(sigma_size*(TDim+1),1);
+        for (unsigned int i=0; i<sigma_size*(TDim+1); i++)
             coeff_matrix(i,0)=coeff(i);
         sigma = prod(p_k,coeff_matrix);
 
         rsigma_recovered = MatrixColumn(sigma,0);
         if(mEchoLevel>1)
             std::cout<<"recovered pressure: "<<prod(N_k,sigma)<<", LM: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
-        if(i_nodes->Id() == 1132)
-            std::cout<<"strange, contact, contact pressure: "<<i_nodes->GetValue(CONTACT_PRESSURE)<<std::endl;
         
     }
 
-    // set the element size. The element size is defined as the diameter of the smallest ball containing the element
+    // set the element size
     void ComputeElementSize(ModelPart::ElementsContainerType::iterator pElement){
 
         // triangular elements
         if (pElement->GetGeometry().size()==3){
         pElement->SetValue(ELEMENT_H,2*pElement->GetGeometry().Circumradius());
+        }
+
+        //tetrahedral elements
+        if(pElement->GetGeometry().size() == 4){
+            pElement->SetValue(ELEMENT_H,pow(12*GeometryUtils::CalculateVolume3D(pElement->GetGeometry())/sqrt(2),0.333333333333));
         }
         
     }

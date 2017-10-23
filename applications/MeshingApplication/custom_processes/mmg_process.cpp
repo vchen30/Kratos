@@ -87,7 +87,8 @@ MmgProcess<TDim>::MmgProcess(
         "echo_level"                       : 3,
         "step_data_size"                   : 0,
         "buffer_size"                      : 0,
-        "contact_model_part_name"          : "Contact_Part"
+        "contact_model_part_name"          : "Contact_Part",
+        "contact_model_part_bc_name"       : "Contact_Part_BC"
     })" );
     
     mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
@@ -553,6 +554,10 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     std::unordered_map<int, std::vector<IndexType>>color_nodes, color_cond_0, color_cond_1, color_elem_0, color_elem_1;
     
     /* NODES */ // TODO: ADD OMP
+    for(int i=0;i<mrThisModelPart.GetSubModelPartNames().size(); i++){
+        std::cout<<mrThisModelPart.GetSubModelPartNames()[i]<<std::endl;
+        
+    }
     for (unsigned int i_node = 1; i_node <= n_nodes; i_node++)
     {
         int ref, is_required;
@@ -563,7 +568,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         {
             p_node->pAddDof(*it_dof);
         }
-        
+
         if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
@@ -695,7 +700,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             for (auto sub_model_part_name : color_list.second)
             {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
-                
+                //if (sub_model_part_name != "Contact")
                 if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
                 // in the case of a contact simulation: the contact conditions should not be updated:
                 // the conditions are here not part of the input but created during the solution itself
@@ -709,7 +714,14 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             }
         }
     }
-    
+
+    // Add contact nodes from the contact bc part to the contact part
+    std::vector<IndexType> vector_nodes;
+    for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
+            i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
+        vector_nodes.push_back(i_nodes->Id());
+    }
+    mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
     // TODO: Add OMP
     // NOTE: We add the nodes from the elements and conditions to the respective submodelparts
     const std::vector<std::string> sub_model_part_names = mrThisModelPart.GetSubModelPartNames();
@@ -766,7 +778,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     ReorderAllIds();
     
     /* Unmoving the original mesh to be able to interpolate */
-    if (mFramework == Lagrangian) 
+    if(false)
+    //if (mFramework == Lagrangian) 
     {
         nodes_array = r_old_model_part.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
@@ -794,7 +807,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
-    if (mFramework == Lagrangian) 
+    if(false)
+    //if (mFramework == Lagrangian) 
     {
         /* We move the mesh */
         nodes_array = mrThisModelPart.Nodes();
@@ -1228,6 +1242,7 @@ NodeType::Pointer MmgProcess<2>::CreateNode(
         exit(EXIT_FAILURE);
     }
     
+
     NodeType::Pointer p_node = mrThisModelPart.CreateNewNode(iNode, coord_0, coord_1, 0.0);
     
     return p_node;
@@ -1290,12 +1305,14 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         // detect if the condition which is created is a contact condition
         bool is_contact_condition = false;
         for(auto & color_list : mColors){
+            //if(color_list.first<=mrThisModelPart.GetSubModelPartNames().size()){
             for (auto sub_model_part_name : color_list.second){
                 if (sub_model_part_name == mThisParameters["contact_model_part_name"].GetString()){
                     if(PropId == color_list.first)
                         is_contact_condition = true;
                 }
             }
+        //}
         }
         // skip the condition creation if the condition belongs to the main model part or to the contact part
         if (PropId!=0 && (is_contact_condition == false))
@@ -1882,18 +1899,100 @@ void MmgProcess<2>::OutputMdpa(){
     // save mesh in .mdpa format
     std::ofstream output_file;
     output_file.open(mStdStringFilename+"output.mdpa");
+
+    // header
+    output_file<<"Begin ModelPartData\n//  VARIABLE_NAME value\nEnd ModelPartData\n\n";
+
+    //properties
+    output_file<<"Begin Properties 0\nEnd Properties\n";
+    output_file<<"Begin Properties 1\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n";
+    output_file<<"Begin Properties 2\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n";
+    //nodes
     output_file<<"Begin Nodes\n";
     int i=0;
     for(auto i_nodes= mrThisModelPart.NodesBegin(); i_nodes != mrThisModelPart.NodesEnd(); i_nodes++){
         i=i+1;
-        output_file<<i<<"  "<<i_nodes->X()<<"  "<<i_nodes->Y()<<"  "<<i_nodes->Z()<<"\n";
+        output_file<<"\t"<<i<<"\t"<<i_nodes->X()<<"\t"<<i_nodes->Y()<<"\t"<<i_nodes->Z()<<"\n";
     }
-    for(auto & color_list : mColors){
-            for (auto sub_model_part_name : color_list.second){
-                    output_file<<sub_model_part_name<<": "<<color_list.first<<"\n";
-        
+    output_file<<"End Nodes\n";
+
+    //elements
+    std::vector<std::string> submodels;
+    submodels.push_back("Parts_Parts_Auto1");
+    submodels.push_back("Parts_Parts_Auto2");
+    for(auto i=0;i<submodels.size();i++){
+        if (mrThisModelPart.HasSubModelPart(submodels[i])){
+            output_file<<"Begin Elements SmallDisplacementElement2D3N\n";
+            for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin();
+                      i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){
+                output_file<<"\t"<<i_element->Id()<<"\t0";
+                for (auto j=0; j < i_element->GetGeometry().size(); j++){
+                    output_file<<"\t"<<i_element->GetGeometry()[j].Id();
+                }
+                output_file<<"\n";
             }
+            output_file<<"End Elements\n\n";
         }
+    }
+
+    // conditions
+    std::vector<std::string> conditions;
+    conditions.push_back("DISPLACEMENT_Displacement_Auto1");
+    conditions.push_back("DISPLACEMENT_Displacement_Auto2");
+    conditions.push_back("IMPOSE_DISP_Auto1");
+    conditions.push_back("Contact_Part_BC");
+    for(auto i=0;i<conditions.size();i++){
+        if (mrThisModelPart.HasSubModelPart(conditions[i])){
+            output_file<<"Begin Conditions LineLoadCondition2D2N\n";
+            for (auto i_condition = mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsBegin();
+                      i_condition != mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsEnd(); i_condition++){
+                output_file<<"\t"<<i_condition->Id()<<"\t0";
+                for (auto j=0; j < i_condition->GetGeometry().size(); j++){
+                    output_file<<"\t"<<i_condition->GetGeometry()[j].Id();
+                }
+                output_file<<"\n";
+            }
+            output_file<<"End Conditions\n\n";
+        }
+    }
+
+
+    submodels.push_back("Contact_Part");
+    submodels.push_back("Contact_Part_BC");
+    submodels.push_back("DISPLACEMENT_Displacement_Auto1");
+    submodels.push_back("DISPLACEMENT_Displacement_Auto2");
+    submodels.push_back("IMPOSE_DISP_Auto1");
+    // submodel parts
+    for(auto i=0;i<submodels.size();i++){
+        if (mrThisModelPart.HasSubModelPart(submodels[i])){
+            output_file<<"Begin SubModelPart "<<submodels[i]<<"\n";
+            //nodes
+            output_file<<"    Begin SubModelPartNodes\n";
+            for(auto i_nodes = mrThisModelPart.GetSubModelPart(submodels[i]).NodesBegin();
+                      i_nodes != mrThisModelPart.GetSubModelPart(submodels[i]).NodesEnd(); i_nodes++){
+                output_file<<"\t"<<i_nodes->Id()<<"\n";
+            }
+            output_file<<"    End SubModelPartNodes\n";
+
+            //elements
+            output_file<<"    Begin SubModelPartElements\n";
+            for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin();
+                      i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){
+                output_file<<"\t"<<i_element->Id()<<"\n";
+            }
+            output_file<<"    End SubModelPartElements\n";
+
+            //conditions
+            output_file<<"    Begin SubModelPartConditions\n";
+            for (auto i_condition = mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsBegin();
+                      i_condition != mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsEnd(); i_condition++){
+                output_file<<"\t"<<i_condition->Id()<<"\n";
+            }
+            output_file<<"    End SubModelPartConditions\n";
+
+            output_file<<"End SubModelPart\n\n";
+        }
+    }
     output_file.close();
 
 }
