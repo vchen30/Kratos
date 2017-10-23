@@ -522,7 +522,7 @@ private:
         if(TDim ==2){
             N_k(0,2) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
             T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
-            std::cout<<"Tangential vector old: "<<T_K<<", ";
+            std::cout<<"Tangential vector old: "<<T_k<<", ";
             T_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
             T_k(0,1) = -i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
             T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1]-i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];

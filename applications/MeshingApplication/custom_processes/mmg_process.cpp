@@ -778,8 +778,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     ReorderAllIds();
     
     /* Unmoving the original mesh to be able to interpolate */
-    if(false)
-    //if (mFramework == Lagrangian) 
+    if (mFramework == Lagrangian) 
     {
         nodes_array = r_old_model_part.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
@@ -807,8 +806,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
-    if(false)
-    //if (mFramework == Lagrangian) 
+    if (mFramework == Lagrangian) 
     {
         /* We move the mesh */
         nodes_array = mrThisModelPart.Nodes();
