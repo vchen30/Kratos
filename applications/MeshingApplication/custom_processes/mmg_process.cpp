@@ -569,7 +569,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             p_node->pAddDof(*it_dof);
         }
 
-        if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
+        //if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
     // Auxiliar values
@@ -700,28 +700,32 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             for (auto sub_model_part_name : color_list.second)
             {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
-                //if (sub_model_part_name != "Contact")
-                if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
-                // in the case of a contact simulation: the contact conditions should not be updated:
-                // the conditions are here not part of the input but created during the solution itself
-                // keeping them leads to many issues 
-                //if(sub_model_part_name != "Contact_Part"){
-                if (true){
-                    if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
-                    if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);}
+                if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);                
+                if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
+                if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);
                 if (color_elem_1.find(key) != color_elem_1.end()) r_sub_model_part.AddElements(color_elem_1[key]);
             }
         }
     }
-
+    /*
+    //in case of contact:
     // Add contact nodes from the contact bc part to the contact part
-    std::vector<IndexType> vector_nodes;
-    for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
-            i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
-        vector_nodes.push_back(i_nodes->Id());
+    if(mrThisModelPart.HasSubModelPart(mThisParameters["contact_model_part_bc_name"].GetString())){
+        std::vector<IndexType> vector_nodes;
+        for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
+                i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
+            vector_nodes.push_back(i_nodes->Id());
+        }
+        mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
     }
-    mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
+
+    // in case of contact:
+    // remove Contact part from computing_domain model part
+    if(mrThisModelPart.HasSubModelPart("computing_domain")){
+        if(mrThisModelPart.GetSubModelPart("computing_domain").HasSubModelPart("Contact"))
+            mrThisModelPart.GetSubModelPart("computing_domain").RemoveSubModelPart("Contact");
+    }*/
     // TODO: Add OMP
     // NOTE: We add the nodes from the elements and conditions to the respective submodelparts
     const std::vector<std::string> sub_model_part_names = mrThisModelPart.GetSubModelPartNames();
@@ -764,7 +768,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         std::copy(node_ids.begin(), node_ids.end(), std::back_inserter(vector_ids));
         r_sub_model_part.AddNodes(vector_ids);
     }
-    
+    /* After that we reorder nodes, conditions and elements: */
+    ReorderAllIds();
     /* Save to file */
     if (save_to_file == true)
     {
@@ -774,8 +779,6 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     /* Free memory */
     FreeMemory();
     
-    /* After that we reorder nodes, conditions and elements: */
-    ReorderAllIds();
     
     /* Unmoving the original mesh to be able to interpolate */
     if (mFramework == Lagrangian) 
@@ -1302,6 +1305,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         
         // detect if the condition which is created is a contact condition
         bool is_contact_condition = false;
+        /*
         for(auto & color_list : mColors){
             //if(color_list.first<=mrThisModelPart.GetSubModelPartNames().size()){
             for (auto sub_model_part_name : color_list.second){
@@ -1311,7 +1315,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
                 }
             }
         //}
-        }
+        }*/
         // skip the condition creation if the condition belongs to the main model part or to the contact part
         if (PropId!=0 && (is_contact_condition == false))
             p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());

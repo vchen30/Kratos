@@ -93,8 +93,8 @@ public:
     {               
         Parameters DefaultParameters = Parameters(R"(
         {
-            "minimal_size"                        : 0.001,
-            "maximal_size"                        : 1.0, 
+            "minimal_size"                        : 0.01,
+            "maximal_size"                        : 10.0, 
             "error"                               : 0.1,
             "echo_level"                          : 0
         })" );
@@ -103,6 +103,10 @@ public:
         mMinSize = ThisParameters["minimal_size"].GetDouble();
         mMaxSize = ThisParameters["maximal_size"].GetDouble();
         mEchoLevel = ThisParameters["echo_level"].GetInt();
+        if(TDim == 2)
+            mSigmaSize = 3;
+        if(TDim == 3)
+            mSigmaSize = 6;
         
     }
     
@@ -219,6 +223,7 @@ private:
     double mBoundLayer;                      // The boundary layer limit distance
     Interpolation mInterpolation;            // The interpolation type
     int mEchoLevel;
+    int mSigmaSize;
     
 
     double SuperconvergentPatchRecovery()
@@ -235,11 +240,7 @@ private:
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
             int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
 
-            Vector sigma_recovered;
-            if (TDim == 2)
-                sigma_recovered.resize(3);
-            else if(TDim == 3)
-                sigma_recovered.resize(6);
+            Vector sigma_recovered(mSigmaSize,0);
             
             if(neighbour_size>TDim){ 
                 CalculatePatch(i_nodes,i_nodes,neighbour_size,sigma_recovered);
@@ -251,11 +252,8 @@ private:
                 //for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
                 for(auto i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
                     
-                    Vector sigma_recovered_i;
-                    if (TDim == 2)
-                        sigma_recovered.resize(3);
-                    else if(TDim == 3)
-                        sigma_recovered.resize(6);
+                    Vector sigma_recovered_i(mSigmaSize,0);
+                    
 
                     unsigned int count_i=0;
                     for(ModelPart::NodesContainerType::iterator i = rNodes.begin(); i!=rNodes.end(); i++){
@@ -323,7 +321,7 @@ private:
             //compute new element size
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
             //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
             
             //set minimal and maximal element size
@@ -403,13 +401,8 @@ private:
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
         Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
-        int sigma_size;
-        if(TDim == 2)
-            sigma_size = 3;
-        else if( TDim == 3)
-            sigma_size =6;
         Matrix A(TDim+1,TDim+1,0);
-        Matrix b(TDim+1,sigma_size,0); 
+        Matrix b(TDim+1,mSigmaSize,0); 
         Matrix p_k(1,TDim+1,0);
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
             
@@ -418,8 +411,8 @@ private:
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            Matrix sigma(1,sigma_size);
-            for(int j=0;j<sigma_size;j++)
+            Matrix sigma(1,mSigmaSize);
+            for(int j=0;j<mSigmaSize;j++)
                 sigma(0,j)=stress_vector[0][j];
             p_k(0,0)=1;
             p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
@@ -436,7 +429,7 @@ private:
         //std::cout <<invA<<std::endl;
         //std::cout << det<< std::endl;
 
-        Matrix coeff(TDim+1,sigma_size);
+        Matrix coeff(TDim+1,mSigmaSize);
         coeff = prod(invA,b);
         if(neighbour_size > TDim)
             rsigma_recovered = MatrixRow(coeff,0);
@@ -445,7 +438,7 @@ private:
             p_k(0,2)=i_nodes->Y()-i_patch_node->Y();
             if(TDim ==3)
                 p_k(0,3)=i_nodes->Z()-i_patch_node->Z();
-            Matrix sigma(1,sigma_size);
+            Matrix sigma(1,mSigmaSize);
             sigma = prod(p_k,coeff);
             rsigma_recovered = MatrixRow(sigma,0);
         }
@@ -465,21 +458,16 @@ private:
         std::vector<array_1d<double,3>> coordinates_vector(1);
         Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
         Variable<Vector> variable_stress = CAUCHY_STRESS_VECTOR;
-        int sigma_size;
-        if(TDim == 2)
-            sigma_size = 3;
-        else if( TDim == 3)
-            sigma_size =6;
 
-        CompressedMatrix A((sigma_size*(TDim+1)),(sigma_size*(TDim+1)),0);
-        Matrix b((sigma_size*(TDim+1)),1,0); 
-        Matrix p_k(sigma_size,(sigma_size*(TDim+1)),0);
-        Matrix N_k(1,sigma_size,0);
-        Matrix T_k(1,sigma_size,0);
-        Matrix T_k2(1,sigma_size,0);  // in case of 3D: second tangential vector
+        CompressedMatrix A((mSigmaSize*(TDim+1)),(mSigmaSize*(TDim+1)),0);
+        Matrix b((mSigmaSize*(TDim+1)),1,0); 
+        Matrix p_k(mSigmaSize,(mSigmaSize*(TDim+1)),0);
+        Matrix N_k(1,mSigmaSize,0);
+        Matrix T_k(1,mSigmaSize,0);
+        Matrix T_k2(1,mSigmaSize,0);  // in case of 3D: second tangential vector
         double penalty_normal = 10000;
         double penalty_tangential = 10000;
-        Matrix sigma(sigma_size,1);
+        Matrix sigma(mSigmaSize,1);
         // computation A and b
         // PART 1: contributions from the neighboring elements
         for( WeakPointerVector< Element >::iterator i_elements = i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).begin(); i_elements != i_patch_node->GetValue(NEIGHBOUR_ELEMENTS).end(); i_elements++) {
@@ -489,10 +477,10 @@ private:
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            for(int j=0;j<sigma_size;j++)
+            for(int j=0;j<mSigmaSize;j++)
                 sigma(j,0)=stress_vector[0][j];
             
-            for (int j=0; j<sigma_size;j++){
+            for (int j=0; j<mSigmaSize;j++){
                 p_k(j,j*(TDim+1))=1;
                 p_k(j,j*(TDim+1)+1)=coordinates_vector[0][0]-i_patch_node->X(); 
                 p_k(j,j*(TDim+1)+2)=coordinates_vector[0][1]-i_patch_node->Y();
@@ -503,8 +491,8 @@ private:
             b+=prod(trans(p_k),sigma);
         }
         // computing A and b
-        Matrix A1((sigma_size*(TDim+1)),1,0), A2(1,(sigma_size*(TDim+1)),0);
-        for (int j=0; j<sigma_size;j++){
+        Matrix A1((mSigmaSize*(TDim+1)),1,0), A2(1,(mSigmaSize*(TDim+1)),0);
+        for (int j=0; j<mSigmaSize;j++){
             p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
             p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
             if(TDim == 3)
@@ -512,32 +500,65 @@ private:
         }
         
         // set the normal and tangential vectors in Voigt Notation
+        std::vector<double> n(TDim);
+
         for(int j=0;j<TDim;j++){
-        N_k(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(NORMAL)[j];
-        T_k(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(TANGENT_XI)[j];
-        if(TDim ==3)
-            T_k2(0,j) = i_nodes->GetValue(NORMAL)[j]*i_nodes->GetValue(TANGENT_ETA)[j];
+            n[j] = i_nodes->GetValue(NORMAL)[j];
         }
 
         if(TDim ==2){
-            N_k(0,2) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-            T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
-            std::cout<<"Tangential vector old: "<<T_k<<", ";
-            T_k(0,0) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-            T_k(0,1) = -i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-            T_k(0,2) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[1]-i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[0];
-            std::cout<<"Tangential vector xi: "<<T_k<<std::endl;
+            N_k(0,0) = n[0]*n[0];
+            N_k(0,1) = n[1]*n[1];
+            N_k(0,2) = 2*n[0]*n[1];
+            
+            T_k(0,0) = n[0]*n[1];
+            T_k(0,1) = -n[0]*n[1];
+            T_k(0,2) = n[1]*n[1]-n[0]*n[0];
+            
         }
         else if (TDim ==3){
-            N_k(0,3) = 2*i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(NORMAL)[1];
-            N_k(0,4) = 2*i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(NORMAL)[2];
-            N_k(0,5) = 2*i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(NORMAL)[0];
-            T_k(0,3) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
-            T_k(0,4) = i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[1]+i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[2];
-            T_k(0,5) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[2]+i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[0];
-            T_k2(0,3) = i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[0]+i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[1];
-            T_k2(0,4) = i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[1]+i_nodes->GetValue(NORMAL)[1]*i_nodes->GetValue(TANGENT_XI)[2];
-            T_k2(0,5) = i_nodes->GetValue(NORMAL)[0]*i_nodes->GetValue(TANGENT_XI)[2]+i_nodes->GetValue(NORMAL)[2]*i_nodes->GetValue(TANGENT_XI)[0];
+            N_k(0,0) = n[0]*n[0];
+            N_k(0,1) = n[1]*n[1];
+            N_k(0,1) = n[2]*n[2];
+            N_k(0,3) = 2*n[1]*n[2];
+            N_k(0,4) = 2*n[2]*n[0];
+            N_k(0,5) = 2*n[0]*n[1];
+
+            //set tangential vectors
+            std::vector<double> t1(3),t2(3);
+            if(n[0]!=0 || n[1] !=0){
+                double norm = sqrt((t1[0]*t1[0]+t1[1]*t1[1]));
+                t1[0] = n[1]/norm;
+                t1[1] = -n[0]/norm;
+                t1[2] = 0;
+
+                t2[0] = -n[0]*n[2]/norm;
+                t2[1] = -n[1]*n[2]/norm;
+                t2[2] = n[0]*n[0]+n[1]*n[1]/norm;
+            }
+            else{
+                t1[0] = 1;
+                t1[1] = 0;
+                t1[2] = 0;
+
+                t2[0] = 0;
+                t2[1] = 1;
+                t2[2] = 0;
+            }
+
+            T_k(0,0) = n[0]*t1[0];
+            T_k(0,1) = n[1]*t1[1];
+            T_k(0,2) = n[2]*t1[2];
+            T_k(0,3) = n[1]*t1[2]+n[2]*t1[1];
+            T_k(0,4) = n[2]*t1[0]+n[0]*t1[2];
+            T_k(0,5) = n[0]*t1[1]+n[1]*t1[0];
+            
+            T_k2(0,0) = n[0]*t2[0];
+            T_k2(0,1) = n[1]*t2[1];
+            T_k2(0,2) = n[2]*t2[2];
+            T_k2(0,3) = n[1]*t2[2]+n[2]*t2[1];
+            T_k2(0,4) = n[2]*t2[0]+n[0]*t2[2];
+            T_k2(0,5) = n[0]*t2[1]+n[1]*t2[0];
         }
         A1 = prod(trans(p_k),trans(N_k));
         A2 = prod(N_k,p_k);
@@ -617,18 +638,18 @@ private:
             for (unsigned j = 0; j < compA.size2 (); ++ j)
                 compA (i, j) = 9 * i + j;
         }*/
-        Vector coeff(sigma_size*(TDim+1));
+        Vector coeff(mSigmaSize*(TDim+1));
         Vector b_vector = MatrixColumn(b,0);
         solver.Solve(A,coeff,b_vector);
 
-        for (int j=0; j<sigma_size;j++){    
+        for (int j=0; j<mSigmaSize;j++){    
             p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
             p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
             if (TDim ==3)
                 p_k(j,j*(TDim+1)+3)= i_nodes->Z()-i_patch_node->Z();
         }
-        Matrix coeff_matrix(sigma_size*(TDim+1),1);
-        for (unsigned int i=0; i<sigma_size*(TDim+1); i++)
+        Matrix coeff_matrix(mSigmaSize*(TDim+1),1);
+        for (unsigned int i=0; i<mSigmaSize*(TDim+1); i++)
             coeff_matrix(i,0)=coeff(i);
         sigma = prod(p_k,coeff_matrix);
 

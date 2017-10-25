@@ -217,7 +217,7 @@ class ALMContactProcess(python_process.PythonProcess):
             interface_model_part.AddCondition(cond)    
         del(cond)
         for node in self.contact_model_part.Nodes:
-            interface_model_part.AddNode(node, 0)    
+            interface_model_part.AddNode(node, 0)   
         del(node)
 
         # Creating the search

@@ -38,7 +38,7 @@ KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( WEIGHTED_VECTOR_RESIDUAL )           
 KRATOS_CREATE_VARIABLE( Matrix, DELTA_NORMAL )                                       // Directional derivative of the normal
 
 /* For ALM mortar condition */
-//KRATOS_CREATE_VARIABLE( double, AUGMENTED_NORMAL_CONTACT_PRESSURE )                  // The resultant augmented pressure in the normal direction
+KRATOS_CREATE_VARIABLE( double, AUGMENTED_NORMAL_CONTACT_PRESSURE )                  // The resultant augmented pressure in the normal direction
 KRATOS_CREATE_VARIABLE( double, AUGMENTED_TANGENT_CONTACT_PRESSURE )                 // The resultant augmented pressure in the tangent direction
 KRATOS_CREATE_VARIABLE( double, TANGENT_FACTOR )                                     // The proportion between the tangent and normal penalty
 KRATOS_CREATE_VARIABLE( bool, CONSIDER_NORMAL_VARIATION )                            // A value used to check if consider normal variation or not

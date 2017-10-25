@@ -62,7 +62,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
             },
             "initial_remeshing"                : true,
             "fix_contour_model_parts"          : [],
-            "minimal_size"                     : 0.1,
+            "minimal_size"                     : 0.01,
             "maximal_size"                     : 10.0,
             "anisotropy_remeshing"             : true,
             "anisotropy_parameters":{
