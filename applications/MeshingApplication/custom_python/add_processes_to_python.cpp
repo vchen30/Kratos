@@ -23,7 +23,6 @@
 #include "custom_processes/metric_fast_init_process.h"
 #include "custom_processes/metrics_levelset_process.h"
 #include "custom_processes/metrics_hessian_process.h"
-#include "custom_processes/metrics_error_process.h"
 #include "custom_processes/metrics_spr_error_process.h"
 // #include "custom_processes/nodal_values_interpolation_process.h"
 #include "custom_processes/internal_variables_interpolation_process.h"
@@ -116,18 +115,6 @@ void  AddProcessesToPython()
         .def(init<ModelPart&, component_type&, Parameters>())
         .def("Execute",&ComputeHessianSolMetricProcess<3, component_type>::Execute)
         ;
-        
-        // ERROR
-        class_<ComputeErrorSolMetricProcess<2>, bases<Process> >("ComputeErrorSolMetricProcess2D", init<ModelPart&>())
-        .def(init<ModelPart&, Parameters>())
-        .def("Execute",&ComputeErrorSolMetricProcess<2>::Execute)
-        ;
-   
-        class_<ComputeErrorSolMetricProcess<3>, bases<Process> >("ComputeErrorSolMetricProcess3D", init<ModelPart&>())
-        .def(init<ModelPart&, Parameters>())
-        .def("Execute",&ComputeErrorSolMetricProcess<3>::Execute)
-        ;
-        
         
         //SPR_ERROR
         class_<ComputeSPRErrorSolMetricProcess<2>, bases<Process> >("ComputeSPRErrorSolMetricProcess2D", init<ModelPart&>())

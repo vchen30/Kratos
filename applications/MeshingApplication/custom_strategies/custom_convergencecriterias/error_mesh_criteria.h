@@ -29,7 +29,6 @@
 #include "processes/find_nodal_h_process.h"
 #include "custom_processes/metric_fast_init_process.h"
 #include "custom_processes/metrics_spr_error_process.h"
-// #include "custom_processes/metrics_error_process.h" // DEPRECATED
 #ifdef INCLUDE_MMG
     #include "custom_processes/mmg_process.h"
 #endif
