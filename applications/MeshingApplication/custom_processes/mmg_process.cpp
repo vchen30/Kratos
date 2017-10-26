@@ -776,13 +776,13 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     /* Unmoving the original mesh to be able to interpolate */
     if (mFramework == Lagrangian) 
     {
-        nodes_array = r_old_model_part.Nodes();
-        const int num_nodes = static_cast<int>(nodes_array.size());
+        NodesArrayType& nodes_array_old = r_old_model_part.Nodes();
+        const int num_nodes = static_cast<int>(nodes_array_old.size());
         
         #pragma omp parallel for
         for(int i = 0; i < num_nodes; i++)
         {
-            auto it_node = nodes_array.begin() + i;
+            auto it_node = nodes_array_old.begin() + i;
 
             noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates();
         }
@@ -802,11 +802,13 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
+    
     if (mFramework == Lagrangian) 
     {
         /* We move the mesh */
         nodes_array = mrThisModelPart.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
+        std::cout<<"number of nodes: "<<num_nodes<<std::endl;
 
         #pragma omp parallel for
         for(int i = 0; i < num_nodes; i++)
