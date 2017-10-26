@@ -106,6 +106,33 @@ class ALMContactProcess(python_process.PythonProcess):
             preprocess = True
             interface_model_part = computing_model_part.CreateSubModelPart("Contact")
 
+        # We consider frictional contact (We use the SLIP flag because was the easiest way)
+        if self.params["contact_type"].GetString() == "Frictional":
+            computing_model_part.Set(KratosMultiphysics.SLIP, True) 
+        else:
+            computing_model_part.Set(KratosMultiphysics.SLIP, False) 
+            
+        # We recompute the normal at each iteration (false by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
+        # We recompute the pairs at each iteration (true by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_PAIR_VARIATION] = self.params["pair_variation"].GetBool()
+        # We set the max gap factor for the gap adaptation
+        max_gap_factor = self.params["max_gap_factor"].GetDouble()
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = (max_gap_factor > 0.0)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.MAX_GAP_FACTOR] = max_gap_factor
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ACTIVE_CHECK_FACTOR] = self.params["active_check_factor"].GetDouble()
+        
+        # We set the value that scales in the tangent direction the penalty and scale parameter
+        if self.params["contact_type"].GetString() == "Frictional":
+            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.TANGENT_FACTOR] = self.params["tangent_factor"].GetDouble()
+        
+        # Copying the properties in the contact model part
+        self.contact_model_part.SetProperties(computing_model_part.GetProperties())
+        
+        # Setting the integration order and active check factor
+        for prop in computing_model_part.GetProperties():
+            prop[ContactStructuralMechanicsApplication.INTEGRATION_ORDER_CONTACT] = self.params["integration_order"].GetInt()
+            
         for node in self.contact_model_part.Nodes:
             node.Set(KratosMultiphysics.INTERFACE, True)
         del(node)
