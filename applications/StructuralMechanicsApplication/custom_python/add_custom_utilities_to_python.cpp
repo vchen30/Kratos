@@ -26,6 +26,7 @@
 //Utilities
 #include "custom_utilities/sprism_neighbours.hpp"
 #include "custom_utilities/eigenvector_to_solution_step_variable_transfer_utility.hpp"
+#include "custom_utilities/composite_fiber_orientation_utility.hpp"
 
 //Processes
 #include "custom_processes/apply_multi_point_constraints_process.h"
@@ -53,6 +54,21 @@ void TransferEigenvector2(
         int step)
 {
     rThisUtil.Transfer(rModelPart,iEigenMode,step);
+}
+
+inline
+void WriteFiberAngles1(
+        CompositeFiberOrientationUtility& rThisUtil)
+{
+    rThisUtil.WriteFiberAngles();
+}
+
+inline
+void WriteFiberAngles2(
+        CompositeFiberOrientationUtility& rThisUtil,
+        std::string FileName)
+{
+    rThisUtil.WriteFiberAngles(FileName);
 }
 
 void  AddCustomUtilitiesToPython()
@@ -83,6 +99,13 @@ void  AddCustomUtilitiesToPython()
     .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelationWithNodeIdsAndVariable)
     .def("SetActive", &ApplyMultipointConstraintsProcess::SetActive)      
     .def("PrintData", &ApplyMultipointConstraintsProcess::PrintData);
+
+
+	class_<CompositeFiberOrientationUtility>("CompositeFiberOrientationUtility", init<ModelPart&>())
+    .def("Execute", &CompositeFiberOrientationUtility::Execute)
+    .def("WriteFiberAngles", WriteFiberAngles1)
+    .def("WriteFiberAngles", WriteFiberAngles2)
+	;
 
 }
 
