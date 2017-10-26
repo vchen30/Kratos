@@ -223,7 +223,7 @@ private:
     double mBoundLayer;                      // The boundary layer limit distance
     Interpolation mInterpolation;            // The interpolation type
     int mEchoLevel;
-    int mSigmaSize;
+    unsigned int mSigmaSize;
     
 
     double SuperconvergentPatchRecovery()
@@ -238,7 +238,7 @@ private:
         //iteration over all nodes -- construction of patches
         ModelPart::NodesContainerType& rNodes = mThisModelPart.Nodes();
         for(ModelPart::NodesContainerType::iterator i_nodes = rNodes.begin(); i_nodes!=rNodes.end(); i_nodes++){
-            int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
+            unsigned int neighbour_size = i_nodes->GetValue(NEIGHBOUR_ELEMENTS).size();
 
             Vector sigma_recovered(mSigmaSize,0);
             
@@ -249,7 +249,6 @@ private:
                     std::cout<<"recovered sigma"<<sigma_recovered<<std::endl;
             }
             else{
-                //for(WeakPointerVector< Node<3> >::iterator i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
                 for(auto i_neighbour_nodes = i_nodes->GetValue(NEIGHBOUR_NODES).begin(); i_neighbour_nodes != i_nodes->GetValue(NEIGHBOUR_NODES).end(); i_neighbour_nodes++){
                     
                     Vector sigma_recovered_i(mSigmaSize,0);
@@ -321,7 +320,7 @@ private:
             //compute new element size
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
             //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
             
             //set minimal and maximal element size
@@ -348,7 +347,7 @@ private:
 
             // set metric
             Matrix metric_matrix(TDim,TDim,0);
-            for(auto i=0;i<TDim;i++)
+            for(unsigned int i=0;i<TDim;i++)
                 metric_matrix(i,i)=1/(h_min*h_min);
 
             // transform metric matrix to a vector
@@ -364,7 +363,7 @@ private:
     void CalculatePatch(
         ModelPart::NodesContainerType::iterator i_nodes,
         ModelPart::NodesContainerType::iterator i_patch_node,
-        int neighbour_size,
+        unsigned int neighbour_size,
         Vector& rsigma_recovered)
     {
         // determine if contact BC has to be regarded
@@ -394,7 +393,7 @@ private:
     void CalculatePatchStandard(
         ModelPart::NodesContainerType::iterator i_nodes,
         ModelPart::NodesContainerType::iterator i_patch_node,
-        int neighbour_size,
+        unsigned int neighbour_size,
         Vector& rsigma_recovered)
     {
         std::vector<Vector> stress_vector(1);
@@ -412,7 +411,7 @@ private:
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
             Matrix sigma(1,mSigmaSize);
-            for(int j=0;j<mSigmaSize;j++)
+            for(unsigned int j=0;j<mSigmaSize;j++)
                 sigma(0,j)=stress_vector[0][j];
             p_k(0,0)=1;
             p_k(0,1)=coordinates_vector[0][0]-i_patch_node->X(); 
@@ -451,7 +450,7 @@ private:
     void CalculatePatchContact(
         ModelPart::NodesContainerType::iterator i_nodes,
         ModelPart::NodesContainerType::iterator i_patch_node,
-        int neighbour_size,
+        unsigned int neighbour_size,
         Vector& rsigma_recovered)
     {
         std::vector<Vector> stress_vector(1);
@@ -477,10 +476,10 @@ private:
 
             //std::cout << "\tstress: " << stress_vector[0] << std::endl;
             //std::cout << "\tx: " << coordinates_vector[0][0] << "\ty: " << coordinates_vector[0][1] << "\tz_coordinate: " << coordinates_vector[0][2] << std::endl;
-            for(int j=0;j<mSigmaSize;j++)
+            for(unsigned int j=0;j<mSigmaSize;j++)
                 sigma(j,0)=stress_vector[0][j];
             
-            for (int j=0; j<mSigmaSize;j++){
+            for ( unsigned int j=0; j<mSigmaSize;j++){
                 p_k(j,j*(TDim+1))=1;
                 p_k(j,j*(TDim+1)+1)=coordinates_vector[0][0]-i_patch_node->X(); 
                 p_k(j,j*(TDim+1)+2)=coordinates_vector[0][1]-i_patch_node->Y();
@@ -492,7 +491,7 @@ private:
         }
         // computing A and b
         Matrix A1((mSigmaSize*(TDim+1)),1,0), A2(1,(mSigmaSize*(TDim+1)),0);
-        for (int j=0; j<mSigmaSize;j++){
+        for (unsigned int j=0; j<mSigmaSize;j++){
             p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
             p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
             if(TDim == 3)
@@ -502,7 +501,7 @@ private:
         // set the normal and tangential vectors in Voigt Notation
         std::vector<double> n(TDim);
 
-        for(int j=0;j<TDim;j++){
+        for( unsigned int j=0;j<TDim;j++){
             n[j] = i_nodes->GetValue(NORMAL)[j];
         }
 
@@ -642,7 +641,7 @@ private:
         Vector b_vector = MatrixColumn(b,0);
         solver.Solve(A,coeff,b_vector);
 
-        for (int j=0; j<mSigmaSize;j++){    
+        for (unsigned int j=0; j<mSigmaSize;j++){    
             p_k(j,j*(TDim+1)+1)= i_nodes->X()-i_patch_node->X();
             p_k(j,j*(TDim+1)+2)= i_nodes->Y()-i_patch_node->Y();
             if (TDim ==3)
