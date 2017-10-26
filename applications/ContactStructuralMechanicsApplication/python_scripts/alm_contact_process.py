@@ -73,15 +73,6 @@ class ALMContactProcess(python_process.PythonProcess):
 
         self.contact_model_part = model_part[self.params["contact_model_part"].GetString()]
         
-        if (self.params["assume_master_slave"].GetString() != ""):
-            for node in self.contact_model_part.Nodes:
-                node.Set(KratosMultiphysics.SLAVE, False)
-            del(node)
-            model_part_slave = self.main_model_part.GetSubModelPart(self.params["assume_master_slave"].GetString())
-            for node in model_part_slave.Nodes:
-                node.Set(KratosMultiphysics.SLAVE, True)
-            del(node)
-        
         self.axisymmetric  = self.params["axisymmetric"].GetBool()
         if (self.axisymmetric == True) and (self.dimension == 3):
             raise NameError("3D and axisymmetric makes no sense")
@@ -103,114 +94,34 @@ class ALMContactProcess(python_process.PythonProcess):
             self.write_conditions = KratosMultiphysics.WriteConditionsFlag.WriteElementsOnly
         
     def ExecuteInitialize(self):
+        # Assigning master and slave sides
+        self._assign_slave_nodes()
+        
         # Appending the conditions created to the self.main_model_part
         computing_model_part = self.main_model_part.GetSubModelPart(self.computing_model_part_name)
         if (computing_model_part.HasSubModelPart("Contact")):
+            preprocess = False
             interface_model_part = computing_model_part.GetSubModelPart("Contact")
         else:
+            preprocess = True
             interface_model_part = computing_model_part.CreateSubModelPart("Contact")
 
-        # We consider frictional contact (We use the SLIP flag because was the easiest way)
-        if self.params["contact_type"].GetString() == "Frictional":
-            computing_model_part.Set(KratosMultiphysics.SLIP, True) 
-        else:
-            computing_model_part.Set(KratosMultiphysics.SLIP, False) 
-            
-        # We recompute the normal at each iteration (false by default)
-        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
-        # We recompute the pairs at each iteration (true by default)
-        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_PAIR_VARIATION] = self.params["pair_variation"].GetBool()
-        # We set the max gap factor for the gap adaptation
-        max_gap_factor = self.params["max_gap_factor"].GetDouble()
-        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = (max_gap_factor > 0.0)
-        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.MAX_GAP_FACTOR] = max_gap_factor
-        
-        # We set the value that scales in the tangent direction the penalty and scale parameter
-        if self.params["contact_type"].GetString() == "Frictional":
-            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.TANGENT_FACTOR] = self.params["tangent_factor"].GetDouble()
-        
-        # Copying the properties in the contact model part
-        self.contact_model_part.SetProperties(computing_model_part.GetProperties())
-        
-        # Setting the integration order and active check factor
-        for prop in computing_model_part.GetProperties():
-            prop[ContactStructuralMechanicsApplication.INTEGRATION_ORDER_CONTACT] = self.params["integration_order"].GetInt() 
-            prop[ContactStructuralMechanicsApplication.ACTIVE_CHECK_FACTOR] = self.params["active_check_factor"].GetDouble()
-            
         for node in self.contact_model_part.Nodes:
             node.Set(KratosMultiphysics.INTERFACE, True)
         del(node)
         
-        self.Preprocess = ContactStructuralMechanicsApplication.InterfacePreprocessCondition(computing_model_part)
+        #If the conditions doesn't exist we create them
+        if (preprocess ==  True):
+            self._interface_preprocess(computing_model_part)
         
-        if self.params["contact_type"].GetString() == "Frictionless":
-            if self.normal_variation == True:
-                if self.axisymmetric == True:
-                    condition_name = "ALMNVFrictionlessAxisymMortarContact"
-                else:
-                    condition_name = "ALMNVFrictionlessMortarContact"
-            else:
-                if self.axisymmetric == True:
-                    condition_name = "ALMFrictionlessAxisymMortarContact"
-                else:
-                    condition_name = "ALMFrictionlessMortarContact"
-        elif self.params["contact_type"].GetString() == "Frictional":
-            if self.normal_variation == True:
-                if self.axisymmetric == True:
-                    condition_name = "ALMNVFrictionalAxisymMortarContact"
-                else:
-                    condition_name = "ALMNVFrictionalMortarContact"
-            else:
-                if self.axisymmetric == True:
-                    condition_name = "ALMFrictionalAxisymMortarContact"
-                else:
-                    condition_name = "ALMFrictionalMortarContact"
-        
-        #print("MODEL PART BEFORE CREATING INTERFACE")
-        #print(computing_model_part) 
-        
-        # It should create the conditions automatically
-        interface_parameters = KratosMultiphysics.Parameters("""{"condition_name": "", "final_string": "", "simplify_geometry": false}""")
-        interface_parameters["condition_name"].SetString(condition_name)
-        if (self.dimension == 2):
-            self.Preprocess.GenerateInterfacePart2D(computing_model_part, self.contact_model_part, interface_parameters) 
-        else:
-            self.Preprocess.GenerateInterfacePart3D(computing_model_part, self.contact_model_part, interface_parameters) 
+        # We initialize the contact values
+        self._initialize_contact_values(computing_model_part)
 
         # When all conditions are simultaneously master and slave
-        if (self.params["assume_master_slave"].GetString() == ""):
-            for node in self.contact_model_part.Conditions:
-                node.Set(KratosMultiphysics.SLAVE, True)
-            del(node)
-            for cond in self.contact_model_part.Conditions:
-                cond.Set(KratosMultiphysics.SLAVE, True)
-            del(cond)
+        self._assign_slave_conditions()
 
-        if (self.params["manual_ALM"].GetBool() == False):
-            # Computing the scale factors or the penalty parameters (StiffnessFactor * E_mean/h_mean)
-            self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(computing_model_part)
-            self.find_nodal_h.Execute()
-            
-            alm_var_parameters = KratosMultiphysics.Parameters("""{}""")
-            alm_var_parameters.AddValue("stiffness_factor",self.params["stiffness_factor"])
-            alm_var_parameters.AddValue("penalty_scale_factor",self.params["penalty_scale_factor"])
-            self.alm_var_process = ContactStructuralMechanicsApplication.ALMVariablesCalculationProcess(self.contact_model_part,KratosMultiphysics.NODAL_H, alm_var_parameters)
-            self.alm_var_process.Execute()
-            # We don't consider scale factor
-            if (self.params["use_scale_factor"].GetBool() == False):
-                self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR] = 1.0
-        else:
-            # We set the values in the process info
-            self.main_model_part.ProcessInfo[KratosMultiphysics.INITIAL_PENALTY] = self.params["penalty"].GetDouble()
-            self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR] = self.params["scale_factor"].GetDouble()
-            
-        # We print the parameters considered
-        print("The parameters considered finally are: ")            
-        print("SCALE_FACTOR: ","{:.2e}".format(self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR]))
-        print("INITIAL_PENALTY: ","{:.2e}".format(self.main_model_part.ProcessInfo[KratosMultiphysics.INITIAL_PENALTY]))
-            
-        #print("MODEL PART AFTER CREATING INTERFACE")
-        #print(computing_model_part)
+        # We initialize the ALM parameters
+        self._initialize_alm_parameters(computing_model_part)
 
         # We copy the conditions to the ContactSubModelPart
         for cond in self.contact_model_part.Conditions:
@@ -221,15 +132,7 @@ class ALMContactProcess(python_process.PythonProcess):
         del(node)
 
         # Creating the search
-        search_parameters = KratosMultiphysics.Parameters("""{}""")
-        search_parameters.AddValue("type_search",self.params["type_search"])
-        search_parameters.AddValue("allocation_size",self.params["max_number_results"])
-        search_parameters.AddValue("bucket_size",self.params["bucket_size"])
-        search_parameters.AddValue("search_factor",self.params["search_factor"])
-        search_parameters.AddValue("dual_search_check",self.params["dual_search_check"])
-        search_parameters.AddValue("strict_search_check",self.params["strict_search_check"])
-        search_parameters.AddValue("use_exact_integration",self.params["use_exact_integration"])
-        self.contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(computing_model_part, search_parameters)
+        self._create_main_search(computing_model_part)
         
         # We initialize the conditions    
         self.alm_init_var = ContactStructuralMechanicsApplication.ALMFastInit(self.contact_model_part) 
@@ -277,33 +180,173 @@ class ALMContactProcess(python_process.PythonProcess):
         
     def ExecuteFinalizeSolutionStep(self):
         if (self.params["remeshing_with_contact_bc"].GetBool() == True):
-            self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
-            self.set_contact_bc.Execute()
+            self._transfer_slave_to_master()
 
     def ExecuteBeforeOutputStep(self):
         pass
 
     def ExecuteAfterOutputStep(self):
         if (self.database_step >= self.database_step_update or self.global_step == 1):
-            self._clear_sets()
+            self._clear_sets(self.contact_search, self.hard_clear_after_step)
             
     def ExecuteFinalize(self):
         pass
 
-    def _clear_sets(self):
-        if (self.hard_clear_after_step == True):
+    def _clear_sets(self, contact_search, hard_clear_after_step):
+        if (hard_clear_after_step == True):
             if self.params["contact_type"].GetString() == "Frictionless":  
-                self.contact_search.TotalClearALMFrictionlessMortarConditions()
+                contact_search.TotalClearALMFrictionlessMortarConditions()
             else:
-                self.contact_search.TotalClearComponentsMortarConditions()
+                contact_search.TotalClearComponentsMortarConditions()
         else:
             if self.params["contact_type"].GetString() == "Frictionless":
-                self.contact_search.PartialClearALMFrictionlessMortarConditions()
+                contact_search.PartialClearALMFrictionlessMortarConditions()
             else:
-                self.contact_search.PartialClearComponentsMortarConditions()
+                contact_search.PartialClearComponentsMortarConditions()
                 
         self.database_step = 0
+        
+    def _assign_slave_conditions(self, inverse = False):
+        if (self.params["assume_master_slave"].GetString() == ""):
+            #model_part_slave = self.main_model_part.GetSubModelPart(self.params["assume_master_slave"].GetString())
+            for cond in self.contact_model_part.Conditions:
+                cond.Set(KratosMultiphysics.SLAVE, True)
+            del(cond)
+            
+            #if (inverse == True):
                 
+            
+    def _assign_slave_nodes(self):
+        if (self.params["assume_master_slave"].GetString() != ""):
+            for node in self.contact_model_part.Nodes:
+                node.Set(KratosMultiphysics.SLAVE, False)
+            del(node)
+            model_part_slave = self.main_model_part.GetSubModelPart(self.params["assume_master_slave"].GetString())
+            for node in model_part_slave.Nodes:
+                node.Set(KratosMultiphysics.SLAVE, True)
+            del(node)
+            
+    def _interface_preprocess(self, computing_model_part):
+        self.interface_preprocess = ContactStructuralMechanicsApplication.InterfacePreprocessCondition(computing_model_part)
+            
+        if self.params["contact_type"].GetString() == "Frictionless":
+            if self.normal_variation == True:
+                if self.axisymmetric == True:
+                    condition_name = "ALMNVFrictionlessAxisymMortarContact"
+                else:
+                    condition_name = "ALMNVFrictionlessMortarContact"
+            else:
+                if self.axisymmetric == True:
+                    condition_name = "ALMFrictionlessAxisymMortarContact"
+                else:
+                    condition_name = "ALMFrictionlessMortarContact"
+        elif self.params["contact_type"].GetString() == "Frictional":
+            if self.normal_variation == True:
+                if self.axisymmetric == True:
+                    condition_name = "ALMNVFrictionalAxisymMortarContact"
+                else:
+                    condition_name = "ALMNVFrictionalMortarContact"
+            else:
+                if self.axisymmetric == True:
+                    condition_name = "ALMFrictionalAxisymMortarContact"
+                else:
+                    condition_name = "ALMFrictionalMortarContact"
+        
+        #print("MODEL PART BEFORE CREATING INTERFACE")
+        #print(computing_model_part) 
+        
+        # It should create the conditions automatically
+        interface_parameters = KratosMultiphysics.Parameters("""{"condition_name": "", "final_string": "", "simplify_geometry": false}""")
+        interface_parameters["condition_name"].SetString(condition_name)
+        if (self.dimension == 2):
+            self.interface_preprocess.GenerateInterfacePart2D(computing_model_part, self.contact_model_part, interface_parameters) 
+        else:
+            self.interface_preprocess.GenerateInterfacePart3D(computing_model_part, self.contact_model_part, interface_parameters) 
+            
+        #print("MODEL PART AFTER CREATING INTERFACE")
+        #print(computing_model_part)
+            
+    def _initialize_contact_values(self, computing_model_part):
+        # We consider frictional contact (We use the SLIP flag because was the easiest way)
+        if self.params["contact_type"].GetString() == "Frictional":
+            computing_model_part.Set(KratosMultiphysics.SLIP, True) 
+        else:
+            computing_model_part.Set(KratosMultiphysics.SLIP, False) 
+            
+        # We recompute the normal at each iteration (false by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_NORMAL_VARIATION] = self.normal_variation
+        # We recompute the pairs at each iteration (true by default)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.CONSIDER_PAIR_VARIATION] = self.params["pair_variation"].GetBool()
+        # We set the max gap factor for the gap adaptation
+        max_gap_factor = self.params["max_gap_factor"].GetDouble()
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.ADAPT_PENALTY] = (max_gap_factor > 0.0)
+        self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.MAX_GAP_FACTOR] = max_gap_factor
+        
+        # We set the value that scales in the tangent direction the penalty and scale parameter
+        if self.params["contact_type"].GetString() == "Frictional":
+            self.main_model_part.ProcessInfo[ContactStructuralMechanicsApplication.TANGENT_FACTOR] = self.params["tangent_factor"].GetDouble()
+        
+        # Copying the properties in the contact model part
+        self.contact_model_part.SetProperties(computing_model_part.GetProperties())
+        
+        # Setting the integration order and active check factor
+        for prop in computing_model_part.GetProperties():
+            prop[ContactStructuralMechanicsApplication.INTEGRATION_ORDER_CONTACT] = self.params["integration_order"].GetInt() 
+            prop[ContactStructuralMechanicsApplication.ACTIVE_CHECK_FACTOR] = self.params["active_check_factor"].GetDouble()
+            
+    def _initialize_alm_parameters(self, computing_model_part):
+        if (self.params["manual_ALM"].GetBool() == False):
+            # Computing the scale factors or the penalty parameters (StiffnessFactor * E_mean/h_mean)
+            self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(computing_model_part)
+            self.find_nodal_h.Execute()
+            
+            alm_var_parameters = KratosMultiphysics.Parameters("""{}""")
+            alm_var_parameters.AddValue("stiffness_factor",self.params["stiffness_factor"])
+            alm_var_parameters.AddValue("penalty_scale_factor",self.params["penalty_scale_factor"])
+            self.alm_var_process = ContactStructuralMechanicsApplication.ALMVariablesCalculationProcess(self.contact_model_part,KratosMultiphysics.NODAL_H, alm_var_parameters)
+            self.alm_var_process.Execute()
+            # We don't consider scale factor
+            if (self.params["use_scale_factor"].GetBool() == False):
+                self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR] = 1.0
+        else:
+            # We set the values in the process info
+            self.main_model_part.ProcessInfo[KratosMultiphysics.INITIAL_PENALTY] = self.params["penalty"].GetDouble()
+            self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR] = self.params["scale_factor"].GetDouble()
+            
+        # We print the parameters considered
+        print("The parameters considered finally are: ")            
+        print("SCALE_FACTOR: ","{:.2e}".format(self.main_model_part.ProcessInfo[KratosMultiphysics.SCALE_FACTOR]))
+        print("INITIAL_PENALTY: ","{:.2e}".format(self.main_model_part.ProcessInfo[KratosMultiphysics.INITIAL_PENALTY]))
+            
+    def _create_main_search(self, computing_model_part):
+        search_parameters = KratosMultiphysics.Parameters("""{}""")
+        search_parameters.AddValue("type_search",self.params["type_search"])
+        search_parameters.AddValue("allocation_size",self.params["max_number_results"])
+        search_parameters.AddValue("bucket_size",self.params["bucket_size"])
+        search_parameters.AddValue("search_factor",self.params["search_factor"])
+        search_parameters.AddValue("dual_search_check",self.params["dual_search_check"])
+        search_parameters.AddValue("strict_search_check",self.params["strict_search_check"])
+        search_parameters.AddValue("use_exact_integration",self.params["use_exact_integration"])
+        self.contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(computing_model_part, search_parameters)
+    
+    def _transfer_slave_to_master(self):
+        search_parameters = KratosMultiphysics.Parameters("{}")
+        search_parameters.AddValue("search_factor",self.params["search_factor"])
+        search_parameters.AddValue("allocation_size",self.params["allocation_size"])
+        search_parameters.AddValue("type_search",self.params["type_search"])
+        search_parameters.AddValue("use_exact_integration",self.params["use_exact_integration"])
+        inverse_contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(self.contact_model_part, search_parameters)
+    
+        # We initialize the search utility
+        inverse_contact_search.CreatePointListMortar()
+        inverse_contact_search.InitializeMortarConditions()
+        inverse_contact_search.UpdateMortarConditions()
+        
+        
+        
+        #self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
+        #self.set_contact_bc.Execute()
+        
     def _linear_solver_predict(self):
         import linear_solver_factory
         linear_solver = linear_solver_factory.ConstructSolver(self.params["linear_solver_settings"])
