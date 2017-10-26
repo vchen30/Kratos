@@ -84,6 +84,7 @@ MmgProcess<TDim>::MmgProcess(
             "internal_variable_interpolation_list" :[]
         },
         "save_external_files"              : false,
+        "save_mdpa_file"                   : false,
         "max_number_of_searchs"            : 1000,
         "echo_level"                       : 3,
         "step_data_size"                   : 0,
@@ -139,10 +140,7 @@ void MmgProcess<TDim>::Execute()
     CheckMeshData();
     
     // Save to file
-    if (safe_to_file == true)
-    {
-        SaveSolutionToFile(false);
-    }
+    if (safe_to_file == true) SaveSolutionToFile(false);
     
     // We execute the remeshing
     ExecuteRemeshing();
@@ -415,22 +413,22 @@ void MmgProcess<TDim>::InitializeSolData()
     {
         auto it_node = nodes_array.begin() + i;
         
-        #ifdef KRATOS_DEBUG 
+    #ifdef KRATOS_DEBUG 
         if( it_node->Has(MMG_METRIC) == false) 
         {
             KRATOS_ERROR <<  " MMG_METRIC not defined for node " << it_node->Id();
         }
-        #endif     
+    #endif     
         
         // We get the metric
         const Vector& metric = it_node->GetValue(MMG_METRIC);
         
-        #ifdef KRATOS_DEBUG 
+    #ifdef KRATOS_DEBUG 
         if(metric.size() != TDim * 3 - 3) 
         {
             KRATOS_ERROR << "Wrong size of vector MMG_METRIC found for node " << it_node->Id() << " size is " << metric.size() << " expected size was " << TDim * 3 - 3;
         }
-        #endif
+    #endif
         
         // We set the metric
         SetMetricTensor(metric, i + 1);
@@ -697,7 +695,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             for (auto sub_model_part_name : color_list.second)
             {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
-                if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);                
+//                 if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);                
                 if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
                 if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);
@@ -765,21 +763,18 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         std::copy(node_ids.begin(), node_ids.end(), std::back_inserter(vector_ids));
         r_sub_model_part.AddNodes(vector_ids);
     }
+    
     /* After that we reorder nodes, conditions and elements: */
     ReorderAllIds();
-    /* Save to file */
-    if (save_to_file == true)
-    {
-        SaveSolutionToFile(true);
-    }
     
+    /* Save to file */
+    if (save_to_file == true) SaveSolutionToFile(true);
+
     /* Free memory */
     FreeMemory();
     
-    
     /* Unmoving the original mesh to be able to interpolate */
-    if(false)
-    //if (mFramework == Lagrangian) 
+    if (mFramework == Lagrangian) 
     {
         nodes_array = r_old_model_part.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
@@ -807,8 +802,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
-    if(false)
-    //if (mFramework == Lagrangian) 
+    if (mFramework == Lagrangian) 
     {
         /* We move the mesh */
         nodes_array = mrThisModelPart.Nodes();
@@ -1592,9 +1586,8 @@ void MmgProcess<TDim>::SaveSolutionToFile(const bool PostOutput)
     OutputSol(PostOutput, step);
 
     // Save the mesh in an .mdpa format
-    if(PostOutput == true)
-        OutputMdpa();
-
+    const bool save_mdpa_file = mThisParameters["save_mdpa_file"].GetBool();
+    if(save_mdpa_file == true) OutputMdpa();
 }
 
 /***********************************************************************************/
@@ -1895,15 +1888,9 @@ void MmgProcess<3>::OutputMesh(
 /***********************************************************************************/
 /***********************************************************************************/
 
-template<>  
-void MmgProcess<2>::OutputMdpa(){
-    std::ofstream output_file;
-    ModelPartIO model_part_io("output",IO::WRITE);
-    model_part_io.WriteModelPart(mrThisModelPart);
-}
-
-template<>  
-void MmgProcess<3>::OutputMdpa(){
+template<unsigned int TDim>  
+void MmgProcess<TDim>::OutputMdpa()
+{
     std::ofstream output_file;
     ModelPartIO model_part_io("output",IO::WRITE);
     model_part_io.WriteModelPart(mrThisModelPart);
