@@ -672,7 +672,10 @@ private:
         
     }
     /// Assignment operator.
-    ComputeSPRErrorSolMetricProcess& operator=(ComputeSPRErrorSolMetricProcess const& rOther);
+    ComputeSPRErrorSolMetricProcess& operator=(ComputeSPRErrorSolMetricProcess const& rOther)
+    {
+        return *this;
+    };
 
     /// Copy constructor.
     //ComputeSPRErrorSolMetricProcess(ComputeSPRErrorSolMetricProcess const& rOther);

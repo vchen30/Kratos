@@ -526,7 +526,10 @@ private:
     ///@{
 
     /// Assignment operator.
-    EmbeddedMeshLocatorProcess& operator=(EmbeddedMeshLocatorProcess const& rOther) {};
+    EmbeddedMeshLocatorProcess& operator=(EmbeddedMeshLocatorProcess const& rOther) 
+    {
+        return *this;
+    };
 
     /// Copy constructor.
     //EmbeddedMeshLocatorProcess(EmbeddedMeshLocatorProcess const& rOther);

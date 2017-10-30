@@ -301,7 +301,10 @@ private:
     ///@{
 
     /// Assignment operator.
-    SetHMapProcess& operator=(SetHMapProcess const& rOther) {};
+    SetHMapProcess& operator=(SetHMapProcess const& rOther) 
+    {
+        return *this;
+    };
 
     /// Copy constructor.
     //SetHMapProcess(SetHMapProcess const& rOther);
