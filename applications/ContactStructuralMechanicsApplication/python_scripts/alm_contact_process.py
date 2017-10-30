@@ -206,8 +206,10 @@ class ALMContactProcess(python_process.PythonProcess):
                self._debug_output(self.global_step, "")
         
     def ExecuteFinalizeSolutionStep(self):
+        self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part) 
         if (self.params["remeshing_with_contact_bc"].GetBool() == True):
-            self._transfer_slave_to_master()
+            #self._transfer_slave_to_master()
+            self.set_contact_bc.Execute()
 
     def ExecuteBeforeOutputStep(self):
         pass

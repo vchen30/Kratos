@@ -133,7 +133,6 @@ public:
     virtual double Execute()
     {
         return SuperconvergentPatchRecovery();
-
     }
     
     ///@}
@@ -320,8 +319,8 @@ private:
             //compute new element size
             double new_element_size;
             new_element_size = i_elements->GetValue(ELEMENT_H)/i_elements->GetValue(ELEMENT_ERROR);
-            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.1;
-            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/1000)*0.15;
+            //new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
+            new_element_size *= sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/400)*0.15;
             
             //set minimal and maximal element size
             if(new_element_size<mMinSize)

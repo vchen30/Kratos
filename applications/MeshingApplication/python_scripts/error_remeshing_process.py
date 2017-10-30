@@ -25,6 +25,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
             "mesh_id"                          : 0,
             "filename"                         : "out",
             "model_part_name"                  : "MainModelPart",
+            "save_mdpa_file"                   : false,
             "strategy"                         : "LevelSet",
             "level_set_strategy_parameters"              :{
                 "scalar_variable"                  : "DISTANCE",
@@ -110,6 +111,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
         mmg_parameters.AddValue("save_external_files",self.params["save_external_files"])
         mmg_parameters.AddValue("max_number_of_searchs",self.params["max_number_of_searchs"])
         mmg_parameters.AddValue("echo_level",self.params["echo_level"])
+        mmg_parameters.AddValue("save_mdpa_file",self.params["save_mdpa_file"])
         if (self.dim == 2):
             self.MmgProcess = MeshingApplication.MmgProcess2D(self.Model[self.model_part_name], mmg_parameters)
         else:

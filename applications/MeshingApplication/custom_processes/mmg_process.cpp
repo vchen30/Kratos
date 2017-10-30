@@ -703,24 +703,14 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             }
         }
     }
-    /*
-    //in case of contact:
-    // Add contact nodes from the contact bc part to the contact part
-    if(mrThisModelPart.HasSubModelPart(mThisParameters["contact_model_part_bc_name"].GetString())){
-        std::vector<IndexType> vector_nodes;
-        for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
-                i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
-            vector_nodes.push_back(i_nodes->Id());
-        }
-        mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
-    }
+    
 
     // in case of contact:
     // remove Contact part from computing_domain model part
     if(mrThisModelPart.HasSubModelPart("computing_domain")){
         if(mrThisModelPart.GetSubModelPart("computing_domain").HasSubModelPart("Contact"))
             mrThisModelPart.GetSubModelPart("computing_domain").RemoveSubModelPart("Contact");
-    }*/
+    }
     // TODO: Add OMP
     // NOTE: We add the nodes from the elements and conditions to the respective submodelparts
     const std::vector<std::string> sub_model_part_names = mrThisModelPart.GetSubModelPartNames();
@@ -763,6 +753,16 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         std::copy(node_ids.begin(), node_ids.end(), std::back_inserter(vector_ids));
         r_sub_model_part.AddNodes(vector_ids);
     }
+    //in case of contact:
+    // Add contact nodes from the contact bc part to the contact part
+    if(mrThisModelPart.HasSubModelPart(mThisParameters["contact_model_part_bc_name"].GetString())){
+        std::vector<IndexType> vector_nodes;
+        for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
+                i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
+            vector_nodes.push_back(i_nodes->Id());
+        }
+        mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
+    }
     
     /* After that we reorder nodes, conditions and elements: */
     ReorderAllIds();
@@ -802,7 +802,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
-    
+    //if(false)
     if (mFramework == Lagrangian) 
     {
         /* We move the mesh */
@@ -816,7 +816,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             auto it_node = nodes_array.begin() + i;
 
             noalias(it_node->Coordinates())  = it_node->GetInitialPosition().Coordinates();
-            noalias(it_node->Coordinates()) += it_node->FastGetSolutionStepValue(DISPLACEMENT);
+            //noalias(it_node->Coordinates()) += it_node->FastGetSolutionStepValue(DISPLACEMENT);
         }
         
         /* We interpolate the internal variables */
@@ -1300,7 +1300,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         
         // detect if the condition which is created is a contact condition
         bool is_contact_condition = false;
-        /*
+        
         for(auto & color_list : mColors){
             //if(color_list.first<=mrThisModelPart.GetSubModelPartNames().size()){
             for (auto sub_model_part_name : color_list.second){
@@ -1310,7 +1310,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
                 }
             }
         //}
-        }*/
+        }
         // skip the condition creation if the condition belongs to the main model part or to the contact part
         if (PropId!=0 && (is_contact_condition == false))
             p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
@@ -1893,9 +1893,110 @@ void MmgProcess<3>::OutputMesh(
 template<unsigned int TDim>  
 void MmgProcess<TDim>::OutputMdpa()
 {
-    std::ofstream output_file;
-    ModelPartIO model_part_io("output",IO::WRITE);
-    model_part_io.WriteModelPart(mrThisModelPart);
+    if(TDim == 2){
+        // save mesh in .mdpa format 
+        std::ofstream output_file; 
+        output_file.open(mStdStringFilename+"_output.mdpa"); 
+ 
+        // header 
+        output_file<<"Begin ModelPartData\n//  VARIABLE_NAME value\nEnd ModelPartData\n\n"; 
+    
+        //properties 
+        output_file<<"Begin Properties 0\nEnd Properties\n"; 
+        output_file<<"Begin Properties 1\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
+        output_file<<"Begin Properties 2\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
+        //nodes 
+        output_file<<"Begin Nodes\n"; 
+        int i=0; 
+        for(auto i_nodes= mrThisModelPart.NodesBegin(); i_nodes != mrThisModelPart.NodesEnd(); i_nodes++){ 
+            i=i+1; 
+            output_file<<"\t"<<i<<"\t"<<i_nodes->X()<<"\t"<<i_nodes->Y()<<"\t"<<i_nodes->Z()<<"\n"; 
+        } 
+        output_file<<"End Nodes\n"; 
+    
+        //elements 
+        std::vector<std::string> submodels; 
+        submodels.push_back("Parts_Parts_Auto1"); 
+        submodels.push_back("Parts_Parts_Auto2"); 
+        for(auto i=0;i<submodels.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
+                output_file<<"Begin Elements SmallDisplacementElement2D3N\n"; 
+                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
+                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
+                    output_file<<"\t"<<i_element->Id()<<"\t0"; 
+                    for (auto j=0; j < i_element->GetGeometry().size(); j++){ 
+                        output_file<<"\t"<<i_element->GetGeometry()[j].Id(); 
+                    } 
+                    output_file<<"\n"; 
+                } 
+                output_file<<"End Elements\n\n"; 
+            } 
+        } 
+    
+        // conditions 
+        std::vector<std::string> conditions; 
+        conditions.push_back("DISPLACEMENT_Displacement_Auto1"); 
+        conditions.push_back("DISPLACEMENT_Displacement_Auto2"); 
+        conditions.push_back("IMPOSE_DISP_Auto1"); 
+        conditions.push_back("Contact_Part_BC"); 
+        for(auto i=0;i<conditions.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(conditions[i])){ 
+                output_file<<"Begin Conditions LineLoadCondition2D2N\n"; 
+                for (auto i_condition = mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsBegin(); 
+                        i_condition != mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsEnd(); i_condition++){ 
+                    output_file<<"\t"<<i_condition->Id()<<"\t0"; 
+                    for (auto j=0; j < i_condition->GetGeometry().size(); j++){ 
+                        output_file<<"\t"<<i_condition->GetGeometry()[j].Id(); 
+                    } 
+                    output_file<<"\n"; 
+                } 
+                output_file<<"End Conditions\n\n"; 
+            } 
+        } 
+    
+    
+        submodels.push_back("Contact_Part"); 
+        submodels.push_back("Contact_Part_BC"); 
+        submodels.push_back("DISPLACEMENT_Displacement_Auto1"); 
+        submodels.push_back("DISPLACEMENT_Displacement_Auto2"); 
+        submodels.push_back("IMPOSE_DISP_Auto1"); 
+        // submodel parts 
+        for(auto i=0;i<submodels.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
+                output_file<<"Begin SubModelPart "<<submodels[i]<<"\n"; 
+                //nodes 
+                output_file<<"    Begin SubModelPartNodes\n"; 
+                for(auto i_nodes = mrThisModelPart.GetSubModelPart(submodels[i]).NodesBegin(); 
+                        i_nodes != mrThisModelPart.GetSubModelPart(submodels[i]).NodesEnd(); i_nodes++){ 
+                    output_file<<"\t"<<i_nodes->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartNodes\n"; 
+    
+                //elements 
+                output_file<<"    Begin SubModelPartElements\n"; 
+                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
+                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
+                    output_file<<"\t"<<i_element->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartElements\n"; 
+    
+                //conditions 
+                output_file<<"    Begin SubModelPartConditions\n"; 
+                for (auto i_condition = mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsBegin(); 
+                        i_condition != mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsEnd(); i_condition++){ 
+                    output_file<<"\t"<<i_condition->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartConditions\n"; 
+    
+                output_file<<"End SubModelPart\n\n"; 
+            } 
+        } 
+        output_file.close(); 
+        }
+    else{
+        std::ofstream output_file;
+        ModelPartIO model_part_io("output",IO::WRITE);
+        model_part_io.WriteModelPart(mrThisModelPart);}
 }
 
 /***********************************************************************************/

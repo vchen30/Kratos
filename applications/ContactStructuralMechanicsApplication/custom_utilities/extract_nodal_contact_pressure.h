@@ -52,6 +52,7 @@ public:
 
     ExtractNodalContactPressure(ModelPart& mp): mThisModelPart (mp)
     {
+        WriteContactStressesToFile();
     }
 
     void Execute()
@@ -82,7 +83,7 @@ public:
                 //if (i_master->second){
                 if (true){
                     std::cout<<"masterelement active:"<<i_master->second<<std::endl;
-                    for(int i=0; i < i_master->first->GetGeometry().size(); i++){
+                    for(unsigned int i=0; i < i_master->first->GetGeometry().size(); i++){
                         
                         array_1d<double,3> i_nodes= i_master->first->GetGeometry()[i].Coordinates();
                         PointType master_point = PointType(i_nodes);
@@ -109,7 +110,7 @@ public:
                             Vector shape_function_value;
                             i_condition->GetGeometry().ShapeFunctionsValues(shape_function_value,projected_point_local);
                             double contact_pressure=0;
-                            for (auto j=0;j< i_condition->GetGeometry().size();j++)
+                            for (unsigned int j=0;j< i_condition->GetGeometry().size();j++)
                                 contact_pressure += i_condition->GetGeometry()[j].GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)
                                                                                     *shape_function_value[j];
                             i_master->first->GetGeometry()[i].SetValue(CONTACT_PRESSURE, contact_pressure);
@@ -122,6 +123,18 @@ public:
             }
 
         }
+    }
+    //print contact stresses to file
+    void WriteContactStressesToFile(){
+        std::ofstream output_file; 
+        output_file.open("contact_stresses.txt");
+        //print normal contact stress
+        for(auto i_nodes= mThisModelPart.NodesBegin();
+                i_nodes != mThisModelPart.NodesEnd(); i_nodes++){
+            if(i_nodes->Is(SLAVE))
+                output_file<<i_nodes->X0()<<"\t"<<i_nodes->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE)<<"\t"<<i_nodes->Y0()<<"\n";
+        }
+        output_file.close();
     }
 
 private:
