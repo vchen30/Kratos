@@ -1897,6 +1897,10 @@ void MmgProcess<3>::OutputMesh(
 template<unsigned int TDim>  
 void MmgProcess<TDim>::OutputMdpa()
 {
+//     std::ofstream output_file;
+//     ModelPartIO model_part_io("output",IO::WRITE);
+//     model_part_io.WriteModelPart(mrThisModelPart);
+    
     if(TDim == 2){
         // save mesh in .mdpa format 
         std::ofstream output_file; 
