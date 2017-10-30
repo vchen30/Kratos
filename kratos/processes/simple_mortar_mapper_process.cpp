@@ -24,6 +24,89 @@
 namespace Kratos
 {
 template< int TDim, int TNumNodes, class TVarType, HistoricalValues THist> 
+SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::SimpleMortarMapperProcess( 
+        ModelPart& rThisModelPart,
+        TVarType& ThisVariable, 
+        Parameters ThisParameters,
+        LinearSolverType::Pointer pThisLinearSolver
+        ): mrThisModelPart(rThisModelPart),
+           mOriginVariable(ThisVariable),
+           mDestinationVariable(ThisVariable),
+           mThisParameters(ThisParameters),
+           mpThisLinearSolver(pThisLinearSolver)
+{
+    Parameters DefaultParameters = Parameters(R"(
+    {
+        "echo_level"                       : 0,
+        "absolute_convergence_tolerance"   : 1.0e-9,
+        "relative_convergence_tolerance"   : 1.0e-4,
+        "max_number_iterations"            : 10,
+        "integration_order"                : 2,
+        "inverted_master_slave_pairing"    : false
+    })" );
+    
+    mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
+
+    mInvertedPairing = mThisParameters["inverted_master_slave_pairing"].GetBool();
+    mEchoLevel = mThisParameters["echo_level"].GetInt();
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+   
+template< int TDim, int TNumNodes, class TVarType, HistoricalValues THist> 
+SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::SimpleMortarMapperProcess( 
+        ModelPart& rThisModelPart,
+        TVarType& OriginVariable,
+        TVarType& DestinationVariable,
+        Parameters ThisParameters,
+        LinearSolverType::Pointer pThisLinearSolver
+        ): mrThisModelPart(rThisModelPart),
+           mOriginVariable(OriginVariable),
+           mDestinationVariable(DestinationVariable),
+           mThisParameters(ThisParameters),
+           mpThisLinearSolver(pThisLinearSolver)
+{
+    Parameters DefaultParameters = Parameters(R"(
+    {
+        "echo_level"                       : 0,
+        "absolute_convergence_tolerance"   : 1.0e-9,
+        "relative_convergence_tolerance"   : 1.0e-4,
+        "max_number_iterations"            : 10,
+        "integration_order"                : 2,
+        "inverted_master_slave_pairing"    : false
+    })" );
+    
+    mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
+
+    mInvertedPairing = mThisParameters["inverted_master_slave_pairing"].GetBool();
+    mEchoLevel = mThisParameters["echo_level"].GetInt();
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template< int TDim, int TNumNodes, class TVarType, HistoricalValues THist> 
+void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>:: Execute()
+{
+    KRATOS_TRY;
+
+    if (mpThisLinearSolver == nullptr)
+    {
+        ExecuteExplicitMapping();
+    }
+    else
+    {
+        ExecuteImplicitMapping();
+    }
+    
+    KRATOS_CATCH("");
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+   
+template< int TDim, int TNumNodes, class TVarType, HistoricalValues THist> 
 void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ResetNodalArea()
 {
     NodesArrayType& nodes_array = mrThisModelPart.Nodes();
@@ -237,7 +320,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::GetSystemSize(
     for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
-        if (it_node->Is(SLAVE) == true)
+        if (it_node->Is(SLAVE) == !mInvertedPairing)
         {
             #pragma omp atomic
             SizeSystem += 1;
@@ -265,7 +348,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::CreateSlaveCon
     for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
-        if (it_node->Is(SLAVE) == true)
+        if (it_node->Is(SLAVE) == !mInvertedPairing)
         {
             ConectivityDatabase[SizeSystem] = it_node->Id();
             InverseConectivityDatabase[it_node->Id()] = SizeSystem;
@@ -466,7 +549,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteExplici
         {
             auto it_cond = conditions_array.begin() + i;
             
-            if (it_cond->Is(SLAVE) == true)
+            if (it_cond->Is(SLAVE) == !mInvertedPairing)
             {
                 const array_1d<double, 3>& slave_normal = it_cond->GetValue(NORMAL);
                 GeometryType& slave_geometry = it_cond->GetGeometry();
@@ -542,7 +625,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteExplici
         for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
-            if (it_node->Is(SLAVE) == true)
+            if (it_node->Is(SLAVE) == !mInvertedPairing)
             {                    
                 Node<3>::Pointer pnode = *(it_node.base());
                 MortarUtilities::AddAreaWeightedNodalValue<TVarType, THist>(pnode, mDestinationVariable);
@@ -642,7 +725,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteImplici
         {
             auto it_cond = mrThisModelPart.ConditionsBegin() + i;
             
-            if (it_cond->Is(SLAVE) == true)
+            if (it_cond->Is(SLAVE) == !mInvertedPairing)
             {
                 const array_1d<double, 3>& slave_normal = it_cond->GetValue(NORMAL);
                 GeometryType& slave_geometry = it_cond->GetGeometry();

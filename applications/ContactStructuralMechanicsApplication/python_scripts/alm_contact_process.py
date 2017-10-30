@@ -129,7 +129,7 @@ class ALMContactProcess(python_process.PythonProcess):
         del(node)
         
         #If the conditions doesn't exist we create them
-        if (preprocess ==  True):
+        if (preprocess == True):
             self._interface_preprocess(computing_model_part)
         
         # We initialize the contact values
@@ -181,10 +181,8 @@ class ALMContactProcess(python_process.PythonProcess):
                self._debug_output(self.global_step, "")
         
     def ExecuteFinalizeSolutionStep(self):
-        self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part) 
         if (self.params["remeshing_with_contact_bc"].GetBool() == True):
-            #self._transfer_slave_to_master()
-            self.set_contact_bc.Execute()
+            self._transfer_slave_to_master()
 
     def ExecuteBeforeOutputStep(self):
         pass
@@ -210,15 +208,11 @@ class ALMContactProcess(python_process.PythonProcess):
                 
         self.database_step = 0
         
-    def _assign_slave_conditions(self, inverse = False):
+    def _assign_slave_conditions(self):
         if (self.params["assume_master_slave"].GetString() == ""):
-            #model_part_slave = self.main_model_part.GetSubModelPart(self.params["assume_master_slave"].GetString())
             for cond in self.contact_model_part.Conditions:
                 cond.Set(KratosMultiphysics.SLAVE, True)
             del(cond)
-            
-            #if (inverse == True):
-                
             
     def _assign_slave_nodes(self):
         if (self.params["assume_master_slave"].GetString() != ""):
@@ -334,22 +328,59 @@ class ALMContactProcess(python_process.PythonProcess):
         self.contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(computing_model_part, search_parameters)
     
     def _transfer_slave_to_master(self):
-        search_parameters = KratosMultiphysics.Parameters("{}")
-        search_parameters.AddValue("search_factor",self.params["search_factor"])
-        search_parameters.AddValue("allocation_size",self.params["allocation_size"])
-        search_parameters.AddValue("type_search",self.params["type_search"])
-        search_parameters.AddValue("use_exact_integration",self.params["use_exact_integration"])
-        inverse_contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(self.contact_model_part, search_parameters)
+        #search_parameters = KratosMultiphysics.Parameters("""{"inverted_search": true}""")
+        #search_parameters.AddValue("search_factor",self.params["search_factor"])
+        #search_parameters.AddValue("allocation_size",self.params["max_number_results"])
+        #search_parameters.AddValue("type_search",self.params["type_search"])
+        #search_parameters.AddValue("use_exact_integration",self.params["use_exact_integration"])
+        #computing_model_part = self.main_model_part.GetSubModelPart(self.computing_model_part_name)
+        #inverse_contact_search = ContactStructuralMechanicsApplication.TreeContactSearch(computing_model_part, search_parameters)
     
-        # We initialize the search utility
-        inverse_contact_search.CreatePointListMortar()
-        inverse_contact_search.InitializeMortarConditions()
-        inverse_contact_search.UpdateMortarConditions()
+        #for cond in self.contact_model_part.Conditions:
+            #break
+        #num_nodes = len(cond.GetNodes())
+    
+        ## We initialize the search utility
+        #inverse_contact_search.CreatePointListMortar()
+        #inverse_contact_search.InitializeMortarConditions()
+        #inverse_contact_search.UpdateMortarConditions()
         
+        #map_parameters = KratosMultiphysics.Parameters("""
+        #{
+            #"echo_level"                       : 0,
+            #"absolute_convergence_tolerance"   : 1.0e-9,
+            #"relative_convergence_tolerance"   : 1.0e-4,
+            #"max_number_iterations"            : 10,
+            #"integration_order"                : 2,
+            #"inverted_master_slave_pairing"    : true
+        #}
+        #""")
         
+        #if (self.dimension == 2): 
+            #if self.params["contact_type"].GetString() == "Frictional":
+                #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+            #else:
+                #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+        #else:
+            #if (num_nodes == 3): 
+                #if self.params["contact_type"].GetString() == "Frictional":
+                    #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+                #else:
+                    #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                    #mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+            #else:
+                #if self.params["contact_type"].GetString() == "Frictional":
+                    #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+                #else:
+                    #mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                    #mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+                    
+        #mortar_mapping0.Execute()
+        #mortar_mapping1.Execute()
         
-        #self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
-        #self.set_contact_bc.Execute()
+        self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
+        self.set_contact_bc.Execute()
     
     def _debug_output(self, label, name):
 
