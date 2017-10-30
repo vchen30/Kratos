@@ -15,11 +15,11 @@
 // System includes
 
 // External includes
-#include <omp.h>
 
 // Project includes
 #include "includes/model_part.h"
 #include "includes/kratos_parameters.h"
+#include "utilities/openmp_utils.h"
 
 /* Custom includes*/
 #include "custom_includes/point_item.h"
@@ -203,6 +203,18 @@ public:
     
     void InvertSearch();
     
+    /**
+     * This resets the contact operators
+     */
+        
+    void ResetContactOperators();
+    
+    /**
+     * This resets all the contact operators
+     */
+        
+    void TotalResetContactOperators();
+    
     ///@}
     ///@name Access
     ///@{
@@ -271,12 +283,6 @@ protected:
      */ 
     
     static inline double Radius(GeometryType& ThisGeometry);
-
-    /**
-     * This resets the contact operators
-     */
-        
-    void ResetContactOperators();
     
     /**
      * This converts the framework string to an enum

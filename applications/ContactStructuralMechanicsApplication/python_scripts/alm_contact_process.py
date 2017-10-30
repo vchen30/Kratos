@@ -334,9 +334,10 @@ class ALMContactProcess(python_process.PythonProcess):
         num_nodes = len(cond.GetNodes())
     
         # We use the search utility
-        self.contact_search.InvertSearch()
+        self._reset_search()
         self.contact_search.UpdateMortarConditions()
-        self.contact_search.InvertSearch()
+        #self.contact_search.CheckMortarConditions()
+        self._reset_search()
         
         map_parameters = KratosMultiphysics.Parameters("""
         {
@@ -369,12 +370,18 @@ class ALMContactProcess(python_process.PythonProcess):
                     mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
                     mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
                     
-        #mortar_mapping0.Execute()
+        mortar_mapping0.Execute()
         #mortar_mapping1.Execute()
         
-        self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
-        self.set_contact_bc.Execute()
+        #self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
+        #self.set_contact_bc.Execute()
     
+    def _reset_search(self):
+        self.contact_search.InvertSearch()
+        self.contact_search.TotalResetContactOperators()
+        self.contact_search.CreatePointListMortar()
+        self.contact_search.InitializeMortarConditions()
+        
     def _debug_output(self, label, name):
 
         gid_io = KratosMultiphysics.GidIO(self.output_file+name+"_STEP_"+str(label), self.gid_mode, self.singlefile, self.deformed_mesh_flag, self.write_conditions)

@@ -54,7 +54,7 @@ TreeContactSearch::TreeContactSearch(
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         it_node->Set(ACTIVE, false);
@@ -65,7 +65,7 @@ TreeContactSearch::TreeContactSearch(
     const int num_conditions = static_cast<int>(conditions_array.size());
 
     #pragma omp parallel for 
-    for(int i = 0; i < num_conditions; i++) 
+    for(int i = 0; i < num_conditions; ++i) 
     {
         auto it_cond = conditions_array.begin() + i;
         
@@ -83,7 +83,7 @@ void TreeContactSearch::InitializeMortarConditions()
     const int num_conditions = static_cast<int>(conditions_array.size());
 
     #pragma omp parallel for 
-    for(int i = 0; i < num_conditions; i++) 
+    for(int i = 0; i < num_conditions; ++i) 
     {
         auto it_cond = conditions_array.begin() + i;
 
@@ -97,18 +97,16 @@ void TreeContactSearch::InitializeMortarConditions()
 
 void TreeContactSearch::TotalClearScalarMortarConditions()
 {
-    ResetContactOperators();
+    TotalResetContactOperators();
     
     NodesArrayType& nodes_array = mrMainModelPart.Nodes();
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
-        
         it_node->FastGetSolutionStepValue(SCALAR_LAGRANGE_MULTIPLIER) = 0.0;
-        if (it_node->Is(ACTIVE) == true) it_node->Set( ACTIVE, false );
     }  
 }
 
@@ -117,17 +115,16 @@ void TreeContactSearch::TotalClearScalarMortarConditions()
 
 void TreeContactSearch::TotalClearComponentsMortarConditions()
 {
-    ResetContactOperators();
+    TotalResetContactOperators();
     
     NodesArrayType& nodes_array = mrMainModelPart.Nodes();
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
-        if (it_node->Is(ACTIVE) == true) it_node->Set( ACTIVE, false );
     }  
 }
 
@@ -136,18 +133,16 @@ void TreeContactSearch::TotalClearComponentsMortarConditions()
 
 void TreeContactSearch::TotalClearALMFrictionlessMortarConditions()
 {        
-    ResetContactOperators();
+    TotalResetContactOperators();
     
     NodesArrayType& nodes_array = mrMainModelPart.Nodes();
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
-        
         it_node->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) = 0.0;
-        if (it_node->Is(ACTIVE) == true) it_node->Set( ACTIVE, false );
     }  
 }
 
@@ -160,7 +155,7 @@ void TreeContactSearch::PartialClearScalarMortarConditions()
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         it_node->FastGetSolutionStepValue(SCALAR_LAGRANGE_MULTIPLIER) = 0.0;
@@ -176,7 +171,7 @@ void TreeContactSearch::PartialClearComponentsMortarConditions()
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
@@ -192,7 +187,7 @@ void TreeContactSearch::PartialClearALMFrictionlessMortarConditions()
     const int num_nodes = static_cast<int>(nodes_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         it_node->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) = 0.0;
@@ -212,22 +207,21 @@ void TreeContactSearch::CreatePointListMortar()
     const int num_conditions = static_cast<int>(conditions_array.size());
 
     // Creating a buffer for parallel vector fill
-    const unsigned int num_threads = omp_get_max_threads();
+    const int num_threads = OpenMPUtils::GetNumThreads();
     std::vector<PointVector> points_buffer(num_threads);
 
     #pragma omp parallel
     {
-        const unsigned int thread_id = omp_get_thread_num();
+        const int thread_id = OpenMPUtils::ThisThread();
 
         #pragma omp for
-        for(int i = 0; i < num_conditions; i++) 
+        for(int i = 0; i < num_conditions; ++i) 
         {
             auto it_cond = conditions_array.begin() + i;
             
             if (it_cond->Is(MASTER) == !mInvertedSearch)
             {
                 PointTypePointer p_point = PointTypePointer(new PointItem((*it_cond.base())));
-//                     (mPointListDestination).push_back(p_point);
                 (points_buffer[thread_id]).push_back(p_point);
             }
         }
@@ -253,10 +247,7 @@ void TreeContactSearch::UpdatePointListMortar()
     const int num_points = static_cast<int>(mPointListDestination.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_points; i++) 
-    {
-        mPointListDestination[i]->UpdatePoint(delta_time);
-    }
+    for(int i = 0; i < num_points; ++i) mPointListDestination[i]->UpdatePoint(delta_time);
 }
 
 /***********************************************************************************/
@@ -294,7 +285,7 @@ void TreeContactSearch::UpdateMortarConditions()
         const int num_conditions = static_cast<int>(conditions_array.size());
 
 //             #pragma omp for 
-        for(int i = 0; i < num_conditions; i++) 
+        for(int i = 0; i < num_conditions; ++i) 
         {
             auto it_cond = conditions_array.begin() + i;
             
@@ -489,7 +480,7 @@ void TreeContactSearch::CleanMortarConditions()
     const double& active_check_factor = mrMainModelPart.GetProcessInfo()[ACTIVE_CHECK_FACTOR];
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_conditions; i++) 
+    for(int i = 0; i < num_conditions; ++i) 
     {
         auto it_cond = conditions_array.begin() + i;
         const GeometryType& this_geometry = it_cond->GetGeometry();
@@ -542,17 +533,17 @@ void TreeContactSearch::CheckMortarConditions()
     ConditionsArrayType& conditions_array = mrMainModelPart.Conditions();
     const int num_conditions = static_cast<int>(conditions_array.size());
 
-    for(int i = 0; i < num_conditions; i++) 
+    for(int i = 0; i < num_conditions; ++i) 
     {
         auto it_cond = conditions_array.begin() + i;
+        
+        ConditionMap::Pointer& conditions_pointers_destination = it_cond->GetValue(MAPPING_PAIRS);
+        if (conditions_pointers_destination->size() > 0) KRATOS_WATCH(conditions_pointers_destination->size());
         
         if (it_cond->Is(SLAVE) == true && it_cond->Is(ACTIVE) == true)
         {
             KRATOS_WATCH(it_cond->Id());
             KRATOS_WATCH(it_cond->GetGeometry());
-            
-            ConditionMap::Pointer& conditions_pointers_destination = it_cond->GetValue(MAPPING_PAIRS);
-            KRATOS_WATCH(conditions_pointers_destination->size());
             conditions_pointers_destination->print();
         }
     }
@@ -560,7 +551,7 @@ void TreeContactSearch::CheckMortarConditions()
     NodesArrayType& nodes_array = mrMainModelPart.Nodes();
     const int num_nodes = static_cast<int>(nodes_array.size());
     
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         
@@ -634,16 +625,13 @@ inline double TreeContactSearch::Radius(GeometryType& ThisGeometry)
     double radius = 0.0; 
     const Point& center = ThisGeometry.Center(); 
         
-    for(unsigned int i_node = 0; i_node < ThisGeometry.PointsNumber(); i_node++) 
+    for(unsigned int i_node = 0; i_node < ThisGeometry.PointsNumber(); ++i_node) 
     { 
-        const array_1d<double, 3> aux_vector = center.Coordinates() - ThisGeometry[i_node].Coordinates();
+        const array_1d<double, 3>& aux_vector = center.Coordinates() - ThisGeometry[i_node].Coordinates();
             
         const double aux_value = inner_prod(aux_vector, aux_vector); 
 
-        if(aux_value > radius) 
-        { 
-            radius = aux_value; 
-        } 
+        if(aux_value > radius) radius = aux_value; 
     } 
 
     return std::sqrt(radius); 
@@ -658,7 +646,7 @@ void TreeContactSearch::ResetContactOperators()
     const int num_conditions = static_cast<int>(conditions_array.size());
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_conditions; i++) 
+    for(int i = 0; i < num_conditions; ++i) 
     {
         auto it_cond = conditions_array.begin() + i;
         if (it_cond->Is(SLAVE) == !mInvertedSearch && it_cond->Is(ACTIVE) == true)
@@ -673,6 +661,24 @@ void TreeContactSearch::ResetContactOperators()
 //                     condition_pointers->reserve(mAllocationSize); 
             }
         }
+    }   
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void TreeContactSearch::TotalResetContactOperators()
+{
+    ConditionsArrayType& conditions_array = mrMainModelPart.Conditions();
+    const int num_conditions = static_cast<int>(conditions_array.size());
+    
+    #pragma omp parallel for 
+    for(int i = 0; i < num_conditions; ++i) 
+    {
+        auto it_cond = conditions_array.begin() + i;
+        it_cond->Set(ACTIVE, false);
+        auto& condition_pointers = it_cond->GetValue(MAPPING_PAIRS);
+        if (condition_pointers != nullptr)  condition_pointers->clear();
     }   
 }
 

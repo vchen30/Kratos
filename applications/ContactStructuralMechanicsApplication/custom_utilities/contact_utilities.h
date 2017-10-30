@@ -145,13 +145,13 @@ public:
         const double& tolerance = std::numeric_limits<double>::epsilon();
 
         // Initialize normal vectors
-        const array_1d<double,3> zero_vect = ZeroVector(3);
+        const array_1d<double,3>& zero_vect = ZeroVector(3);
         
         NodesArrayType& nodes_array = rModelPart.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size()); 
         
         #pragma omp parallel for
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
             it_node->SetValue(NORMAL, zero_vect);
@@ -162,25 +162,23 @@ public:
         const int num_conditions = static_cast<int>(conditions_array.size());
         
         #pragma omp parallel for
-        for(int i = 0; i < num_conditions; i++) 
+        for(int i = 0; i < num_conditions; ++i) 
         {
             auto it_cond = conditions_array.begin() + i;
+            GeometryType& this_geometry = it_cond->GetGeometry();
             
-            if (it_cond->Is(SLAVE) || it_cond->Is(MASTER) || it_cond->Is(ACTIVE))
+            // Aux coordinates
+            CoordinatesArrayType aux_coords;
+            aux_coords = this_geometry.PointLocalCoordinates(aux_coords, this_geometry.Center());
+            it_cond->SetValue(NORMAL, this_geometry.Normal(aux_coords));
+            const array_1d<double, 3>& normal = it_cond->GetValue(NORMAL);
+            
+            const unsigned int number_nodes = this_geometry.PointsNumber();
+            
+            for (unsigned int i = 0; i < number_nodes; ++i)
             {
-                // Aux coordinates
-                CoordinatesArrayType aux_coords;
-                aux_coords = it_cond->GetGeometry().PointLocalCoordinates(aux_coords, it_cond->GetGeometry().Center());
-                array_1d<double, 3>& rNormal = it_cond->GetValue(NORMAL);
-                rNormal = it_cond->GetGeometry().Normal(aux_coords);
-                
-                const unsigned int number_nodes = it_cond->GetGeometry().PointsNumber();
-                
-                for (unsigned int i = 0; i < number_nodes; i++)
-                {
-                    #pragma omp critical
-                    noalias( it_cond->GetGeometry()[i].GetValue(NORMAL) ) += rNormal;
-                }
+                #pragma omp critical // TODO: See if there is another alternative
+                noalias( this_geometry[i].GetValue(NORMAL) ) += normal;
             }
         }
         
@@ -191,16 +189,12 @@ public:
         }
 
         #pragma omp parallel for 
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
 
             const double norm_normal = norm_2(it_node->GetValue(NORMAL));
-            
-            if (norm_normal > tolerance)
-            {
-                it_node->GetValue(NORMAL) /= norm_normal;
-            }
+            if (norm_normal > tolerance) it_node->GetValue(NORMAL) /= norm_normal;
         }
     }
     
@@ -222,7 +216,7 @@ public:
         const int num_nodes = static_cast<int>(nodes_array.size()); 
         
         #pragma omp parallel for
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
             it_node->SetValue(NODAL_AREA, 0.0);
@@ -238,7 +232,7 @@ public:
         const int num_conditions = static_cast<int>(conditions_array.size());
         
         #pragma omp parallel for
-        for(int i = 0; i < num_conditions; i++) 
+        for(int i = 0; i < num_conditions; ++i) 
         {
             auto it_cond = conditions_array.begin() + i;
             
@@ -251,7 +245,7 @@ public:
                 const unsigned int number_nodes = it_cond->GetGeometry().PointsNumber();
                 const double & rArea = it_cond->GetGeometry().Area()/number_nodes;
                 
-                for (unsigned int i = 0; i < number_nodes; i++)
+                for (unsigned int i = 0; i < number_nodes; ++i)
                 {
                     auto& this_node = it_cond->GetGeometry()[i];
                     this_node.SetLock();
@@ -263,7 +257,7 @@ public:
         }
         
         #pragma omp parallel for 
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
 
@@ -281,7 +275,7 @@ public:
         }
 
         #pragma omp parallel for 
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
 
@@ -325,7 +319,7 @@ public:
         const int num_nodes = static_cast<int>(nodes_array.size()); 
         
         #pragma omp parallel for 
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
             it_node->SetValue(DELTA_NORMAL, zero_delta_normal);
@@ -353,7 +347,7 @@ public:
                         
                         Ce = prod( I - ne_o_ne, Delta_ne_adj ) / ne_norm;     // In 2D, Delta_ne_adj is node-independent => evaluated outside the nodes loop
                         
-                        for (unsigned int i = 0; i < num_nodes; i++)
+                        for (unsigned int i = 0; i < num_nodes; ++i)
                         {
                             NodeType& node_j = it_cond->GetGeometry( )[i];
                             
@@ -379,7 +373,7 @@ public:
                 {
                     const double ne_norm = it_cond->GetGeometry( ).Area( ); // The norm of a geometry's normal is its characteristic dimension - length for 2D and area for 3D 
                     
-                    for (unsigned int i = 0; i < num_nodes; i++)
+                    for (unsigned int i = 0; i < num_nodes; ++i)
                     {
                         Matrix J = ZeroMatrix( 3, 2 ); // Jacobian [ 3D global x 2D local ]
                         array_1d<double, 2> DN_De_j        = ZeroVector( 2 );  // Shape functions derivatives for node j [ DN_Dxi_j, DN_Deta_j ]
@@ -490,7 +484,7 @@ public:
         }
         
         #pragma omp parallel for 
-        for(int i = 0; i < num_nodes; i++) 
+        for(int i = 0; i < num_nodes; ++i) 
         {
             auto it_node = nodes_array.begin() + i;
             const array_1d<double, 3>& nj = it_node->GetValue(NORMAL); // nodal non-normalized normal (this function is called before normalization)
