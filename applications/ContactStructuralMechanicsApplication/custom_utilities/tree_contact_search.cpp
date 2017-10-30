@@ -82,11 +82,12 @@ void TreeContactSearch::InitializeMortarConditions()
     ConditionsArrayType& conditions_array = mrMainModelPart.Conditions();
     const int num_conditions = static_cast<int>(conditions_array.size());
 
+    #pragma omp parallel for 
     for(int i = 0; i < num_conditions; i++) 
     {
         auto it_cond = conditions_array.begin() + i;
 
-        it_cond->GetValue(MAPPING_PAIRS) = ConditionMap::Pointer(new ConditionMap); 
+        it_cond->SetValue(MAPPING_PAIRS, ConditionMap::Pointer(new ConditionMap)); 
 //             it_cond->GetValue(MAPPING_PAIRS)->reserve(mAllocationSize); 
     }
 }
