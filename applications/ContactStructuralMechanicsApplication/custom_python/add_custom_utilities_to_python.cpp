@@ -50,6 +50,7 @@ void  AddCustomUtilitiesToPython()
     .def("UpdateMortarConditions",&TreeContactSearch::UpdateMortarConditions)
     .def("CleanMortarConditions",&TreeContactSearch::CleanMortarConditions)
     .def("CheckMortarConditions",&TreeContactSearch::CheckMortarConditions)
+    .def("InvertSearch",&TreeContactSearch::InvertSearch)
     ;
   
     // Process Factory utility

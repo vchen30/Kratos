@@ -87,7 +87,7 @@ void TreeContactSearch::InitializeMortarConditions()
     {
         auto it_cond = conditions_array.begin() + i;
 
-        it_cond->SetValue(MAPPING_PAIRS, ConditionMap::Pointer(new ConditionMap)); 
+        if (it_cond->Has(MAPPING_PAIRS) == false) it_cond->SetValue(MAPPING_PAIRS, ConditionMap::Pointer(new ConditionMap)); 
 //             it_cond->GetValue(MAPPING_PAIRS)->reserve(mAllocationSize); 
     }
 }
@@ -566,6 +566,14 @@ void TreeContactSearch::CheckMortarConditions()
         
         if (it_node->Is(ACTIVE) == true) std::cout << "Node: " << it_node->Id() << " is active" << std::endl;
     }
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void TreeContactSearch::InvertSearch()
+{
+    mInvertedSearch = !mInvertedSearch;
 }
 
 /***********************************************************************************/

@@ -197,6 +197,12 @@ public:
     
     void CheckMortarConditions();
     
+    /**
+     * It sets if the search is inverted
+     */
+    
+    void InvertSearch();
+    
     ///@}
     ///@name Access
     ///@{
