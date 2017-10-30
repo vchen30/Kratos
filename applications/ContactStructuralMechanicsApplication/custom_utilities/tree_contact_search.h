@@ -255,7 +255,8 @@ protected:
     static inline CheckResult CheckCondition(
         ConditionMap::Pointer& ConditionPointers1,
         const Condition::Pointer& pCond1,
-        const Condition::Pointer& pCond2
+        const Condition::Pointer& pCond2,
+        const bool InvertedSearch = false
         );
     
     /**  
