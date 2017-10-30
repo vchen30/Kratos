@@ -48,15 +48,7 @@ class ALMContactProcess(python_process.PythonProcess):
             "hard_clear_after_step"       : false,
             "database_step_update"        : 1,
             "integration_order"           : 3,
-            "predict_with_linear_solver"  : false,
             "max_gap_factor"              : 0.0,
-            "linear_solver_settings"      : {
-                "solver_type"             : "SuperLUSolver",
-                "max_iteration"           : 500,
-                "tolerance"               : 1e-9,
-                "scaling"                 : false,
-                "verbosity"               : 1
-            },
             "debug_mode"                  : false,
             "remeshing_with_contact_bc"   : false
         }
@@ -80,7 +72,6 @@ class ALMContactProcess(python_process.PythonProcess):
         self.database_step_update = self.params["database_step_update"].GetInt() 
         self.database_step = 0
         self.frictional_law = self.params["frictional_law"].GetString()
-        self.predict_with_linear_solver = self.params["predict_with_linear_solver"].GetBool()
         self.debug_mode = self.params["debug_mode"].GetBool()
         self.hard_clear_after_step = self.params["hard_clear_after_step"].GetBool()
         
@@ -184,22 +175,6 @@ class ALMContactProcess(python_process.PythonProcess):
             
             self.contact_search.UpdateMortarConditions()
             #self.contact_search.CheckMortarConditions()
-                
-            if (self.predict_with_linear_solver == True and self.global_step > 1):
-                # Debug
-                if (self.debug_mode == True):
-                    self._debug_output(self.global_step, "_LINEARPRED")
-                self._linear_solver_predict()
-                if (self.hard_clear_after_step == True):
-                    if self.params["contact_type"].GetString() == "Frictionless":  
-                        self.contact_search.TotalClearALMFrictionlessMortarConditions()
-                    else:
-                        self.contact_search.TotalClearComponentsMortarConditions()
-                        
-                    self.contact_search.UpdateMortarConditions()
-                    #self.contact_search.CheckMortarConditions()
-                else:
-                    self.contact_search.CleanMortarConditions()
                 
             # Debug
             if (self.debug_mode == True):
@@ -375,30 +350,6 @@ class ALMContactProcess(python_process.PythonProcess):
         
         #self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
         #self.set_contact_bc.Execute()
-        
-    def _linear_solver_predict(self):
-        import linear_solver_factory
-        linear_solver = linear_solver_factory.ConstructSolver(self.params["linear_solver_settings"])
-        builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolver(linear_solver)
-        scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
-        
-        compute_reactions = True
-        reform_step_dofs = True
-        calculate_norm_dx = False
-        move_mesh_flag = True
-        strategy = KratosMultiphysics.ResidualBasedLinearStrategy(self.main_model_part, 
-                                                                scheme, 
-                                                                linear_solver, 
-                                                                builder_and_solver, 
-                                                                compute_reactions, 
-                                                                reform_step_dofs, 
-                                                                calculate_norm_dx,
-                                                                move_mesh_flag
-                                                                )
-        strategy.SetEchoLevel(0)
-        strategy.Check()
-        strategy.Solve()
-        strategy.Clear()
     
     def _debug_output(self, label, name):
 
