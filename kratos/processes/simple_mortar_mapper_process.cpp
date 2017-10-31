@@ -409,7 +409,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ComputeResidua
     GeometryType& MasterGeometry,
     const MortarOperator<TNumNodes>& ThisMortarOperators
     )
-{
+{    
     Matrix var_origin_matrix;
     MortarUtilities::MatrixValue<TVarType, THist>(MasterGeometry, mOriginVariable, var_origin_matrix);
     Matrix var_destination_matrix;
@@ -506,7 +506,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteExplici
     unsigned int iteration = 0;
     
     // We set to zero the variables
-    MortarUtilities::ResetValue<TVarType, THist>(mrThisModelPart, mDestinationVariable);
+    MortarUtilities::ResetValue<TVarType, THist>(mrThisModelPart, mDestinationVariable, mInvertedPairing);
     
     // Getting the auxiliar variable
     TVarType aux_variable = MortarUtilities::GetAuxiliarVariable<TVarType>();
@@ -548,13 +548,13 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteExplici
         for(int i = 0; i < num_conditions; ++i) 
         {
             auto it_cond = conditions_array.begin() + i;
-            
+
             if (it_cond->Is(SLAVE) == !mInvertedPairing)
             {
                 const array_1d<double, 3>& slave_normal = it_cond->GetValue(NORMAL);
                 GeometryType& slave_geometry = it_cond->GetGeometry();
                 
-                boost::shared_ptr<ConditionMap>& all_conditions_maps = it_cond->GetValue( MAPPING_PAIRS ); // These are the master conditions
+                ConditionMap::Pointer& all_conditions_maps = it_cond->GetValue( MAPPING_PAIRS ); // These are the master conditions
                 
                 for (auto it_pair = all_conditions_maps->begin(); it_pair != all_conditions_maps->end(); ++it_pair )
                 {
@@ -626,7 +626,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteExplici
         {
             auto it_node = nodes_array.begin() + i;
             if (it_node->Is(SLAVE) == !mInvertedPairing)
-            {                    
+            {    
                 Node<3>::Pointer pnode = *(it_node.base());
                 MortarUtilities::AddAreaWeightedNodalValue<TVarType, THist>(pnode, mDestinationVariable);
                 for (unsigned int i_size = 0; i_size < variable_size; ++i_size)
@@ -678,7 +678,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteImplici
     unsigned int iteration = 0;
     
     // We set to zero the variables
-    MortarUtilities::ResetValue<TVarType, THist>(mrThisModelPart, mDestinationVariable);
+    MortarUtilities::ResetValue<TVarType, THist>(mrThisModelPart, mDestinationVariable, mInvertedPairing);
     
     // Creating the assemble database
     std::size_t system_size;
@@ -730,7 +730,7 @@ void SimpleMortarMapperProcess<TDim, TNumNodes, TVarType, THist>::ExecuteImplici
                 const array_1d<double, 3>& slave_normal = it_cond->GetValue(NORMAL);
                 GeometryType& slave_geometry = it_cond->GetGeometry();
                 
-                boost::shared_ptr<ConditionMap>& all_conditions_maps = it_cond->GetValue( MAPPING_PAIRS ); // These are the master conditions
+                ConditionMap::Pointer& all_conditions_maps = it_cond->GetValue( MAPPING_PAIRS ); // These are the master conditions
                 
                 for (auto it_pair = all_conditions_maps->begin(); it_pair != all_conditions_maps->end(); ++it_pair )
                 {
