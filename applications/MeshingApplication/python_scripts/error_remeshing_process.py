@@ -98,7 +98,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
              
     def ExecuteFinalizeSolutionStep(self):
         self.__error_calculation()
-        if (self.estimated_error > self.error_threshold):
+        if (self.Model[self.model_part_name].ProcessInfo[MeshingApplication.ERROR_ESTIMATE] > self.error_threshold):
             self.__execute_refinement()
 
     def ExecuteBeforeOutputStep(self):
@@ -149,7 +149,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         print("Calculating the metrics")
         # Execute metric computation
         for metric_process in self.MetricsProcess:
-            self.estimated_error = metric_process.Execute()
+            #self.estimated_error = metric_process.Execute()
+            metric_process.Execute()
         
     def __generate_submodelparts_list_from_input(self, param):
         '''Parse a list of variables from input.'''

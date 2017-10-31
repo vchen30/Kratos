@@ -174,7 +174,7 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
         double new_element_size;
         new_element_size = it_elem->GetValue(ELEMENT_H)/it_elem->GetValue(ELEMENT_ERROR);
         //new_element_size *= std::sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
-        new_element_size *= std::sqrt((std::pow(energy_norm_overall, 2)+ std::pow(error_overall, 2))/400.0) * 0.15;
+        new_element_size *= std::sqrt((std::pow(energy_norm_overall, 2)+ std::pow(error_overall, 2))/1000.0) * 0.15;
         
         // Set minimal and maximal element size
         if(new_element_size < mMinSize)
