@@ -268,7 +268,8 @@ public:
         // Final check
         const double mesh_error = mConstantError * std::sqrt(total_error_pow2);
 //         const double mesh_error = std::sqrt(total_error_pow2/(current_sol_pow2 + total_error_pow2));*/
-            // Computing metric
+        
+        // Computing metric
         // We initialize the check
         bool converged_error = true;
         double estimated_error = 0;
@@ -277,14 +278,16 @@ public:
             MetricFastInit<2> MetricInit = MetricFastInit<2>(mThisModelPart);
             MetricInit.Execute();           
             ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-            estimated_error = ComputeMetric.Execute();
+            ComputeMetric.Execute();
+            estimated_error = mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE];
         }
         else
         {
             MetricFastInit<3> MetricInit = MetricFastInit<3>(mThisModelPart);
             MetricInit.Execute();
             ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
-            estimated_error = ComputeMetric.Execute();
+            ComputeMetric.Execute();
+            estimated_error = mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE];
         }
         if (estimated_error > 0.21)
         {

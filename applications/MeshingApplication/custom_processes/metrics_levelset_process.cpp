@@ -68,7 +68,7 @@ void ComputeLevelSetSolMetricProcess<TDim>::Execute()
     int num_nodes = nodes_array.end() - nodes_array.begin();
     
     #pragma omp parallel for 
-    for(int i = 0; i < num_nodes; i++) 
+    for(int i = 0; i < num_nodes; ++i) 
     {
         auto it_node = nodes_array.begin() + i;
         

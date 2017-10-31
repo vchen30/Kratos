@@ -40,6 +40,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             "save_external_files"              : false,
             "save_mdpa_file"                   : false,
             "max_number_of_searchs"            : 1000,
+            "debug_mode"                       : false,
             "echo_level"                       : 3
         }
         """)
@@ -122,7 +123,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
                 self.Model[self.model_part_name], 
                 spr_parameters))
         else:
-            self.MetricsProcess.append(MeshingApplicati_CreateMetricsProcesson.ComputeSPRErrorSolMetricProcess3D(
+            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
                 self.Model[self.model_part_name], 
                 spr_parameters))                        
 
@@ -130,6 +131,10 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
         print("Remeshing")
         self.MmgProcess.Execute()
+
+        if (self.params["debug_mode"].GetBool() == True):
+            step = self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.TIME_STEPS]
+            self._debug_output(step, "")
 
         # We need to set that the model part has been modified (later on we will act in consequence)
         self.Model[self.model_part_name].Set(KratosMultiphysics.MODIFIED, True)
@@ -179,3 +184,22 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
                 variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Z" ))
 
       return variable_list
+  
+    def _debug_output(self, label, name):
+        gid_mode = KratosMultiphysics.GiDPostMode.GiD_PostBinary
+        singlefile = KratosMultiphysics.MultiFileFlag.SingleFile
+        deformed = KratosMultiphysics.WriteDeformedMeshFlag.WriteUndeformed
+        write_conditions = KratosMultiphysics.WriteConditionsFlag.WriteConditions
+        gid_io = KratosMultiphysics.GidIO("REMESHING_"+name+"_STEP_"+str(label), gid_mode, singlefile, deformed, write_conditions)
+        
+        gid_io.InitializeMesh(label)
+        gid_io.WriteMesh(self.Model[self.model_part_name].GetMesh())
+        gid_io.FinalizeMesh()
+        gid_io.InitializeResults(label, self.Model[self.model_part_name].GetMesh())
+        if (self.params["framework"].GetString() ==  "Lagrangian"):
+            gid_io.WriteNodalResults(KratosMultiphysics.DISPLACEMENT, self.Model[self.model_part_name].Nodes, label, 0)
+        else:
+            gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY, self.Model[self.model_part_name].Nodes, label, 0)
+        gid_io.FinalizeResults()
+        
+        #raise NameError("DEBUG")
