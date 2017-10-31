@@ -25,7 +25,6 @@
 //Utilities
 #include "custom_utilities/tree_contact_search.h"
 #include "custom_utilities/process_factory_utility.h"
-#include "custom_utilities/extract_nodal_contact_pressure.h"
 
 namespace Kratos
 {
@@ -68,11 +67,6 @@ void  AddCustomUtilitiesToPython()
     .def("ExecuteAfterOutputStep",&ProcessFactoryUtility::ExecuteAfterOutputStep)
     .def("ExecuteFinalize",&ProcessFactoryUtility::ExecuteFinalize)
     .def("Clear",&ProcessFactoryUtility::Clear)
-    ;
-
-    class_<ExtractNodalContactPressure>("ExtractNodalContactPressure", init<ModelPart&>())
-    .def(init<ModelPart&>())
-    .def("Execute",&ExtractNodalContactPressure::Execute)
     ;
 }
 
