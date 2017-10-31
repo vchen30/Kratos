@@ -70,8 +70,8 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
     NodesArrayType& nodes_array = mThisModelPart.Nodes();
     int num_nodes = nodes_array.end() - nodes_array.begin();
     
-    for(int i__node = 0; i__node < num_nodes; ++i__node) {
-        auto it_node = nodes_array.begin() + i__node;
+    for(int i_node = 0; i_node < num_nodes; ++i_node) {
+        auto it_node = nodes_array.begin() + i_node;
         
         const unsigned int neighbour_size = it_node->GetValue(NEIGHBOUR_ELEMENTS).size();
 

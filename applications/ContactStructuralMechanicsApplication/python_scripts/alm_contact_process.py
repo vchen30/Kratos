@@ -376,7 +376,7 @@ class ALMContactProcess(python_process.PythonProcess):
         
         # Transfering the AUGMENTED_NORMAL_CONTACT_PRESSURE to NORMAL_CONTACT_STRESS
         for node in interface_model_part.Nodes:
-            aug_press = node.GetSolutionStepValue(ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE)
+            aug_press = node.GetValue(ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE)
             node.SetValue(KratosMultiphysics.NORMAL_CONTACT_STRESS, aug_press)
         del(node)
     
