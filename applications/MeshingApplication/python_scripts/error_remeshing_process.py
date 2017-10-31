@@ -111,7 +111,6 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         pass
 
     def __create_metric_process(self):
-        self.MetricsProcess = []
         spr_parameters = KratosMultiphysics.Parameters("""{}""")
         spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
         spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
@@ -119,13 +118,13 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         spr_parameters.AddValue("echo_level", self.params["echo_level"])
             
         if (self.dim == 2):
-            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
+            self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
                 self.Model[self.model_part_name], 
-                spr_parameters))
+                spr_parameters)
         else:
-            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
+            self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
                 self.Model[self.model_part_name], 
-                spr_parameters))                        
+                spr_parameters)                     
 
     def __execute_refinement(self):
 
@@ -148,9 +147,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
         print("Calculating the metrics")
         # Execute metric computation
-        for metric_process in self.MetricsProcess:
-            #self.estimated_error = metric_process.Execute()
-            metric_process.Execute()
+        self.metric_process.Execute()
+        self.estimated_error = self.Model[self.model_part_name].ProcessInfo[MeshingApplication.ERROR_ESTIMATE]
         
     def __generate_submodelparts_list_from_input(self, param):
         '''Parse a list of variables from input.'''
