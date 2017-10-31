@@ -144,9 +144,10 @@ class MmgProcess(KratosMultiphysics.Process):
         for submodelpart in submodelpartslist:
             for node in submodelpart.Nodes:
                 node.Set(KratosMultiphysics.BLOCKED, True)
+            del(node)
 
         if (self.strategy == "LevelSet"):
-            self._CreateGradientProcess()
+            self.__create_gradient_process()
 
         if (self.dim == 2):
             self.initialize_metric = MeshingApplication.MetricFastInit2D(self.Model[self.model_part_name])
@@ -155,7 +156,7 @@ class MmgProcess(KratosMultiphysics.Process):
             
         self.initialize_metric.Execute()
 
-        self._CreateMetricsProcess()
+        self.__create_metrics_process()
 
         mmg_parameters = KratosMultiphysics.Parameters("""{}""")
         mmg_parameters.AddValue("filename",self.params["filename"])
@@ -170,7 +171,7 @@ class MmgProcess(KratosMultiphysics.Process):
             self.MmgProcess = MeshingApplication.MmgProcess3D(self.Model[self.model_part_name], mmg_parameters)
 
         if (self.initial_remeshing == True):
-            self._ExecuteRefinement()
+            self.__execute_refinement()
 
     def ExecuteBeforeSolutionLoop(self):
         self.step = 0
@@ -185,7 +186,7 @@ class MmgProcess(KratosMultiphysics.Process):
             if self.step_frequency > 0:
                 if self.step >= self.step_frequency:
                     if self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.TIME_STEPS] >= self.initial_step:
-                        self._ExecuteRefinement()
+                        self.__execute_refinement()
                         self.step = 0  # Reset
 
     def ExecuteFinalizeSolutionStep(self):
@@ -200,7 +201,7 @@ class MmgProcess(KratosMultiphysics.Process):
     def ExecuteFinalize(self):
         pass
 
-    def _CreateMetricsProcess(self):
+    def __create_metrics_process(self):
         self.MetricsProcess = []
         if (self.strategy == "LevelSet"):
             level_set_parameters = KratosMultiphysics.Parameters("""{}""")
@@ -252,14 +253,14 @@ class MmgProcess(KratosMultiphysics.Process):
                             current_metric_variable,
                             hessian_parameters))
 
-    def _CreateGradientProcess(self):
+    def __create_gradient_process(self):
         # We compute the scalar value gradient
         if (self.dim == 2):
             self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.Model[self.model_part_name], self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
         else:
             self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess3D(self.Model[self.model_part_name], self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
 
-    def _ExecuteRefinement(self):
+    def __execute_refinement(self):
         if (self.strategy == "LevelSet"):
             # Calculate the gradient
             self.local_gradient.Execute()

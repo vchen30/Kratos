@@ -2,20 +2,14 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the Kratos Library
 import KratosMultiphysics as KratosMultiphysics
 import KratosMultiphysics.MeshingApplication as MeshingApplication
-import os
-import math
-from json_utilities import *
-import json
 KratosMultiphysics.CheckForPreviousImport()
-
 
 def Factory(settings, Model):
     if(type(settings) != KratosMultiphysics.Parameters):
         raise Exception("Expected input shall be a Parameters object, encapsulating a json string")
-    return RemeshingProcess(Model, settings["Parameters"])
+    return ErrorRemeshingProcess(Model, settings["Parameters"])
 
-
-class RemeshingProcess(KratosMultiphysics.Process):
+class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
     def __init__(self,Model,params):
 
@@ -25,14 +19,8 @@ class RemeshingProcess(KratosMultiphysics.Process):
             "mesh_id"                          : 0,
             "filename"                         : "out",
             "model_part_name"                  : "MainModelPart",
-            "save_mdpa_file"                   : false,
-            "strategy"                         : "LevelSet",
-            "level_set_strategy_parameters"              :{
-                "scalar_variable"                  : "DISTANCE",
-                "gradient_variable"                : "DISTANCE_GRADIENT"
-            },
-            "framework"                            : "Lagrangian",
-            "internal_variables_parameters"        :
+            "framework"                        : "Lagrangian",
+            "internal_variables_parameters"    :
             {
                 "allocation_size"                      : 1000, 
                 "bucket_size"                          : 4, 
@@ -40,42 +28,19 @@ class RemeshingProcess(KratosMultiphysics.Process):
                 "interpolation_type"                   : "LST",
                 "internal_variable_interpolation_list" :[]
             },
-            "hessian_strategy_parameters"              :{
-                "metric_variable"                  : ["DISTANCE"],
-                "interpolation_error"              : 0.04,
-                "mesh_dependent_constant"          : 0.0
+            "error_parameters"                 :
+            {
+                "error_threshold"                       : 0.05,
+                "initial_run"                           : true,
+                "interpolation_error"                   : 0.04
             },
-            "error_parameters"              :{
-                "initial_run"                  : true,
-                "interpolation_error"          : 0.04
-            },
-            "enforce_current"                  : true,
-            "initial_step"                     : 1,
-            "step_frequency"                   : 0,
-            "automatic_remesh"                 : true,
-            "automatic_remesh_parameters"      :{
-                "automatic_remesh_type"            : "Ratio",
-                "min_size_ratio"                   : 1.0,
-                "max_size_ratio"                   : 3.0,
-                "refer_type"                       : "Mean",
-                "min_size_current_percentage"      : 50.0,
-                "max_size_current_percentage"      : 98.0
-            },
-            "initial_remeshing"                : true,
             "fix_contour_model_parts"          : [],
             "minimal_size"                     : 0.01,
             "maximal_size"                     : 10.0,
-            "anisotropy_remeshing"             : true,
-            "anisotropy_parameters":{
-                "hmin_over_hmax_anisotropic_ratio" : 0.01,
-                "boundary_layer_max_distance"      : 1.0,
-                "boundary_layer_min_size_ratio"    : 2.0,
-                "interpolation"                    : "Linear"
-            },
             "save_external_files"              : false,
+            "save_mdpa_file"                   : false,
             "max_number_of_searchs"            : 1000,
-            "echo_level"                       : 3,
-            "execute_remeshing"                : false
+            "echo_level"                       : 3
         }
         """)
 
@@ -87,14 +52,19 @@ class RemeshingProcess(KratosMultiphysics.Process):
         self.model_part_name = self.params["model_part_name"].GetString()
         self.dim = self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
         self.params = params
-
-        self.enforce_current = self.params["enforce_current"].GetBool()
-
-        self.initial_remeshing = self.params["initial_remeshing"].GetBool()
-
+        
+        self.error_threshold = self.params["error_parameters"]["error_threshold"].GetDouble()
         self.estimated_error = 0
 
     def ExecuteInitialize(self):
+        # NOTE: Add more model part if interested
+        submodelpartslist = self.__generate_submodelparts_list_from_input(self.params["fix_contour_model_parts"])
+
+        for submodelpart in submodelpartslist:
+            for node in submodelpart.Nodes:
+                node.Set(KratosMultiphysics.BLOCKED, True)
+            del(node)
+        
         if (self.dim == 2):
             self.initialize_metric = MeshingApplication.MetricFastInit2D(self.Model[self.model_part_name])
         else:
@@ -102,7 +72,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
             
         self.initialize_metric.Execute()
 
-        self._CreateMetricsProcess()
+        self.__create_metric_process()
 
         mmg_parameters = KratosMultiphysics.Parameters("""{}""")
         mmg_parameters.AddValue("filename",self.params["filename"])
@@ -124,15 +94,11 @@ class RemeshingProcess(KratosMultiphysics.Process):
 
     def ExecuteInitializeSolutionStep(self):
         pass
-
-                                
+             
     def ExecuteFinalizeSolutionStep(self):
-        self._ErrorCalculation()
-        if (self.estimated_error > 0.05):
-            self._ExecuteRefinement()
-
-
-            
+        self.__error_calculation()
+        if (self.estimated_error > self.error_threshold):
+            self.__execute_refinement()
 
     def ExecuteBeforeOutputStep(self):
         pass
@@ -143,7 +109,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
     def ExecuteFinalize(self):
         pass
 
-    def _CreateMetricsProcess(self):
+    def __create_metric_process(self):
         self.MetricsProcess = []
         spr_parameters = KratosMultiphysics.Parameters("""{}""")
         spr_parameters.AddValue("minimal_size",self.params["minimal_size"])
@@ -153,14 +119,14 @@ class RemeshingProcess(KratosMultiphysics.Process):
             
         if (self.dim == 2):
             self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-                self.Model[self.model_part_name],
+                self.Model[self.model_part_name], 
                 spr_parameters))
         else:
-            self.MetricsProcess.append(MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-                self.Model[self.model_part_name],
+            self.MetricsProcess.append(MeshingApplicati_CreateMetricsProcesson.ComputeSPRErrorSolMetricProcess3D(
+                self.Model[self.model_part_name], 
                 spr_parameters))                        
 
-    def _ExecuteRefinement(self):
+    def __execute_refinement(self):
 
         print("Remeshing")
         self.MmgProcess.Execute()
@@ -170,7 +136,7 @@ class RemeshingProcess(KratosMultiphysics.Process):
 
         print("Remesh finished")
 
-    def _ErrorCalculation (self):
+    def __error_calculation(self):
 
         # Initialize metric
         self.initialize_metric.Execute()
@@ -179,3 +145,37 @@ class RemeshingProcess(KratosMultiphysics.Process):
         # Execute metric computation
         for metric_process in self.MetricsProcess:
             self.estimated_error = metric_process.Execute()
+        
+    def __generate_submodelparts_list_from_input(self, param):
+        '''Parse a list of variables from input.'''
+        # At least verify that the input is a string
+        if not param.IsArray():
+            raise Exception("{0} Error: Variable list is unreadable".format(self.__class__.__name__))
+
+        # Retrieve submodelparts name from input (a string) and request the corresponding C++ object to the kernel
+        return [self.Model[self.model_part_name].GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
+
+    def __generate_variable_list_from_input(self, param):
+      '''Parse a list of variables from input.'''
+      # At least verify that the input is a string
+      if not param.IsArray():
+          raise Exception("{0} Error: Variable list is unreadable".format(self.__class__.__name__))
+
+      # Retrieve variable name from input (a string) and request the corresponding C++ object to the kernel
+
+      variable_list = []
+
+      for i in range( 0,param.size()):
+          aux_var = KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString() )
+          for node in self.Model[self.model_part_name].Nodes:
+            val = node.GetSolutionStepValue(aux_var, 0)
+            break
+          if isinstance(val,float):
+              variable_list.append(aux_var)
+          else:
+              variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_X" ))
+              variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Y" ))
+              if (self.dim == 3):
+                variable_list.append( KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString()+"_Z" ))
+
+      return variable_list
