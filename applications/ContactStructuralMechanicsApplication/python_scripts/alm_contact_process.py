@@ -188,7 +188,8 @@ class ALMContactProcess(python_process.PythonProcess):
         pass
 
     def ExecuteAfterOutputStep(self):
-        if (self.database_step >= self.database_step_update or self.global_step == 1):
+        modified = self.main_model_part.Is(KratosMultiphysics.MODIFIED)
+        if (modified == False and (self.database_step >= self.database_step_update or self.global_step == 1)):
             self._clear_sets(self.contact_search, self.hard_clear_after_step)
             
     def ExecuteFinalize(self):
