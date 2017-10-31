@@ -221,7 +221,7 @@ void TreeContactSearch::CreatePointListMortar()
             
             if (it_cond->Is(MASTER) == !mInvertedSearch)
             {
-                PointTypePointer p_point = PointTypePointer(new PointItem((*it_cond.base())));
+                const PointTypePointer& p_point = PointTypePointer(new PointItem((*it_cond.base())));
                 (points_buffer[thread_id]).push_back(p_point);
             }
         }

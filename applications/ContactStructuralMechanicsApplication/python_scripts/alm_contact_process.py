@@ -337,7 +337,6 @@ class ALMContactProcess(python_process.PythonProcess):
         self._reset_search()
         self.contact_search.UpdateMortarConditions()
         #self.contact_search.CheckMortarConditions()
-        self._reset_search()
         
         map_parameters = KratosMultiphysics.Parameters("""
         {
@@ -350,31 +349,32 @@ class ALMContactProcess(python_process.PythonProcess):
         }
         """)
         
+        computing_model_part = self.main_model_part.GetSubModelPart(self.computing_model_part_name)
+        interface_model_part = computing_model_part.GetSubModelPart("Contact")
         if (self.dimension == 2): 
             if self.params["contact_type"].GetString() == "Frictional":
-                mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+                mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NVectorHistorical(interface_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
             else:
-                mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
-                mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+                mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleHistorical(interface_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess2D2NDoubleNonHistorical(interface_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
         else:
             if (num_nodes == 3): 
                 if self.params["contact_type"].GetString() == "Frictional":
-                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NVectorHistorical(interface_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
                 else:
-                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
-                    mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleHistorical(interface_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                    mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D3NDoubleNonHistorical(interface_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
             else:
                 if self.params["contact_type"].GetString() == "Frictional":
-                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NVectorHistorical(self.main_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
+                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NVectorHistorical(interface_model_part, KratosMultiphysics.VECTOR_LAGRANGE_MULTIPLIER, map_parameters)
                 else:
-                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleHistorical(self.main_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
-                    mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleNonHistorical(self.main_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
+                    mortar_mapping0 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleHistorical(interface_model_part, KratosMultiphysics.NORMAL_CONTACT_STRESS, map_parameters)
+                    mortar_mapping1 = KratosMultiphysics.SimpleMortarMapperProcess3D4NDoubleNonHistorical(interface_model_part, ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, map_parameters)
                     
         mortar_mapping0.Execute()
-        #mortar_mapping1.Execute()
-        
-        #self.set_contact_bc = ContactStructuralMechanicsApplication.ExtractNodalContactPressure(self.contact_model_part)
-        #self.set_contact_bc.Execute()
+        mortar_mapping1.Execute()
+    
+        self._reset_search()
     
     def _reset_search(self):
         self.contact_search.InvertSearch()
