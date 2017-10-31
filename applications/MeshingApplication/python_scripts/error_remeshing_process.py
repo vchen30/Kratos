@@ -41,7 +41,9 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             "save_mdpa_file"                   : false,
             "max_number_of_searchs"            : 1000,
             "debug_mode"                       : false,
-            "echo_level"                       : 3
+            "echo_level"                       : 3,
+            "set_number_of_elements"              : false,
+            "number_of_elements"                  : 1000
         }
         """)
 
@@ -116,6 +118,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         spr_parameters.AddValue("maximal_size",self.params["maximal_size"])
         spr_parameters.AddValue("error",self.params["error_parameters"]["interpolation_error"])
         spr_parameters.AddValue("echo_level", self.params["echo_level"])
+        spr_parameters.AddValue("set_number_of_elements", self.params["set_number_of_elements"])
+        spr_parameters.AddValue("number_of_elements", self.params["number_of_elements"])
             
         if (self.dim == 2):
             self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess2D(

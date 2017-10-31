@@ -187,7 +187,10 @@ private:
     double mPenaltyNormal;                   // The normal penalty
     double mPenaltyTangent;                  // The tangent penalty
     int mEchoLevel;                          // The echo level 
-    unsigned int mSigmaSize;                 // The size of the stress vector (Voig)
+    unsigned int mSigmaSize;                 // The size of the stress vector (Voigt Notation)
+    bool mSetElementNumber;                  // Determines if a target number of elements for the new mesh is set
+    unsigned int mElementNumber;             // The target number of elements for the new mesh
+    double mTargetError;                     // The overall target error for the new mesh
     
     ///@}
     ///@name Private Operators

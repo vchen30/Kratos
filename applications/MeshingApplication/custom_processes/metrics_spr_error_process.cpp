@@ -29,7 +29,9 @@ ComputeSPRErrorSolMetricProcess<TDim>::ComputeSPRErrorSolMetricProcess(
         "error"                               : 0.1,
         "penalty_normal"                      : 10000.0,
         "penalty_tangential"                  : 10000.0,
-        "echo_level"                          : 0
+        "echo_level"                          : 0,
+        "set_number_of_elements"              : false,
+        "number_of_elements"                  : 1000
     })" 
     );
     
@@ -41,6 +43,9 @@ ComputeSPRErrorSolMetricProcess<TDim>::ComputeSPRErrorSolMetricProcess(
     mPenaltyTangent = ThisParameters["penalty_tangential"].GetDouble();
     mEchoLevel = ThisParameters["echo_level"].GetInt();
     mSigmaSize = (TDim == 2) ? 3 : 6;
+    mSetElementNumber = ThisParameters["set_number_of_elements"].GetBool();
+    mElementNumber = ThisParameters["number_of_elements"].GetInt();
+    mTargetError = ThisParameters["error"].GetDouble();
 }
     
 /***********************************************************************************/
@@ -173,10 +178,15 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
         // Compute new element size
         double new_element_size;
         new_element_size = it_elem->GetValue(ELEMENT_H)/it_elem->GetValue(ELEMENT_ERROR);
-        //new_element_size *= std::sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*0.15;
-        new_element_size *= std::sqrt((std::pow(energy_norm_overall, 2)+ std::pow(error_overall, 2))/1000.0) * 0.15;
+
+        // if a target number for elements is given: use this, else: use current element number
+        if(mSetElementNumber == true)
+        new_element_size *= std::sqrt((std::pow(energy_norm_overall, 2)+ std::pow(error_overall, 2))/mElementNumber) * mTargetError;
+        else
+        new_element_size *= std::sqrt((energy_norm_overall*energy_norm_overall+error_overall*error_overall)/mThisModelPart.Elements().size())*mTargetError;
         
-        // Set minimal and maximal element size
+        
+        // Check if element sizes are in specified limits. If not, set them to the limit case
         if(new_element_size < mMinSize)
             new_element_size = mMinSize;
         if(new_element_size > mMaxSize)
