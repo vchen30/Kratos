@@ -31,7 +31,6 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             "error_parameters"                 :
             {
                 "error_threshold"                       : 0.05,
-                "initial_run"                           : true,
                 "interpolation_error"                   : 0.04
             },
             "fix_contour_model_parts"          : [],
