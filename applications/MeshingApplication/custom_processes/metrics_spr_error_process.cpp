@@ -237,7 +237,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatch(
     Vector& rSigmaRecovered)
 {
     // Determine if contact BC has to be regarded
-    const bool regard_contact = (itNode->GetValue(CONTACT_PRESSURE) > 0.0);
+    const bool regard_contact = (itNode->GetValue(CONTACT_PRESSURE) != 0.0);
     
     //regard_contact = itPatchNode->Has(CONTACT_PRESSURE);
     /*if(regard_contact == false)
@@ -331,6 +331,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchContact(
     unsigned int NeighbourSize,
     Vector& rSigmaRecovered)
 {
+
     std::vector<Vector> stress_vector(1);
     std::vector<array_1d<double,3>> coordinates_vector(1);
     Variable<array_1d<double,3>> variable_coordinates = INTEGRATION_COORDINATES;
