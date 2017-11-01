@@ -148,32 +148,28 @@ public:
             const double& epsilon = it_node->GetValue(INITIAL_PENALTY);
             
             // Check if the node is slave
-            bool node_is_slave = true;
-            if ((it_node)->IsDefined(SLAVE))
-            {
-                node_is_slave = (it_node)->Is(SLAVE);
-            }
+            const bool node_is_slave = it_node->IsDefined(SLAVE) ? it_node->Is(SLAVE) : false;
             
             if (node_is_slave == true)
             {
-                const double augmented_normal_pressure = scale_factor * (it_node)->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) + epsilon * (it_node)->FastGetSolutionStepValue(WEIGHTED_GAP);     
+                const double augmented_normal_pressure = scale_factor * it_node->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);     
                     
-                (it_node)->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure); // NOTE: This value is purely for debugging interest (to see the "effective" pressure)
+                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure); // NOTE: This value is purely for debugging interest (to see the "effective" pressure)
 
                 if (augmented_normal_pressure < mTolerance * scale_factor) // NOTE: This could be conflictive (< or <=)
                 {
-                    if ((it_node)->Is(ACTIVE) == false )
+                    if (it_node->Is(ACTIVE) == false )
                     {
-                        (it_node)->Set(ACTIVE, true);
+                        it_node->Set(ACTIVE, true);
                         #pragma omp atomic
                         is_converged += 1;
                     }
                 }
                 else
                 {
-                    if ((it_node)->Is(ACTIVE) == true )
+                    if (it_node->Is(ACTIVE) == true )
                     {
-                        (it_node)->Set(ACTIVE, false);
+                        it_node->Set(ACTIVE, false);
                         #pragma omp atomic
                         is_converged += 1;
                     }

@@ -56,10 +56,10 @@ namespace Kratos
                         
                         // Check if the node is slave
                         bool node_is_slave = true;
-                        if ((it_node)->IsDefined(SLAVE)) node_is_slave = (it_node)->Is(SLAVE);
+                        if (it_node->IsDefined(SLAVE)) node_is_slave = it_node->Is(SLAVE);
                         if (node_is_slave == true)
                         {
-                            if ((it_node)->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE) < 0.0) 
+                            if (it_node->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE) < 0.0) 
                             {
                                 it_node->Set(ACTIVE, true);
                             }
@@ -112,6 +112,34 @@ namespace Kratos
         contact_model_part.AddNodes(index_node);
         contact_model_part.AddConditions(index_cond);
 
+        // We reset spurious values
+        ModelPart& root_model_part = mrThisModelPart.GetRootModelPart();
+        
+        // Now we iterate over the nodes
+        NodesArrayType& root_nodes_array = root_model_part.Nodes();
+        const int root_num_nodes = static_cast<int>(root_nodes_array.size());
+        
+        #pragma omp parallel for
+        for(int i = 0; i < root_num_nodes; ++i) 
+        {
+            auto it_node = root_nodes_array.begin() + i;
+            if (it_node->IsDefined(INTERFACE) == true)
+            {
+                if (it_node->Is(INTERFACE) == false)
+                {
+                    it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, 0.0);
+                    it_node->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) = 0.0;
+                    it_node->FastGetSolutionStepValue(WEIGHTED_GAP) = 0.0;
+                }
+            }
+            else
+            {
+                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, 0.0);
+                it_node->FastGetSolutionStepValue(NORMAL_CONTACT_STRESS) = 0.0;
+                it_node->FastGetSolutionStepValue(WEIGHTED_GAP) = 0.0;
+            }
+        }
+        
         KRATOS_CATCH("");
     }
 }
