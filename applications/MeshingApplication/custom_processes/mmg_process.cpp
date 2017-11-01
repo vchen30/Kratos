@@ -30,7 +30,9 @@
 #include "utilities/binbased_fast_point_locator.h"
 // Include the spatial containers needed for search
 #include "spatial_containers/spatial_containers.h" // kd-tree 
+#include "includes/io.h"
 #include "includes/model_part_io.h"
+
 
 // NOTE: The following contains the license of the MMG library
 /* =============================================================================
@@ -89,9 +91,7 @@ MmgProcess<TDim>::MmgProcess(
         "echo_level"                       : 3,
         "step_data_size"                   : 0,
         "remesh_at_non_linear_iteration"   : false,
-        "buffer_size"                      : 0,
-        "contact_model_part_name"          : "Contact_Part",
-        "contact_model_part_bc_name"       : "Contact_Part_BC"
+        "buffer_size"                      : 0
     })" );
     
     mThisParameters.ValidateAndAssignDefaults(DefaultParameters);
@@ -564,15 +564,14 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         {
             p_node->pAddDof(*it_dof);
         }
-
-        //if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
+        
+        if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
     // Auxiliar values
     int prop_id, is_required;
     
     /* CONDITIONS */ // TODO: ADD OMP
-    
     if (mpRefCondition.size() > 0)
     {
         unsigned int cond_id = 1;
@@ -696,7 +695,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             for (auto sub_model_part_name : color_list.second)
             {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
-//                 if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);                
+                
+                if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
                 if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
                 if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);
@@ -705,13 +705,6 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         }
     }
     
-
-    // in case of contact:
-    // remove Contact part from computing_domain model part
-    if(mrThisModelPart.HasSubModelPart("computing_domain")){
-        if(mrThisModelPart.GetSubModelPart("computing_domain").HasSubModelPart("Contact"))
-            mrThisModelPart.GetSubModelPart("computing_domain").RemoveSubModelPart("Contact");
-    }
     // TODO: Add OMP
     // NOTE: We add the nodes from the elements and conditions to the respective submodelparts
     const std::vector<std::string> sub_model_part_names = mrThisModelPart.GetSubModelPartNames();
@@ -754,19 +747,6 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         std::copy(node_ids.begin(), node_ids.end(), std::back_inserter(vector_ids));
         r_sub_model_part.AddNodes(vector_ids);
     }
-    //in case of contact:
-    // Add contact nodes from the contact bc part to the contact part
-    if(mrThisModelPart.HasSubModelPart(mThisParameters["contact_model_part_bc_name"].GetString())){
-        std::vector<IndexType> vector_nodes;
-        for(auto i_nodes = mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesBegin();
-                i_nodes != mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_bc_name"].GetString()).NodesEnd();i_nodes ++){
-            vector_nodes.push_back(i_nodes->Id());
-        }
-        mrThisModelPart.GetSubModelPart( mThisParameters["contact_model_part_name"].GetString()).AddNodes(vector_nodes);
-    }
-    
-    /* After that we reorder nodes, conditions and elements: */
-    ReorderAllIds();
     
     /* Save to file */
     if (save_to_file == true) SaveSolutionToFile(true);
@@ -774,21 +754,24 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     /* Free memory */
     FreeMemory();
     
+    /* After that we reorder nodes, conditions and elements: */
+    ReorderAllIds();
+    
     /* Unmoving the original mesh to be able to interpolate */
     if (mFramework == Lagrangian) 
     {
-        NodesArrayType& nodes_array_old = r_old_model_part.Nodes();
-        const int num_nodes = static_cast<int>(nodes_array_old.size());
+        NodesArrayType& old_nodes_array = mrThisModelPart.Nodes();
+        const SizeType old_num_nodes = old_nodes_array.end() - old_nodes_array.begin();
         
         #pragma omp parallel for
-        for(int i = 0; i < num_nodes; ++i)
+        for(int i = 0; i < old_num_nodes; ++i)
         {
-            auto it_node = nodes_array_old.begin() + i;
+            auto it_node = old_nodes_array.begin() + i;
 
             noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates();
         }
     }
-
+    
     /* We interpolate all the values */
     Parameters InterpolateParameters = Parameters(R"({"echo_level": 1, "framework": "Eulerian", "max_number_of_searchs": 1000, "step_data_size": 0, "buffer_size": 0})" );
     InterpolateParameters["echo_level"].SetInt(mThisParameters["echo_level"].GetInt());
@@ -803,7 +786,6 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     InitializeElementsAndConditions();
     
     /* We do some operations related with the Lagrangian framework */
-    //if(false)
     if (mFramework == Lagrangian) 
     {
         // If we remesh during non linear iteration we just move to the previous displacement, to the last displacement otherwise
@@ -812,7 +794,6 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         /* We move the mesh */
         nodes_array = mrThisModelPart.Nodes();
         const int num_nodes = static_cast<int>(nodes_array.size());
-        std::cout<<"number of nodes: "<<num_nodes<<std::endl;
 
         #pragma omp parallel for
         for(int i = 0; i < num_nodes; ++i)
@@ -1242,7 +1223,6 @@ NodeType::Pointer MmgProcess<2>::CreateNode(
         exit(EXIT_FAILURE);
     }
     
-
     NodeType::Pointer p_node = mrThisModelPart.CreateNewNode(iNode, coord_0, coord_1, 0.0);
     
     return p_node;
@@ -1301,23 +1281,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         condition_nodes[0] = mrThisModelPart.pGetNode(edge_0);
         condition_nodes[1] = mrThisModelPart.pGetNode(edge_1);    
         
-        
-        // detect if the condition which is created is a contact condition
-        bool is_contact_condition = false;
-        
-        for(auto & color_list : mColors){
-            //if(color_list.first<=mrThisModelPart.GetSubModelPartNames().size()){
-            for (auto sub_model_part_name : color_list.second){
-                if (sub_model_part_name == mThisParameters["contact_model_part_name"].GetString()){
-                    if(PropId == color_list.first)
-                        is_contact_condition = true;
-                }
-            }
-        //}
-        }
-        // skip the condition creation if the condition belongs to the main model part or to the contact part
-        if (PropId!=0 && (is_contact_condition == false))
-            p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
+        p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
     else if (mEchoLevel > 2)
     {
@@ -1590,10 +1554,10 @@ void MmgProcess<TDim>::SaveSolutionToFile(const bool PostOutput)
 
     // Automatically save the solution 
     OutputSol(PostOutput, step);
-
-    // Save the mesh in an .mdpa format
-    const bool save_mdpa_file = mThisParameters["save_mdpa_file"].GetBool();
-    if(save_mdpa_file == true) OutputMdpa();
+    
+    // Save the mesh in an .mdpa format 
+    const bool save_mdpa_file = mThisParameters["save_mdpa_file"].GetBool(); 
+    if(save_mdpa_file == true) OutputMdpa(); 
 }
 
 /***********************************************************************************/
@@ -1856,7 +1820,6 @@ void MmgProcess<2>::OutputMesh(
     {
         std::cout << "UNABLE TO SAVE MESH" << std::endl;
     }
-
 }
 
 /***********************************************************************************/
@@ -1891,120 +1854,15 @@ void MmgProcess<3>::OutputMesh(
     }
 }
 
-/***********************************************************************************/
-/***********************************************************************************/
-
-template<unsigned int TDim>  
-void MmgProcess<TDim>::OutputMdpa()
-{
-//     std::ofstream output_file;
-//     ModelPartIO model_part_io("output",IO::WRITE);
-//     model_part_io.WriteModelPart(mrThisModelPart);
-    
-    if(TDim == 2){
-        // save mesh in .mdpa format 
-        std::ofstream output_file; 
-        output_file.open(mStdStringFilename+"_output.mdpa"); 
+/***********************************************************************************/ 
+/***********************************************************************************/ 
  
-        // header 
-        output_file<<"Begin ModelPartData\n//  VARIABLE_NAME value\nEnd ModelPartData\n\n"; 
-    
-        //properties 
-        output_file<<"Begin Properties 0\nEnd Properties\n"; 
-        output_file<<"Begin Properties 1\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
-        output_file<<"Begin Properties 2\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
-        //nodes 
-        output_file<<"Begin Nodes\n"; 
-        int i=0; 
-        for(auto i_nodes= mrThisModelPart.NodesBegin(); i_nodes != mrThisModelPart.NodesEnd(); i_nodes++){ 
-            i=i+1; 
-            output_file<<"\t"<<i<<"\t"<<i_nodes->X()<<"\t"<<i_nodes->Y()<<"\t"<<i_nodes->Z()<<"\n"; 
-        } 
-        output_file<<"End Nodes\n"; 
-    
-        //elements 
-        std::vector<std::string> submodels; 
-        submodels.push_back("Parts_Parts_Auto1"); 
-        submodels.push_back("Parts_Parts_Auto2"); 
-        for(auto i=0;i<submodels.size();i++){ 
-            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
-                output_file<<"Begin Elements SmallDisplacementElement2D3N\n"; 
-                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
-                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
-                    output_file<<"\t"<<i_element->Id()<<"\t0"; 
-                    for (auto j=0; j < i_element->GetGeometry().size(); j++){ 
-                        output_file<<"\t"<<i_element->GetGeometry()[j].Id(); 
-                    } 
-                    output_file<<"\n"; 
-                } 
-                output_file<<"End Elements\n\n"; 
-            } 
-        } 
-    
-        // conditions 
-        std::vector<std::string> conditions; 
-        conditions.push_back("DISPLACEMENT_Displacement_Auto1"); 
-        conditions.push_back("DISPLACEMENT_Displacement_Auto2"); 
-        conditions.push_back("IMPOSE_DISP_Auto1"); 
-        conditions.push_back("Contact_Part_BC"); 
-        for(auto i=0;i<conditions.size();i++){ 
-            if (mrThisModelPart.HasSubModelPart(conditions[i])){ 
-                output_file<<"Begin Conditions LineLoadCondition2D2N\n"; 
-                for (auto i_condition = mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsBegin(); 
-                        i_condition != mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsEnd(); i_condition++){ 
-                    output_file<<"\t"<<i_condition->Id()<<"\t0"; 
-                    for (auto j=0; j < i_condition->GetGeometry().size(); j++){ 
-                        output_file<<"\t"<<i_condition->GetGeometry()[j].Id(); 
-                    } 
-                    output_file<<"\n"; 
-                } 
-                output_file<<"End Conditions\n\n"; 
-            } 
-        } 
-    
-    
-        submodels.push_back("Contact_Part"); 
-        submodels.push_back("Contact_Part_BC"); 
-        submodels.push_back("DISPLACEMENT_Displacement_Auto1"); 
-        submodels.push_back("DISPLACEMENT_Displacement_Auto2"); 
-        submodels.push_back("IMPOSE_DISP_Auto1"); 
-        // submodel parts 
-        for(auto i=0;i<submodels.size();i++){ 
-            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
-                output_file<<"Begin SubModelPart "<<submodels[i]<<"\n"; 
-                //nodes 
-                output_file<<"    Begin SubModelPartNodes\n"; 
-                for(auto i_nodes = mrThisModelPart.GetSubModelPart(submodels[i]).NodesBegin(); 
-                        i_nodes != mrThisModelPart.GetSubModelPart(submodels[i]).NodesEnd(); i_nodes++){ 
-                    output_file<<"\t"<<i_nodes->Id()<<"\n"; 
-                } 
-                output_file<<"    End SubModelPartNodes\n"; 
-    
-                //elements 
-                output_file<<"    Begin SubModelPartElements\n"; 
-                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
-                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
-                    output_file<<"\t"<<i_element->Id()<<"\n"; 
-                } 
-                output_file<<"    End SubModelPartElements\n"; 
-    
-                //conditions 
-                output_file<<"    Begin SubModelPartConditions\n"; 
-                for (auto i_condition = mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsBegin(); 
-                        i_condition != mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsEnd(); i_condition++){ 
-                    output_file<<"\t"<<i_condition->Id()<<"\n"; 
-                } 
-                output_file<<"    End SubModelPartConditions\n"; 
-    
-                output_file<<"End SubModelPart\n\n"; 
-            } 
-        } 
-        output_file.close(); 
-        }
-    else{
-        std::ofstream output_file;
-        ModelPartIO model_part_io("output",IO::WRITE);
-        model_part_io.WriteModelPart(mrThisModelPart);}
+template<unsigned int TDim>   
+void MmgProcess<TDim>::OutputMdpa() 
+{ 
+    std::ofstream output_file; 
+    ModelPartIO model_part_io("output", IO::WRITE); 
+    model_part_io.WriteModelPart(mrThisModelPart); 
 }
 
 /***********************************************************************************/
