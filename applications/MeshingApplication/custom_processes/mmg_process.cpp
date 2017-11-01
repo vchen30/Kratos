@@ -263,7 +263,7 @@ void MmgProcess<TDim>::InitializeMeshData()
     /* Nodes */
     // We copy the DOF from the first node (after we release, to avoid problem with previous conditions)
     mDofs = nodes_array.begin()->GetDofs();
-    for (typename Node<3>::DofsContainerType::const_iterator it_dof = mDofs.begin(); it_dof != mDofs.end(); ++it_dof)
+    for (DofItType it_dof = mDofs.begin(); it_dof != mDofs.end(); ++it_dof)
     {
         it_dof->FreeDof();
     }
@@ -560,7 +560,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         NodeType::Pointer p_node = CreateNode(i_node, ref, is_required);
         
         // Set the DOFs in the nodes 
-        for (typename NodeType::DofsContainerType::const_iterator it_dof = mDofs.begin(); it_dof != mDofs.end(); ++it_dof)
+        for (DofItType it_dof = mDofs.begin(); it_dof != mDofs.end(); ++it_dof)
         {
             p_node->pAddDof(*it_dof);
         }

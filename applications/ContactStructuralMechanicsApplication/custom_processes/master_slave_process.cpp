@@ -53,6 +53,17 @@ namespace Kratos
                     if (it_node->Is(INTERFACE) == true)
                     {
                         (index_node_buffer[thread_id]).push_back(it_node->Id());
+                        
+                        // Check if the node is slave
+                        bool node_is_slave = true;
+                        if ((it_node)->IsDefined(SLAVE)) node_is_slave = (it_node)->Is(SLAVE);
+                        if (node_is_slave == true)
+                        {
+                            if ((it_node)->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE) < 0.0) 
+                            {
+                                it_node->Set(ACTIVE, true);
+                            }
+                        }
                     }
                 }
             }

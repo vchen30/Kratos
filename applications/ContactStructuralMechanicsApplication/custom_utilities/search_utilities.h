@@ -187,10 +187,10 @@ public:
             // Initialize the mortar operators
             rThisMortarConditionMatrices.Initialize();
             
-            for (unsigned int i_geom = 0; i_geom < conditions_points_slave.size(); i_geom++)
+            for (unsigned int i_geom = 0; i_geom < conditions_points_slave.size(); ++i_geom)
             {
                 std::vector<PointType::Pointer> points_array (TDim); // The points are stored as local coordinates, we calculate the global coordinates of this points
-                for (unsigned int i_node = 0; i_node < TDim; i_node++)
+                for (unsigned int i_node = 0; i_node < TDim; ++i_node)
                 {
                     PointType global_point;
                     SlaveGeometry.GlobalCoordinates(global_point, conditions_points_slave[i_geom][i_node]);
@@ -206,7 +206,7 @@ public:
                     const GeometryType::IntegrationPointsArrayType& integration_points_slave = decomp_geom.IntegrationPoints( this_integration_method );
                     
                     // Integrating the mortar operators
-                    for ( unsigned int point_number = 0; point_number < integration_points_slave.size(); point_number++ )
+                    for ( unsigned int point_number = 0; point_number < integration_points_slave.size(); ++point_number )
                     {
                         const PointType local_point_decomp = integration_points_slave[point_number].Coordinates();
                         PointType local_point_parent;
@@ -224,7 +224,7 @@ public:
                         
                         /// MASTER CONDITION ///
                         PointType projected_gp_global;
-                        const array_1d<double,3> gp_normal = MortarUtilities::GaussPointUnitNormal(rVariables.NSlave, SlaveGeometry);
+                        const array_1d<double,3>& gp_normal = MortarUtilities::GaussPointUnitNormal(rVariables.NSlave, SlaveGeometry);
                         
                         GeometryType::CoordinatesArrayType slave_gp_global;
                         SlaveGeometry.GlobalCoordinates( slave_gp_global, local_point );
@@ -245,35 +245,38 @@ public:
                     /* Setting the gap */
 
                     // Current coordinates 
-                    const bounded_matrix<double, TNumNodes, TDim> x1 = MortarUtilities::GetCoordinates<TDim,TNumNodes>(SlaveGeometry);
-                    const bounded_matrix<double, TNumNodes, TDim> x2 = MortarUtilities::GetCoordinates<TDim,TNumNodes>(MasterGeometry);
+                    const bounded_matrix<double, TNumNodes, TDim>& x1 = MortarUtilities::GetCoordinates<TDim,TNumNodes>(SlaveGeometry);
+                    const bounded_matrix<double, TNumNodes, TDim>& x2 = MortarUtilities::GetCoordinates<TDim,TNumNodes>(MasterGeometry);
             
                     const bounded_matrix<double, TNumNodes, TDim> Dx1Mx2 = prod(rThisMortarConditionMatrices.DOperator, x1) - prod(rThisMortarConditionMatrices.MOperator, x2); 
                     
                     array_1d<double, TDim> aux_slave_normal;
-                    for (unsigned int i_dim = 0; i_dim < TDim; i_dim++)
+                    for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
                     {
                         aux_slave_normal[i_dim] = SlaveNormal[i_dim];
                     }
                     
                     if (TFill == true)
                     {
-                        for (unsigned int i_node = 0; i_node < TNumNodes; i_node++)
+                        for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
                         {
-                            if (SlaveGeometry[i_node].Is(ACTIVE) == false)
+                            auto& this_point = SlaveGeometry[i_node];
+                            if (this_point.Is(ACTIVE) == false)
                             {
-                                const array_1d<double, 3> delta_disp = SlaveGeometry[i_node].FastGetSolutionStepValue(DISPLACEMENT, 0) - SlaveGeometry[i_node].FastGetSolutionStepValue(DISPLACEMENT, 1);
+                                const array_1d<double, 3>& current_disp = this_point.FastGetSolutionStepValue(DISPLACEMENT);
+                                const array_1d<double, 3>& previous_disp = this_point.FastGetSolutionStepValue(DISPLACEMENT, 1);
+                                const array_1d<double, 3> delta_disp = (norm_2(previous_disp) > 0.0) ? (current_disp - previous_disp) : previous_disp;
                                 
                                 // We check if the movement is in the direction of the normal
-                                const bool moving_gap_direction = norm_2(delta_disp) > 0.0 ? (inner_prod(delta_disp, SlaveNormal) > 0 ) : true;
+                                const bool moving_gap_direction = (norm_2(delta_disp) > 0.0) ? (inner_prod(delta_disp, SlaveNormal) >= 0.0) : true;
                                 
                                 const array_1d<double, TDim> aux_array = row(Dx1Mx2, i_node);
                                 
-                                const double nodal_gap = inner_prod(aux_array, - aux_slave_normal); 
+                                const double nodal_gap = inner_prod(aux_array, - aux_slave_normal);
                                 
                                 if ((nodal_gap < ActiveCheckLength) && (moving_gap_direction == true))
                                 {                                    
-                                    SlaveGeometry[i_node].Set(ACTIVE, true);
+                                    this_point.Set(ACTIVE, true);
                                     condition_is_active = true;
                                 }
                             }
@@ -285,16 +288,11 @@ public:
                     }
                     else
                     {
-                        for (unsigned int i_node = 0; i_node < TNumNodes; i_node++)
+                        for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
                         {
                             const array_1d<double, TDim> aux_array = row(Dx1Mx2, i_node);
-                            
                             const double nodal_gap = inner_prod(aux_array, - aux_slave_normal); 
-                            
-                            if (nodal_gap < ActiveCheckLength)
-                            {
-                                return true;
-                            }
+                            if (nodal_gap < ActiveCheckLength) return true;
                         }
                     }
                 }
@@ -420,7 +418,7 @@ private:
         )
     {
         bool at_least_one_node_potential_contact = false;
-        for (unsigned int i_node = 0; i_node < Geom1.size(); i_node++)
+        for (unsigned int i_node = 0; i_node < Geom1.size(); ++i_node)
         {
             if (Geom1[i_node].Is(ACTIVE) == false)
             {

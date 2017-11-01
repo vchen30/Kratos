@@ -77,12 +77,7 @@ class ALMContactProcess(python_process.PythonProcess):
         
         # Debug
         if (self.debug_mode == True):
-            self.output_file = "POSTSEARCH"
-
-            self.gid_mode = KratosMultiphysics.GiDPostMode.GiD_PostBinary
-            self.singlefile = KratosMultiphysics.MultiFileFlag.SingleFile
-            self.deformed_mesh_flag = KratosMultiphysics.WriteDeformedMeshFlag.WriteUndeformed
-            self.write_conditions = KratosMultiphysics.WriteConditionsFlag.WriteElementsOnly
+            self._init_debug_output()
         
     def ExecuteInitialize(self):
         # Assigning master and slave sides
@@ -392,6 +387,13 @@ class ALMContactProcess(python_process.PythonProcess):
         self.contact_search.TotalResetContactOperators()
         self.contact_search.CreatePointListMortar()
         self.contact_search.InitializeMortarConditions()
+        
+    def _init_debug_output(self):
+        self.output_file = "POSTSEARCH"
+        self.gid_mode = KratosMultiphysics.GiDPostMode.GiD_PostBinary
+        self.singlefile = KratosMultiphysics.MultiFileFlag.SingleFile
+        self.deformed_mesh_flag = KratosMultiphysics.WriteDeformedMeshFlag.WriteUndeformed
+        self.write_conditions = KratosMultiphysics.WriteConditionsFlag.WriteElementsOnly
         
     def _debug_output(self, label, name):
 

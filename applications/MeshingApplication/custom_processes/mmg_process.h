@@ -74,6 +74,7 @@ namespace Kratos
     
     // DoF definition
     typedef Dof<double>                                                 DofType;
+    typedef typename Node<3>::DofsContainerType::const_iterator       DofItType;
     
     // Mesh definition
     typedef Mesh<NodeType, PropertiesType, ElementType, ConditionType> MeshType;
