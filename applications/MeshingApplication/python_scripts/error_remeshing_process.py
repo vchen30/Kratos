@@ -53,7 +53,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
         self.Model= Model
         self.model_part_name = self.params["model_part_name"].GetString()
-        self.dim = self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+        self.main_model_part = self.Model[self.model_part_name]
+        self.dim = self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
         self.params = params
         
         self.error_threshold = self.params["error_parameters"]["error_threshold"].GetDouble()
@@ -69,9 +70,9 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             del(node)
         
         if (self.dim == 2):
-            self.initialize_metric = MeshingApplication.MetricFastInit2D(self.Model[self.model_part_name])
+            self.initialize_metric = MeshingApplication.MetricFastInit2D(self.main_model_part)
         else:
-            self.initialize_metric = MeshingApplication.MetricFastInit3D(self.Model[self.model_part_name])
+            self.initialize_metric = MeshingApplication.MetricFastInit3D(self.main_model_part)
             
         self.initialize_metric.Execute()
 
@@ -86,11 +87,9 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         mmg_parameters.AddValue("echo_level",self.params["echo_level"])
         mmg_parameters.AddValue("save_mdpa_file",self.params["save_mdpa_file"])
         if (self.dim == 2):
-            self.MmgProcess = MeshingApplication.MmgProcess2D(self.Model[self.model_part_name], mmg_parameters)
+            self.MmgProcess = MeshingApplication.MmgProcess2D(self.main_model_part, mmg_parameters)
         else:
-            self.MmgProcess = MeshingApplication.MmgProcess3D(self.Model[self.model_part_name], mmg_parameters)
-
-        #self.setContactNodes = MeshingApplication.SetNodalContact(self.Model[self.model_part_name])
+            self.MmgProcess = MeshingApplication.MmgProcess3D(self.main_model_part, mmg_parameters)
 
     def ExecuteBeforeSolutionLoop(self):
         pass
@@ -100,7 +99,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
              
     def ExecuteFinalizeSolutionStep(self):
         self.__error_calculation()
-        if (self.Model[self.model_part_name].ProcessInfo[MeshingApplication.ERROR_ESTIMATE] > self.error_threshold):
+        if (self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE] > self.error_threshold):
             self.__execute_refinement()
 
     def ExecuteBeforeOutputStep(self):
@@ -123,11 +122,11 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             
         if (self.dim == 2):
             self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
-                self.Model[self.model_part_name], 
+                self.main_model_part, 
                 spr_parameters)
         else:
             self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
-                self.Model[self.model_part_name], 
+                self.main_model_part, 
                 spr_parameters)                     
 
     def __execute_refinement(self):
@@ -136,11 +135,11 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         self.MmgProcess.Execute()
 
         if (self.params["debug_mode"].GetBool() == True):
-            step = self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.TIME_STEPS]
+            step = self.main_model_part.ProcessInfo[KratosMultiphysics.TIME_STEPS]
             self._debug_output(step, "")
 
         # We need to set that the model part has been modified (later on we will act in consequence)
-        self.Model[self.model_part_name].Set(KratosMultiphysics.MODIFIED, True)
+        self.main_model_part.Set(KratosMultiphysics.MODIFIED, True)
 
         print("Remesh finished")
 
@@ -152,7 +151,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         print("Calculating the metrics")
         # Execute metric computation
         self.metric_process.Execute()
-        self.estimated_error = self.Model[self.model_part_name].ProcessInfo[MeshingApplication.ERROR_ESTIMATE]
+        self.estimated_error = self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE]
         
     def __generate_submodelparts_list_from_input(self, param):
         '''Parse a list of variables from input.'''
@@ -161,7 +160,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             raise Exception("{0} Error: Variable list is unreadable".format(self.__class__.__name__))
 
         # Retrieve submodelparts name from input (a string) and request the corresponding C++ object to the kernel
-        return [self.Model[self.model_part_name].GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
+        return [self.main_model_part.GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
 
     def __generate_variable_list_from_input(self, param):
       '''Parse a list of variables from input.'''
@@ -175,7 +174,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
       for i in range( 0,param.size()):
           aux_var = KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString() )
-          for node in self.Model[self.model_part_name].Nodes:
+          for node in self.main_model_part.Nodes:
             val = node.GetSolutionStepValue(aux_var, 0)
             break
           if isinstance(val,float):
@@ -196,13 +195,13 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         gid_io = KratosMultiphysics.GidIO("REMESHING_"+name+"_STEP_"+str(label), gid_mode, singlefile, deformed, write_conditions)
         
         gid_io.InitializeMesh(label)
-        gid_io.WriteMesh(self.Model[self.model_part_name].GetMesh())
+        gid_io.WriteMesh(self.main_model_part.GetMesh())
         gid_io.FinalizeMesh()
-        gid_io.InitializeResults(label, self.Model[self.model_part_name].GetMesh())
+        gid_io.InitializeResults(label, self.main_model_part.GetMesh())
         if (self.params["framework"].GetString() ==  "Lagrangian"):
-            gid_io.WriteNodalResults(KratosMultiphysics.DISPLACEMENT, self.Model[self.model_part_name].Nodes, label, 0)
+            gid_io.WriteNodalResults(KratosMultiphysics.DISPLACEMENT, self.main_model_part.Nodes, label, 0)
         else:
-            gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY, self.Model[self.model_part_name].Nodes, label, 0)
+            gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY, self.main_model_part.Nodes, label, 0)
         gid_io.FinalizeResults()
         
         #raise NameError("DEBUG")
