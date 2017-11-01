@@ -565,7 +565,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             p_node->pAddDof(*it_dof);
         }
         
-        if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
+        //if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
     // Auxiliar values
@@ -1281,6 +1281,7 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         condition_nodes[0] = mrThisModelPart.pGetNode(edge_0);
         condition_nodes[1] = mrThisModelPart.pGetNode(edge_1);    
         
+        if(PropId != 0)
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
     else if (mEchoLevel > 2)
@@ -1859,10 +1860,116 @@ void MmgProcess<3>::OutputMesh(
  
 template<unsigned int TDim>   
 void MmgProcess<TDim>::OutputMdpa() 
-{ 
-    std::ofstream output_file; 
-    ModelPartIO model_part_io("output", IO::WRITE); 
-    model_part_io.WriteModelPart(mrThisModelPart); 
+{
+    if(TDim == 2){
+        // save mesh in .mdpa format 
+        std::ofstream output_file; 
+        output_file.open(mStdStringFilename+"_output.mdpa"); 
+ 
+        // header 
+        output_file<<"Begin ModelPartData\n//  VARIABLE_NAME value\nEnd ModelPartData\n\n"; 
+    
+        //properties 
+        output_file<<"Begin Properties 0\nEnd Properties\n"; 
+        output_file<<"Begin Properties 1\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
+        output_file<<"Begin Properties 2\n    DENSITY   1.00000E+03\n    YOUNG_MODULUS   2.06900E+11\n    POISSON_RATIO   2.90000E-01\nEnd Properties\n\n"; 
+        //nodes 
+        output_file<<"Begin Nodes\n"; 
+        int i=0; 
+        for(auto i_nodes= mrThisModelPart.NodesBegin(); i_nodes != mrThisModelPart.NodesEnd(); i_nodes++){ 
+            i=i+1; 
+            output_file<<"\t"<<i<<"\t"<<i_nodes->X()<<"\t"<<i_nodes->Y()<<"\t"<<i_nodes->Z()<<"\n"; 
+        } 
+        output_file<<"End Nodes\n"; 
+    
+        //elements 
+        std::vector<std::string> submodels; 
+        submodels.push_back("Parts_Parts_Auto1"); 
+        submodels.push_back("Parts_Parts_Auto2"); 
+        for(auto i=0;i<submodels.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
+                output_file<<"Begin Elements SmallDisplacementElement2D3N\n"; 
+                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
+                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
+                    output_file<<"\t"<<i_element->Id()<<"\t0"; 
+                    for (auto j=0; j < i_element->GetGeometry().size(); j++){ 
+                        output_file<<"\t"<<i_element->GetGeometry()[j].Id(); 
+                    } 
+                    output_file<<"\n"; 
+                } 
+                output_file<<"End Elements\n\n"; 
+            } 
+        } 
+    
+        // conditions 
+        std::vector<std::string> conditions; 
+        conditions.push_back("DISPLACEMENT_Displacement_Auto1"); 
+        conditions.push_back("DISPLACEMENT_Displacement_Auto2"); 
+        conditions.push_back("IMPOSE_DISP_Auto1"); 
+        conditions.push_back("Contact_Part_BC");
+        conditions.push_back("LineLoad2D_Load_on_lines_Auto1");
+        conditions.push_back("LineLoad2D_Load_on_lines_Auto2");
+        conditions.push_back("Contact_Part");
+        for(auto i=0;i<conditions.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(conditions[i])){ 
+                output_file<<"Begin Conditions LineLoadCondition2D2N\n"; 
+                for (auto i_condition = mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsBegin(); 
+                        i_condition != mrThisModelPart.GetSubModelPart(conditions[i]).ConditionsEnd(); i_condition++){ 
+                    output_file<<"\t"<<i_condition->Id()<<"\t1"; 
+                    for (auto j=0; j < i_condition->GetGeometry().size(); j++){ 
+                        output_file<<"\t"<<i_condition->GetGeometry()[j].Id(); 
+                    } 
+                    output_file<<"\n"; 
+                } 
+                output_file<<"End Conditions\n\n"; 
+            } 
+        } 
+    
+    
+        submodels.push_back("Contact_Part"); 
+        submodels.push_back("Contact_Part_BC"); 
+        submodels.push_back("DISPLACEMENT_Displacement_Auto1"); 
+        submodels.push_back("DISPLACEMENT_Displacement_Auto2"); 
+        submodels.push_back("IMPOSE_DISP_Auto1"); 
+        submodels.push_back("LineLoad2D_Load_on_lines_Auto1");
+        submodels.push_back("LineLoad2D_Load_on_lines_Auto2");
+        // submodel parts 
+        for(auto i=0;i<submodels.size();i++){ 
+            if (mrThisModelPart.HasSubModelPart(submodels[i])){ 
+                output_file<<"Begin SubModelPart "<<submodels[i]<<"\n"; 
+                //nodes 
+                output_file<<"    Begin SubModelPartNodes\n"; 
+                for(auto i_nodes = mrThisModelPart.GetSubModelPart(submodels[i]).NodesBegin(); 
+                        i_nodes != mrThisModelPart.GetSubModelPart(submodels[i]).NodesEnd(); i_nodes++){ 
+                    output_file<<"\t"<<i_nodes->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartNodes\n"; 
+    
+                //elements 
+                output_file<<"    Begin SubModelPartElements\n"; 
+                for (auto i_element = mrThisModelPart.GetSubModelPart(submodels[i]).ElementsBegin(); 
+                        i_element != mrThisModelPart.GetSubModelPart(submodels[i]).ElementsEnd(); i_element++){ 
+                    output_file<<"\t"<<i_element->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartElements\n"; 
+    
+                //conditions 
+                output_file<<"    Begin SubModelPartConditions\n"; 
+                for (auto i_condition = mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsBegin(); 
+                        i_condition != mrThisModelPart.GetSubModelPart(submodels[i]).ConditionsEnd(); i_condition++){ 
+                    output_file<<"\t"<<i_condition->Id()<<"\n"; 
+                } 
+                output_file<<"    End SubModelPartConditions\n"; 
+    
+                output_file<<"End SubModelPart\n\n"; 
+            } 
+        } 
+        output_file.close(); 
+        }
+     
+    //std::ofstream output_file; 
+    //ModelPartIO model_part_io("output", IO::WRITE); 
+    //model_part_io.WriteModelPart(mrThisModelPart); 
 }
 
 /***********************************************************************************/
