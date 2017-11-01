@@ -170,15 +170,20 @@ public:
             // Aux coordinates
             CoordinatesArrayType aux_coords;
             aux_coords = this_geometry.PointLocalCoordinates(aux_coords, this_geometry.Center());
-            it_cond->SetValue(NORMAL, this_geometry.Normal(aux_coords));
+            it_cond->SetValue(NORMAL, this_geometry.UnitNormal(aux_coords));
             const array_1d<double, 3>& normal = it_cond->GetValue(NORMAL);
             
             const unsigned int number_nodes = this_geometry.PointsNumber();
             
             for (unsigned int i = 0; i < number_nodes; ++i)
             {
-                #pragma omp critical // TODO: See if there is another alternative
-                noalias( this_geometry[i].GetValue(NORMAL) ) += normal;
+                auto& this_node = it_cond->GetGeometry()[i];
+                auto& node_normal = this_node.GetValue(NORMAL);
+                for (unsigned int j = 0; j < 3; ++j)
+                {
+                    #pragma omp atomic
+                    node_normal[j] += normal[j];
+                }
             }
         }
         
@@ -239,8 +244,8 @@ public:
             if (it_cond->Is(SLAVE) || it_cond->Is(MASTER) || it_cond->Is(ACTIVE))
             {
                 aux_coords = it_cond->GetGeometry().PointLocalCoordinates(aux_coords, it_cond->GetGeometry().Center());
-                array_1d<double, 3>& rNormal = it_cond->GetValue(NORMAL);
-                rNormal = it_cond->GetGeometry().Normal(aux_coords);
+                array_1d<double, 3>& normal = it_cond->GetValue(NORMAL);
+                normal = it_cond->GetGeometry().UnitNormal(aux_coords);
                 
                 const unsigned int number_nodes = it_cond->GetGeometry().PointsNumber();
                 const double & rArea = it_cond->GetGeometry().Area()/number_nodes;
@@ -248,10 +253,14 @@ public:
                 for (unsigned int i = 0; i < number_nodes; ++i)
                 {
                     auto& this_node = it_cond->GetGeometry()[i];
-                    this_node.SetLock();
+                    #pragma omp atomic
                     this_node.GetValue(NODAL_AREA)        += rArea;
-                    noalias( this_node.GetValue(NORMAL) ) += rArea * rNormal;
-                    this_node.UnSetLock();
+                    auto& node_normal = this_node.GetValue(NORMAL);
+                    for (unsigned int j = 0; j < 3; ++j)
+                    {
+                        #pragma omp atomic
+                        node_normal[j] += rArea * normal[j];
+                    }
                 }
             }
         }
