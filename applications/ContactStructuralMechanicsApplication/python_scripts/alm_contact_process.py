@@ -140,13 +140,12 @@ class ALMContactProcess(python_process.PythonProcess):
         self._initialize_alm_parameters(computing_model_part)
 
         # We copy the conditions to the ContactSubModelPart
-        if (preprocess == True):
-            for cond in self.contact_model_part.Conditions:
-                interface_model_part.AddCondition(cond)    
-            del(cond)
-            for node in self.contact_model_part.Nodes:
-                interface_model_part.AddNode(node, 0)   
-            del(node)
+        for cond in self.contact_model_part.Conditions:
+            interface_model_part.AddCondition(cond)    
+        del(cond)
+        for node in self.contact_model_part.Nodes:
+            interface_model_part.AddNode(node, 0)   
+        del(node)
 
         # Creating the search
         self._create_main_search(computing_model_part)
