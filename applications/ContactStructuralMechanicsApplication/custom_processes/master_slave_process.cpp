@@ -59,9 +59,10 @@ namespace Kratos
                         if (it_node->IsDefined(SLAVE)) node_is_slave = it_node->Is(SLAVE);
                         if (node_is_slave == true)
                         {
-                            if (it_node->GetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE) < 0.0) 
+                            auto& aux_var = AUGMENTED_NORMAL_CONTACT_PRESSURE;
+                            if (it_node->Has(aux_var))
                             {
-                                it_node->Set(ACTIVE, true);
+                                if (it_node->GetValue(aux_var) < 0.0) it_node->Set(ACTIVE, true);
                             }
                         }
                     }
