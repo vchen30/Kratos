@@ -565,7 +565,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             p_node->pAddDof(*it_dof);
         }
         
-        //if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
+        if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
     // Auxiliar values
@@ -901,10 +901,9 @@ std::vector<unsigned int> MmgProcess<TDim>::CheckNodes()
         if (node_map[coords] > 1)
         {
             nodes_to_remove_ids.push_back(it_node->Id());
-            if (mEchoLevel > 0)
-            {
-                std::cout << "The mode " << it_node->Id() <<  " is repeated"<< std::endl;
-            }
+        #ifdef KRATOS_DEBUG
+            if (mEchoLevel > 0)  std::cout << "The mode " << it_node->Id() <<  " is repeated"<< std::endl;
+        #endif
         }
     }
     
@@ -1272,8 +1271,8 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
     }
     
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (edge_0 == 0) SkipCreation = true;
-    if (edge_1 == 0) SkipCreation = true;
+    if (edge_0 == 0 || edge_1 == 0) SkipCreation = true;
+    if (PropId == 0) SkipCreation = true; // We avoid spurious conditions
     
     if (SkipCreation == false)
     {
@@ -1284,10 +1283,12 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         if(PropId != 0)
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Condition creation avoided" << std::endl;
+        std::cout << "WARNING:: Condition creation avoided" << std::endl;
     }
+#endif
     
     return p_condition;
 }
@@ -1313,9 +1314,8 @@ ConditionType::Pointer MmgProcess<3>::CreateCondition0(
     }
     
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (vertex_0 == 0) SkipCreation = true;
-    if (vertex_1 == 0) SkipCreation = true;
-    if (vertex_2 == 0) SkipCreation = true;
+    if (vertex_0 == 0 || vertex_1 == 0 || vertex_2 == 0) SkipCreation = true;
+    if (PropId == 0) SkipCreation = true; // We avoid spurious conditions
     
     if (SkipCreation == false)
     {
@@ -1326,10 +1326,12 @@ ConditionType::Pointer MmgProcess<3>::CreateCondition0(
         
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Condition creation avoided" << std::endl;
+        std::cout << "WARNING:: Condition creation avoided" << std::endl;
     }
+#endif
     
     return p_condition;
 }
@@ -1369,10 +1371,8 @@ ConditionType::Pointer MmgProcess<3>::CreateCondition1(
     }
     
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (vertex_0 == 0) SkipCreation = true;
-    if (vertex_1 == 0) SkipCreation = true;
-    if (vertex_2 == 0) SkipCreation = true;
-    if (vertex_3 == 0) SkipCreation = true;
+    if (vertex_0 == 0 || vertex_1 == 0 || vertex_2 == 0 || vertex_3 == 0) SkipCreation = true;
+    if (PropId == 0) SkipCreation = true; // We avoid spurious conditions
     
     if (SkipCreation == false)
     {
@@ -1384,10 +1384,12 @@ ConditionType::Pointer MmgProcess<3>::CreateCondition1(
         
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Condition creation avoided" << std::endl;
+        std::cout << "WARNING:: Condition creation avoided" << std::endl;
     }
+#endif
     
     return p_condition;
 }
@@ -1413,9 +1415,7 @@ ElementType::Pointer MmgProcess<2>::CreateElement0(
     }
 
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (vertex_0 == 0) SkipCreation = true;
-    if (vertex_1 == 0) SkipCreation = true;
-    if (vertex_2 == 0) SkipCreation = true;
+    if (vertex_0 == 0 || vertex_1 == 0 || vertex_2 == 0) SkipCreation = true;
     
     if (SkipCreation == false)
     {
@@ -1426,10 +1426,12 @@ ElementType::Pointer MmgProcess<2>::CreateElement0(
         
         p_element = mpRefElement[PropId]->Create(ElemId, element_nodes, mpRefElement[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Element creation avoided" << std::endl;
+        std::cout << "WARNING:: Element creation avoided" << std::endl;
     }
+#endif
     
     return p_element;
 }
@@ -1455,10 +1457,7 @@ ElementType::Pointer MmgProcess<3>::CreateElement0(
     }
     
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (vertex_0 == 0) SkipCreation = true;
-    if (vertex_1 == 0) SkipCreation = true;
-    if (vertex_2 == 0) SkipCreation = true;
-    if (vertex_3 == 0) SkipCreation = true;
+    if (vertex_0 == 0 || vertex_1 == 0 || vertex_2 == 0 || vertex_3 == 0) SkipCreation = true;
     
     if (SkipCreation == false)
     {
@@ -1470,10 +1469,12 @@ ElementType::Pointer MmgProcess<3>::CreateElement0(
         
         p_element = mpRefElement[PropId]->Create(ElemId, element_nodes, mpRefElement[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Element creation avoided" << std::endl;
+        std::cout << "WARNING:: Element creation avoided" << std::endl;
     }
+#endif
     
     return p_element;
 }
@@ -1513,12 +1514,7 @@ ElementType::Pointer MmgProcess<3>::CreateElement1(
     }
     
     // FIXME: This is not the correct solution to the problem, I asked in the MMG Forum
-    if (vertex_0 == 0) SkipCreation = true;
-    if (vertex_1 == 0) SkipCreation = true;
-    if (vertex_2 == 0) SkipCreation = true;
-    if (vertex_3 == 0) SkipCreation = true;
-    if (vertex_4 == 0) SkipCreation = true;
-    if (vertex_5 == 0) SkipCreation = true;
+    if (vertex_0 == 0 || vertex_1 == 0 || vertex_2 == 0 || vertex_3 == 0 || vertex_4 == 0 || vertex_5 == 0) SkipCreation = true;
     
     if (SkipCreation == false)
     {
@@ -1532,10 +1528,12 @@ ElementType::Pointer MmgProcess<3>::CreateElement1(
     
         p_element = mpRefElement[PropId]->Create(ElemId, element_nodes, mpRefElement[PropId]->pGetProperties());
     }
+#ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)
     {
-        std::cout << "Element creation avoided" << std::endl;
+        std::cout << "WARNING:: Element creation avoided" << std::endl;
     }
+#endif
     
     return p_element;
 }
@@ -1644,7 +1642,7 @@ void MmgProcess<TDim>::InitVerbosity()
 /***********************************************************************************/
 
 template<>  
-void MmgProcess<2>::InitVerbosityParameter(const int& VerbosityMMG)
+void MmgProcess<2>::InitVerbosityParameter(const int VerbosityMMG)
 {  
     if ( !MMG2D_Set_iparameter(mmgMesh,mmgSol,MMG2D_IPARAM_verbose, VerbosityMMG) )
     {
@@ -1656,7 +1654,7 @@ void MmgProcess<2>::InitVerbosityParameter(const int& VerbosityMMG)
 /***********************************************************************************/
 
 template<>  
-void MmgProcess<3>::InitVerbosityParameter(const int& VerbosityMMG)
+void MmgProcess<3>::InitVerbosityParameter(const int VerbosityMMG)
 {       
     if ( !MMG3D_Set_iparameter(mmgMesh,mmgSol,MMG3D_IPARAM_verbose, VerbosityMMG) )
     {
@@ -2142,8 +2140,8 @@ void MmgProcess<2>::SetConditions(
     }
     else if (Geom.GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Line2D2) // Line
     {
-        const int& id_1 = Geom[0].Id(); // First node id
-        const int& id_2 = Geom[1].Id(); // Second node id
+        const int id_1 = Geom[0].Id(); // First node id
+        const int id_2 = Geom[1].Id(); // Second node id
 
         if ( MMG2D_Set_edge(mmgMesh, id_1, id_2, Color, Index) != 1 ) 
         {
@@ -2224,9 +2222,9 @@ void MmgProcess<3>::SetConditions(
     }
     else if (Geom.GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Triangle3D3) // Triangle
     {
-        const int& id_1 = Geom[0].Id(); // First node Id
-        const int& id_2 = Geom[1].Id(); // Second node Id
-        const int& id_3 = Geom[2].Id(); // Third node Id
+        const int id_1 = Geom[0].Id(); // First node Id
+        const int id_2 = Geom[1].Id(); // Second node Id
+        const int id_3 = Geom[2].Id(); // Third node Id
     
         if ( MMG3D_Set_triangle(mmgMesh, id_1, id_2, id_3, Color, Index) != 1 )  
         {
@@ -2260,10 +2258,10 @@ void MmgProcess<3>::SetConditions(
     }
     else if (Geom.GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Quadrilateral3D4) // Quadrilaterals
     {
-        const int& id_1 = Geom[0].Id(); // First node Id
-        const int& id_2 = Geom[1].Id(); // Second node Id
-        const int& id_3 = Geom[2].Id(); // Third node Id
-        const int& id_4 = Geom[3].Id(); // Fourth node Id
+        const int id_1 = Geom[0].Id(); // First node Id
+        const int id_2 = Geom[1].Id(); // Second node Id
+        const int id_3 = Geom[2].Id(); // Third node Id
+        const int id_4 = Geom[3].Id(); // Fourth node Id
         
         if ( MMG3D_Set_quadrilateral(mmgMesh, id_1, id_2, id_3, id_4, Color, Index) != 1 )  
         {
@@ -2287,9 +2285,9 @@ void MmgProcess<2>::SetElements(
     const int Index
     )
 {
-    const int& id_1 = Geom[0].Id(); // First node Id
-    const int& id_2 = Geom[1].Id(); // Second node Id
-    const int& id_3 = Geom[2].Id(); // Third node Id
+    const int id_1 = Geom[0].Id(); // First node Id
+    const int id_2 = Geom[1].Id(); // Second node Id
+    const int id_3 = Geom[2].Id(); // Third node Id
     
     if ( MMG2D_Set_triangle(mmgMesh, id_1, id_2, id_3, Color, Index) != 1 ) 
     {
@@ -2308,10 +2306,10 @@ void MmgProcess<3>::SetElements(
     const int Index
     )
 {
-    const int& id_1 = Geom[0].Id(); // First node Id
-    const int& id_2 = Geom[1].Id(); // Second node Id
-    const int& id_3 = Geom[2].Id(); // Third node Id
-    const int& id_4 = Geom[3].Id(); // Fourth node Id
+    const int id_1 = Geom[0].Id(); // First node Id
+    const int id_2 = Geom[1].Id(); // Second node Id
+    const int id_3 = Geom[2].Id(); // Third node Id
+    const int id_4 = Geom[3].Id(); // Fourth node Id
     
     if (Geom.GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Tetrahedra3D4) // Tetrahedron
     {
@@ -2322,8 +2320,8 @@ void MmgProcess<3>::SetElements(
     }
     else if (Geom.GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Prism3D6) // Prisms
     {
-        const int& id_5 = Geom[4].Id(); // 5th node Id
-        const int& id_6 = Geom[5].Id(); // 6th node Id
+        const int id_5 = Geom[4].Id(); // 5th node Id
+        const int id_6 = Geom[5].Id(); // 6th node Id
         
         if ( MMG3D_Set_prism(mmgMesh, id_1, id_2, id_3, id_4, id_5, id_6, Color, Index) != 1 )  
         {

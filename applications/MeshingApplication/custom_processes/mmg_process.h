@@ -500,7 +500,7 @@ private:
      * @param verbosityMMG: The equivalent verbosity level in the MMG API
      */
         
-    void InitVerbosityParameter(const int& VerbosityMMG);
+    void InitVerbosityParameter(const int VerbosityMMG);
     
     /**
      * This sets the size of the mesh
