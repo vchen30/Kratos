@@ -13,7 +13,7 @@
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
 
-include "mapping_application_variables.h"
+#include "mapping_application_variables.h"
 
 namespace Kratos
 {
