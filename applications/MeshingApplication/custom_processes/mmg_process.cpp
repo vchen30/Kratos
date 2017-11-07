@@ -373,8 +373,9 @@ void MmgProcess<TDim>::InitializeMeshData()
                     
                     if (num_conditions_sub_model_part > 0)
                     {
+                        if(sub_model_part_name != "computing_domain"){
                         mpRefCondition[key] = conditions_array_sub_model_part.begin()->Create(0, conditions_array_sub_model_part.begin()->GetGeometry(), conditions_array_sub_model_part.begin()->pGetProperties());
-                        cond_added = true;
+                        cond_added = true;}
                     }
                 }
                 if (to_check_elem == true)
@@ -565,7 +566,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             p_node->pAddDof(*it_dof);
         }
         
-        if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
+        //if (ref != 0) color_nodes[ref].push_back(i_node);// NOTE: ref == 0 is the MainModelPart
     }
     
     // Auxiliar values
@@ -1280,7 +1281,6 @@ ConditionType::Pointer MmgProcess<2>::CreateCondition0(
         condition_nodes[0] = mrThisModelPart.pGetNode(edge_0);
         condition_nodes[1] = mrThisModelPart.pGetNode(edge_1);    
         
-        if(PropId != 0)
         p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
     }
 #ifdef KRATOS_DEBUG 

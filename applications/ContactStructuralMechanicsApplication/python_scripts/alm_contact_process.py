@@ -137,13 +137,14 @@ class ALMContactProcess(python_process.PythonProcess):
         # We initialize the ALM parameters
         self._initialize_alm_parameters(computing_model_part)
 
-        # We copy the conditions to the ContactSubModelPart
-        for cond in self.contact_model_part.Conditions:
-            interface_model_part.AddCondition(cond)    
-        del(cond)
-        for node in self.contact_model_part.Nodes:
-            interface_model_part.AddNode(node, 0)   
-        del(node)
+        if (preprocess == True):
+            # We copy the conditions to the ContactSubModelPart
+            for cond in self.contact_model_part.Conditions:
+                interface_model_part.AddCondition(cond)    
+            del(cond)
+            for node in self.contact_model_part.Nodes:
+                interface_model_part.AddNode(node, 0)   
+            del(node)
 
         # Creating the search
         self._create_main_search(computing_model_part)
@@ -179,6 +180,7 @@ class ALMContactProcess(python_process.PythonProcess):
     def ExecuteFinalizeSolutionStep(self):
         if (self.params["remeshing_with_contact_bc"].GetBool() == True):
             self._transfer_slave_to_master()
+        self._write_contact_stress()
 
     def ExecuteBeforeOutputStep(self):
         pass
@@ -408,3 +410,12 @@ class ALMContactProcess(python_process.PythonProcess):
         gid_io.FinalizeResults()
         
         #raise NameError("DEBUG")
+
+    def _write_contact_stress(self):
+        file = open("stresses.txt","w") 
+        computing_model_part = self.main_model_part.GetSubModelPart(self.computing_model_part_name)
+        interface_model_part = computing_model_part.GetSubModelPart("Contact")
+        for node in interface_model_part.Nodes:
+            file.write("{:.2e}".format(node.X)+"\t{:.2e}".format(node.GetValue(ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE))+"\n")
+        del(node) 
+        file.close() 

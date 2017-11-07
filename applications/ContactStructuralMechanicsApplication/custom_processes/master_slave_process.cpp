@@ -86,6 +86,8 @@ namespace Kratos
                         if (!this_node.Is(INTERFACE)) is_interface = false;
                         else if (!this_node.Is(SLAVE)) is_slave = false;
                     }
+                    else
+                        is_interface = false;
                 }
                 if (is_interface == true)
                 {
@@ -112,6 +114,7 @@ namespace Kratos
         // Adding nodes and conditions
         contact_model_part.AddNodes(index_node);
         contact_model_part.AddConditions(index_cond);
+
 
         // We reset spurious values
         ModelPart& root_model_part = mrThisModelPart.GetRootModelPart();
