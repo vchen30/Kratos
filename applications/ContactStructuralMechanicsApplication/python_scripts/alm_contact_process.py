@@ -368,10 +368,7 @@ class ALMContactProcess(python_process.PythonProcess):
         mortar_mapping1.Execute()
         
         # Transfering the AUGMENTED_NORMAL_CONTACT_PRESSURE to CONTACT_PRESSURE
-        for node in interface_model_part.Nodes:
-            aug_press = node.GetValue(ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE)
-            node.SetValue(KratosMultiphysics.CONTACT_PRESSURE, aug_press)
-        del(node)
+        KratosMultiphysics.VariableUtils().SaveScalarNonHistVar(ContactStructuralMechanicsApplication.AUGMENTED_NORMAL_CONTACT_PRESSURE, KratosMultiphysics.CONTACT_PRESSURE, interface_model_part.Nodes)
     
         self._reset_search()
     
