@@ -596,7 +596,7 @@ protected:
         KRATOS_CATCH("");
     }
 
-    bool SolveMomentumIteration(unsigned int it,unsigned int maxIt, bool & fixedTimeStep)
+    bool SolveMomentumIteration(unsigned int & it,unsigned int maxIt, bool & fixedTimeStep)
     {
       ModelPart& rModelPart = BaseType::GetModelPart();
       int Rank = rModelPart.GetCommunicator().MyPID();
@@ -620,9 +620,11 @@ protected:
 
       double DvErrorNorm = 0; 
       ConvergedMomentum = this->CheckVelocityConvergence(NormDv,DvErrorNorm);
+      double tolerance=0.005;
       // Check convergence
-      if(it==maxIt-1){
-	fixedTimeStep=this->FixTimeStepMomentum(DvErrorNorm);
+      if(it==maxIt-1 || (DvErrorNorm>tolerance*200 && it>(maxIt*0.5))){
+	it=maxIt-1;
+	fixedTimeStep=this->FixTimeStepMomentum(DvErrorNorm,tolerance);
       }
 
       if (!ConvergedMomentum && BaseType::GetEchoLevel() > 0 && Rank == 0)
@@ -658,9 +660,10 @@ protected:
       double DpErrorNorm = 0; 
       ConvergedContinuity = this->CheckPressureConvergence(NormDp,DpErrorNorm);
 
+      double tolerance=0.005;
       // Check convergence
       if(it==maxIt-1){
-      	ConvergedContinuity=this->FixTimeStepContinuity(DpErrorNorm);
+      	ConvergedContinuity=this->FixTimeStepContinuity(DpErrorNorm,tolerance);
       }
 
       if (!ConvergedContinuity && BaseType::GetEchoLevel() > 0 && Rank == 0)
@@ -768,27 +771,19 @@ protected:
             return false;
     }
 
-    bool FixTimeStepMomentum(const double DvErrorNorm)
+    bool FixTimeStepMomentum(const double DvErrorNorm, double & tolerance)
     {
       ModelPart& rModelPart = BaseType::GetModelPart();
       ProcessInfo& rCurrentProcessInfo = rModelPart.GetProcessInfo();
-      double currentTime = rCurrentProcessInfo[TIME];
-      double timeInterval = rCurrentProcessInfo[DELTA_TIME];
-      double minTolerance=0.005;
       bool fixedTimeStep=false;
-      if(currentTime<10*timeInterval){
-	minTolerance=10;
-      }
-
       bool isItNan=false;
       isItNan=std::isnan(DvErrorNorm);
       bool isItInf=false;
       isItInf=std::isinf(DvErrorNorm);
-      if((DvErrorNorm>minTolerance || (DvErrorNorm<0 && DvErrorNorm>0) || (DvErrorNorm!=DvErrorNorm) || isItNan==true || isItInf==true) && DvErrorNorm!=0 && DvErrorNorm!=1){
+      if((DvErrorNorm>tolerance || (DvErrorNorm<0 && DvErrorNorm>0) || (DvErrorNorm!=DvErrorNorm) || isItNan==true || isItInf==true) && DvErrorNorm!=0 && DvErrorNorm!=1){
 	rCurrentProcessInfo.SetValue(BAD_VELOCITY_CONVERGENCE,true);
 	std::cout << "NOT GOOD CONVERGENCE!!! I'll reduce the next time interval"<<DvErrorNorm<< std::endl;
-	minTolerance=0.05;
-	if(DvErrorNorm>minTolerance){
+	if(DvErrorNorm>(tolerance*10.0)){
 	  std::cout<< "BAD CONVERGENCE!!! I GO AHEAD WITH THE PREVIOUS VELOCITY AND PRESSURE FIELDS"<<DvErrorNorm<< std::endl;
 	  fixedTimeStep=true;
 #pragma omp parallel 
@@ -812,23 +807,16 @@ protected:
       return fixedTimeStep;
     }
 
-   bool FixTimeStepContinuity(const double DvErrorNorm)
+    bool FixTimeStepContinuity(const double DvErrorNorm, double & tolerance)
     {
       ModelPart& rModelPart = BaseType::GetModelPart();
       ProcessInfo& rCurrentProcessInfo = rModelPart.GetProcessInfo();
-      double currentTime = rCurrentProcessInfo[TIME];
-      double timeInterval = rCurrentProcessInfo[DELTA_TIME];
-      double minTolerance=0.005;
       bool fixedTimeStep=false;
-      if(currentTime<10*timeInterval){
-	minTolerance=10;
-      }
-
       bool isItNan=false;
       isItNan=std::isnan(DvErrorNorm);
       bool isItInf=false;
       isItInf=std::isinf(DvErrorNorm);
-      if((DvErrorNorm>minTolerance || (DvErrorNorm<0 && DvErrorNorm>0) || (DvErrorNorm!=DvErrorNorm) || isItNan==true || isItInf==true) && DvErrorNorm!=0 && DvErrorNorm!=1){
+      if((DvErrorNorm>tolerance || (DvErrorNorm<0 && DvErrorNorm>0) || (DvErrorNorm!=DvErrorNorm) || isItNan==true || isItInf==true) && DvErrorNorm!=0 && DvErrorNorm!=1){
 	fixedTimeStep=true;
 	rCurrentProcessInfo.SetValue(BAD_PRESSURE_CONVERGENCE,true);
       }else{
