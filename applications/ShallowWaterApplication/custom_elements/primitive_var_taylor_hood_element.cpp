@@ -78,29 +78,29 @@ void PrimitiveVarTaylorHoodElement::Initialize()
     const SizeType Dim = rGeom.WorkingSpaceDimension();
     const SizeType NumVNodes = rGeom.PointsNumber();
 
-    // Define a geometry container for pressure nodes
+    // Define a geometry container for water height nodes
     switch (NumVNodes)
     {
     case 3: // 2D P1P1, not div-stable !!
-        mpPressureGeometry = this->pGetGeometry();
+        mpHeightGeometry = this->pGetGeometry();
         break;
     case 4: // 2D Q1Q1, not div-stable !!
-        mpPressureGeometry = this->pGetGeometry();
+        mpHeightGeometry = this->pGetGeometry();
         break;
     case 6: // 2D P2P1
-        mpPressureGeometry = GeometryType::Pointer( new Triangle2D3< Node<3> >(rGeom(0), rGeom(1), rGeom(2)) );
+        mpHeightGeometry = GeometryType::Pointer( new Triangle2D3< Node<3> >(rGeom(0), rGeom(1), rGeom(2)) );
         break;
     case 9: // 2D Q2Q1
-        mpPressureGeometry = GeometryType::Pointer( new Quadrilateral2D4< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3)) );
+        mpHeightGeometry = GeometryType::Pointer( new Quadrilateral2D4< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3)) );
         break;
     case 10: // 3D P2P1
-        mpPressureGeometry = GeometryType::Pointer( new Tetrahedra3D4< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3)) );
+        mpHeightGeometry = GeometryType::Pointer( new Tetrahedra3D4< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3)) );
         break;
     case 27: // 3D Q2Q1
-        mpPressureGeometry = GeometryType::Pointer( new Hexahedra3D8< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3), rGeom(4), rGeom(5), rGeom(6), rGeom(7)) );
+        mpHeightGeometry = GeometryType::Pointer( new Hexahedra3D8< Node<3> >(rGeom(0), rGeom(1), rGeom(2), rGeom(3), rGeom(4), rGeom(5), rGeom(6), rGeom(7)) );
         break;
     default:
-        KRATOS_ERROR << "Unexpected geometry type for Fluid Taylor-Hood elements" << std::endl;
+        KRATOS_ERROR << "Unexpected geometry type for Primitive Variables Taylor-Hood elements" << std::endl;
     }
 
     if (NumVNodes > 4)
@@ -112,7 +112,7 @@ void PrimitiveVarTaylorHoodElement::Initialize()
 
     // Initialize member variables
     mDNv_DX.resize( IntegrationPoints.size() ); // Shape function derivatives container
-    mDetJ.resize( IntegrationPoints.size() ); // determinant of Jacobian at each integration point
+    mDetJ.resize( IntegrationPoints.size() ); // Determinant of Jacobian at each integration point
 
     GeometryType::JacobiansType J;
     J = GetGeometry().Jacobian( J, mIntegrationMethod );
@@ -141,13 +141,13 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
     // Obtain required constants
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
     const SizeType NumGauss = this->GetGeometry().IntegrationPoints(this->mIntegrationMethod).size();
 
-    const SizeType LocalSize = Dim * NumVNodes + NumPNodes;
+    const SizeType LocalSize = Dim * NumVNodes + NumHNodes;
 
     const Matrix NvContainer = this->GetGeometry().ShapeFunctionsValues(this->mIntegrationMethod);
-    const Matrix NpContainer = mpPressureGeometry->ShapeFunctionsValues(this->mIntegrationMethod);
+    const Matrix NhContainer = mpHeightGeometry->ShapeFunctionsValues(this->mIntegrationMethod);
 
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints( this->mIntegrationMethod );
 
@@ -166,7 +166,7 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
     for (SizeType g = 0; g < NumGauss; g++)
     {
         const ShapeFunctionsType& Nv = row(NvContainer,g);
-        const ShapeFunctionsType& Np = row(NpContainer,g);
+        const ShapeFunctionsType& Nh = row(NhContainer,g);
         const ShapeDerivativesType& DNv_DX = mDNv_DX[g];
         const double GaussWeight = mDetJ[g] * IntegrationPoints[g].Weight();
 
@@ -176,10 +176,10 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
         array_1d<double,3> Velocity(3,0.0);
         array_1d<double,3> MeshVelocity(3,0.0);
 
-        // Interpolation using pressure is linear
-        this->EvaluateInPoint(Density,DENSITY,Np,*mpPressureGeometry);
-        this->EvaluateInPoint(Viscosity,VISCOSITY,Np,*mpPressureGeometry);
-        this->EvaluateInPoint(BodyForce,BODY_FORCE,Np,*mpPressureGeometry);
+        // Interpolation using height is linear
+        this->EvaluateInPoint(Density,DENSITY,Nh,*mpHeightGeometry);
+        this->EvaluateInPoint(Viscosity,VISCOSITY,Nh,*mpHeightGeometry);
+        this->EvaluateInPoint(BodyForce,BODY_FORCE,Nh,*mpHeightGeometry);
 
         this->EvaluateInPoint(Velocity,VELOCITY,Nv,this->GetGeometry());
         this->EvaluateInPoint(MeshVelocity,MESH_VELOCITY,Nv,this->GetGeometry());
@@ -190,13 +190,13 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
         // Evaluate convection operator Velocity * Grad(N)
         Vector UGradN(NumVNodes);
 
-        this->EvaluateConvection(UGradN,ConvVel,DNv_DX);
+        //~ this->EvaluateConvection(UGradN,ConvVel,DNv_DX);
 
         // Add velocity terms in momentum equation
         this->AddMomentumTerms(rLeftHandSideMatrix,rRightHandSideVector,UGradN,Density,Viscosity,BodyForce,Nv,DNv_DX,GaussWeight);
 
-        // Add velocity-pressure terms
-        this->AddContinuityTerms(rLeftHandSideMatrix,Np,DNv_DX,GaussWeight);
+        // Add velocity-height terms
+        this->AddContinuityTerms(rLeftHandSideMatrix,Nh,DNv_DX,GaussWeight);
     }
 
     // Add residual of previous iteration to RHS
@@ -211,13 +211,13 @@ void PrimitiveVarTaylorHoodElement::MassMatrix(MatrixType &rMassMatrix,
     // Obtain required constants
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
     const SizeType NumGauss = this->GetGeometry().IntegrationPoints(this->mIntegrationMethod).size();
 
-    const SizeType LocalSize = Dim * NumVNodes + NumPNodes;
+    const SizeType LocalSize = Dim * NumVNodes + NumHNodes;
 
     const Matrix NvContainer = this->GetGeometry().ShapeFunctionsValues(this->mIntegrationMethod);
-    const Matrix NpContainer = mpPressureGeometry->ShapeFunctionsValues(this->mIntegrationMethod);
+    const Matrix NhContainer = mpHeightGeometry->ShapeFunctionsValues(this->mIntegrationMethod);
 
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints( this->mIntegrationMethod );
 
@@ -264,15 +264,15 @@ void PrimitiveVarTaylorHoodElement::MassMatrix(MatrixType &rMassMatrix,
     for (SizeType g = 0; g < NumGauss; g++)
     {
         const ShapeFunctionsType& Nv = row(NvContainer,g);
-        const ShapeFunctionsType& Np = row(NpContainer,g);
+        const ShapeFunctionsType& Nh = row(NhContainer,g);
 
         double Density;
-        // Interpolation using pressure is linear
-        this->EvaluateInPoint(Density,DENSITY,Np,*mpPressureGeometry);
+        // Interpolation using height is linear
+        this->EvaluateInPoint(Density,DENSITY,Nh,*mpHeightGeometry);
 
         const double Weight = Density * mDetJ[g] * IntegrationPoints[g].Weight();
 
-        this->AddMassTerm(rMassMatrix,Nv,Weight);
+        this->AddMassTerm(rMassMatrix,Nv,Nh,Weight);
     }
 }
 
@@ -282,9 +282,9 @@ void PrimitiveVarTaylorHoodElement::GetDofList(DofsVectorType &rElementalDofList
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
-    const SizeType LocalSize = NumVNodes * Dim + NumPNodes;
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
 
     if (rElementalDofList.size() != LocalSize)
         rElementalDofList.resize(LocalSize);
@@ -298,8 +298,8 @@ void PrimitiveVarTaylorHoodElement::GetDofList(DofsVectorType &rElementalDofList
         if(Dim > 2) rElementalDofList[Index++] = GetGeometry()[i].pGetDof(VELOCITY_Z);
     }
 
-    for (SizeType i = 0; i < NumPNodes; i++)
-        rElementalDofList[Index++] = mpPressureGeometry->operator[](i).pGetDof(PRESSURE);
+    for (SizeType i = 0; i < NumHNodes; i++)
+        rElementalDofList[Index++] = mpHeightGeometry->operator[](i).pGetDof(HEIGHT);
 }
 
 
@@ -307,9 +307,9 @@ void PrimitiveVarTaylorHoodElement::EquationIdVector(Element::EquationIdVectorTy
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
-    const SizeType LocalSize = NumVNodes * Dim + NumPNodes;
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
 
     if (rResult.size() != LocalSize)
         rResult.resize(LocalSize);
@@ -323,41 +323,17 @@ void PrimitiveVarTaylorHoodElement::EquationIdVector(Element::EquationIdVectorTy
         if(Dim > 2) rResult[Index++] = GetGeometry()[i].GetDof(VELOCITY_Z).EquationId();
     }
 
-    for (SizeType i = 0; i < NumPNodes; i++)
-        rResult[Index++] = mpPressureGeometry->operator[](i).GetDof(PRESSURE).EquationId();
+    for (SizeType i = 0; i < NumHNodes; i++)
+        rResult[Index++] = mpHeightGeometry->operator[](i).GetDof(HEIGHT).EquationId();
 }
 
-//void PrimitiveVarTaylorHoodElement::GetValuesVector(Vector &rValues, int Step)
-//{
-//    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-//    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-//    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
-
-//    const SizeType LocalSize = NumVNodes * Dim + NumPNodes;
-
-//    if (rValues.size() != LocalSize)
-//        rValues.resize(LocalSize);
-
-//    SizeType Index = 0;
-
-//    for (SizeType i = 0; i < NumVNodes; i++)
-//    {
-//        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_X,Step);
-//        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Y,Step);
-//        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Z,Step);
-//    }
-
-//    for (SizeType i = 0; i < NumPNodes; i++)
-//        rValues[Index++] = mpPressureGeometry->operator[](i).FastGetSolutionStepValue(PRESSURE,Step);
-//}
-
-void PrimitiveVarTaylorHoodElement::GetFirstDerivativesVector(Vector &rValues, int Step)
+void PrimitiveVarTaylorHoodElement::GetValuesVector(Vector &rValues, int Step)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
-    const SizeType LocalSize = NumVNodes * Dim + NumPNodes;
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
 
     if (rValues.size() != LocalSize)
         rValues.resize(LocalSize);
@@ -371,17 +347,65 @@ void PrimitiveVarTaylorHoodElement::GetFirstDerivativesVector(Vector &rValues, i
         if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Z,Step);
     }
 
-    for (SizeType i = 0; i < NumPNodes; i++)
-        rValues[Index++] = mpPressureGeometry->operator[](i).FastGetSolutionStepValue(PRESSURE,Step);
+    for (SizeType i = 0; i < NumHNodes; i++)
+        rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT,Step);
+}
+
+void PrimitiveVarTaylorHoodElement::GetProjectedValuesVector(Vector &rValues, int Step)
+{
+    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
+    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
+
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
+
+    if (rValues.size() != LocalSize)
+        rValues.resize(LocalSize);
+
+    SizeType Index = 0;
+
+    for (SizeType i = 0; i < NumVNodes; i++)
+    {
+        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_X,Step);
+        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_Y,Step);
+        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_Z,Step);
+    }
+
+    for (SizeType i = 0; i < NumHNodes; i++)
+        rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(PROJECTED_SCALAR1,Step);
+}
+
+void PrimitiveVarTaylorHoodElement::GetFirstDerivativesVector(Vector &rValues, int Step)
+{
+    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
+    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
+
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
+
+    if (rValues.size() != LocalSize)
+        rValues.resize(LocalSize);
+
+    SizeType Index = 0;
+
+    for (SizeType i = 0; i < NumVNodes; i++)
+    {
+        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_X,Step);
+        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Y,Step);
+        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Z,Step);
+    }
+
+    for (SizeType i = 0; i < NumHNodes; i++)
+        rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT,Step);
 }
 
 void PrimitiveVarTaylorHoodElement::GetSecondDerivativesVector(Vector &rValues, int Step)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
-    const SizeType LocalSize = NumVNodes * Dim + NumPNodes;
+    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
 
     if (rValues.size() != LocalSize)
         rValues.resize(LocalSize);
@@ -395,7 +419,7 @@ void PrimitiveVarTaylorHoodElement::GetSecondDerivativesVector(Vector &rValues, 
         if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(ACCELERATION_Z,Step);
     }
 
-    for (SizeType i = 0; i < NumPNodes; i++)
+    for (SizeType i = 0; i < NumHNodes; i++)
         rValues[Index++] = 0.0;
 }
 
@@ -417,79 +441,79 @@ void PrimitiveVarTaylorHoodElement::FinalizeSolutionStep(ProcessInfo &rCurrentPr
     }
     case 6: // triangle
     {
-        const double p0 = rGeom[0].FastGetSolutionStepValue(PRESSURE);
-        const double p1 = rGeom[1].FastGetSolutionStepValue(PRESSURE);
-        const double p2 = rGeom[2].FastGetSolutionStepValue(PRESSURE);
-        ThreadSafeNodeWrite(rGeom[3],PRESSURE, 0.5 * (p0 + p1) );
-        ThreadSafeNodeWrite(rGeom[4],PRESSURE, 0.5 * (p1 + p2) );
-        ThreadSafeNodeWrite(rGeom[5],PRESSURE, 0.5 * (p2 + p0) );
+        const double p0 = rGeom[0].FastGetSolutionStepValue(HEIGHT);
+        const double p1 = rGeom[1].FastGetSolutionStepValue(HEIGHT);
+        const double p2 = rGeom[2].FastGetSolutionStepValue(HEIGHT);
+        ThreadSafeNodeWrite(rGeom[3],HEIGHT, 0.5 * (p0 + p1) );
+        ThreadSafeNodeWrite(rGeom[4],HEIGHT, 0.5 * (p1 + p2) );
+        ThreadSafeNodeWrite(rGeom[5],HEIGHT, 0.5 * (p2 + p0) );
         break;
     }
     case 9: // quadrilateral
     {
-        const double p0 = rGeom[0].FastGetSolutionStepValue(PRESSURE);
-        const double p1 = rGeom[1].FastGetSolutionStepValue(PRESSURE);
-        const double p2 = rGeom[2].FastGetSolutionStepValue(PRESSURE);
-        const double p3 = rGeom[3].FastGetSolutionStepValue(PRESSURE);
-        ThreadSafeNodeWrite(rGeom[4],PRESSURE, 0.5 * (p0 + p1) );
-        ThreadSafeNodeWrite(rGeom[5],PRESSURE, 0.5 * (p1 + p2) );
-        ThreadSafeNodeWrite(rGeom[6],PRESSURE, 0.5 * (p2 + p3) );
-        ThreadSafeNodeWrite(rGeom[7],PRESSURE, 0.5 * (p3 + p0) );
-        ThreadSafeNodeWrite(rGeom[8],PRESSURE, 0.25 * (p0 + p1 + p2 + p3) );
+        const double p0 = rGeom[0].FastGetSolutionStepValue(HEIGHT);
+        const double p1 = rGeom[1].FastGetSolutionStepValue(HEIGHT);
+        const double p2 = rGeom[2].FastGetSolutionStepValue(HEIGHT);
+        const double p3 = rGeom[3].FastGetSolutionStepValue(HEIGHT);
+        ThreadSafeNodeWrite(rGeom[4],HEIGHT, 0.5 * (p0 + p1) );
+        ThreadSafeNodeWrite(rGeom[5],HEIGHT, 0.5 * (p1 + p2) );
+        ThreadSafeNodeWrite(rGeom[6],HEIGHT, 0.5 * (p2 + p3) );
+        ThreadSafeNodeWrite(rGeom[7],HEIGHT, 0.5 * (p3 + p0) );
+        ThreadSafeNodeWrite(rGeom[8],HEIGHT, 0.25 * (p0 + p1 + p2 + p3) );
         break;
     }
     case 10: // tetrahedron
     {
-        const double p0 = rGeom[0].FastGetSolutionStepValue(PRESSURE);
-        const double p1 = rGeom[1].FastGetSolutionStepValue(PRESSURE);
-        const double p2 = rGeom[2].FastGetSolutionStepValue(PRESSURE);
-        const double p3 = rGeom[3].FastGetSolutionStepValue(PRESSURE);
-        ThreadSafeNodeWrite(rGeom[4],PRESSURE, 0.5 * (p0 + p1) );
-        ThreadSafeNodeWrite(rGeom[5],PRESSURE, 0.5 * (p1 + p2) );
-        ThreadSafeNodeWrite(rGeom[6],PRESSURE, 0.5 * (p2 + p0) );
-        ThreadSafeNodeWrite(rGeom[7],PRESSURE, 0.5 * (p0 + p3) );
-        ThreadSafeNodeWrite(rGeom[8],PRESSURE, 0.5 * (p1 + p3) );
-        ThreadSafeNodeWrite(rGeom[9],PRESSURE, 0.5 * (p2 + p3) );
+        const double p0 = rGeom[0].FastGetSolutionStepValue(HEIGHT);
+        const double p1 = rGeom[1].FastGetSolutionStepValue(HEIGHT);
+        const double p2 = rGeom[2].FastGetSolutionStepValue(HEIGHT);
+        const double p3 = rGeom[3].FastGetSolutionStepValue(HEIGHT);
+        ThreadSafeNodeWrite(rGeom[4],HEIGHT, 0.5 * (p0 + p1) );
+        ThreadSafeNodeWrite(rGeom[5],HEIGHT, 0.5 * (p1 + p2) );
+        ThreadSafeNodeWrite(rGeom[6],HEIGHT, 0.5 * (p2 + p0) );
+        ThreadSafeNodeWrite(rGeom[7],HEIGHT, 0.5 * (p0 + p3) );
+        ThreadSafeNodeWrite(rGeom[8],HEIGHT, 0.5 * (p1 + p3) );
+        ThreadSafeNodeWrite(rGeom[9],HEIGHT, 0.5 * (p2 + p3) );
         break;
     }
     case 27: // hexahedron
     {
-        const double p0 = rGeom[0].FastGetSolutionStepValue(PRESSURE);
-        const double p1 = rGeom[1].FastGetSolutionStepValue(PRESSURE);
-        const double p2 = rGeom[2].FastGetSolutionStepValue(PRESSURE);
-        const double p3 = rGeom[3].FastGetSolutionStepValue(PRESSURE);
-        const double p4 = rGeom[4].FastGetSolutionStepValue(PRESSURE);
-        const double p5 = rGeom[5].FastGetSolutionStepValue(PRESSURE);
-        const double p6 = rGeom[6].FastGetSolutionStepValue(PRESSURE);
-        const double p7 = rGeom[7].FastGetSolutionStepValue(PRESSURE);
+        const double p0 = rGeom[0].FastGetSolutionStepValue(HEIGHT);
+        const double p1 = rGeom[1].FastGetSolutionStepValue(HEIGHT);
+        const double p2 = rGeom[2].FastGetSolutionStepValue(HEIGHT);
+        const double p3 = rGeom[3].FastGetSolutionStepValue(HEIGHT);
+        const double p4 = rGeom[4].FastGetSolutionStepValue(HEIGHT);
+        const double p5 = rGeom[5].FastGetSolutionStepValue(HEIGHT);
+        const double p6 = rGeom[6].FastGetSolutionStepValue(HEIGHT);
+        const double p7 = rGeom[7].FastGetSolutionStepValue(HEIGHT);
         // edges -- bottom
-        ThreadSafeNodeWrite(rGeom[8],PRESSURE, 0.5 * (p0 + p1) );
-        ThreadSafeNodeWrite(rGeom[9],PRESSURE, 0.5 * (p1 + p2) );
-        ThreadSafeNodeWrite(rGeom[10],PRESSURE, 0.5 * (p2 + p3) );
-        ThreadSafeNodeWrite(rGeom[11],PRESSURE, 0.5 * (p3 + p0) );
+        ThreadSafeNodeWrite(rGeom[8],HEIGHT, 0.5 * (p0 + p1) );
+        ThreadSafeNodeWrite(rGeom[9],HEIGHT, 0.5 * (p1 + p2) );
+        ThreadSafeNodeWrite(rGeom[10],HEIGHT, 0.5 * (p2 + p3) );
+        ThreadSafeNodeWrite(rGeom[11],HEIGHT, 0.5 * (p3 + p0) );
         // edges -- middle
-        ThreadSafeNodeWrite(rGeom[12],PRESSURE, 0.5 * (p4 + p0) );
-        ThreadSafeNodeWrite(rGeom[13],PRESSURE, 0.5 * (p5 + p1) );
-        ThreadSafeNodeWrite(rGeom[14],PRESSURE, 0.5 * (p6 + p2) );
-        ThreadSafeNodeWrite(rGeom[15],PRESSURE, 0.5 * (p7 + p3) );
+        ThreadSafeNodeWrite(rGeom[12],HEIGHT, 0.5 * (p4 + p0) );
+        ThreadSafeNodeWrite(rGeom[13],HEIGHT, 0.5 * (p5 + p1) );
+        ThreadSafeNodeWrite(rGeom[14],HEIGHT, 0.5 * (p6 + p2) );
+        ThreadSafeNodeWrite(rGeom[15],HEIGHT, 0.5 * (p7 + p3) );
         // edges -- top
-        ThreadSafeNodeWrite(rGeom[16],PRESSURE, 0.5 * (p4 + p5) );
-        ThreadSafeNodeWrite(rGeom[17],PRESSURE, 0.5 * (p5 + p6) );
-        ThreadSafeNodeWrite(rGeom[18],PRESSURE, 0.5 * (p6 + p7) );
-        ThreadSafeNodeWrite(rGeom[19],PRESSURE, 0.5 * (p7 + p0) );
+        ThreadSafeNodeWrite(rGeom[16],HEIGHT, 0.5 * (p4 + p5) );
+        ThreadSafeNodeWrite(rGeom[17],HEIGHT, 0.5 * (p5 + p6) );
+        ThreadSafeNodeWrite(rGeom[18],HEIGHT, 0.5 * (p6 + p7) );
+        ThreadSafeNodeWrite(rGeom[19],HEIGHT, 0.5 * (p7 + p0) );
         // face centers
-        ThreadSafeNodeWrite(rGeom[20],PRESSURE, 0.25 * (p0 + p1 + p2 + p3) );
-        ThreadSafeNodeWrite(rGeom[21],PRESSURE, 0.25 * (p0 + p1 + p4 + p5) );
-        ThreadSafeNodeWrite(rGeom[22],PRESSURE, 0.25 * (p1 + p2 + p5 + p6) );
-        ThreadSafeNodeWrite(rGeom[23],PRESSURE, 0.25 * (p2 + p3 + p6 + p7) );
-        ThreadSafeNodeWrite(rGeom[24],PRESSURE, 0.25 * (p3 + p0 + p7 + p4) );
-        ThreadSafeNodeWrite(rGeom[25],PRESSURE, 0.25 * (p4 + p5 + p6 + p7) );
+        ThreadSafeNodeWrite(rGeom[20],HEIGHT, 0.25 * (p0 + p1 + p2 + p3) );
+        ThreadSafeNodeWrite(rGeom[21],HEIGHT, 0.25 * (p0 + p1 + p4 + p5) );
+        ThreadSafeNodeWrite(rGeom[22],HEIGHT, 0.25 * (p1 + p2 + p5 + p6) );
+        ThreadSafeNodeWrite(rGeom[23],HEIGHT, 0.25 * (p2 + p3 + p6 + p7) );
+        ThreadSafeNodeWrite(rGeom[24],HEIGHT, 0.25 * (p3 + p0 + p7 + p4) );
+        ThreadSafeNodeWrite(rGeom[25],HEIGHT, 0.25 * (p4 + p5 + p6 + p7) );
         // element center
-        ThreadSafeNodeWrite(rGeom[26],PRESSURE, 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7) );
+        ThreadSafeNodeWrite(rGeom[26],HEIGHT, 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7) );
         break;
     }
     default:
-        KRATOS_ERROR << "Unexpected geometry type for Fluid Taylor-Hood elements" << std::endl;
+        KRATOS_ERROR << "Unexpected geometry type for Primitive Variables Taylor-Hood elements" << std::endl;
     }
 
     KRATOS_CATCH("");
@@ -497,10 +521,12 @@ void PrimitiveVarTaylorHoodElement::FinalizeSolutionStep(ProcessInfo &rCurrentPr
 
 void PrimitiveVarTaylorHoodElement::AddMassTerm(MatrixType &rMassMatrix,
                                   const ShapeFunctionsType &Nv,
+                                  const ShapeFunctionsType &Nh,
                                   const double Weight)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
     SizeType FirstRow = 0;
     SizeType FirstCol = 0;
@@ -516,8 +542,16 @@ void PrimitiveVarTaylorHoodElement::AddMassTerm(MatrixType &rMassMatrix,
                 rMassMatrix(FirstRow+d,FirstCol+d) += Term_ij;
             FirstCol += Dim;
         }
-        FirstRow += Dim;
         FirstCol = 0;
+        FirstRow += Dim;
+    }
+    for (unsigned int i = 0; i < NumHNodes; i++)
+    {
+        for (unsigned int j = 0; j < NumHNodes; j++)
+        {
+            Term_ij = Weight * Nh[i] * Nh[j];
+            rMassMatrix(NumVNodes+i,NumVNodes+j) += Term_ij;
+        }
     }
 }
 
@@ -571,26 +605,26 @@ void PrimitiveVarTaylorHoodElement::AddMomentumTerms(MatrixType &rLHS,
 }
 
 void PrimitiveVarTaylorHoodElement::AddContinuityTerms(MatrixType &rLHS,
-                                         const ShapeFunctionsType &Np,
+                                         const ShapeFunctionsType &Nh,
                                          const ShapeDerivativesType &DNv_DX,
                                          const double Weight)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumPNodes = mpPressureGeometry->PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
     SizeType Row = NumVNodes*Dim;
     SizeType FirstCol = 0;
 
     double DivTerm = 0.0;
 
-    for (SizeType i = 0; i < NumPNodes; ++i)
+    for (SizeType i = 0; i < NumHNodes; ++i)
     {
         for (SizeType j = 0; j < NumVNodes; ++j)
         {
             for (SizeType d = 0; d < Dim; ++d)
             {
-                DivTerm = Weight * Np[i] * DNv_DX(j,d);
+                DivTerm = Weight * Nh[i] * DNv_DX(j,d);
                 rLHS(Row,FirstCol + d) += DivTerm; // Divergence term
                 rLHS(FirstCol + d,Row) -= DivTerm; // Gradient term
             }
@@ -604,21 +638,21 @@ void PrimitiveVarTaylorHoodElement::AddContinuityTerms(MatrixType &rLHS,
     }
 }
 
-void PrimitiveVarTaylorHoodElement::EvaluateConvection(Vector &rResult,
-                                         const array_1d<double, 3> &rConvVel,
-                                         const ShapeDerivativesType &DNv_DX)
-{
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+//~ void PrimitiveVarTaylorHoodElement::EvaluateConvection(Vector &rResult,
+                                         //~ const array_1d<double, 3> &rConvVel,
+                                         //~ const ShapeDerivativesType &DNv_DX)
+//~ {
+    //~ const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
+    //~ const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+//~ 
+    //~ if(rResult.size() != NumVNodes) rResult.resize(NumVNodes);
+//~ 
+    //~ for (SizeType i = 0; i < NumVNodes; i++)
+    //~ {
+        //~ rResult[i] = rConvVel[0]*DNv_DX(i,0);
+        //~ for(SizeType k = 1; k < Dim; k++)
+            //~ rResult[i] += rConvVel[k]*DNv_DX(i,k);
+    //~ }
+//~ }
 
-    if(rResult.size() != NumVNodes) rResult.resize(NumVNodes);
-
-    for (SizeType i = 0; i < NumVNodes; i++)
-    {
-        rResult[i] = rConvVel[0]*DNv_DX(i,0);
-        for(SizeType k = 1; k < Dim; k++)
-            rResult[i] += rConvVel[k]*DNv_DX(i,k);
-    }
-}
-
-}
+} // namespace Kratos

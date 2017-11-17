@@ -145,13 +145,15 @@ public:
     /// Fill given vector with the linear system row index for the element's degrees of freedom
     virtual void EquationIdVector(Element::EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo);
 
-    //~ virtual void GetValuesVector(Vector& rValues, int Step = 0);
+    virtual void GetValuesVector(Vector& rValues, int Step = 0);
+
+    virtual void GetProjectedValuesVector(Vector& rValues, int Step = 0);
 
     virtual void GetFirstDerivativesVector(Vector &rValues, int Step = 0);
 
     virtual void GetSecondDerivativesVector(Vector &rValues, int Step = 0);
 
-    /// Update the pressure value for the velocity-only nodes, so it is properly printed in the postprocess.
+    /// Update the water hwight value for the velocity-only nodes, so it is properly printed in the postprocess.
     virtual void FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo);
 
     ///@}
@@ -181,7 +183,7 @@ public:
     {
         rOStream << "PrimitiveVarTaylorHoodElement" << this->GetGeometry().WorkingSpaceDimension() << "D #" << Id() << std::endl;
         rOStream << "Number of Velocity Nodes: " << this->GetGeometry().PointsNumber() << std::endl;
-        rOStream << "Number of Pressure Nodes: " << mpPressureGeometry->PointsNumber() << std::endl;
+        rOStream << "Number of Water Height Nodes: " << mpHeightGeometry->PointsNumber() << std::endl;
         rOStream << "Integration method: " << this->mIntegrationMethod;
     }
 
@@ -191,8 +193,8 @@ public:
         this->PrintInfo(rOStream);
         rOStream << "Velocity Geometry Data: " << std::endl;
         this->GetGeometry().PrintData(rOStream);
-        rOStream << "Pressure  Geometry Data: " << std::endl;
-        mpPressureGeometry->PrintData(rOStream);
+        rOStream << "Height Geometry Data: " << std::endl;
+        mpHeightGeometry->PrintData(rOStream);
     }
 
 
@@ -223,7 +225,8 @@ protected:
     ///@{
 
     void AddMassTerm(MatrixType &rMassMatrix,
-                     const ShapeFunctionsType &N,
+                     const ShapeFunctionsType &Nv,
+                     const ShapeFunctionsType &Nh,
                      const double Weight);
 
     void AddMomentumTerms(MatrixType &rLHS,
@@ -237,13 +240,13 @@ protected:
                           const double Weigth);
 
     void AddContinuityTerms(MatrixType &rLHS,
-                            const ShapeFunctionsType &Np,
+                            const ShapeFunctionsType &Nh,
                             const ShapeDerivativesType &DNv_DX,
                             const double Weight);
 
-    void EvaluateConvection(Vector& rResult,
-                            const array_1d<double,3>& rConvVel,
-                            const ShapeDerivativesType& DN_DX);
+    //~ void EvaluateConvection(Vector& rResult,
+                            //~ const array_1d<double,3>& rConvVel,
+                            //~ const ShapeDerivativesType& DN_DX);
 
     template< class TVariableType >
     void EvaluateInPoint(TVariableType& rResult,
@@ -285,8 +288,8 @@ private:
     ///@name Member Variables
     ///@{
 
-    /// Pointer to Pressure Geometry (nodes only on vertices).
-    Geometry< Node<3> >::Pointer mpPressureGeometry;
+    /// Pointer to Height Geometry (nodes only on vertices).
+    Geometry< Node<3> >::Pointer mpHeightGeometry;
 
     /// Order of integration.
     Element::IntegrationMethod mIntegrationMethod;
@@ -294,7 +297,7 @@ private:
     /// Velocity shape function derivatives at each integration point.
     std::vector< ShapeDerivativesType > mDNv_DX;
 
-    /// Pressure shape function derivatives at each integration point.
+    /// Height shape function derivatives at each integration point.
     std::vector< ShapeDerivativesType > mDNp_DX;
 
     /// Determinant of the Jacobian, evaluated at each integration point.
@@ -313,7 +316,7 @@ private:
     {
         KRATOS_TRY;
         KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );
-        rSerializer.save("mpPressureGeometry",mpPressureGeometry);
+        rSerializer.save("mpHeightGeometry",mpHeightGeometry);
         unsigned int IntMethod = 0;
         switch(mIntegrationMethod)
         {
@@ -347,7 +350,7 @@ private:
     {
         KRATOS_TRY;
         KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer,Element);
-        rSerializer.load("mpPressureGeometry",mpPressureGeometry);
+        rSerializer.load("mpHeightGeometry",mpHeightGeometry);
         unsigned int IntMethod = 0;
         rSerializer.load("IntMethod",IntMethod);
         switch(mIntegrationMethod)
