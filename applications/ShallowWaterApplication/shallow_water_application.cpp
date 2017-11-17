@@ -18,7 +18,9 @@
 
 // Project includes
 #include "geometries/triangle_2d_3.h"
+#include "geometries/triangle_2d_6.h"
 #include "geometries/quadrilateral_2d_4.h"
+#include "geometries/quadrilateral_2d_9.h"
 #include "geometries/line_2d.h"
 #include "geometries/point_2d.h"
 #include "includes/define.h"
@@ -37,6 +39,11 @@ namespace Kratos
     mConservedVarElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
     mConservedVarElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
 
+    mPrimitiveVarTaylorHoodElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
+    mPrimitiveVarTaylorHoodElement2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6<Node<3>      >( Element::GeometryType::PointsArrayType (6) ) ) ),
+    mPrimitiveVarTaylorHoodElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
+    mPrimitiveVarTaylorHoodElement2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9<Node<3> >( Element::GeometryType::PointsArrayType (9) ) ) ),
+
     mEulerPrimVarElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
     mEulerPrimVarElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
 
@@ -51,7 +58,7 @@ namespace Kratos
     {
         // Calling base class register to register Kratos components
         KratosApplication::Register();
-        
+
         std::cout << " KRATOS      |          |   |                        " << std::endl;
         std::cout << "        __|   _ \\  _` | |   |    _ \\        /      " << std::endl;
         std::cout << "      \\__ `  |  | (   | |   |   (   |      /        " << std::endl;
@@ -80,16 +87,21 @@ namespace Kratos
         // Registering elements and conditions here
         KRATOS_REGISTER_ELEMENT("PrimitiveVarElement2D3N", mPrimitiveVarElement2D3N)   // mesh stage element
         KRATOS_REGISTER_ELEMENT("PrimitiveVarElement2D4N", mPrimitiveVarElement2D4N)   // mesh stage element
-        
+
         KRATOS_REGISTER_ELEMENT("ConservedVarElement2D3N", mConservedVarElement2D3N)   // mesh stage element
         KRATOS_REGISTER_ELEMENT("ConservedVarElement2D4N", mConservedVarElement2D4N)   // mesh stage element
-        
+
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D3N", mPrimitiveVarTaylorHoodElement2D3N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D6N", mPrimitiveVarTaylorHoodElement2D6N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D4N", mPrimitiveVarTaylorHoodElement2D4N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D9N", mPrimitiveVarTaylorHoodElement2D9N)   // Pfem2 Taylor Hood element
+
         KRATOS_REGISTER_ELEMENT("EulerPrimVarElement2D3N", mEulerPrimVarElement2D3N)   // eulerian element
         KRATOS_REGISTER_ELEMENT("EulerPrimVarElement2D4N", mEulerPrimVarElement2D4N)   // eulerian element
-        
+
         KRATOS_REGISTER_ELEMENT("EulerConsVarElement2D3N", mEulerConsVarElement2D3N)   // eulerian element
         KRATOS_REGISTER_ELEMENT("EulerConsVarElement2D4N", mEulerConsVarElement2D4N)   // eulerian element
-        
+
         KRATOS_REGISTER_CONDITION("NothingCondition2D2N", mNothingCondition2D2N)
     }
 

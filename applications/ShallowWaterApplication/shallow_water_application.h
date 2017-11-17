@@ -42,6 +42,7 @@
 #include "custom_elements/conserved_var_element.hpp"
 #include "custom_elements/euler_prim_var_element.hpp"
 #include "custom_elements/euler_cons_var_element.hpp"
+#include "custom_elements/primitive_var_taylor_hood_element.hpp"
 #include "custom_conditions/nothing_condition.hpp"
 
 
@@ -147,7 +148,7 @@ namespace Kratos
         }
 
 
-        ///@}      
+        ///@}
         ///@name Friends
         ///@{
 
@@ -156,86 +157,95 @@ namespace Kratos
 
     protected:
         ///@name Protected static Member Variables 
-        ///@{ 
+        ///@{
 
 
-        ///@} 
-        ///@name Protected member Variables 
-        ///@{ 
+        ///@}
+        ///@name Protected member Variables
+        ///@{
 
 
-        ///@} 
+        ///@}
         ///@name Protected Operators
-        ///@{ 
+        ///@{
 
 
-        ///@} 
+        ///@}
         ///@name Protected Operations
-        ///@{ 
+        ///@{
 
 
-        ///@} 
-        ///@name Protected  Access 
-        ///@{ 
+        ///@}
+        ///@name Protected  Access
+        ///@{
 
 
-        ///@}      
-        ///@name Protected Inquiry 
-        ///@{ 
+        ///@}
+        ///@name Protected Inquiry
+        ///@{
 
 
-        ///@}    
-        ///@name Protected LifeCycle 
-        ///@{ 
+        ///@}
+        ///@name Protected LifeCycle
+        ///@{
 
 
         ///@}
 
     private:
-        ///@name Static Member Variables 
-        ///@{ 
-
-
-        ///@} 
-        ///@name Member Variables 
+        ///@name Static Member Variables
         ///@{
-        // Lagrangian elements 
+
+
+        ///@}
+        ///@name Member Variables
+        ///@{
+
+        // Pfem2 elements
         const PrimitiveVarElement<3> mPrimitiveVarElement2D3N;
         const PrimitiveVarElement<4> mPrimitiveVarElement2D4N;
         const ConservedVarElement<3> mConservedVarElement2D3N;
         const ConservedVarElement<4> mConservedVarElement2D4N;
+
+        // Pfem2 Taylor Hood elements
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D3N; // Unstable element!!
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D6N; // Stable triangle
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D4N; // Unstalbe element!!
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D9N; // Stable quadrilateral
+
         // Eulerian elements
         const EulerPrimVarElement<3> mEulerPrimVarElement2D3N;
         const EulerPrimVarElement<4> mEulerPrimVarElement2D4N;
         const EulerConsVarElement<3> mEulerConsVarElement2D3N;
         const EulerConsVarElement<4> mEulerConsVarElement2D4N;
+
         // Condition
         const NothingCondition<2> mNothingCondition2D2N;
 
 
-        ///@} 
+        ///@}
         ///@name Private Operators
-        ///@{ 
+        ///@{
 
 
-        ///@} 
+        ///@}
         ///@name Private Operations
-        ///@{ 
+        ///@{
 
 
-        ///@} 
-        ///@name Private  Access 
-        ///@{ 
+        ///@}
+        ///@name Private  Access
+        ///@{
 
 
-        ///@}    
-        ///@name Private Inquiry 
-        ///@{ 
+        ///@}
+        ///@name Private Inquiry
+        ///@{
 
 
-        ///@}    
-        ///@name Un accessible methods 
-        ///@{ 
+        ///@}
+        ///@name Un accessible methods
+        ///@{
 
         /// Assignment operator.
         KratosShallowWaterApplication& operator=(KratosShallowWaterApplication const& rOther);
@@ -244,24 +254,24 @@ namespace Kratos
         KratosShallowWaterApplication(KratosShallowWaterApplication const& rOther);
 
 
-        ///@}    
+        ///@}
 
-    }; // Class KratosShallowWaterApplication 
+    }; // Class KratosShallowWaterApplication
 
-    ///@} 
-
-
-    ///@name Type Definitions       
-    ///@{ 
+    ///@}
 
 
-    ///@} 
-    ///@name Input and output 
-    ///@{ 
+    ///@name Type Definitions
+    ///@{
 
-    ///@} 
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    ///@}
 
 
 }  // namespace Kratos.
 
-#endif // KRATOS_SHALLOW_WATER_APPLICATION_H_INCLUDED  defined 
+#endif // KRATOS_SHALLOW_WATER_APPLICATION_H_INCLUDED  defined
