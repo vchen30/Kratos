@@ -38,6 +38,7 @@ int PrimitiveVarTaylorHoodElement::Check(const ProcessInfo &rCurrentProcessInfo)
     KRATOS_CHECK_VARIABLE_KEY(HEIGHT)
     KRATOS_CHECK_VARIABLE_KEY(PROJECTED_VECTOR1)
     KRATOS_CHECK_VARIABLE_KEY(PROJECTED_SCALAR1)
+    KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME)
     KRATOS_CHECK_VARIABLE_KEY(BATHYMETRY)
     KRATOS_CHECK_VARIABLE_KEY(GRAVITY)
     KRATOS_CHECK_VARIABLE_KEY(MANNING)
@@ -102,6 +103,7 @@ void PrimitiveVarTaylorHoodElement::Initialize()
     default:
         KRATOS_ERROR << "Unexpected geometry type for Primitive Variables Taylor-Hood elements" << std::endl;
     }
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
     if (NumVNodes > 4)
         this->mIntegrationMethod = GeometryData::GI_GAUSS_4; // Quadratic velocities
@@ -112,26 +114,40 @@ void PrimitiveVarTaylorHoodElement::Initialize()
 
     // Initialize member variables
     mDNv_DX.resize( IntegrationPoints.size() ); // Shape function derivatives container
-    mDetJ.resize( IntegrationPoints.size() ); // Determinant of Jacobian at each integration point
+    mDNh_DX.resize( 1 );                        // Shape function derivatives are constant for height
+    mDetJ.resize( IntegrationPoints.size() );   // Determinant of Jacobian at each integration point
 
+    // Geting the jacobian for the velocity geometry
     GeometryType::JacobiansType J;
     J = GetGeometry().Jacobian( J, mIntegrationMethod );
 
     const GeometryType::ShapeFunctionsGradientsType& DNv_De = rGeom.ShapeFunctionsLocalGradients( this->mIntegrationMethod );
+    const GeometryType::ShapeFunctionsGradientsType& DNh_De = mpHeightGeometry->ShapeFunctionsLocalGradients( GeometryData::GI_GAUSS_1 );
 
     // Temporary container for inverse of J
     Matrix InvJ;
 
-    //calculating the inverse J
+    // Calculating the inverse J
     for ( SizeType g = 0; g < IntegrationPoints.size(); g++ )
     {
-        //calculating and storing inverse of the jacobian and the parameters needed
+        // Calculating and storing inverse of the jacobian and the parameters needed
         MathUtils<double>::InvertMatrix( J[g], InvJ, mDetJ[g] );
 
-        //calculating the shape function derivatives in global coordinates
+        // Calculating the shape function derivatives in global coordinates
         mDNv_DX[g].resize(NumVNodes,Dim);
         noalias( mDNv_DX[g] ) = prod( DNv_De[g], InvJ );
     }
+
+    // Geting the jacobian for the height geometry
+    mpHeightGeometry->Jacobian( J, GeometryData::GI_GAUSS_1 );
+
+    // Calculate inverse of the jacobian and its determinant
+    MathUtils<double>::InvertMatrix( J[0], InvJ, mDetJ[0] );
+
+    // Calculate the height shape function derivatives in global coordinates
+    mDNh_DX[0].resize(NumHNodes,Dim);
+    noalias( mDNh_DX[0] ) = prod( DNh_De[0], InvJ );
+
 
     KRATOS_CATCH( "" )
 }
@@ -151,6 +167,11 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
 
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints( this->mIntegrationMethod );
 
+    // Getting gravity value and constants
+    mGravity = rCurrentProcessInfo[GRAVITY_Z];
+    const double delta_t = rCurrentProcessInfo[DELTA_TIME];
+    const double dt_inv  = 1.0 / delta_t;
+
     // Initialize local contribution
     if (rLeftHandSideMatrix.size1() != LocalSize)
         rLeftHandSideMatrix.resize(LocalSize, LocalSize, false);
@@ -168,112 +189,33 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
         const ShapeFunctionsType& Nv = row(NvContainer,g);
         const ShapeFunctionsType& Nh = row(NhContainer,g);
         const ShapeDerivativesType& DNv_DX = mDNv_DX[g];
+        const ShapeDerivativesType& DNh_DX = mDNh_DX[0];
         const double GaussWeight = mDetJ[g] * IntegrationPoints[g].Weight();
 
-        double Density;
-        double Viscosity;
-        array_1d<double,3> BodyForce(3,0.0);
+        double Height;
+        array_1d<double,3> depth_grad(3,0.0);
         array_1d<double,3> Velocity(3,0.0);
-        array_1d<double,3> MeshVelocity(3,0.0);
 
         // Interpolation using height is linear
-        this->EvaluateInPoint(Density,DENSITY,Nh,*mpHeightGeometry);
-        this->EvaluateInPoint(Viscosity,VISCOSITY,Nh,*mpHeightGeometry);
-        this->EvaluateInPoint(BodyForce,BODY_FORCE,Nh,*mpHeightGeometry);
-
+        this->EvaluateInPoint(Height,HEIGHT,Nh,*mpHeightGeometry);
+        this->EvaluateGradient(depth_grad,BATHYMETRY,DNh_DX,*mpHeightGeometry);
         this->EvaluateInPoint(Velocity,VELOCITY,Nv,this->GetGeometry());
-        this->EvaluateInPoint(MeshVelocity,MESH_VELOCITY,Nv,this->GetGeometry());
 
-        // For ALE: convective velocity
-        array_1d<double,3> ConvVel = Velocity - MeshVelocity;
 
-        // Evaluate convection operator Velocity * Grad(N)
-        Vector UGradN(NumVNodes);
+        // Add inertia terms
+        this->AddMassTerms(rLeftHandSideMatrix,rRightHandSideVector,dt_inv,Nv,Nh,GaussWeight);
 
-        //~ this->EvaluateConvection(UGradN,ConvVel,DNv_DX);
-
-        // Add velocity terms in momentum equation
-        this->AddMomentumTerms(rLeftHandSideMatrix,rRightHandSideVector,UGradN,Density,Viscosity,BodyForce,Nv,DNv_DX,GaussWeight);
+        // Add mixed wave equation terms in mass and momentum equations
+        this->AddWaveEquationTerms(rLeftHandSideMatrix,Height,Nv,Nh,DNv_DX,DNh_DX,GaussWeight);
 
         // Add velocity-height terms
-        this->AddContinuityTerms(rLeftHandSideMatrix,Nh,DNv_DX,GaussWeight);
+        this->AddSourceTerms(rRightHandSideVector,depth_grad,Nh,GaussWeight);
     }
 
     // Add residual of previous iteration to RHS
     VectorType LastValues = ZeroVector(LocalSize);
-    this->GetFirstDerivativesVector(LastValues);
+    this->GetValuesVector(LastValues);
     noalias(rRightHandSideVector) -= prod(rLeftHandSideMatrix,LastValues);
-}
-
-void PrimitiveVarTaylorHoodElement::MassMatrix(MatrixType &rMassMatrix,
-                                 ProcessInfo &rCurrentProcessInfo)
-{
-    // Obtain required constants
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
-    const SizeType NumGauss = this->GetGeometry().IntegrationPoints(this->mIntegrationMethod).size();
-
-    const SizeType LocalSize = Dim * NumVNodes + NumHNodes;
-
-    const Matrix NvContainer = this->GetGeometry().ShapeFunctionsValues(this->mIntegrationMethod);
-    const Matrix NhContainer = mpHeightGeometry->ShapeFunctionsValues(this->mIntegrationMethod);
-
-    const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints( this->mIntegrationMethod );
-
-    // Initialize local contribution
-    if (rMassMatrix.size1() != LocalSize)
-        rMassMatrix.resize(LocalSize, LocalSize, false);
-
-    rMassMatrix = ZeroMatrix(LocalSize,LocalSize);
-
-//    double Density = this->GetGeometry()[0].FastGetSolutionStepValue(DENSITY);
-//    const double A = 0.5 * mElementSize;
-//    const double W = Density * A / 180.0;
-
-//    rMassMatrix(0,0) = 6.0*W; rMassMatrix(0,2) = -1.0*W; rMassMatrix(0,4) = -1.0*W; rMassMatrix(0,8) = -4.0*W;
-//    rMassMatrix(1,1) = 6.0*W; rMassMatrix(1,3) = -1.0*W; rMassMatrix(1,5) = -1.0*W; rMassMatrix(1,9) = -4.0*W;
-//    rMassMatrix(2,0) = -1.0*W; rMassMatrix(2,2) = 6.0*W; rMassMatrix(2,4) = -1.0*W; rMassMatrix(2,10) = -4.0*W;
-//    rMassMatrix(3,1) = -1.0*W; rMassMatrix(3,3) = 6.0*W; rMassMatrix(3,5) = -1.0*W; rMassMatrix(3,11) = -4.0*W;
-//    rMassMatrix(4,0) = -1.0*W; rMassMatrix(4,2) = -1.0*W; rMassMatrix(4,4) = -6.0*W; rMassMatrix(4,6) = -4.0*W;
-//    rMassMatrix(5,1) = -1.0*W; rMassMatrix(5,3) = -1.0*W; rMassMatrix(5,5) = -6.0*W; rMassMatrix(5,7) = -4.0*W;
-//    rMassMatrix(6,4) = -4.0*W; rMassMatrix(6,6) = 32.0 * W; rMassMatrix(6,8) = 16.0 * W; rMassMatrix(6,10) = 16.0 * W;
-//    rMassMatrix(7,5) = -4.0*W; rMassMatrix(7,7) = 32.0 * W; rMassMatrix(7,9) = 16.0 * W; rMassMatrix(7,11) = 16.0 * W;
-//    rMassMatrix(8,0) = -4.0*W; rMassMatrix(8,6) = 16.0 * W; rMassMatrix(8,8) = 32.0 * W; rMassMatrix(8,10) = 16.0 * W;
-//    rMassMatrix(9,1) = -4.0*W; rMassMatrix(9,7) = 16.0 * W; rMassMatrix(9,9) = 32.0 * W; rMassMatrix(9,11) = 16.0 * W;
-//    rMassMatrix(10,2) = -4.0*W; rMassMatrix(10,6) = 16.0 * W; rMassMatrix(10,8) = 16.0 * W; rMassMatrix(10,10) = 32.0 * W;
-//    rMassMatrix(11,3) = -4.0*W; rMassMatrix(11,7) = 16.0 * W; rMassMatrix(11,9) = 16.0 * W; rMassMatrix(11,11) = 32.0 * W;
-
-//    double Density = this->GetGeometry()[0].FastGetSolutionStepValue(DENSITY);
-//    const double A = 0.5 * mElementSize;
-//    const double W = Density * A / 57.0;
-//    rMassMatrix(0,0) = 3.0*W;
-//    rMassMatrix(1,1) = 3.0*W;
-//    rMassMatrix(2,2) = 3.0*W;
-//    rMassMatrix(3,3) = 3.0*W;
-//    rMassMatrix(4,4) = 3.0*W;
-//    rMassMatrix(5,5) = 3.0*W;
-//    rMassMatrix(6,6) = 16.0*W;
-//    rMassMatrix(7,7) = 16.0*W;
-//    rMassMatrix(8,8) = 16.0*W;
-//    rMassMatrix(9,9) = 16.0*W;
-//    rMassMatrix(10,10) = 16.0*W;
-//    rMassMatrix(11,11) = 16.0*W;
-
-    // Loop on integration points
-    for (SizeType g = 0; g < NumGauss; g++)
-    {
-        const ShapeFunctionsType& Nv = row(NvContainer,g);
-        const ShapeFunctionsType& Nh = row(NhContainer,g);
-
-        double Density;
-        // Interpolation using height is linear
-        this->EvaluateInPoint(Density,DENSITY,Nh,*mpHeightGeometry);
-
-        const double Weight = Density * mDetJ[g] * IntegrationPoints[g].Weight();
-
-        this->AddMassTerm(rMassMatrix,Nv,Nh,Weight);
-    }
 }
 
 
@@ -375,53 +317,6 @@ void PrimitiveVarTaylorHoodElement::GetProjectedValuesVector(Vector &rValues, in
         rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(PROJECTED_SCALAR1,Step);
 }
 
-void PrimitiveVarTaylorHoodElement::GetFirstDerivativesVector(Vector &rValues, int Step)
-{
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
-
-    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
-
-    if (rValues.size() != LocalSize)
-        rValues.resize(LocalSize);
-
-    SizeType Index = 0;
-
-    for (SizeType i = 0; i < NumVNodes; i++)
-    {
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_X,Step);
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Y,Step);
-        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_Z,Step);
-    }
-
-    for (SizeType i = 0; i < NumHNodes; i++)
-        rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT,Step);
-}
-
-void PrimitiveVarTaylorHoodElement::GetSecondDerivativesVector(Vector &rValues, int Step)
-{
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
-
-    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
-
-    if (rValues.size() != LocalSize)
-        rValues.resize(LocalSize);
-
-    SizeType Index = 0;
-
-    for (SizeType i = 0; i < NumVNodes; i++)
-    {
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(ACCELERATION_X,Step);
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(ACCELERATION_Y,Step);
-        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(ACCELERATION_Z,Step);
-    }
-
-    for (SizeType i = 0; i < NumHNodes; i++)
-        rValues[Index++] = 0.0;
-}
 
 void PrimitiveVarTaylorHoodElement::FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo)
 {
@@ -519,140 +414,114 @@ void PrimitiveVarTaylorHoodElement::FinalizeSolutionStep(ProcessInfo &rCurrentPr
     KRATOS_CATCH("");
 }
 
-void PrimitiveVarTaylorHoodElement::AddMassTerm(MatrixType &rMassMatrix,
-                                  const ShapeFunctionsType &Nv,
-                                  const ShapeFunctionsType &Nh,
-                                  const double Weight)
+void PrimitiveVarTaylorHoodElement::AddMassTerms(MatrixType& rLHS,
+                                                 VectorType& rRHS,
+                                                 const double& rDeltaTInv,
+                                                 const ShapeFunctionsType& Nv,
+                                                 const ShapeFunctionsType& Nh,
+                                                 const double& rWeight)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
     const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
+    const int local_size = Dim * NumVNodes + NumHNodes;
 
     SizeType FirstRow = 0;
     SizeType FirstCol = 0;
-    double Term_ij = 0.0;
+    double term_ij = 0.0;
+    MatrixType mass_matrix = ZeroMatrix(local_size, local_size);
 
+    // Add mass terms for velocity unknown
     for (unsigned int i = 0; i < NumVNodes; ++i)
     {
         for (unsigned int j = 0; j < NumVNodes; ++j)
         {
-            Term_ij = Weight * Nv[i] * Nv[j];
+            term_ij = rWeight * Nv[i] * Nv[j];
 
             for (unsigned int d = 0; d < Dim; ++d)
-                rMassMatrix(FirstRow+d,FirstCol+d) += Term_ij;
+                mass_matrix(FirstRow+d,FirstCol+d) += term_ij;
             FirstCol += Dim;
         }
         FirstCol = 0;
         FirstRow += Dim;
     }
+
+    // Add mass terms for height unknown
+    FirstRow = NumVNodes * Dim;
+    FirstCol = NumVNodes * Dim;
     for (unsigned int i = 0; i < NumHNodes; i++)
     {
         for (unsigned int j = 0; j < NumHNodes; j++)
         {
-            Term_ij = Weight * Nh[i] * Nh[j];
-            rMassMatrix(NumVNodes+i,NumVNodes+j) += Term_ij;
+            term_ij = rWeight * Nh[i] * Nh[j];
+            mass_matrix(FirstRow+i,FirstCol+j) += term_ij;
         }
     }
+
+    // Add mass contribution to LHS
+    rLHS = rDeltaTInv * mass_matrix;
+
+    // Add mass contribution to RHS
+    VectorType projected_values = ZeroVector(local_size);
+    this->GetProjectedValuesVector(projected_values,0);
+    rRHS = rDeltaTInv * prod (mass_matrix, projected_values);
 }
 
-void PrimitiveVarTaylorHoodElement::AddMomentumTerms(MatrixType &rLHS,
-                                       VectorType &rRHS,
-                                       const Vector &UGradN,
-                                       const double Density,
-                                       const double Viscosity,
-                                       const array_1d<double, 3> &BodyForce,
-                                       const ShapeFunctionsType &Nv,
-                                       const ShapeDerivativesType &DNv_DX,
-                                       const double Weigth)
-{
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-
-    SizeType FirstRow = 0;
-    SizeType FirstCol = 0;
-    double Term_ij = 0.0;
-
-    for(SizeType i = 0; i < NumVNodes; ++i)
-    {
-        // Body force
-        for(SizeType d = 0; d < Dim; ++d)
-            rRHS[FirstRow + d] += Weigth * Nv[i] * Density * BodyForce[d];
-
-        for(SizeType j = 0; j < NumVNodes; ++j)
-        {
-            Term_ij = 0.0;
-
-            // Viscous term
-            for(SizeType d = 0; d < Dim; ++d)
-                Term_ij += DNv_DX(i,d) * DNv_DX(j,d);
-            Term_ij *= Viscosity;
-
-            // Convection
-            Term_ij += Nv[i] * UGradN[j];
-
-            Term_ij *= Density * Weigth;
-
-            for(SizeType d = 0; d < Dim; ++d)
-                rLHS(FirstRow+d,FirstCol+d) += Term_ij;
-
-            // Update column index
-            FirstCol += Dim;
-        }
-        // Update matrix indices
-        FirstRow += Dim;
-        FirstCol = 0;
-    }
-}
-
-void PrimitiveVarTaylorHoodElement::AddContinuityTerms(MatrixType &rLHS,
-                                         const ShapeFunctionsType &Nh,
-                                         const ShapeDerivativesType &DNv_DX,
-                                         const double Weight)
+void PrimitiveVarTaylorHoodElement::AddWaveEquationTerms(MatrixType &rLHS,
+                                                         const double& rHeight,
+                                                         const ShapeFunctionsType &Nv,
+                                                         const ShapeFunctionsType &Nh,
+                                                         const ShapeDerivativesType &DNv_DX,
+                                                         const ShapeDerivativesType &DNh_DX,
+                                                         const double& rWeight)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();
     const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
 
-    SizeType Row = NumVNodes*Dim;
-    SizeType FirstCol = 0;
+    SizeType FirstRow = 0;
+    SizeType Col = NumVNodes * Dim;
+    //~ double Term_ij = 0.0;
 
-    double DivTerm = 0.0;
-
-    for (SizeType i = 0; i < NumHNodes; ++i)
+    for(SizeType i = 0; i < NumVNodes; ++i)
     {
-        for (SizeType j = 0; j < NumVNodes; ++j)
+        for(SizeType j = 0; j < NumHNodes; ++j)
         {
-            for (SizeType d = 0; d < Dim; ++d)
+            for(SizeType d = 0; d < Dim; d++)
             {
-                DivTerm = Weight * Nh[i] * DNv_DX(j,d);
-                rLHS(Row,FirstCol + d) += DivTerm; // Divergence term
-                rLHS(FirstCol + d,Row) -= DivTerm; // Gradient term
+                rLHS(FirstRow+d,Col) += rWeight * mGravity * Nv[i] * DNh_DX(j,d); // height gradient
+                rLHS(Col,FirstRow+d) += rWeight * rHeight  * Nh[j] * DNv_DX(i,d); // velocity divergence
             }
 
             // Update column index
-            FirstCol += Dim;
+            Col += 1;
         }
         // Update matrix indices
-        FirstCol = 0;
-        Row += 1;
+        FirstRow += Dim;
+        Col = NumVNodes * Dim;
     }
 }
 
-//~ void PrimitiveVarTaylorHoodElement::EvaluateConvection(Vector &rResult,
-                                         //~ const array_1d<double, 3> &rConvVel,
-                                         //~ const ShapeDerivativesType &DNv_DX)
-//~ {
-    //~ const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    //~ const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-//~ 
-    //~ if(rResult.size() != NumVNodes) rResult.resize(NumVNodes);
-//~ 
-    //~ for (SizeType i = 0; i < NumVNodes; i++)
-    //~ {
-        //~ rResult[i] = rConvVel[0]*DNv_DX(i,0);
-        //~ for(SizeType k = 1; k < Dim; k++)
-            //~ rResult[i] += rConvVel[k]*DNv_DX(i,k);
-    //~ }
-//~ }
+void PrimitiveVarTaylorHoodElement::AddSourceTerms(VectorType &rRHS,
+                                         const array_1d<double,2>& rDepthGrad,
+                                         const ShapeFunctionsType &Nv,
+                                         const double& rWeight)
+{
+    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
+    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+    //~ const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
+
+    SizeType FirstRow = 0;
+
+    for (SizeType i = 0; i < NumVNodes; ++i)
+    {
+        for (SizeType d = 0; d < Dim; ++d)
+        {
+            rRHS(FirstRow + d) += rWeight * Nv[i] * rDepthGrad[d];
+        }
+
+        FirstRow += 1;
+    }
+}
 
 } // namespace Kratos

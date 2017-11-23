@@ -118,7 +118,7 @@ public:
     /// Calculate Shape function derivatives and Jacobian at each integration point
     virtual void Initialize();
 
-    /// Evaluate the elemental contribution to the problem for turbulent viscosity.
+    /// Evaluate the elemental contribution to the problem
     /**
      * @param rLeftHandSideMatrix Elemental left hand side matrix
      * @param rRightHandSideVector Elemental right hand side vector
@@ -126,18 +126,16 @@ public:
      */
     virtual void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo);
 
+    /// Evaluate the elemental contribution to the RHS
+    /**
+     * @param rRightHandSideVector Elemental right hand side vector
+     * @param rCurrentProcessInfo Reference to the ProcessInfo from the ModelPart containg the element
+     */
     virtual void CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
     {
         MatrixType TmpLHS;
         this->CalculateLocalSystem(TmpLHS,rRightHandSideVector,rCurrentProcessInfo);
     }
-
-    /// Evaluate the elemental mass matrix, adding acceleration terms to the momentum equation
-    /**
-      * @param rMassMatrix Elemental mass matrix
-      * @param rCurrentProcessInfo ProcessInfo instance (unused)
-      */
-    virtual void MassMatrix(MatrixType &rMassMatrix, ProcessInfo &rCurrentProcessInfo);
 
     /// Fill given array with containing the element's degrees of freedom
     virtual void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& rCurrentProcessInfo);
@@ -145,13 +143,11 @@ public:
     /// Fill given vector with the linear system row index for the element's degrees of freedom
     virtual void EquationIdVector(Element::EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo);
 
+    /// Fill given vector with the unknowns
     virtual void GetValuesVector(Vector& rValues, int Step = 0);
 
+    /// Fill given vector with the projected unknowns
     virtual void GetProjectedValuesVector(Vector& rValues, int Step = 0);
-
-    virtual void GetFirstDerivativesVector(Vector &rValues, int Step = 0);
-
-    virtual void GetSecondDerivativesVector(Vector &rValues, int Step = 0);
 
     /// Update the water hwight value for the velocity-only nodes, so it is properly printed in the postprocess.
     virtual void FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo);
@@ -224,29 +220,25 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void AddMassTerm(MatrixType &rMassMatrix,
-                     const ShapeFunctionsType &Nv,
-                     const ShapeFunctionsType &Nh,
-                     const double Weight);
+    void AddMassTerms(MatrixType& rLHS,
+                      VectorType& rRHS,
+                      const double& rDeltaTInv,
+                      const ShapeFunctionsType& Nv,
+                      const ShapeFunctionsType& Nh,
+                      const double& Weight);
 
-    void AddMomentumTerms(MatrixType &rLHS,
-                          VectorType &rRHS,
-                          const Vector& UGradN,
-                          const double Density,
-                          const double Viscosity,
-                          const array_1d<double,3>& BodyForce,
-                          const ShapeFunctionsType &Nv,
-                          const ShapeDerivativesType &DNv_DX,
-                          const double Weigth);
+    void AddWaveEquationTerms(MatrixType &rLHS,
+                              const double& rHeight,
+                              const ShapeFunctionsType &Nv,
+                              const ShapeFunctionsType &Nh,
+                              const ShapeDerivativesType &DNv_DX,
+                              const ShapeDerivativesType &DNh_DX,
+                              const double& rWeigth);
 
-    void AddContinuityTerms(MatrixType &rLHS,
-                            const ShapeFunctionsType &Nh,
-                            const ShapeDerivativesType &DNv_DX,
-                            const double Weight);
-
-    //~ void EvaluateConvection(Vector& rResult,
-                            //~ const array_1d<double,3>& rConvVel,
-                            //~ const ShapeDerivativesType& DN_DX);
+    void AddSourceTerms(VectorType &rRHS,
+                        const array_1d<double,2>& rDepthGrad,
+                        const ShapeFunctionsType &Nv,
+                        const double& rWeight);
 
     template< class TVariableType >
     void EvaluateInPoint(TVariableType& rResult,
@@ -259,6 +251,21 @@ protected:
         for(SizeType i = 1; i < rShapeFunc.size(); i++)
         {
             rResult += rShapeFunc[i] * rGeom[i].FastGetSolutionStepValue(Var);
+        }
+    }
+
+    void EvaluateGradient(array_1d<double,3>& rResult,
+                          const Kratos::Variable<double> Var,
+                          const ShapeDerivativesType& rShapeDer,
+                          GeometryType& rGeom)
+    {
+        rResult[0] = rShapeDer(0,0) * rGeom[0].FastGetSolutionStepValue(Var);
+        rResult[1] = rShapeDer(0,1) * rGeom[0].FastGetSolutionStepValue(Var);
+
+        for(SizeType i = 1; i < rShapeDer.size1(); i++)
+        {
+            rResult[0] += rShapeDer(i,0) * rGeom[i].FastGetSolutionStepValue(Var);
+            rResult[1] += rShapeDer(i,1) * rGeom[i].FastGetSolutionStepValue(Var);
         }
     }
 
@@ -298,13 +305,16 @@ private:
     std::vector< ShapeDerivativesType > mDNv_DX;
 
     /// Height shape function derivatives at each integration point.
-    std::vector< ShapeDerivativesType > mDNp_DX;
+    std::vector< ShapeDerivativesType > mDNh_DX;
 
     /// Determinant of the Jacobian, evaluated at each integration point.
     /** Note that, for elements with straight edges, the Jacobian is constant
       * in the element.
       */
     std::vector< double > mDetJ;
+
+    /// Gravity value
+    double mGravity;
 
     ///@}
     ///@name Serialization
@@ -341,7 +351,7 @@ private:
         }
         rSerializer.save("IntMethod",IntMethod);
         rSerializer.save("mDNv_DX",mDNv_DX);
-        rSerializer.save("mDNp_DX",mDNp_DX);
+        rSerializer.save("mDNh_DX",mDNh_DX);
         rSerializer.save("mDetJ",mDetJ);
         KRATOS_CATCH("");
     }
@@ -375,7 +385,7 @@ private:
             break;
         }
         rSerializer.load("mDNv_DX",mDNv_DX);
-        rSerializer.load("mDNp_DX",mDNp_DX);
+        rSerializer.load("mDNh_DX",mDNh_DX);
         rSerializer.load("mDetJ",mDetJ);
         KRATOS_CATCH("");
     }
