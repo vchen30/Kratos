@@ -478,6 +478,40 @@ namespace Kratos
 		KRATOS_CATCH("")
 	}
 
+
+	void CrBeamElement3D2N::AddPrestressMatrix(MatrixType &rLeftHandSideMatrix)
+	{
+		KRATOS_TRY;
+		//already globalized !!!!
+		double sigma_pre = 0.00;
+		if (this->GetProperties().Has(TRUSS_PRESTRESS_PK2)) {
+			sigma_pre = GetProperties()[TRUSS_PRESTRESS_PK2];
+		}
+
+		const double L = this->CalculateCurrentLength();
+		const double A = this->GetProperties()[CROSS_AREA];
+
+		const double scal_mult = A*sigma_pre/L;
+
+
+		rLeftHandSideMatrix(0, 0) += scal_mult;
+		rLeftHandSideMatrix(6, 6) += scal_mult;
+		rLeftHandSideMatrix(0, 6) -= scal_mult;
+		rLeftHandSideMatrix(6, 0) -= scal_mult;
+
+		rLeftHandSideMatrix(1, 1) += scal_mult;
+		rLeftHandSideMatrix(7, 7) += scal_mult;
+		rLeftHandSideMatrix(1, 7) -= scal_mult;
+		rLeftHandSideMatrix(7, 1) -= scal_mult;
+
+		rLeftHandSideMatrix(2, 2) += scal_mult;
+		rLeftHandSideMatrix(8, 8) += scal_mult;
+		rLeftHandSideMatrix(2, 8) -= scal_mult;
+		rLeftHandSideMatrix(8, 2) -= scal_mult;
+		KRATOS_CATCH("")
+	}
+
+
 	void CrBeamElement3D2N::CalculateTransformationMatrix(bounded_matrix<double,
 		CrBeamElement3D2N::msElementSize,CrBeamElement3D2N::msElementSize>& rRotationMatrix) {
 
@@ -1114,6 +1148,8 @@ namespace Kratos
 			rLeftHandSideMatrix = prod(aux_matrix,
 				Matrix(trans(TransformationMatrix)));
 		}
+
+		this->AddPrestressMatrix(rLeftHandSideMatrix);
 		//assign global element variables
 		this->mLHS = rLeftHandSideMatrix;
 		KRATOS_CATCH("")
@@ -1125,8 +1161,9 @@ namespace Kratos
 		bounded_vector<double,msLocalSize> deformation_modes_total_V = ZeroVector(msLocalSize);
 		const double L = this->CalculateReferenceLength();
 		const double l = this->CalculateCurrentLength();
+		const double A = this->GetProperties()[CROSS_AREA];
 
-		deformation_modes_total_V[3] = l - L;
+		deformation_modes_total_V[3] = l - L; 
 		for (int i = 0; i < 3; ++i) deformation_modes_total_V[i] = this->mPhiS[i];
 		for (int i = 0; i < 2; ++i) deformation_modes_total_V[i + 4] = this->mPhiA[i + 1];
 		//calculate element forces
@@ -1136,6 +1173,13 @@ namespace Kratos
 		deformation_stiffness_Kd = this->CalculateDeformationStiffness();
 		element_forces_t = prod(deformation_stiffness_Kd,
 			deformation_modes_total_V);
+
+		// add Prestress to N !!!
+		double sigma_pre = 0.00;
+		if (this->GetProperties().Has(TRUSS_PRESTRESS_PK2)) {
+			sigma_pre = GetProperties()[TRUSS_PRESTRESS_PK2];
+		}
+		element_forces_t[3] += (sigma_pre * l * A) / L;
 
 		return element_forces_t;
 		KRATOS_CATCH("")
