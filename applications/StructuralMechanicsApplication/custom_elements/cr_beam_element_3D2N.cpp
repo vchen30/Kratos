@@ -488,7 +488,7 @@ namespace Kratos
 			sigma_pre = GetProperties()[TRUSS_PRESTRESS_PK2];
 		}
 
-		const double L = this->CalculateCurrentLength();
+		const double L = this->CalculateReferenceLength();
 		const double A = this->GetProperties()[CROSS_AREA];
 
 		const double scal_mult = A*sigma_pre/L;

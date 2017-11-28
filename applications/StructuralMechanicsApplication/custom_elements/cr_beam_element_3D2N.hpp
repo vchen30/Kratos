@@ -84,7 +84,6 @@ namespace Kratos
 		bounded_vector<double,msLocalSize> GetCurrentNodalPosition();
 
 		void AddPrestressMatrix(MatrixType& rLeftHandSideMatrix);
-		void AddPrestressForce(MatrixType& rLeftHandSideMatrix);
 
 		bounded_vector<double,msLocalSize> CalculateElementForces();
 
