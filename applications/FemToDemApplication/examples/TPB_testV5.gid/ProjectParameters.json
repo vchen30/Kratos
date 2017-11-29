@@ -47,7 +47,6 @@
         "kratos_module": "KratosMultiphysics.SolidMechanicsApplication",
         "process_name":  "AssignVectorComponentsToNodesProcess",
         "Parameters":    {
-            "mesh_id":         0,
             "model_part_name": "Solid_Displacement-auto-1",
             "variable_name":   "DISPLACEMENT",
             "value":           [0.0,0.0,0.0],
@@ -58,7 +57,6 @@
         "kratos_module": "KratosMultiphysics.SolidMechanicsApplication",
         "process_name":  "AssignVectorComponentsToNodesProcess",
         "Parameters":    {
-            "mesh_id":         0,
             "model_part_name": "Solid_Displacement-auto-2",
             "variable_name":   "DISPLACEMENT",
             "value":           [0.0,"-0.00005*t",0.0],

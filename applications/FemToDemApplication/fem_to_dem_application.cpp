@@ -56,7 +56,7 @@
 namespace Kratos {
 
 KratosFemToDemApplication::KratosFemToDemApplication():
-mZaratipitoElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+//mZaratipitoElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
 mAleCornVelElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3))))
 {}
 
@@ -99,7 +99,7 @@ void KratosFemToDemApplication::Register()
 
 	
 	//Register element
-	KRATOS_REGISTER_ELEMENT("ZaratipitoElement", mZaratipitoElement)
+	//KRATOS_REGISTER_ELEMENT("ZaratipitoElement", mZaratipitoElement)
 	KRATOS_REGISTER_ELEMENT("AleCornVelElement", mAleCornVelElement)
 			
 	//Register Constitutive Laws

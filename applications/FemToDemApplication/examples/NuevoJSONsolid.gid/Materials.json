@@ -1,0 +1,21 @@
+{
+    "material_models_list" : [{
+        "python_module" : "assign_materials_process",
+        "kratos_module" : "ConstitutiveModelsApplication",
+        "help"          : "This process creates a material and assigns its properties",
+        "process_name"  : "AssignMaterialsProcess",
+        "Parameters"    : {
+            "model_part_name"  : "Parts_Parts_Auto1",
+            "properties_id"    : 1,
+            "constitutive_law" : {
+                "name" : "KratosMultiphysics.ConstitutiveModelsApplication.SmallStrainPlaneStrain2DLaw.LinearElasticModel"
+            },
+            "variables"        : {
+                "DENSITY"       : 7850.0,
+                "YOUNG_MODULUS" : 206900000000.0,
+                "POISSON_RATIO" : 0.29
+            },
+            "tables"           : {}
+        }
+    }]
+}

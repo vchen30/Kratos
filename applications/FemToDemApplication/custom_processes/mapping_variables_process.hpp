@@ -403,8 +403,8 @@ protected:
         //double ColumnSize = (X_max - X_min) / NColumns;
 
         // if it's too big, Nncol could be 0 -> error
-		int NRows    = int((Y_max - Y_min) / (10.0 * mAverageElementLength));
-		int NColumns = int((X_max - X_min) / (10.0 * mAverageElementLength));
+		int NRows    = int((Y_max - Y_min) / (22.5 * mAverageElementLength));
+		int NColumns = int((X_max - X_min) / (22.5 * mAverageElementLength));
 
 		double RowSize = (Y_max - Y_min) / NRows;
 		double ColumnSize = (X_max - X_min) / NColumns;

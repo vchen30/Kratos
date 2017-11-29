@@ -135,7 +135,7 @@ VALUE: false
 QUESTION: Skin_output#CB#(true,false)
 VALUE: false
 
-TITLE:DEM_Properties
+TITLE:DEM_Materials_Properties
 QUESTION: Coupled_Calculation#CB#(true,false)
 VALUE: false
 QUESTION: Density
@@ -160,11 +160,21 @@ QUESTION: Discontinous_Contact_Law#CB#(Linear,Hertz)
 VALUE: Linear
 QUESTION: Cohesion_Law#CB#(None,JKR,DMT)
 VALUE: None
+
+
+TITLE:DEM_Parameters
+QUESTION: Dimension#CB#(2,3)
+VALUE: 2
+QUESTION: GravityX
+VALUE: 0.0
+QUESTION: GravityY
+VALUE: 0.0
+QUESTION: GravityZ
+VALUE: 0.0
+QUESTION: MaxTimeStep
+VALUE: 5e-5
+
 END PROBLEM DATA
-
-
-
-
 
 
 

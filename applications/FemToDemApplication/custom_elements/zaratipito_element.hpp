@@ -14,7 +14,7 @@
 
 #include "includes/element.h"
 //#include "custom_elements/linear_solid_element.hpp"
-#include "custom_elements/small_displacement_element.hpp"
+#include "custom_elements/solid_elements/small_displacement_element.hpp"
 
 namespace Kratos
 {

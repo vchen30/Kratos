@@ -4,7 +4,7 @@
         "plane_state":                    "Plane_Stress",
         "mesh_optimality_criteria":       "Global_Error_Equidistribution",
         "permissible_error":               0.09,
-        "refinement_frequency":            1.5,
+        "refinement_frequency":            1.0,
         "Mapping_Procedure":              "Closest_Point_Transfer",
         "gid_path":                       "D:\\Program Files (x86)\\GiD 13.1.8d\\gid.exe"
     },
@@ -13,8 +13,8 @@
         "model_part_name":      "Structure",
         "domain_size":          2,
         "start_time":           0.0,
-        "end_time":             5.0,
-        "time_step":            0.1,
+        "end_time":             1.0,
+        "time_step":            0.25,
         "echo_level":           1
     },
    "solver_settings": {
@@ -32,9 +32,9 @@
             "convergence_criterion":               "Residual_criterion",
             "displacement_relative_tolerance":      1.0E-4,
             "displacement_absolute_tolerance":      1.0E-9,
-            "residual_relative_tolerance":          1.0E-2,
+            "residual_relative_tolerance":          1.0E-4,
             "residual_absolute_tolerance":          1.0E-9,
-            "max_iteration":                        25,
+            "max_iteration":                        15,
             "linear_solver_settings":     {
                  "solver_type":      "SuperLUSolver",
                  "scaling":           false
@@ -69,7 +69,7 @@
     "output_configuration": {
         "result_file_configuration": {
             "gidpost_flags":       {
-                "WriteDeformedMeshFlag": "WriteUndeformed",
+                "WriteDeformedMeshFlag": "WriteDeformed",
                 "WriteConditionsFlag":   "WriteElementsOnly",
                 "GiDPostMode":           "GiD_PostAscii",
                 "MultiFileFlag":         "MultipleFiles"

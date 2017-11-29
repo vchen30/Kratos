@@ -253,9 +253,10 @@ class AdaptiveMeshRefinementUtility:
             self.Model = {self.ProjectParameters["problem_data"]["model_part_name"].GetString() : model_part}
 
 
-            # we delete 2 added parameters to avoid error --> TODO
+            # we delete 3 added parameters to avoid error --> TODO
             self.ProjectParameters["solver_settings"].RemoveValue("damp_factor_m")
             self.ProjectParameters["solver_settings"].RemoveValue("dynamic_factor")
+            self.ProjectParameters["solver_settings"].RemoveValue("stabilization_factor")
 
 
             #construct the solver (main setting methods are located in the solver_module)

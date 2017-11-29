@@ -28,9 +28,9 @@
 #include "includes/kratos_application.h"
 #include "includes/variables.h"
 
-#include "custom_elements\zaratipito_element.hpp"
-#include "custom_constitutive\zarate_law.hpp"
-#include "custom_elements\alecornvel_element.hpp"
+//#include "custom_elements/zaratipito_element.hpp"
+#include "custom_constitutive/zarate_law.hpp"
+#include "custom_elements/alecornvel_element.hpp"
 
 #include "fem_to_dem_application_variables.h"
 
@@ -100,7 +100,7 @@ protected:
 private:
 	
 	// Elements
-	const ZaratipitoElement mZaratipitoElement;
+	//const ZaratipitoElement mZaratipitoElement;
 	const AleCornVelElement mAleCornVelElement;
 
 

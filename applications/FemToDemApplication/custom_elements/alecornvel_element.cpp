@@ -198,112 +198,124 @@ namespace Kratos
 	{
 		//*****************************
 		KRATOS_TRY
-		//if (rCurrentProcessInfo[STEP] > 30)
-		//{ 
-			//KRATOS_WATCH(this->Id())
-		//}
-		
-		//1.-Initialize sizes for the system components:
-		const unsigned int number_of_nodes = GetGeometry().size();
-		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
-		unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
 
-		Vector StrainVector(voigt_size);
-		noalias(StrainVector) = ZeroVector(voigt_size);
-		Vector StressVector(voigt_size);
-		noalias(StressVector) = ZeroVector(voigt_size);
-		Matrix ConstitutiveMatrix(voigt_size, voigt_size);
-		noalias(ConstitutiveMatrix) = ZeroMatrix(voigt_size, voigt_size);
-		Matrix B(voigt_size, dimension*number_of_nodes);
-		noalias(B) = ZeroMatrix(voigt_size, dimension*number_of_nodes);
-		Matrix DN_DX(number_of_nodes, dimension);
-		noalias(DN_DX) = ZeroMatrix(number_of_nodes, dimension);
-
-		//deffault values for the infinitessimal theory
-		double detF = 1;
-		Matrix F(dimension, dimension);
-		noalias(F) = identity_matrix<double>(dimension);
-
-		//3.-Calculate elemental system:
-
-		//reading integration points
-		const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints(mThisIntegrationMethod);
-
-		//get the shape functions [N] (for the order of the default integration method)
-		const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(mThisIntegrationMethod);
-
-		//get the shape functions parent coodinates derivative [dN/d�] (for the order of the default integration method)
-		const GeometryType::ShapeFunctionsGradientsType& DN_De = GetGeometry().ShapeFunctionsLocalGradients(mThisIntegrationMethod);
-
-		//calculate delta position (here coincides with the current displacement)
-		Matrix DeltaPosition(number_of_nodes, dimension);
-		noalias(DeltaPosition) = ZeroMatrix(number_of_nodes, dimension);
-		DeltaPosition = this->CalculateDeltaPosition(DeltaPosition);
-
-		//calculating the reference jacobian from cartesian coordinates to parent coordinates for all integration points [dx_n/d�]
-		GeometryType::JacobiansType J;
-		J.resize(1, false);
-		J[0].resize(dimension, dimension, false);
-		noalias(J[0]) = ZeroMatrix(dimension, dimension);
-		J = GetGeometry().Jacobian(J, mThisIntegrationMethod, DeltaPosition);
-
-
-		// Loop Over Integration Points
-		for (unsigned int PointNumber = 0; PointNumber < integration_points.size(); PointNumber++)
+		bool is_active = true;
+		if (this->IsDefined(ACTIVE))
 		{
-			Matrix InvJ(dimension, dimension);
-			noalias(InvJ) = ZeroMatrix(dimension, dimension);
-			double detJ = 0;
-			MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
-
-			if (detJ<0) KRATOS_THROW_ERROR(std::invalid_argument, " SMALL DISPLACEMENT ELEMENT INVERTED: |J|<0 ) detJ = ", detJ)
-
-			//compute cartesian derivatives for this integration point  [dN/dx_n]
-			noalias(DN_DX) = prod(DN_De[PointNumber], InvJ);
-
-			//set shape functions for this integration point
-			Vector N = row(Ncontainer, PointNumber);
-
-			//b.-compute infinitessimal strain
-			this->CalculateInfinitesimalStrain(StrainVector, DN_DX);
-			//this->SetStrainVector(StrainVector);
-			this->SetValue(STRAIN_VECTOR, StrainVector);
-
-			ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
-
-			//set constitutive law variables: (it passes only references to this local variables)
-			Values.SetStrainVector(StrainVector);
-			Values.SetStressVector(StressVector);
-			Values.SetConstitutiveMatrix(ConstitutiveMatrix);
-			Values.SetShapeFunctionsDerivatives(DN_DX);
-			Values.SetShapeFunctionsValues(N);
-			//values to be set:
-			Values.SetDeterminantF(detF);
-			Values.SetDeformationGradientF(F);
-
-			//set constitutive law flags:
-			Flags &ConstitutiveLawOptions = Values.GetOptions();
-
-			//compute stress and constitutive matrix
-			ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
-			ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
-
-			//CALL THE CONSTITUTIVE LAW (for this integration point)
-			//(after calling the constitutive law StressVector and ConstitutiveMatrix are set and can be used)
-			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);  
-			this->SetValue(STRESS_VECTOR, Values.GetStressVector());
-
-			this->CalculateDeformationMatrix(B, DN_DX);
-			this->SetBMatrix(B);
-
-
-			//if (rCurrentProcessInfo[STEP] > 30)
-			//{ 
-			//	KRATOS_WATCH(this->Id())
-			//	KRATOS_WATCH(this->Is(ACTIVE))
-			//	KRATOS_WATCH(Values.GetStressVector())
-			//}
+			is_active = this->Is(ACTIVE);
 		}
+
+		// Inactive elements can have negative determinant of the Jacobian
+		if (is_active == true)
+		{
+			//1.-Initialize sizes for the system components:
+			const unsigned int number_of_nodes = GetGeometry().size();
+			const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+			unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
+
+			Vector StrainVector(voigt_size);
+			noalias(StrainVector) = ZeroVector(voigt_size);
+			Vector StressVector(voigt_size);
+			noalias(StressVector) = ZeroVector(voigt_size);
+			Matrix ConstitutiveMatrix(voigt_size, voigt_size);
+			noalias(ConstitutiveMatrix) = ZeroMatrix(voigt_size, voigt_size);
+			Matrix B(voigt_size, dimension*number_of_nodes);
+			noalias(B) = ZeroMatrix(voigt_size, dimension*number_of_nodes);
+			Matrix DN_DX(number_of_nodes, dimension);
+			noalias(DN_DX) = ZeroMatrix(number_of_nodes, dimension);
+
+			//deffault values for the infinitessimal theory
+			double detF = 1;
+			Matrix F(dimension, dimension);
+			noalias(F) = identity_matrix<double>(dimension);
+
+			//3.-Calculate elemental system:
+
+			//reading integration points
+			const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints(mThisIntegrationMethod);
+
+			//get the shape functions [N] (for the order of the default integration method)
+			const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(mThisIntegrationMethod);
+
+			//get the shape functions parent coodinates derivative [dN/d�] (for the order of the default integration method)
+			const GeometryType::ShapeFunctionsGradientsType& DN_De = GetGeometry().ShapeFunctionsLocalGradients(mThisIntegrationMethod);
+
+			//calculate delta position (here coincides with the current displacement)
+			Matrix DeltaPosition(number_of_nodes, dimension);
+			noalias(DeltaPosition) = ZeroMatrix(number_of_nodes, dimension);
+			DeltaPosition = this->CalculateDeltaPosition(DeltaPosition);
+
+			//calculating the reference jacobian from cartesian coordinates to parent coordinates for all integration points [dx_n/d�]
+			GeometryType::JacobiansType J;
+			J.resize(1, false);
+			J[0].resize(dimension, dimension, false);
+			noalias(J[0]) = ZeroMatrix(dimension, dimension);
+			J = GetGeometry().Jacobian(J, mThisIntegrationMethod, DeltaPosition);
+
+
+			// Loop Over Integration Points
+			for (unsigned int PointNumber = 0; PointNumber < integration_points.size(); PointNumber++)
+			{
+				Matrix InvJ(dimension, dimension);
+				noalias(InvJ) = ZeroMatrix(dimension, dimension);
+				double detJ = 0;
+				MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
+
+
+				if (detJ < 0)
+				{
+					//KRATOS_WATCH(this->Id())
+					//KRATOS_WATCH(detJ)
+					this->Set(ACTIVE, false); // element alone inside a crack
+					detJ = fabs(detJ);
+				}
+
+
+				if (detJ<0) KRATOS_THROW_ERROR(std::invalid_argument, " SMALL DISPLACEMENT ELEMENT INVERTED: |J|<0 ) detJ = ", detJ)
+
+				//compute cartesian derivatives for this integration point  [dN/dx_n]
+				noalias(DN_DX) = prod(DN_De[PointNumber], InvJ);
+
+				//set shape functions for this integration point
+				Vector N = row(Ncontainer, PointNumber);
+
+				//b.-compute infinitessimal strain
+				this->CalculateInfinitesimalStrain(StrainVector, DN_DX);
+				//this->SetStrainVector(StrainVector);
+				this->SetValue(STRAIN_VECTOR, StrainVector);
+
+				ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
+
+				//set constitutive law variables: (it passes only references to this local variables)
+				Values.SetStrainVector(StrainVector);
+				Values.SetStressVector(StressVector);
+				Values.SetConstitutiveMatrix(ConstitutiveMatrix);
+				Values.SetShapeFunctionsDerivatives(DN_DX);
+				Values.SetShapeFunctionsValues(N);
+				//values to be set:
+				Values.SetDeterminantF(detF);
+				Values.SetDeformationGradientF(F);
+
+				//set constitutive law flags:
+				Flags &ConstitutiveLawOptions = Values.GetOptions();
+
+				//compute stress and constitutive matrix
+				ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
+				ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
+
+				//CALL THE CONSTITUTIVE LAW (for this integration point)
+				//(after calling the constitutive law StressVector and ConstitutiveMatrix are set and can be used)
+				mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);  
+				this->SetValue(STRESS_VECTOR, Values.GetStressVector());
+
+				this->CalculateDeformationMatrix(B, DN_DX);
+				this->SetBMatrix(B);
+
+
+
+			}
+		}
+		
 		KRATOS_CATCH("")
 
 	}
@@ -823,49 +835,49 @@ namespace Kratos
 		if (rOutput.size() != integration_points_number)
 			rOutput.resize(integration_points_number);
 
-		if (rVariable == CAUCHY_STRESS_VECTOR || rVariable == PK2_STRESS_VECTOR)
-		{
-			//create and initialize element variables:
-			GeneralVariables Variables;
-			this->InitializeGeneralVariables(Variables, rCurrentProcessInfo);
+		// if (rVariable == CAUCHY_STRESS_VECTOR || rVariable == PK2_STRESS_VECTOR)
+		// {
+		// 	//create and initialize element variables:
+		// 	ElementVariables Variables;
+		// 	this->InitializeElementVariables(Variables, rCurrentProcessInfo);
 
-			//create constitutive law parameters:
-			ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
+		// 	//create constitutive law parameters:
+		// 	ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
 
-			//set constitutive law flags:
-			Flags &ConstitutiveLawOptions = Values.GetOptions();
+		// 	//set constitutive law flags:
+		// 	Flags &ConstitutiveLawOptions = Values.GetOptions();
 
-			ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
+		// 	ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
 
 
-			//reading integration points
-			for (unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++)
-			{
-				//compute element kinematics B, F, DN_DX ...
-				this->CalculateKinematics(Variables, PointNumber);
+		// 	//reading integration points
+		// 	for (unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++)
+		// 	{
+		// 		//compute element kinematics B, F, DN_DX ...
+		// 		this->CalculateKinematics(Variables, PointNumber);
 
-				//set general variables to constitutivelaw parameters
-				this->SetGeneralVariables(Variables, Values, PointNumber);
+		// 		//set general variables to constitutivelaw parameters
+		// 		this->SetGeneralVariables(Variables, Values, PointNumber);
 
-				//call the constitutive law to update material variables
-				if (rVariable == CAUCHY_STRESS_VECTOR)
-					mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);
-				else
-					mConstitutiveLawVector[PointNumber]->CalculateMaterialResponsePK2(Values);
+		// 		//call the constitutive law to update material variables
+		// 		if (rVariable == CAUCHY_STRESS_VECTOR)
+		// 			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);
+		// 		else
+		// 			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponsePK2(Values);
 
-				if (rOutput[PointNumber].size() != Variables.StressVector.size())
-					rOutput[PointNumber].resize(Variables.StressVector.size(), false);
+		// 		if (rOutput[PointNumber].size() != Variables.StressVector.size())
+		// 			rOutput[PointNumber].resize(Variables.StressVector.size(), false);
 
-				rOutput[PointNumber] = Variables.StressVector;
+		// 		rOutput[PointNumber] = Variables.StressVector;
 
-			}
+		// 	}
 
-		}
+		// }
 		else if (rVariable == GREEN_LAGRANGE_STRAIN_VECTOR || rVariable == ALMANSI_STRAIN_VECTOR)
 		{
 			//create and initialize element variables:
-			GeneralVariables Variables;
-			this->InitializeGeneralVariables(Variables, rCurrentProcessInfo);
+			ElementVariables Variables;
+			this->InitializeElementVariables(Variables, rCurrentProcessInfo);
 
 			//reading integration points
 			for (unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++)

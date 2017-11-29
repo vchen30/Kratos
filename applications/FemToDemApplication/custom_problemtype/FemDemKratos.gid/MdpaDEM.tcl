@@ -24,8 +24,6 @@ proc WriteMdpaDEM { basename dir problemtypedir } {
 	puts $FileVar "  ROLLING_FRICTION                        [GiD_AccessValue get gendata Rolling_Friction]"
 	puts $FileVar "  DEM_DISCONTINUUM_CONSTITUTIVE_LAW_NAME  DEM_D_Linear_viscous_Coulomb"
 	puts $FileVar "  DEM_CONTINUUM_CONSTITUTIVE_LAW_NAME     DEMContinuumConstitutiveLaw"
-
-
     puts $FileVar "End Properties"
     puts $FileVar ""
     close $FileVar

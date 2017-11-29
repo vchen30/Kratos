@@ -75,6 +75,9 @@ proc BeforeRunCalculation { batfilename basename dir problemtypedir gidexe args 
         # Writes the mdpa of the discrete elements (only properties)
         source [file join $problemtypedir MdpaDEM.tcl]
         WriteMdpaDEM $basename $dir $problemtypedir
+
+        source [file join $problemtypedir ProjectParametersDEM.tcl]
+        WriteProjectParametersDEM $basename $dir $problemtypedir
     }
 #---------------------------------------------------------------
     # Run the problem
