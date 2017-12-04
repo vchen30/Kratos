@@ -119,7 +119,7 @@ namespace Kratos
       double updatedTimeInterval = rCurrentProcessInfo[DELTA_TIME];
       double deltaTimeToNewMilestone=initialTimeInterval;
       double minimumTimeInterval=initialTimeInterval*0.0001;
-
+      minimumTimeInterval=initialTimeInterval*0.1;
       rCurrentProcessInfo.SetValue(PREVIOUS_DELTA_TIME,currentTimeInterval);
       rCurrentProcessInfo.SetValue(TIME_INTERVAL_CHANGED,false);
 	    
@@ -162,14 +162,14 @@ namespace Kratos
 
       if(timeIntervalReduced==false){
 	if(updatedTimeInterval>(2.0*minimumTimeInterval)){
-	  
-	  CheckNodalConditionForTimeStepReduction(updatedTimeInterval,increaseTimeInterval,timeIntervalReduced);
 
-	  if(timeIntervalReduced==false){
-
-	    CheckElementalConditionForTimeStepReduction(increaseTimeInterval);
-
-	  }
+	  const unsigned int dimension =  mrModelPart.ElementsBegin()->GetGeometry().WorkingSpaceDimension();
+	  if(dimension==2){
+	    CheckNodalConditionForTimeStepReduction(updatedTimeInterval,increaseTimeInterval,timeIntervalReduced);
+	    if(timeIntervalReduced==false){
+	      CheckElementalConditionForTimeStepReduction(increaseTimeInterval);
+	    }
+	}
 	}
 
 	if(increaseTimeInterval==true && initialTimeInterval>(1.0+tolerance)*updatedTimeInterval && badPressureConvergence==false && badVelocityConvergence==false ){
