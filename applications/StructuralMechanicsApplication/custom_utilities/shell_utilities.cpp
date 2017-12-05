@@ -27,43 +27,44 @@ namespace Kratos
 {
     namespace ShellUtilities
 	{
-        typedef Properties PropertiesType; // TODO remove this?
+		typedef std::size_t 			SizeType;
+        typedef Properties 				PropertiesType; // TODO remove this?
 
-		double dN_seren_dxi(const int actualNodeNumber,const double xi,
-			const double eta)
+		double dN_seren_dxi(const int ThisNodeNumber, const double Xi, 
+							const double Eta)
 		{
 			// Natural derivatives of 8-node serendipity shape functions
 
-			double returnValue;
-			switch (actualNodeNumber)
+			double return_value;
+			switch (ThisNodeNumber)
 			{
 			case 1:
-				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
-					0.25*(-eta + 1.0)*(-eta - xi - 1.0);
+				return_value = -(-Eta + 1.0)*(-0.25*Xi + 0.25) -
+					0.25*(-Eta + 1.0)*(-Eta - Xi - 1.0);
 				break;
 			case 2:
-				returnValue = (-eta + 1.0)*(0.25*xi + 0.25) +
-					0.25*(-eta + 1.0)*(-eta + xi - 1.0);
+				return_value = (-Eta + 1.0)*(0.25*Xi + 0.25) +
+					0.25*(-Eta + 1.0)*(-Eta + Xi - 1.0);
 				break;
 			case 3:
-				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
-					0.25*(eta + 1.0)*(eta + xi - 1.0);
+				return_value = (Eta + 1.0)*(0.25*Xi + 0.25) +
+					0.25*(Eta + 1.0)*(Eta + Xi - 1.0);
 				break;
 			case 4:
-				returnValue = -(eta + 1.0)*(-0.25*xi + 0.25) -
-					0.25*(eta + 1.0)*(eta - xi - 1.0);
+				return_value = -(Eta + 1.0)*(-0.25*Xi + 0.25) -
+					0.25*(Eta + 1.0)*(Eta - Xi - 1.0);
 				break;
 			case 5:
-				returnValue = -1.0*xi*(-eta + 1.0);
+				return_value = -1.0*Xi*(-Eta + 1.0);
 				break;
 			case 6:
-				returnValue = -0.5*eta*eta + 0.5;
+				return_value = -0.5*Eta*Eta + 0.5;
 				break;
 			case 7:
-				returnValue = -1.0*xi*(eta + 1.0);
+				return_value = -1.0*Xi*(Eta + 1.0);
 				break;
 			case 8:
-				returnValue = 0.5*eta*eta - 0.5;
+				return_value = 0.5*Eta*Eta - 0.5;
 				break;
 			default:
 				KRATOS_ERROR <<
@@ -71,44 +72,44 @@ namespace Kratos
 					<< std::endl;
 			}
 
-			return returnValue;
+			return return_value;
 		}
 
-		double dN_seren_deta(const int actualNodeNumber,const double xi,
-			const double eta)
+		double dN_seren_deta(const int ThisNodeNumber, const double Xi,
+							 const double Eta)
 		{
 			// Natural derivatives of 8-node serendipity shape functions
 
-			double returnValue;
-			switch (actualNodeNumber)
+			double return_value;
+			switch (ThisNodeNumber)
 			{
 			case 1:
-				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
-					(-0.25*xi + 0.25)*(-eta - xi - 1.0);
+				return_value = -(-Eta + 1.0)*(-0.25*Xi + 0.25) -
+					(-0.25*Xi + 0.25)*(-Eta - Xi - 1.0);
 				break;
 			case 2:
-				returnValue = -(-eta + 1.0)*(0.25*xi + 0.25) -
-					(0.25*xi + 0.25)*(-eta + xi - 1.0);
+				return_value = -(-Eta + 1.0)*(0.25*Xi + 0.25) -
+					(0.25*Xi + 0.25)*(-Eta + Xi - 1.0);
 				break;
 			case 3:
-				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
-					(0.25*xi + 0.25)*(eta + xi - 1.0);
+				return_value = (Eta + 1.0)*(0.25*Xi + 0.25) +
+					(0.25*Xi + 0.25)*(Eta + Xi - 1.0);
 				break;
 			case 4:
-				returnValue = (eta + 1.0)*(-0.25*xi + 0.25) +
-					(-0.25*xi + 0.25)*(eta - xi - 1.0);
+				return_value = (Eta + 1.0)*(-0.25*Xi + 0.25) +
+					(-0.25*Xi + 0.25)*(Eta - Xi - 1.0);
 				break;
 			case 5:
-				returnValue = 0.5*xi*xi - 0.5;
+				return_value = 0.5*Xi*Xi - 0.5;
 				break;
 			case 6:
-				returnValue = -1.0*eta*(xi + 1.0);
+				return_value = -1.0*Eta*(Xi + 1.0);
 				break;
 			case 7:
-				returnValue = -0.5*xi*xi + 0.5;
+				return_value = -0.5*Xi*Xi + 0.5;
 				break;
 			case 8:
-				returnValue = -1.0*eta*(-xi + 1.0);
+				return_value = -1.0*Eta*(-Xi + 1.0);
 				break;
 			default:
 				KRATOS_ERROR <<
@@ -116,71 +117,69 @@ namespace Kratos
 					<< std::endl;
 			}
 
-			return returnValue;
+			return return_value;
 		}
 		
-		void InterpToStandardGaussPoints(double& v1, double& v2,
-			double& v3)
+		void InterpToStandardGaussPoints(double& rV1, double& rV2,
+			double& rV3)
 		{
-			double vg1 = v1;
-			double vg2 = v2;
-			double vg3 = v3;
+			double vg1 = rV1;
+			double vg2 = rV2;
+			double vg3 = rV3;
 #ifdef OPT_AVERAGE_RESULTS
-			v1 = (vg1 + vg2 + vg3) / 3.0;
-			v2 = (vg1 + vg2 + vg3) / 3.0;
-			v3 = (vg1 + vg2 + vg3) / 3.0;
+			rV1 = (vg1 + vg2 + vg3) / 3.0;
+			rV2 = (vg1 + vg2 + vg3) / 3.0;
+			rV3 = (vg1 + vg2 + vg3) / 3.0;
 #else
-			v1 = (2.0*vg1) / 3.0 - vg2 / 3.0 + (2.0*vg3) / 3.0;
-			v2 = (2.0*vg1) / 3.0 + (2.0*vg2) / 3.0 - vg3 / 3.0;
-			v3 = (2.0*vg2) / 3.0 - vg1 / 3.0 + (2.0*vg3) / 3.0;
+			rV1 = (2.0*vg1) / 3.0 - vg2 / 3.0 + (2.0*vg3) / 3.0;
+			rV2 = (2.0*vg1) / 3.0 + (2.0*vg2) / 3.0 - vg3 / 3.0;
+			rV3 = (2.0*vg2) / 3.0 - vg1 / 3.0 + (2.0*vg3) / 3.0;
 #endif // OPT_AVERAGE_RESULTS
 		}
 
-		void InterpToStandardGaussPoints(std::vector< double >& v)
+		void InterpToStandardGaussPoints(std::vector< double >& rVec)
 		{
-			if (v.size() != 3) return;
-			InterpToStandardGaussPoints(v[0], v[1], v[2]);
+			if (rVec.size() != 3) return;
+			InterpToStandardGaussPoints(rVec[0], rVec[1], rVec[2]);
 		}
 
-		void InterpToStandardGaussPoints(std::vector< array_1d<double,
-			3> >& v)
+		void InterpToStandardGaussPoints(std::vector< array_1d<double,3> >& rVec)
 		{
-			if (v.size() != 3) return;
-			for (size_t i = 0; i < 3; i++)
-				InterpToStandardGaussPoints(v[0][i], v[1][i], v[2][i]);
+			if (rVec.size() != 3) return;
+			for (SizeType i = 0; i < 3; i++)
+				InterpToStandardGaussPoints(rVec[0][i], rVec[1][i], rVec[2][i]);
 		}
 
-		void InterpToStandardGaussPoints(std::vector< array_1d<double,
-			6> >& v)
+		void InterpToStandardGaussPoints(std::vector< array_1d<double,6> >& rVec)
 		{
-			if (v.size() != 3) return;
-			for (size_t i = 0; i < 6; i++)
-				InterpToStandardGaussPoints(v[0][i], v[1][i], v[2][i]);
+			if (rVec.size() != 3) return;
+			for (SizeType i = 0; i < 6; i++)
+				InterpToStandardGaussPoints(rVec[0][i], rVec[1][i], rVec[2][i]);
 		}
 
-		void InterpToStandardGaussPoints(std::vector< Vector >& v)
+		void InterpToStandardGaussPoints(std::vector< Vector >& rVec)
 		{
-			if (v.size() != 3) return;
-			size_t ncomp = v[0].size();
+			if (rVec.size() != 3) return;
+			SizeType ncomp = rVec[0].size();
 			for (int i = 1; i < 3; i++)
-				if (v[i].size() != ncomp)
+				if (rVec[i].size() != ncomp)
 					return;
-			for (size_t i = 0; i < ncomp; i++)
-				InterpToStandardGaussPoints(v[0][i], v[1][i], v[2][i]);
+			for (SizeType i = 0; i < ncomp; i++)
+				InterpToStandardGaussPoints(rVec[0][i], rVec[1][i], rVec[2][i]);
 		}
 
-		void InterpToStandardGaussPoints(std::vector< Matrix >& v)
+		void InterpToStandardGaussPoints(std::vector< Matrix >& rVec)
 		{
-			if (v.size() != 3) return;
-			size_t nrows = v[0].size1();
-			size_t ncols = v[0].size2();
+			if (rVec.size() != 3) return;
+			SizeType nrows = rVec[0].size1();
+			SizeType ncols = rVec[0].size2();
 			for (int i = 1; i < 3; i++)
-				if (v[i].size1() != nrows || v[i].size2() != ncols)
+				if (rVec[i].size1() != nrows || rVec[i].size2() != ncols)
 					return;
-			for (size_t i = 0; i < nrows; i++)
-				for (size_t j = 0; j < ncols; j++)
+			for (SizeType i = 0; i < nrows; i++)
+				for (SizeType j = 0; j < ncols; j++)
 					InterpToStandardGaussPoints
-					(v[0](i, j), v[1](i, j), v[2](i, j));
+					(rVec[0](i, j), rVec[1](i, j), rVec[2](i, j));
 		}
 
 
@@ -222,8 +221,8 @@ namespace Kratos
         void CheckProperties(const Element* pTheElement, const ProcessInfo& rCurrentProcessInfo, const bool IsThickShell)
         {
             // check properties
-            if(pTheElement->pGetProperties() == nullptr)
-                KRATOS_ERROR << "Properties not provided for element " << pTheElement->Id() << std::endl;
+			KRATOS_ERROR_IF_NOT(pTheElement->pGetProperties()) << "Properties not provided for element " 
+															   << pTheElement->Id() << std::endl;
 
             const PropertiesType & props = pTheElement->GetProperties();
 
@@ -232,8 +231,7 @@ namespace Kratos
             if(props.Has(SHELL_CROSS_SECTION)) // if the user specified a cross section ...
             {
                 const ShellCrossSection::Pointer & section = props[SHELL_CROSS_SECTION];
-                if(section == nullptr)
-                    KRATOS_ERROR << "SHELL_CROSS_SECTION not provided for element " << pTheElement->Id() << std::endl;
+				KRATOS_ERROR_IF_NOT(section) << "SHELL_CROSS_SECTION not provided for element " << pTheElement->Id() << std::endl;
         
                 section->Check(props, geom, rCurrentProcessInfo);
             }
@@ -259,22 +257,22 @@ namespace Kratos
 
         void CheckSpecificProperties(const Element* pTheElement, const PropertiesType & rProps, const bool IsThickShell)
         {
-            if (!rProps.Has(CONSTITUTIVE_LAW))
-                KRATOS_ERROR << "CONSTITUTIVE_LAW not provided for element " << pTheElement->Id() << std::endl;
-            const ConstitutiveLaw::Pointer& claw = rProps[CONSTITUTIVE_LAW];
-            if (claw == nullptr)
-                KRATOS_ERROR << "CONSTITUTIVE_LAW not provided for element " << pTheElement->Id() << std::endl;
+			KRATOS_ERROR_IF_NOT(rProps.Has(CONSTITUTIVE_LAW)) << "CONSTITUTIVE_LAW not provided for element " 
+															  << pTheElement->Id() << std::endl;
 
-            if(!rProps.Has(THICKNESS))
-                KRATOS_ERROR << "THICKNESS not provided for element " << pTheElement->Id() << std::endl;
-            if(rProps[THICKNESS] <= 0.0)
-                KRATOS_ERROR << "wrong THICKNESS value provided for element " << pTheElement->Id() << std::endl;
-                
-            if(!rProps.Has(DENSITY))
-                KRATOS_ERROR << "DENSITY not provided for element " << pTheElement->Id() << std::endl;
-            if(rProps[DENSITY] < 0.0)
-                KRATOS_ERROR << "wrong DENSITY value provided for element " << pTheElement->Id() << std::endl;
-            
+			KRATOS_ERROR_IF_NOT(rProps[CONSTITUTIVE_LAW]) << "CONSTITUTIVE_LAW not provided for element " 
+									  					  << pTheElement->Id() << std::endl;
+
+            KRATOS_ERROR_IF_NOT(rProps.Has(THICKNESS)) << "THICKNESS not provided for element " 
+													   << pTheElement->Id() << std::endl;
+            KRATOS_ERROR_IF(rProps[THICKNESS] <= 0.0) << "wrong THICKNESS value provided for element " 
+													  << pTheElement->Id() << std::endl;
+
+            KRATOS_ERROR_IF_NOT(rProps.Has(DENSITY)) << "DENSITY not provided for element " 
+													 << pTheElement->Id() << std::endl;
+            KRATOS_ERROR_IF(rProps[DENSITY] < 0.0) << "wrong DENSITY value provided for element " 
+												   << pTheElement->Id() << std::endl;
+
             if(IsThickShell)
             {
                 // Check constitutive law has been verified with Stenberg stabilization
