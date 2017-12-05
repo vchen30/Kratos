@@ -351,7 +351,7 @@ class TestCrBeam3D2N(KratosUnittest.TestCase):
         mp = KratosMultiphysics.ModelPart("solid_part")
         self._add_variables(mp)
         self._apply_material_properties(mp,dim)
-        mp.GetProperties()[0].SetValue(StructuralMechanicsApplication.LUMPED_MASS_MATRIX,1)
+        mp.GetProperties()[0].SetValue(StructuralMechanicsApplication.USE_LUMPED_MASS_MATRIX,1)
 
         #create nodes
         dx = 1.00 / nr_elements
@@ -409,7 +409,7 @@ class TestCrBeam3D2N(KratosUnittest.TestCase):
         mp = KratosMultiphysics.ModelPart("solid_part")
         self._add_variables(mp)
         self._apply_material_properties(mp,dim)
-        mp.GetProperties()[0].SetValue(StructuralMechanicsApplication.LUMPED_MASS_MATRIX,0)
+        mp.GetProperties()[0].SetValue(StructuralMechanicsApplication.USE_LUMPED_MASS_MATRIX,0)
 
         #create nodes
         dx = 1.00 / nr_elements
