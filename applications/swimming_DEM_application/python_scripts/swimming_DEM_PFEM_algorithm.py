@@ -23,7 +23,7 @@ class Algorithm(BaseAlgorithm):
     def SetCouplingParameters(self, varying_parameters):
 
         super(Algorithm,self).SetCouplingParameters(varying_parameters)
-        self.pp.domain_size = self.fluid_solution.ProjectParameters["problem_data"]["domain_size"].GetInt()
+        self.pp.domain_size = self.fluid_solution.ProjectParameters["problem_data"]["dimension"].GetInt()
 
     def SetBetaParameters(self):
 

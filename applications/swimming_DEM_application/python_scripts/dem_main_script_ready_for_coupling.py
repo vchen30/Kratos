@@ -23,7 +23,6 @@ class Solution(BaseAlgorithm):
         return self.solver_strategy.SwimmingStrategy(self.all_model_parts,
                                                      self.creator_destructor,
                                                      self.dem_fem_search,
-                                                     self.scheme,
                                                      self.pp.CFD_DEM,
                                                      self.procedures)
 

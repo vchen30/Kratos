@@ -498,7 +498,7 @@ class Algorithm(object):
             # solving the fluid part
 
             if self.step >= self.GetFirstStepForFluidComputation():
-                self.FluidSolve(self.time, solve_system = self.fluid_solve_counter.Tick() and not self.stationarity)
+                self.FluidSolve(self.time)
 
             # assessing stationarity
 
