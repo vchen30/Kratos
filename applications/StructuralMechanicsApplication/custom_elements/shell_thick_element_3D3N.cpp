@@ -230,18 +230,19 @@ namespace Kratos
 		const GeometryType & geom = GetGeometry();
 		const PropertiesType & props = GetProperties();
 
-		if (geom.PointsNumber() != OPT_NUM_NODES)
-			KRATOS_THROW_ERROR(std::logic_error,
-				"ShellThickElement3D3N Element - Wrong number of nodes",
-				geom.PointsNumber());
+		KRATOS_ERROR_IF_NOT(geom.PointsNumber() == OPT_NUM_NODES)
+			<< "ShellThickElement3D3N, ID " << this->Id() 
+			<< " needs a Geometry with " << OPT_NUM_NODES << " nodes and got one with: " 
+			<< geom.PointsNumber() << std::endl;
 
 		const GeometryType::IntegrationPointsArrayType & integrationPoints =
 			geom.IntegrationPoints(GetIntegrationMethod());
 
-		if (integrationPoints.size() != OPT_NUM_GP)
-			KRATOS_THROW_ERROR(std::logic_error,
-				"ShellThickElement3D3N Element - Wrong integration scheme",
-				integrationPoints.size());
+		KRATOS_ERROR_IF_NOT(integrationPoints.size() == OPT_NUM_GP)
+			<< "ShellThickElement3D3N, ID " << this->Id()
+			<< " needs an integration scheme with " << OPT_NUM_GP
+			<< " integration points and got one with: "
+			<< integrationPoints.size() << std::endl;
 
 		if (mSections.size() != OPT_NUM_GP)
 		{
@@ -504,10 +505,12 @@ namespace Kratos
 		av_mass_per_unit_area /= double(OPT_NUM_GP);
 
 		// Flag for consistent or lumped mass matrix
-		bool bconsistent_matrix = false;
+		bool use_lumped_mass_matrix = false; // use consistent mass matrix by default
 
-		// Consistent mass matrix
-		if (bconsistent_matrix)
+		if (this->GetProperties().Has(USE_LUMPED_MASS_MATRIX))
+			use_lumped_mass_matrix = GetProperties()[USE_LUMPED_MASS_MATRIX];
+
+		if (!use_lumped_mass_matrix) // Consistent mass matrix
 		{
 			// General matrix form as per Felippa plane stress CST eqn 31.27:
 			// http://kis.tu.kielce.pl/mo/COLORADO_FEM/colorado/IFEM.Ch31.pdf
@@ -516,8 +519,8 @@ namespace Kratos
 
 			// Average thickness over the whole element
 			double thickness = 0.0;
-			for (std::size_t i = 0; i < OPT_NUM_GP; i++)
-				thickness += mSections[i]->GetThickness();
+			for (std::size_t i = 0; i < OPT_NUM_GP; i++) 
+				thickness += mSections[i]->GetThickness(); // TODO is this correct?
 			thickness /= double(OPT_NUM_GP);
 
 			// Populate mass matrix with integation results
@@ -547,29 +550,25 @@ namespace Kratos
 
 			rMassMatrix *= 
 				av_mass_per_unit_area*referenceCoordinateSystem.Area() / 12.0;
-		}// Consistent mass matrix
-		else
+		}
+		else // Lumped mass matrix
 		{
-			// Lumped mass matrix
+			const double lumped_area = referenceCoordinateSystem.Area() / 3.0;
 
- 			// lumped area
-			double lump_area = referenceCoordinateSystem.Area() / 3.0;
-
-			// loop on nodes
-			for (std::size_t i = 0; i < 3; i++)
+			for (std::size_t i = 0; i < 3; i++) // loop on nodes
 			{
 				std::size_t index = i * 6;
 
-				double nodal_mass = av_mass_per_unit_area * lump_area;
+				double nodal_mass = av_mass_per_unit_area * lumped_area;
 
 				// translational mass
 				rMassMatrix(index, index) = nodal_mass;
 				rMassMatrix(index + 1, index + 1) = nodal_mass;
 				rMassMatrix(index + 2, index + 2) = nodal_mass;
 
-				// rotational mass - neglected for the moment...
+				// rotational mass - neglected for the moment... // TODO!
 			}
-		}// Lumped mass matrix
+		}
 	}
 
 	void ShellThickElement3D3N::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
@@ -916,7 +915,7 @@ namespace Kratos
 
 	void ShellThickElement3D3N::Calculate(const Variable<Matrix>& rVariable, Matrix & Output, const ProcessInfo & rCurrentProcessInfo)
 	{
-		if (rVariable == LOCAL_ELEMENT_ORIENTATION)
+		if (rVariable == LOCAL_ELEMENT_ORIENTATION) // TODO what does this do?
 		{
 			Output.resize(3, 3, false);
 
@@ -1163,6 +1162,7 @@ namespace Kratos
 
 	void ShellThickElement3D3N::CalculateVonMisesStress(const CalculationData & data, const Variable<double>& rVariable, double & rVon_Mises_Result)
 	{
+		// TODO do calculations only when required!
 		// calc von mises stresses at top, mid and bottom surfaces for
 		// thick shell
 		double sxx, syy, sxy, sxz, syz;

@@ -78,6 +78,9 @@ namespace Kratos
 // 
 // }
 
+#define OPT_NUM_NODES 4
+#define OPT_NUM_GP 4
+
 // =====================================================================================
 //
 // Class JacobianOperator
@@ -443,15 +446,22 @@ void ShellThickElement3D4N::Initialize()
 
     const GeometryType & geom = GetGeometry();
     const PropertiesType & props = GetProperties();
+    
+    KRATOS_ERROR_IF_NOT(geom.PointsNumber() == OPT_NUM_NODES)
+        << "ShellThickElement3D4N, ID " << this->Id() 
+        << " needs a Geometry with " << OPT_NUM_NODES << " nodes and got one with: " 
+        << geom.PointsNumber() << std::endl;
 
-    if(geom.PointsNumber() != 4)
-        KRATOS_THROW_ERROR(std::logic_error, "ShellThickElement3D4N Element needs a geometry with 4 nodes", geom.PointsNumber());
+    const GeometryType::IntegrationPointsArrayType & integrationPoints =
+        geom.IntegrationPoints(GetIntegrationMethod());
 
-    const GeometryType::IntegrationPointsArrayType & integrationPoints = geom.IntegrationPoints(GetIntegrationMethod());
-    if(integrationPoints.size() != 4)
-        KRATOS_THROW_ERROR(std::logic_error, "ShellThickElement3D4N Element needs a full integration scheme", integrationPoints.size());
+    KRATOS_ERROR_IF_NOT(integrationPoints.size() == OPT_NUM_GP)
+        << "ShellThickElement3D4N, ID " << this->Id()
+        << " needs an integration scheme with " << OPT_NUM_GP
+        << " integration points and got one with: "
+        << integrationPoints.size() << std::endl;
 
-    if(mSections.size() != 4)
+    if(mSections.size() != OPT_NUM_GP)
     {
         const Matrix & shapeFunctionsValues = geom.ShapeFunctionsValues(GetIntegrationMethod());
 
@@ -703,13 +713,8 @@ void ShellThickElement3D4N::CalculateMassMatrix(MatrixType& rMassMatrix, Process
     noalias(rMassMatrix) = ZeroMatrix(24, 24);
 
     // Compute the local coordinate system.
-
     ShellQ4_LocalCoordinateSystem referenceCoordinateSystem(
         mpCoordinateTransformation->CreateReferenceCoordinateSystem() );
-
-    // lumped area
-
-    double lump_area = referenceCoordinateSystem.Area() / 4.0;
 
     // Calculate avarage mass per unit area
     double av_mass_per_unit_area = 0.0;
@@ -717,20 +722,35 @@ void ShellThickElement3D4N::CalculateMassMatrix(MatrixType& rMassMatrix, Process
         av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea();
     av_mass_per_unit_area /= 4.0;
 
-    // Gauss Loop
+    // Flag for consistent or lumped mass matrix
+    bool use_lumped_mass_matrix = false; // use consistent mass matrix by default
 
-    for(std::size_t i = 0; i < 4; i++)
+    if (this->GetProperties().Has(USE_LUMPED_MASS_MATRIX))
+        use_lumped_mass_matrix = GetProperties()[USE_LUMPED_MASS_MATRIX];
+    
+    bool use_lumped_mass_matrix = true; // use lumped mass matrix by default until consistent one is implemented // TODO
+    
+    if (!use_lumped_mass_matrix) // Consistent mass matrix
     {
-        std::size_t index = i * 6;
+        // TODO Implement Consistent Mass Matrix
+    }
+    else // Lumped Mass Matrix
+    {
+        const double lumped_area = referenceCoordinateSystem.Area() / 4.0;
 
-        double nodal_mass = av_mass_per_unit_area * lump_area;
+        for(std::size_t i = 0; i < 4; i++) // loop Nodes
+        {
+            std::size_t index = i * 6;
 
-        // translational mass
-        rMassMatrix(index, index)            = nodal_mass;
-        rMassMatrix(index + 1, index + 1)    = nodal_mass;
-        rMassMatrix(index + 2, index + 2)    = nodal_mass;
+            double nodal_mass = av_mass_per_unit_area * lumped_area;
 
-        // rotational mass - neglected for the moment...
+            // translational mass
+            rMassMatrix(index, index)            = nodal_mass;
+            rMassMatrix(index + 1, index + 1)    = nodal_mass;
+            rMassMatrix(index + 2, index + 2)    = nodal_mass;
+
+            // rotational mass - neglected for the moment... // TODO
+        }
     }
 }
 

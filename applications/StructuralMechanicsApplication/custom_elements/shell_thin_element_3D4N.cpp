@@ -289,18 +289,20 @@ namespace Kratos
 
 		const GeometryType & geom = GetGeometry();
 		const PropertiesType & props = GetProperties();
+    
+    KRATOS_ERROR_IF_NOT(geom.PointsNumber() == OPT_NUM_NODES)
+        << "ShellThinElement3D4N, ID " << this->Id() 
+        << " needs a Geometry with " << OPT_NUM_NODES << " nodes and got one with: " 
+        << geom.PointsNumber() << std::endl;
 
-		if (geom.PointsNumber() != OPT_NUM_NODES)
-			KRATOS_THROW_ERROR(std::logic_error,
-				"ShellThinElement3D4N Element - Wrong number of nodes",
-				geom.PointsNumber());
+    const GeometryType::IntegrationPointsArrayType & integrationPoints =
+        geom.IntegrationPoints(GetIntegrationMethod());
 
-		const GeometryType::IntegrationPointsArrayType & integrationPoints =
-			geom.IntegrationPoints(GetIntegrationMethod());
-		if (integrationPoints.size() != OPT_NUM_GP)
-			KRATOS_THROW_ERROR(std::logic_error,
-				"ShellThinElement3D4N Element - Wrong integration scheme",
-				integrationPoints.size());
+    KRATOS_ERROR_IF_NOT(integrationPoints.size() == OPT_NUM_GP)
+        << "ShellThinElement3D4N, ID " << this->Id()
+        << " needs an integration scheme with " << OPT_NUM_GP
+        << " integration points and got one with: "
+        << integrationPoints.size() << std::endl;
 
 		if (mSections.size() != OPT_NUM_GP)
 		{
@@ -561,10 +563,12 @@ namespace Kratos
 		double av_mass_per_unit_area = 0.0;
 
 		// Flag for consistent or lumped mass matrix
-		bool bconsistent_matrix = false;
+		bool use_lumped_mass_matrix = false; // use consistent mass matrix by default
 
-		// Consistent mass matrix
-		if (bconsistent_matrix)
+		if (this->GetProperties().Has(USE_LUMPED_MASS_MATRIX))
+			use_lumped_mass_matrix = GetProperties()[USE_LUMPED_MASS_MATRIX];
+				
+		if (!use_lumped_mass_matrix) // Consistent mass matrix
 		{
 			// Get shape function values and setup jacobian
 			const GeometryType & geom = GetGeometry();
@@ -626,35 +630,31 @@ namespace Kratos
 				// Add contribution to total mass matrix
 				rMassMatrix += prod(trans(N), N)*dA*av_mass_per_unit_area;
 			}
-
-		}// Consistent mass matrix
-		else
+		}
+		else // Lumped mass matrix
 		{
-			// Lumped mass matrix
-
 			// Calculate average mass per unit area over the whole element
 			for (std::size_t i = 0; i < 4; i++)
 				av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea();
 			av_mass_per_unit_area /= 4.0;
 
-			// lumped area
-			double lump_area = referenceCoordinateSystem.Area() / 4.0;
+			double lumped_area = referenceCoordinateSystem.Area() / 4.0;
 
 			// Gauss Loop
 			for (std::size_t i = 0; i < 4; i++)
 			{
 				std::size_t index = i * 6;
 
-				double nodal_mass = av_mass_per_unit_area * lump_area;
+				double nodal_mass = av_mass_per_unit_area * lumped_area;
 
 				// translational mass
 				rMassMatrix(index, index) = nodal_mass;
 				rMassMatrix(index + 1, index + 1) = nodal_mass;
 				rMassMatrix(index + 2, index + 2) = nodal_mass;
 
-				// rotational mass - neglected for the moment...
+				// rotational mass - neglected for the moment... // TODO
 			}
-		}// Lumped mass matrix
+		}
 	}
 
 	void ShellThinElement3D4N::CalculateDampingMatrix

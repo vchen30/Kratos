@@ -197,13 +197,20 @@ void ShellThinElement3D3N::Initialize()
 
     const GeometryType & geom = GetGeometry();
     const PropertiesType & props = GetProperties();
+    
+    KRATOS_ERROR_IF_NOT(geom.PointsNumber() == OPT_NUM_NODES)
+        << "ShellThinElement3D3N, ID " << this->Id() 
+        << " needs a Geometry with " << OPT_NUM_NODES << " nodes and got one with: " 
+        << geom.PointsNumber() << std::endl;
 
-    if(geom.PointsNumber() != OPT_NUM_NODES)
-        KRATOS_THROW_ERROR(std::logic_error, "ShellThinElement3D3N Element - Wrong number of nodes", geom.PointsNumber());
+    const GeometryType::IntegrationPointsArrayType & integrationPoints =
+        geom.IntegrationPoints(GetIntegrationMethod());
 
-    const GeometryType::IntegrationPointsArrayType & integrationPoints = geom.IntegrationPoints(GetIntegrationMethod());
-    if(integrationPoints.size() != OPT_NUM_GP)
-        KRATOS_THROW_ERROR(std::logic_error, "ShellThinElement3D3N Element - Wrong integration scheme", integrationPoints.size());
+    KRATOS_ERROR_IF_NOT(integrationPoints.size() == OPT_NUM_GP)
+        << "ShellThinElement3D3N, ID " << this->Id()
+        << " needs an integration scheme with " << OPT_NUM_GP
+        << " integration points and got one with: "
+        << integrationPoints.size() << std::endl;
 
     if(mSections.size() != OPT_NUM_GP)
     {
@@ -447,29 +454,41 @@ void ShellThinElement3D3N::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessI
     ShellT3_LocalCoordinateSystem referenceCoordinateSystem(
         mpCoordinateTransformation->CreateReferenceCoordinateSystem() );
 
-    // lumped area
-
-    double lump_area = referenceCoordinateSystem.Area() / 3.0;
-
     // Calculate avarage mass per unit area
     double av_mass_per_unit_area = 0.0;
     for(std::size_t i = 0; i < OPT_NUM_GP; i++)
         av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea();
     av_mass_per_unit_area /= double(OPT_NUM_GP);
 
-    // loop on nodes
-    for(std::size_t i = 0; i < 3; i++)
+    // Flag for consistent or lumped mass matrix
+    bool use_lumped_mass_matrix = false; // use consistent mass matrix by default
+
+    if (this->GetProperties().Has(USE_LUMPED_MASS_MATRIX))
+        use_lumped_mass_matrix = GetProperties()[USE_LUMPED_MASS_MATRIX];
+    
+    bool use_lumped_mass_matrix = true; // use lumped mass matrix by default until consistent one is implemented // TODO
+    
+    if (!use_lumped_mass_matrix) // Consistent mass matrix
     {
-        std::size_t index = i * 6;
+        // TODO Implement Consistent Mass Matrix
+    }
+    else // Lumped Mass Matrix
+    {
+        const double lumped_area = referenceCoordinateSystem.Area() / 3.0;
 
-        double nodal_mass = av_mass_per_unit_area * lump_area;
+        for(std::size_t i = 0; i < 3; i++) // loop Nodes
+        {
+            std::size_t index = i * 6;
 
-        // translational mass
-        rMassMatrix(index, index)            = nodal_mass;
-        rMassMatrix(index + 1, index + 1)    = nodal_mass;
-        rMassMatrix(index + 2, index + 2)    = nodal_mass;
+            double nodal_mass = av_mass_per_unit_area * lumped_area;
 
-        // rotational mass - neglected for the moment...
+            // translational mass
+            rMassMatrix(index, index)            = nodal_mass;
+            rMassMatrix(index + 1, index + 1)    = nodal_mass;
+            rMassMatrix(index + 2, index + 2)    = nodal_mass;
+
+            // rotational mass - neglected for the moment...
+        }
     }
 }
 
