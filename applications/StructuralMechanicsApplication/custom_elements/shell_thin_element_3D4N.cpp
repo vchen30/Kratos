@@ -678,7 +678,7 @@ namespace Kratos
 		array_1d<double, 3> bf;
 
 		// gauss loop to integrate the external force vector
-		for (unsigned int igauss = 0; igauss < 4; igauss++)
+		for (SizeType igauss = 0; igauss < 4; igauss++)
 		{
 			// get mass per unit area
 			double mass_per_unit_area =
@@ -687,7 +687,7 @@ namespace Kratos
 			// interpolate nodal volume accelerations to this gauss point
 			// and obtain the body force vector
 			bf.clear();
-			for (unsigned int inode = 0; inode < 4; inode++)
+			for (SizeType inode = 0; inode < 4; inode++)
 			{
 				if (geom[inode].SolutionStepsDataHas(VOLUME_ACCELERATION))
 					//temporary, will be checked once at the beginning only
@@ -697,9 +697,9 @@ namespace Kratos
 			bf *= (mass_per_unit_area * data.dA[igauss]);
 
 			// add it to the RHS vector
-			for (unsigned int inode = 0; inode < 4; inode++)
+			for (SizeType inode = 0; inode < 4; inode++)
 			{
-				unsigned int index = inode * 6;
+				SizeType index = inode * 6;
 				double iN = N(igauss, inode);
 				rRightHandSideVector[index + 0] += iN * bf[0];
 				rRightHandSideVector[index + 1] += iN * bf[1];
@@ -801,7 +801,7 @@ namespace Kratos
 
 			
 			// loop over gauss points
-			for (unsigned int gauss_point = 0; gauss_point < size; ++gauss_point)
+			for (SizeType gauss_point = 0; gauss_point < size; ++gauss_point)
 			{
 				// Compute all strain-displacement matrices
 				data.gpIndex = gauss_point;
@@ -890,7 +890,7 @@ namespace Kratos
 			ShellCrossSection::Pointer & section = mSections[0];
 			std::vector<Matrix> Laminae_Strengths = 
 								std::vector<Matrix>(section->NumberOfPlies());
-			for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+			for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 			{
 				Laminae_Strengths[ply].resize(3, 3, 0.0);
 				Laminae_Strengths[ply].clear();
@@ -902,7 +902,7 @@ namespace Kratos
 			double total_rotation = 0.0;
 
 			// Gauss Loop
-			for (unsigned int gauss_point = 0; gauss_point < size; gauss_point++)
+			for (SizeType gauss_point = 0; gauss_point < size; gauss_point++)
 			{
 				// Compute all strain-displacement matrices
 				data.gpIndex = gauss_point;
@@ -922,7 +922,7 @@ namespace Kratos
 				
 				// Rotate lamina stress from element CS to section CS, and then
 				// to lamina angle to lamina material principal directions
-				for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+				for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 				{
 					total_rotation = -ply_orientation[ply] - (section->GetOrientationAngle());
 					section->GetRotationMatrixForGeneralizedStresses(total_rotation, R);
@@ -935,7 +935,7 @@ namespace Kratos
 				// Calculate Tsai-Wu criterion for each ply, take min of all plies
 				double min_tsai_wu = 0.0;
 				double temp_tsai_wu = 0.0;
-				for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+				for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 				{
 					temp_tsai_wu = CalculateTsaiWuPlaneStress(data, Laminae_Strengths[ply],ply);
 					if (ply == 0)
@@ -1128,7 +1128,7 @@ namespace Kratos
 	}
 	
 	void ShellThinElement3D4N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections)
-	{
+	{ // BaseClassCandidate!
 		KRATOS_TRY
 
 		KRATOS_ERROR_IF_NOT(rCrossSections.size() == OPT_NUM_GP) << "The number of cross section is wrong, "
@@ -1189,14 +1189,14 @@ namespace Kratos
 
 		// Resize output vector. 2 Surfaces for each ply
 		data.rlaminateStrains.resize(2 * section->NumberOfPlies());
-		for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+		for (SizeType i = 0; i < 2 * section->NumberOfPlies(); ++i)
 		{
 			data.rlaminateStrains[i].resize(6, false);
 			data.rlaminateStrains[i].clear();
 		}
 
 		// Loop over all plies - start from bottom ply, bottom surface
-		for (unsigned int plyNumber = 0;
+		for (SizeType plyNumber = 0;
 			plyNumber < section->NumberOfPlies(); ++plyNumber)
 		{
 			// Calculate strains at top surface, arranged in columns.
@@ -1227,14 +1227,14 @@ namespace Kratos
 
 		// Resize output vector. 2 Surfaces for each ply
 		data.rlaminateStresses.resize(2 * section->NumberOfPlies());
-		for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+		for (SizeType i = 0; i < 2 * section->NumberOfPlies(); i++)
 		{
 			data.rlaminateStresses[i].resize(6, false);
 			data.rlaminateStresses[i].clear();
 		}
 
 		// Loop over all plies - start from top ply, top surface
-		for (unsigned int plyNumber = 0;
+		for (SizeType plyNumber = 0;
 			plyNumber < section->NumberOfPlies(); ++plyNumber)
 		{
 			// determine stresses at currrent ply, top surface
@@ -1251,7 +1251,7 @@ namespace Kratos
 		}
 	}
 
-	double ShellThinElement3D4N::CalculateTsaiWuPlaneStress(const CalculationData & data, const Matrix& rLamina_Strengths, const unsigned int& rPly)
+	double ShellThinElement3D4N::CalculateTsaiWuPlaneStress(const CalculationData & data, const Matrix& rLamina_Strengths, const SizeType& rPly)
 	{
 		// Incoming lamina strengths are organized as follows:
 		// Refer to 'shell_cross_section.cpp' for details.
@@ -2700,7 +2700,7 @@ namespace Kratos
 		data.localDisplacements = prod(Rdisp, data.globalDisplacements);
 
 		// Gauss Loop
-		for (unsigned int i = 0; i < size; i++)
+		for (SizeType i = 0; i < size; i++)
 		{
 			// Compute all strain-displacement matrices
 			data.gpIndex = i;
@@ -2745,13 +2745,13 @@ namespace Kratos
 				if (ijob > 7)
 				{
 					section->GetRotationMatrixForGeneralizedStresses(-(section->GetOrientationAngle()), R);
-					for (unsigned int i = 0; i < data.rlaminateStresses.size(); i++)
+					for (SizeType i = 0; i < data.rlaminateStresses.size(); i++)
 					{
 						data.rlaminateStresses[i] = prod(R, data.rlaminateStresses[i]);
 					}
 
 					section->GetRotationMatrixForGeneralizedStrains(-(section->GetOrientationAngle()), R);
-					for (unsigned int i = 0; i < data.rlaminateStrains.size(); i++)
+					for (SizeType i = 0; i < data.rlaminateStrains.size(); i++)
 					{
 						data.rlaminateStrains[i] = prod(R, data.rlaminateStrains[i]);
 					}
@@ -2891,7 +2891,7 @@ namespace Kratos
 					// Must use non-global stresses for this!!!
 					std::vector<Matrix> Laminae_Strengths =
 						std::vector<Matrix>(section->NumberOfPlies());
-					for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+					for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 					{
 						Laminae_Strengths[ply].resize(3, 3, 0.0);
 						Laminae_Strengths[ply].clear();
@@ -2903,7 +2903,7 @@ namespace Kratos
 
 					// Rotate lamina stress from section CS 
 					// to lamina angle to lamina material principal directions
-					for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+					for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 					{
 						double total_rotation = -ply_orientation[ply]; // already rotated to section CS
 						section->GetRotationMatrixForGeneralizedStresses(total_rotation, R);
@@ -2917,7 +2917,7 @@ namespace Kratos
 					Vector tsai_output = Vector(9, 0.0);
 					tsai_output.clear();
 					double temp_tsai_wu = 0.0;
-					for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+					for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 					{
 						Vector lamina_stress_top = Vector(data.rlaminateStresses[2 * ply]);
 						Vector lamina_stress_bottom = Vector(data.rlaminateStresses[2 * ply + 1]);

@@ -414,7 +414,7 @@ private:
 
 	void CalculateLaminaStresses(ShellCrossSection::Pointer & section, ShellCrossSection::SectionParameters parameters, const std::vector<VectorType> & rlaminateStrains, std::vector<VectorType> & rlaminateStresses);
 
-	double CalculateTsaiWuPlaneStress(const std::vector<VectorType> & rlaminateStresses, const Matrix& rLamina_Strengths, const unsigned int& rCurrent_Ply);
+	double CalculateTsaiWuPlaneStress(const std::vector<VectorType> & rlaminateStresses, const Matrix& rLamina_Strengths, const SizeType& rCurrent_Ply);
 
 	void CalculateVonMisesStress(const Vector& generalizedStresses, 
 		const Variable<double>& rVariable, double& rVon_Mises_Result);

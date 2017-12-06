@@ -878,7 +878,7 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<double>& 
 		options.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, true);
 
 		// Gauss Loop
-		for (unsigned int i = 0; i < size; i++)
+		for (SizeType i = 0; i < size; i++)
 		{
 			// get a reference of the current integration point and shape functions
 			const GeometryType::IntegrationPointType & ip = geom.IntegrationPoints()[i];
@@ -983,7 +983,7 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<double>& 
 		ShellCrossSection::Pointer & section = mSections[0];
 		std::vector<Matrix> Laminae_Strengths =
 			std::vector<Matrix>(section->NumberOfPlies());
-		for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+		for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 		{
 			Laminae_Strengths[ply].resize(3, 3, 0.0);
 			Laminae_Strengths[ply].clear();
@@ -995,7 +995,7 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<double>& 
 		double total_rotation = 0.0;
 
 		// Gauss Loop
-		for (unsigned int i = 0; i < size; i++)
+		for (SizeType i = 0; i < size; i++)
 		{
 			// get a reference of the current integration point and shape functions
 			const GeometryType::IntegrationPointType & ip = geom.IntegrationPoints()[i];
@@ -1028,7 +1028,7 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<double>& 
 
 			// Rotate lamina stress from element CS to section CS, and then
 			// to lamina angle to lamina material principal directions
-			for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+			for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 			{
 				total_rotation = -ply_orientation[ply] - (section->GetOrientationAngle());
 				section->GetRotationMatrixForGeneralizedStresses(total_rotation, R);
@@ -1041,7 +1041,7 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<double>& 
 			// Calculate Tsai-Wu criterion for each ply, take min of all plies
 			double min_tsai_wu = 0.0;
 			double temp_tsai_wu = 0.0;
-			for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+			for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 			{
 				temp_tsai_wu = CalculateTsaiWuPlaneStress(rlaminateStresses, Laminae_Strengths[ply], ply);
 				if (ply == 0)
@@ -1317,14 +1317,14 @@ void ShellThickElement3D4N::CalculateLaminaStrains(ShellCrossSection::Pointer & 
 
 	// Resize output vector. 2 Surfaces for each ply
 	rlaminateStrains.resize(2 * section->NumberOfPlies());
-	for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+	for (SizeType i = 0; i < 2 * section->NumberOfPlies(); i++)
 	{
 		rlaminateStrains[i].resize(8, false);
 		rlaminateStrains[i].clear();
 	}
 
 	// Loop over all plies - start from bottom ply, bottom surface
-	for (unsigned int plyNumber = 0;
+	for (SizeType plyNumber = 0;
 		plyNumber < section->NumberOfPlies(); ++plyNumber)
 	{
 		// Calculate strains at top surface, arranged in columns.
@@ -1364,14 +1364,14 @@ void ShellThickElement3D4N::CalculateLaminaStresses(ShellCrossSection::Pointer &
 
 	// Resize output vector. 2 Surfaces for each ply
 	rlaminateStresses.resize(2 * section->NumberOfPlies());
-	for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+	for (SizeType i = 0; i < 2 * section->NumberOfPlies(); i++)
 	{
 		rlaminateStresses[i].resize(8, false);
 		rlaminateStresses[i].clear();
 	}
 
 	// Loop over all plies - start from top ply, top surface
-	for (unsigned int plyNumber = 0;
+	for (SizeType plyNumber = 0;
 		plyNumber < section->NumberOfPlies(); ++plyNumber)
 	{
 		// determine stresses at currrent ply, top surface
@@ -1388,7 +1388,7 @@ void ShellThickElement3D4N::CalculateLaminaStresses(ShellCrossSection::Pointer &
 	}
 }
 
-double ShellThickElement3D4N::CalculateTsaiWuPlaneStress(const std::vector<VectorType>& rlaminateStresses, const Matrix & rLamina_Strengths, const unsigned int & rPly)
+double ShellThickElement3D4N::CalculateTsaiWuPlaneStress(const std::vector<VectorType>& rlaminateStresses, const Matrix & rLamina_Strengths, const SizeType & rPly)
 {
 	// Incoming lamina strengths are organized as follows:
 	// Refer to 'shell_cross_section.cpp' for details.
@@ -2001,7 +2001,7 @@ void ShellThickElement3D4N::AddBodyForces(const array_1d<double,4> & dA, VectorT
     array_1d<double, 3> bf;
 
     // gauss loop to integrate the external force vector
-    for(unsigned int igauss = 0; igauss < 4; igauss++)
+    for(SizeType igauss = 0; igauss < 4; igauss++)
     {
         // get mass per unit area
         double mass_per_unit_area = mSections[igauss]->CalculateMassPerUnitArea();
@@ -2009,7 +2009,7 @@ void ShellThickElement3D4N::AddBodyForces(const array_1d<double,4> & dA, VectorT
         // interpolate nodal volume accelerations to this gauss point
         // and obtain the body force vector
         bf.clear();
-        for(unsigned int inode = 0; inode < 4; inode++)
+        for(SizeType inode = 0; inode < 4; inode++)
         {
             if( geom[inode].SolutionStepsDataHas(VOLUME_ACCELERATION) ) //temporary, will be checked once at the beginning only
                 bf += N(igauss,inode) * geom[inode].FastGetSolutionStepValue(VOLUME_ACCELERATION);
@@ -2017,9 +2017,9 @@ void ShellThickElement3D4N::AddBodyForces(const array_1d<double,4> & dA, VectorT
         bf *= (mass_per_unit_area * dA[igauss]);
 
         // add it to the RHS vector
-        for(unsigned int inode = 0; inode < 4; inode++)
+        for(SizeType inode = 0; inode < 4; inode++)
         {
-            unsigned int index = inode*6;
+            SizeType index = inode*6;
             double iN = N(igauss,inode);
             rRightHandSideVector[index + 0] += iN * bf[0];
             rRightHandSideVector[index + 1] += iN * bf[1];
@@ -2190,7 +2190,7 @@ bool ShellThickElement3D4N::TryGetValueOnIntegrationPoints_GeneralizedStrainsOrS
 
     // Gauss Loop
 
-    for(unsigned int i = 0; i < size; i++)
+    for(SizeType i = 0; i < size; i++)
     {
 
         // get a reference of the current integration point and shape functions
@@ -2259,13 +2259,13 @@ bool ShellThickElement3D4N::TryGetValueOnIntegrationPoints_GeneralizedStrainsOrS
 			if (ijob > 7)
 			{
 				section->GetRotationMatrixForGeneralizedStresses(-(section->GetOrientationAngle()), R);
-				for (unsigned int i = 0; i < rlaminateStresses.size(); i++)
+				for (SizeType i = 0; i < rlaminateStresses.size(); i++)
 				{
 					rlaminateStresses[i] = prod(R, rlaminateStresses[i]);
 				}
 
 				section->GetRotationMatrixForGeneralizedStrains(-(section->GetOrientationAngle()), R);
-				for (unsigned int i = 0; i < rlaminateStrains.size(); i++)
+				for (SizeType i = 0; i < rlaminateStrains.size(); i++)
 				{
 					rlaminateStrains[i] = prod(R, rlaminateStrains[i]);
 				}

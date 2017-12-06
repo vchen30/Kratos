@@ -321,7 +321,7 @@ private:
 
 	void CalculateLaminaStresses(CalculationData& data);
 
-	double CalculateTsaiWuPlaneStress(const CalculationData& data, const Matrix& rLamina_Strengths, const unsigned int& rCurrent_Ply);
+	double CalculateTsaiWuPlaneStress(const CalculationData& data, const Matrix& rLamina_Strengths, const SizeType& rCurrent_Ply);
 
 	void CalculateVonMisesStress(const CalculationData& data, const Variable<double>& rVariable, double& rVon_Mises_Result);
 

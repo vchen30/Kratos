@@ -607,7 +607,7 @@ void ShellThinElement3D3N::GetValueOnIntegrationPoints(const Variable<double>& r
 		ShellCrossSection::Pointer & section = mSections[0];
 		std::vector<Matrix> Laminae_Strengths =
 			std::vector<Matrix>(section->NumberOfPlies());
-		for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+		for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 		{
 			Laminae_Strengths[ply].resize(3, 3, 0.0);
 			Laminae_Strengths[ply].clear();
@@ -640,7 +640,7 @@ void ShellThinElement3D3N::GetValueOnIntegrationPoints(const Variable<double>& r
 			CalculateLaminaStresses(data);
 
 			// Rotate lamina stress to lamina material principal directions
-			for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+			for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 			{
 				total_rotation = -ply_orientation[ply] - (section->GetOrientationAngle());
 				section->GetRotationMatrixForGeneralizedStresses(total_rotation, R);
@@ -653,7 +653,7 @@ void ShellThinElement3D3N::GetValueOnIntegrationPoints(const Variable<double>& r
 			// Calculate Tsai-Wu criterion for each ply, take min of all plies
 			double min_tsai_wu = 0.0;
 			double temp_tsai_wu = 0.0;
-			for (unsigned int ply = 0; ply < section->NumberOfPlies(); ply++)
+			for (SizeType ply = 0; ply < section->NumberOfPlies(); ply++)
 			{
 				temp_tsai_wu = CalculateTsaiWuPlaneStress(data, Laminae_Strengths[ply], ply);
 				if (ply == 0)
@@ -974,14 +974,14 @@ void ShellThinElement3D3N::CalculateLaminaStrains(CalculationData & data)
 
 	// Resize output vector. 2 Surfaces for each ply
 	data.rlaminateStrains.resize(2 * section->NumberOfPlies());
-	for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+	for (SizeType i = 0; i < 2 * section->NumberOfPlies(); i++)
 	{
 		data.rlaminateStrains[i].resize(6, false);
 		data.rlaminateStrains[i].clear();
 	}
 
 	// Loop over all plies - start from bottom ply, bottom surface
-	for (unsigned int plyNumber = 0;
+	for (SizeType plyNumber = 0;
 		plyNumber < section->NumberOfPlies(); ++plyNumber)
 	{
 		// Calculate strains at top surface, arranged in columns.
@@ -1016,14 +1016,14 @@ void ShellThinElement3D3N::CalculateLaminaStresses(CalculationData & data)
 
 	// Resize output vector. 2 Surfaces for each ply
 	data.rlaminateStresses.resize(2 * section->NumberOfPlies());
-	for (unsigned int i = 0; i < 2 * section->NumberOfPlies(); i++)
+	for (SizeType i = 0; i < 2 * section->NumberOfPlies(); i++)
 	{
 		data.rlaminateStresses[i].resize(6, false);
 		data.rlaminateStresses[i].clear();
 	}
 
 	// Loop over all plies - start from top ply, top surface
-	for (unsigned int plyNumber = 0;
+	for (SizeType plyNumber = 0;
 		plyNumber < section->NumberOfPlies(); ++plyNumber)
 	{
 		// determine stresses at currrent ply, top surface
@@ -1040,7 +1040,7 @@ void ShellThinElement3D3N::CalculateLaminaStresses(CalculationData & data)
 	}
 }
 
-double ShellThinElement3D3N::CalculateTsaiWuPlaneStress(const CalculationData & data, const Matrix & rLamina_Strengths, const unsigned int & rPly)
+double ShellThinElement3D3N::CalculateTsaiWuPlaneStress(const CalculationData & data, const Matrix & rLamina_Strengths, const SizeType & rPly)
 {
 	// Incoming lamina strengths are organized as follows:
 	// Refer to 'shell_cross_section.cpp' for details.
@@ -1269,7 +1269,7 @@ void ShellThinElement3D3N::InitializeCalculationData(CalculationData& data)
     // implementation of a variable thickness
 
     double h = 0.0;
-    for(unsigned int i = 0; i < mSections.size(); i++)
+    for(SizeType i = 0; i < mSections.size(); i++)
         h += mSections[i]->GetThickness();
     h /= (double)mSections.size();
 
@@ -1446,7 +1446,7 @@ void ShellThinElement3D3N::InitializeCalculationData(CalculationData& data)
 
     data.TTu.resize(3, 9, false);
 
-    for(unsigned int i=0; i<3; i++)
+    for(SizeType i=0; i<3; i++)
     {
         data.TTu(i, 0) = 1.0/A4 * x32;
         data.TTu(i, 1) = 1.0/A4 * y32;
@@ -1775,7 +1775,7 @@ void ShellThinElement3D3N::AddBodyForces(CalculationData& data, VectorType& rRig
     const Matrix & N = GetGeometry().ShapeFunctionsValues(mThisIntegrationMethod);
 #else
     Matrix N(3,3);
-    for(unsigned int igauss = 0; igauss < OPT_NUM_GP; igauss++)
+    for(SizeType igauss = 0; igauss < OPT_NUM_GP; igauss++)
     {
         const array_1d<double,3>& loc = data.gpLocations[igauss];
         N(igauss,0) = 1.0 - loc[1] - loc[2];
@@ -1788,7 +1788,7 @@ void ShellThinElement3D3N::AddBodyForces(CalculationData& data, VectorType& rRig
     array_1d<double, 3> bf;
 
     // gauss loop to integrate the external force vector
-    for(unsigned int igauss = 0; igauss < OPT_NUM_GP; igauss++)
+    for(SizeType igauss = 0; igauss < OPT_NUM_GP; igauss++)
     {
         // get mass per unit area
         double mass_per_unit_area = mSections[igauss]->CalculateMassPerUnitArea();
@@ -1796,7 +1796,7 @@ void ShellThinElement3D3N::AddBodyForces(CalculationData& data, VectorType& rRig
         // interpolate nodal volume accelerations to this gauss point
         // and obtain the body force vector
         bf.clear();
-        for(unsigned int inode = 0; inode < 3; inode++)
+        for(SizeType inode = 0; inode < 3; inode++)
         {
             if( geom[inode].SolutionStepsDataHas(VOLUME_ACCELERATION) ) //temporary, will be checked once at the beginning only
                 bf += N(igauss,inode) * geom[inode].FastGetSolutionStepValue(VOLUME_ACCELERATION);
@@ -1804,9 +1804,9 @@ void ShellThinElement3D3N::AddBodyForces(CalculationData& data, VectorType& rRig
         bf *= (mass_per_unit_area * data.dA);
 
         // add it to the RHS vector
-        for(unsigned int inode = 0; inode < 3; inode++)
+        for(SizeType inode = 0; inode < 3; inode++)
         {
-            unsigned int index = inode*6;
+            SizeType index = inode*6;
             double iN = N(igauss,inode);
             rRightHandSideVector[index + 0] += iN * bf[0];
             rRightHandSideVector[index + 1] += iN * bf[1];
@@ -2012,13 +2012,13 @@ bool ShellThinElement3D3N::TryGetValueOnIntegrationPoints_GeneralizedStrainsOrSt
 			if (ijob > 7)
 			{
 				section->GetRotationMatrixForGeneralizedStresses(-(section->GetOrientationAngle()), R);
-				for (unsigned int i = 0; i < data.rlaminateStresses.size(); i++)
+				for (SizeType i = 0; i < data.rlaminateStresses.size(); i++)
 				{
 					data.rlaminateStresses[i] = prod(R, data.rlaminateStresses[i]);
 				}
 
 				section->GetRotationMatrixForGeneralizedStrains(-(section->GetOrientationAngle()), R);
-				for (unsigned int i = 0; i < data.rlaminateStrains.size(); i++)
+				for (SizeType i = 0; i < data.rlaminateStrains.size(); i++)
 				{
 					data.rlaminateStrains[i] = prod(R, data.rlaminateStrains[i]);
 				}
