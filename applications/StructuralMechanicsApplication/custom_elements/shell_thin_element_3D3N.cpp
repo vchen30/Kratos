@@ -828,15 +828,19 @@ void ShellThinElement3D3N::Calculate(const Variable<Matrix>& rVariable, Matrix &
 	}
 }
 
-void ShellThinElement3D3N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& crossSections)
+void ShellThinElement3D3N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections)
 {
     KRATOS_TRY
-    if(crossSections.size() != OPT_NUM_GP)
-        KRATOS_THROW_ERROR(std::logic_error, "The number of cross section is wrong", crossSections.size());
+
+    KRATOS_ERROR_IF_NOT(rCrossSections.size() == OPT_NUM_GP) << "The number of cross section is wrong, "
+        << "should be: " << OPT_NUM_GP << " , is: " rCrossSections.size());
+
     mSections.clear();
-    for(SizeType i = 0; i <crossSections.size(); i++)
-        mSections.push_back(crossSections[i]);
+    for (SizeType i = 0; i <rCrossSections.size(); ++i)
+        mSections.push_back(rCrossSections[i]);
+
     this->SetupOrientationAngles();
+
     KRATOS_CATCH("")
 }
 

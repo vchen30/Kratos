@@ -1254,15 +1254,19 @@ void ShellThickElement3D4N::Calculate(const Variable<Matrix>& rVariable, Matrix 
 	}
 }
 
-void ShellThickElement3D4N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& crossSections)
+void ShellThickElement3D4N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections)
 {
     KRATOS_TRY
-    if(crossSections.size() != 4)
-        KRATOS_THROW_ERROR(std::logic_error, "Cannot set a number of cross section different from 4", "");
+
+    KRATOS_ERROR_IF_NOT(rCrossSections.size() == OPT_NUM_GP) << "The number of cross section is wrong, "
+        << "should be: " << OPT_NUM_GP << " , is: " rCrossSections.size());
+
     mSections.clear();
-    for(SizeType i = 0; i <crossSections.size(); i++)
-        mSections.push_back(crossSections[i]);
+    for (SizeType i = 0; i <rCrossSections.size(); ++i)
+        mSections.push_back(rCrossSections[i]);
+
     this->SetupOrientationAngles();
+
     KRATOS_CATCH("")
 }
 

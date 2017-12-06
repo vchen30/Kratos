@@ -1126,6 +1126,22 @@ namespace Kratos
 			Output = localCoordinateSystem.Orientation();
 		}
 	}
+	
+	void ShellThinElement3D4N::SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections)
+	{
+		KRATOS_TRY
+
+		KRATOS_ERROR_IF_NOT(rCrossSections.size() == OPT_NUM_GP) << "The number of cross section is wrong, "
+			<< "should be: " << OPT_NUM_GP << " , is: " rCrossSections.size());
+
+		mSections.clear();
+		for (SizeType i = 0; i <rCrossSections.size(); ++i)
+			mSections.push_back(rCrossSections[i]);
+
+		this->SetupOrientationAngles();
+
+		KRATOS_CATCH("")
+	}
 
 	// =========================================================================
 	//

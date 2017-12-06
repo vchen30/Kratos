@@ -203,10 +203,10 @@ namespace Kratos
 
 		///@}
 
-		///@name Public specialized Access - Temporary
+		///@name Public specialized Access - Temporary // TODO remove?
 		///@{
 		
-		void SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& crossSections);
+		void SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections);
 		
 		///@}
 

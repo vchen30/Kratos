@@ -276,13 +276,14 @@ Southern California, 2012.
 			Matrix& Output,
 			const ProcessInfo& rCurrentProcessInfo) override;
 
-		///@}
+    ///@}
 
+    ///@name Public specialized Access - Temporary // TODO remove?
+    ///@{
 
+    void SetCrossSectionsOnIntegrationPoints(std::vector< ShellCrossSection::Pointer >& rCrossSections);
 
-		///@name Public specialized Access - Temporary
-		///@{
-		///@}
+    ///@}
 
 	protected:
 
