@@ -138,12 +138,6 @@ class ShellT3ThickLinearStaticStructPinchedCylinderTests(StructuralMechanichsTes
 class ShellT3ThinLinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_thin_linear_static_struct_pinched_cylinder"
 
-class ShellQ4ThickLinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_struct_pinched_hemisphere"
-
-class ShellQ4ThinLinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_struct_pinched_hemisphere"
-
 class ShellT3ThickLinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_thick_linear_static_struct_pinched_hemisphere"
 
