@@ -32,12 +32,16 @@ using namespace std::chrono;
 namespace Kratos
 {
 
+template<typename TScalar>
 struct SolverType
 {
-    using TSparseMatrix = Eigen::SparseMatrix<double, Eigen::RowMajor, int>;
+    using TSparseMatrix = Eigen::SparseMatrix<TScalar, Eigen::RowMajor, int>;
+
+    using TVector = Eigen::Matrix<TScalar, Eigen::Dynamic, 1>;
 };
 
-struct SparseLU : SolverType
+template<typename TScalar>
+struct SparseLU : SolverType<TScalar>
 {
     using TSolver = Eigen::SparseLU<TSparseMatrix>;
 
@@ -45,21 +49,25 @@ struct SparseLU : SolverType
 };
 
 #if defined EIGEN_USE_MKL_ALL
-struct PardisoLLT : SolverType
+
+template<typename TScalar>
+struct PardisoLLT : SolverType<TScalar>
 {
     using TSolver = Eigen::PardisoLLT<TSparseMatrix>;
 
     static constexpr auto Name = "PardisoLLT";
 };
 
-struct PardisoLDLT : SolverType
+template<typename TScalar>
+struct PardisoLDLT : SolverType<TScalar>
 {
     using TSolver = Eigen::PardisoLDLT<TSparseMatrix>;
 
     static constexpr auto Name = "PardisoLDLT";
 };
 
-struct PardisoLU : SolverType
+template<typename TScalar>
+struct PardisoLU : SolverType<TScalar>
 {
     using TSolver = Eigen::PardisoLU<TSparseMatrix>;
 
@@ -68,10 +76,10 @@ struct PardisoLU : SolverType
 #endif
 
 template <
-    class TSolver,
-    class TSparseSpaceType,
-    class TDenseSpaceType,
-    class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType>>
+    typename TSolver,
+    typename TSparseSpaceType,
+    typename TDenseSpaceType,
+    typename TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType>>
 class EigenDirectSolver
     : public DirectSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>
 {
@@ -117,8 +125,8 @@ class EigenDirectSolver
         }
 
         Eigen::Map<typename TSolver::TSparseMatrix> a(rA.size1(), rA.size2(), rA.nnz(), index1_vector.data(), index2_vector.data(), rA.value_data().begin());
-        Eigen::Map<Eigen::VectorXd> x(rX.data().begin(), rX.size());
-        Eigen::Map<Eigen::VectorXd> b(rB.data().begin(), rB.size());
+        Eigen::Map<TSolver::TVector> x(rX.data().begin(), rX.size());
+        Eigen::Map<TSolver::TVector> b(rB.data().begin(), rB.size());
 
         typename TSolver::TSolver solver;
         solver.compute(a);
