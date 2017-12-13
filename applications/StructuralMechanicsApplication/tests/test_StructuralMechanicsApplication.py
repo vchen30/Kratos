@@ -99,11 +99,9 @@ from test_harmonic_analysis import HarmonicAnalysisTests as THarmonicAnalysisTes
 
 ## NIGHTLY TESTS
 # Shell tests
-from NightlyTests import ShellT3IsotropicLinearStaticStructScordelisLoRoofTests as TShellT3IsotropicLinearStaticStructScordelisLoRoofTests
 from NightlyTests import ShellQ4ThickLinearStaticStructScordelisLoRoofTests as TShellQ4ThickLinearStaticStructScordelisLoRoofTests
 from NightlyTests import ShellQ4ThinLinearStaticStructScordelisLoRoofTests as TShellQ4ThinLinearStaticStructScordelisLoRoofTests
 from NightlyTests import ShellT3ThickLinearStaticStructScordelisLoRoofTests as TShellT3ThickLinearStaticStructScordelisLoRoofTests
-from NightlyTests import ShellT3ThinLinearStaticStructScordelisLoRoofTests as TShellT3ThinLinearStaticStructScordelisLoRoofTests
 
 from NightlyTests import ShellQ4ThickBendingRollUpTests as TShellQ4ThickBendingRollUpTests
 from NightlyTests import ShellQ4ThickDrillingRollUpTests as TShellQ4ThickDrillingRollUpTests
@@ -127,35 +125,16 @@ from NightlyTests import ShellQ4ThinNonLinearDynamicTests as TShellQ4ThinNonLine
 from NightlyTests import ShellQ4ThinOrthotropicLaminateLinearStaticTests as TShellQ4ThinOrthotropicLaminateLinearStaticTests
 
 
-from NightlyTests import ShellQ4ThickLinearStaticStructScordelisLoRoofOrthotropicTests as TShellQ4ThickLinearStaticStructScordelisLoRoofOrthotropicTests
-from NightlyTests import ShellQ4ThinLinearStaticStructScordelisLoRoofOrthotropicTests as TShellQ4ThinLinearStaticStructScordelisLoRoofOrthotropicTests
-from NightlyTests import ShellT3ThickLinearStaticStructScordelisLoRoofOrthotropicTests as TShellT3ThickLinearStaticStructScordelisLoRoofOrthotropicTests
-from NightlyTests import ShellT3ThinLinearStaticStructScordelisLoRoofOrthotropicTests as TShellT3ThinLinearStaticStructScordelisLoRoofOrthotropicTests
 
-from NightlyTests import ShellQ4ThickLinearStaticStructPinchedCylinderTests as TShellQ4ThickLinearStaticStructPinchedCylinderTests
-from NightlyTests import ShellQ4ThinLinearStaticStructPinchedCylinderTests as TShellQ4ThinLinearStaticStructPinchedCylinderTests
-from NightlyTests import ShellT3ThickLinearStaticStructPinchedCylinderTests as TShellT3ThickLinearStaticStructPinchedCylinderTests
-from NightlyTests import ShellT3ThinLinearStaticStructPinchedCylinderTests as TShellT3ThinLinearStaticStructPinchedCylinderTests
 
-from NightlyTests import ShellQ4ThickLinearStaticStructPinchedHemisphereTests as TShellQ4ThickLinearStaticStructPinchedHemisphereTests
-from NightlyTests import ShellQ4ThinLinearStaticStructPinchedHemisphereTests as TShellQ4ThinLinearStaticStructPinchedHemisphereTests
-from NightlyTests import ShellT3ThickLinearStaticStructPinchedHemisphereTests as TShellT3ThickLinearStaticStructPinchedHemisphereTests
-from NightlyTests import ShellT3ThinLinearStaticStructPinchedHemisphereTests as TShellT3ThinLinearStaticStructPinchedHemisphereTests
-
-from NightlyTests import ShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughTests as TShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughTests
-from NightlyTests import ShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughTests as TShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughTests
-from NightlyTests import ShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughTests as TShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughTests
-from NightlyTests import ShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughTests as TShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughTests
-
-from NightlyTests import ShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests as TShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests
-from NightlyTests import ShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests as TShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests
-from NightlyTests import ShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests as TShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests
-from NightlyTests import ShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests as TShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests
-
-from NightlyTests import ShellQ4ThickLinearDynamicStructOscillatingPlateTests as TShellQ4ThickLinearDynamicStructOscillatingPlateTests
-from NightlyTests import ShellQ4ThinLinearDynamicStructOscillatingPlateTests as TShellQ4ThinLinearDynamicStructOscillatingPlateTests
-from NightlyTests import ShellT3ThickLinearDynamicStructOscillatingPlateTests as TShellT3ThickLinearDynamicStructOscillatingPlateTests
-from NightlyTests import ShellT3ThinLinearDynamicStructOscillatingPlateTests as TShellT3ThinLinearDynamicStructOscillatingPlateTests
+from NightlyTests import ShellT3IsotropicLinearStaticStructScordelisLoRoofTests as TShellT3IsotropicLinearStaticStructScordelisLoRoofTests
+from NightlyTests import ShellT3AndQ4LinearStaticStructScordelisLoRoofTests as TShellT3AndQ4LinearStaticStructScordelisLoRoofTests
+from NightlyTests import ShellT3AndQ4LinearStaticStructScordelisLoRoofOrthotropicTests as TShellT3AndQ4LinearStaticStructScordelisLoRoofOrthotropicTests
+from NightlyTests import ShellT3AndQ4LinearStaticStructPinchedCylinderTests as TShellT3AndQ4LinearStaticStructPinchedCylinderTests
+from NightlyTests import ShellT3AndQ4LinearStaticStructPinchedHemisphereTests as TShellT3AndQ4LinearStaticStructPinchedHemisphereTests
+from NightlyTests import ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests as TShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests
+from NightlyTests import ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests as TShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests
+from NightlyTests import ShellT3AndQ4LinearDynamicStructOscillatingPlateTests as TShellT3AndQ4LinearDynamicStructOscillatingPlateTests
 
 
 # CL tests
@@ -167,55 +146,18 @@ from NightlyTests import ShellT3ThinLinearDynamicStructOscillatingPlateTests as 
 from ValidationTests import PendulusTLTest              as TPendulusTLTest
 from ValidationTests import PendulusULTest              as TPendulusULTest
 
-from ValidationTests import ShellQ4ThickLinearStaticUnstructScordelisLoRoofTests as TShellQ4ThickLinearStaticUnstructScordelisLoRoofTests
-from ValidationTests import ShellQ4ThinLinearStaticUnstructScordelisLoRoofTests as TShellQ4ThinLinearStaticUnstructScordelisLoRoofTests
-from ValidationTests import ShellT3ThickLinearStaticUnstructScordelisLoRoofTests as TShellT3ThickLinearStaticUnstructScordelisLoRoofTests
-from ValidationTests import ShellT3ThinLinearStaticUnstructScordelisLoRoofTests as TShellT3ThinLinearStaticUnstructScordelisLoRoofTests
-
-from ValidationTests import ShellQ4ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests as TShellQ4ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests
-from ValidationTests import ShellQ4ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests as TShellQ4ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests
-from ValidationTests import ShellT3ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests as TShellT3ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests
-from ValidationTests import ShellT3ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests as TShellT3ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests
-
-from ValidationTests import ShellQ4ThickLinearStaticUnstructPinchedCylinderTests as TShellQ4ThickLinearStaticUnstructPinchedCylinderTests
-from ValidationTests import ShellQ4ThinLinearStaticUnstructPinchedCylinderTests as TShellQ4ThinLinearStaticUnstructPinchedCylinderTests
-from ValidationTests import ShellT3ThickLinearStaticUnstructPinchedCylinderTests as TShellT3ThickLinearStaticUnstructPinchedCylinderTests
-from ValidationTests import ShellT3ThinLinearStaticUnstructPinchedCylinderTests as TShellT3ThinLinearStaticUnstructPinchedCylinderTests
-
-from ValidationTests import ShellQ4ThickLinearStaticUnstructPinchedHemisphereTests as TShellQ4ThickLinearStaticUnstructPinchedHemisphereTests
-from ValidationTests import ShellQ4ThinLinearStaticUnstructPinchedHemisphereTests as TShellQ4ThinLinearStaticUnstructPinchedHemisphereTests
-from ValidationTests import ShellT3ThickLinearStaticUnstructPinchedHemisphereTests as TShellT3ThickLinearStaticUnstructPinchedHemisphereTests
-from ValidationTests import ShellT3ThinLinearStaticUnstructPinchedHemisphereTests as TShellT3ThinLinearStaticUnstructPinchedHemisphereTests
-
-from ValidationTests import ShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests as TShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests
-from ValidationTests import ShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests as TShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests
-from ValidationTests import ShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests as TShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests
-from ValidationTests import ShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests as TShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests
-
-from ValidationTests import ShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests as TShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests
-from ValidationTests import ShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests as TShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests
-from ValidationTests import ShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests as TShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests
-from ValidationTests import ShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests as TShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests
-
-from ValidationTests import ShellQ4ThickLinearDynamicUnstructOscillatingPlateTests as TShellQ4ThickLinearDynamicUnstructOscillatingPlateTests
-from ValidationTests import ShellQ4ThinLinearDynamicUnstructOscillatingPlateTests as TShellQ4ThinLinearDynamicUnstructOscillatingPlateTests
-from ValidationTests import ShellT3ThickLinearDynamicUnstructOscillatingPlateTests as TShellT3ThickLinearDynamicUnstructOscillatingPlateTests
-from ValidationTests import ShellT3ThinLinearDynamicUnstructOscillatingPlateTests as TShellT3ThinLinearDynamicUnstructOscillatingPlateTests
-
-from ValidationTests import ShellQ4ThickLinearDynamicUnstructLumpedOscillatingPlateTests as TShellQ4ThickLinearDynamicUnstructLumpedOscillatingPlateTests
-from ValidationTests import ShellQ4ThinLinearDynamicUnstructLumpedOscillatingPlateTests as TShellQ4ThinLinearDynamicUnstructLumpedOscillatingPlateTests
-from ValidationTests import ShellT3ThickLinearDynamicUnstructLumpedOscillatingPlateTests as TShellT3ThickLinearDynamicUnstructLumpedOscillatingPlateTests
-from ValidationTests import ShellT3ThinLinearDynamicUnstructLumpedOscillatingPlateTests as TShellT3ThinLinearDynamicUnstructLumpedOscillatingPlateTests
-
-from ValidationTests import ShellQ4ThickPendulusTests as TShellQ4ThickPendulusTests
-from ValidationTests import ShellQ4ThinPendulusTests as TShellQ4ThinPendulusTests
-from ValidationTests import ShellT3ThickPendulusTests as TShellT3ThickPendulusTests
-from ValidationTests import ShellT3ThinPendulusTests as TShellT3ThinPendulusTests
-
-from ValidationTests import ShellQ4ThickPendulusLumpedTests as TShellQ4ThickPendulusLumpedTests
-from ValidationTests import ShellQ4ThinPendulusLumpedTests as TShellQ4ThinPendulusLumpedTests
-from ValidationTests import ShellT3ThickPendulusLumpedTests as TShellT3ThickPendulusLumpedTests
-from ValidationTests import ShellT3ThinPendulusLumpedTests as TShellT3ThinPendulusLumpedTests
+from ValidationTests import ShellT3AndQ4LinearStaticUnstructScordelisLoRoofTests as TShellT3AndQ4LinearStaticUnstructScordelisLoRoofTests
+from ValidationTests import ShellT3AndQ4LinearStaticUnstructScordelisLoRoofOrthotropicTests as TShellT3AndQ4LinearStaticUnstructScordelisLoRoofOrthotropicTests
+from ValidationTests import ShellT3AndQ4LinearStaticUnstructUnstructPinchedCylinderTests as TShellT3AndQ4LinearStaticUnstructUnstructPinchedCylinderTests
+from ValidationTests import ShellT3AndQ4LinearStaticUnstructPinchedHemisphereTests as TShellT3AndQ4LinearStaticUnstructPinchedHemisphereTests
+from ValidationTests import ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests as TShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests
+from ValidationTests import ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests as TShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests
+from ValidationTests import ShellT3AndQ4LinearDynamicUnstructOscillatingPlateTests as TShellT3AndQ4LinearDynamicUnstructOscillatingPlateTests
+from ValidationTests import ShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests as TShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests
+from ValidationTests import ShellT3AndQ4NonLinearDynamicStructPendulusTests as TShellT3AndQ4NonLinearDynamicStructPendulusTests
+from ValidationTests import ShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests as TShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests
+from ValidationTests import ShellT3AndQ4NonLinearDynamicUnstructPendulusTests as TShellT3AndQ4NonLinearDynamicUnstructPendulusTests
+from ValidationTests import ShellT3AndQ4NonLinearDynamicUnstructPendulusLumpedTests as TShellT3AndQ4NonLinearDynamicUnstructPendulusLumpedTests
 
 
 def AssambleTestSuites():
@@ -323,63 +265,37 @@ def AssambleTestSuites():
 
     # Create a test suit with the selected tests plus all small tests
     nightSuite = suites['nightly']
-    nightSuite.addTests(smallSuite)
+    # nightSuite.addTests(smallSuite) # TODO uncomment!!!
     # Shell tests
-    nightSuite.addTest(TShellQ4ThickBendingRollUpTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThickDrillingRollUpTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThickOrthotropicLaminateLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThickBendingRollUpTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThickDrillingRollUpTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThickOrthotropicLaminateLinearStaticTests('test_execution'))
 
-    nightSuite.addTest(TShellT3ThinBendingRollUpTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinOrthotropicLaminateLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThinBendingRollUpTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThinOrthotropicLaminateLinearStaticTests('test_execution'))
 
-    nightSuite.addTest(TShellT3ThickLinearStaticTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickNonLinearStaticTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearDynamicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickNonLinearDynamicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickOrthotropicLaminateLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThickLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThickNonLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThickLinearDynamicTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThickNonLinearDynamicTests('test_execution'))
+    # nightSuite.addTest(TShellT3ThickOrthotropicLaminateLinearStaticTests('test_execution'))
 
-    nightSuite.addTest(TShellQ4ThinLinearStaticTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinNonLinearStaticTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearDynamicTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinNonLinearDynamicTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinOrthotropicLaminateLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThinLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThinNonLinearStaticTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThinLinearDynamicTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThinNonLinearDynamicTests('test_execution'))
+    # nightSuite.addTest(TShellQ4ThinOrthotropicLaminateLinearStaticTests('test_execution'))
 
 
     nightSuite.addTest(TShellT3IsotropicLinearStaticStructScordelisLoRoofTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThickLinearStaticStructScordelisLoRoofTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearStaticStructScordelisLoRoofTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearStaticStructScordelisLoRoofTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinLinearStaticStructScordelisLoRoofTests('test_execution'))
 
-    nightSuite.addTest(TShellQ4ThickLinearStaticStructScordelisLoRoofOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearStaticStructScordelisLoRoofOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearStaticStructScordelisLoRoofOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinLinearStaticStructScordelisLoRoofOrthotropicTests('test_execution'))
-
-    nightSuite.addTest(TShellQ4ThickLinearStaticStructPinchedCylinderTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearStaticStructPinchedCylinderTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearStaticStructPinchedCylinderTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinLinearStaticStructPinchedCylinderTests('test_execution'))
-
-    nightSuite.addTest(TShellQ4ThickLinearStaticStructPinchedHemisphereTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearStaticStructPinchedHemisphereTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearStaticStructPinchedHemisphereTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinLinearStaticStructPinchedHemisphereTests('test_execution'))
-
-    nightSuite.addTest(TShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughTests('test_execution'))
-
-    nightSuite.addTest(TShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-
-    nightSuite.addTest(TShellQ4ThickLinearDynamicStructOscillatingPlateTests('test_execution'))
-    nightSuite.addTest(TShellQ4ThinLinearDynamicStructOscillatingPlateTests('test_execution'))
-    nightSuite.addTest(TShellT3ThickLinearDynamicStructOscillatingPlateTests('test_execution'))
-    nightSuite.addTest(TShellT3ThinLinearDynamicStructOscillatingPlateTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4LinearStaticStructScordelisLoRoofTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4LinearStaticStructScordelisLoRoofOrthotropicTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4LinearStaticStructPinchedCylinderTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4LinearStaticStructPinchedHemisphereTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
+    nightSuite.addTest(TShellT3AndQ4LinearDynamicStructOscillatingPlateTests('test_execution'))
 	
     # CL tests
     ##nightSuite.addTest(TIsotropicDamageSimoJuPSTest('test_execution')) # FIXME: Needs get up to date
@@ -388,61 +304,25 @@ def AssambleTestSuites():
     validationSuite = suites['validation']
     # SPRISM tests
     ####validationSuite.addTest(TSprismPanTests('test_execution'))
-    validationSuite.addTest(TPendulusTLTest('test_execution'))
-    validationSuite.addTest(TPendulusULTest('test_execution'))
-    validationSuite.addTest(TShellT3ThinDrillingRollUpTests('test_execution'))
-    validationSuite.addTest(TShellT3IsotropicScordelisTests('test_execution'))
+    # validationSuite.addTest(TPendulusTLTest('test_execution'))
+    # validationSuite.addTest(TPendulusULTest('test_execution'))
+    # validationSuite.addTest(TShellT3ThinDrillingRollUpTests('test_execution'))
+    # validationSuite.addTest(TShellT3IsotropicScordelisTests('test_execution'))
 
-    validationSuite.addTest(TShellQ4ThickLinearStaticUnstructScordelisLoRoofTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearStaticUnstructScordelisLoRoofTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearStaticUnstructScordelisLoRoofTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearStaticUnstructScordelisLoRoofTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearStaticUnstructScordelisLoRoofTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearStaticUnstructScordelisLoRoofOrthotropicTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearStaticUnstructUnstructPinchedCylinderTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearStaticUnstructPinchedHemisphereTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearDynamicUnstructOscillatingPlateTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearDynamicStructPendulusTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearDynamicUnstructPendulusTests('test_execution'))
+    validationSuite.addTest(TShellT3AndQ4NonLinearDynamicUnstructPendulusLumpedTests('test_execution'))
 
-    validationSuite.addTest(TShellQ4ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests('test_execution'))
 
-    validationSuite.addTest(TShellQ4ThickLinearStaticUnstructPinchedCylinderTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearStaticUnstructPinchedCylinderTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearStaticUnstructPinchedCylinderTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearStaticUnstructPinchedCylinderTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickLinearStaticUnstructPinchedHemisphereTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearStaticUnstructPinchedHemisphereTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearStaticUnstructPinchedHemisphereTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearStaticUnstructPinchedHemisphereTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickLinearDynamicUnstructOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearDynamicUnstructOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearDynamicUnstructOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearDynamicUnstructOscillatingPlateTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickLinearDynamicUnstructLumpedOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinLinearDynamicUnstructLumpedOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickLinearDynamicUnstructLumpedOscillatingPlateTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinLinearDynamicUnstructLumpedOscillatingPlateTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickPendulusTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinPendulusTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickPendulusTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinPendulusTests('test_execution'))
-
-    validationSuite.addTest(TShellQ4ThickPendulusLumpedTests('test_execution'))
-    validationSuite.addTest(TShellQ4ThinPendulusLumpedTests('test_execution'))
-    validationSuite.addTest(TShellT3ThickPendulusLumpedTests('test_execution'))
-    validationSuite.addTest(TShellT3ThinPendulusLumpedTests('test_execution'))
-    
     # Create a test suit that contains all the tests:
     allSuite = suites['all']
     allSuite.addTests(nightSuite) # already contains the smallSuite

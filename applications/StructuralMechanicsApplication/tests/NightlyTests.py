@@ -102,80 +102,23 @@ class ShellQ4ThinOrthotropicLaminateLinearStaticTests(StructuralMechanichsTestFa
 class ShellT3IsotropicLinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_isotropic_linear_static_struct_scordelis_lo_roof"
 
-class ShellQ4ThickLinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4LinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_Q4_thick_linear_static_struct_scordelis_lo_roof"
 
-class ShellQ4ThinLinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4LinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_Q4_thin_linear_static_struct_scordelis_lo_roof"
 
-class ShellT3ThickLinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4LinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_thick_linear_static_struct_scordelis_lo_roof"
 
-class ShellT3ThinLinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4LinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_thin_linear_static_struct_scordelis_lo_roof"
 
-class ShellQ4ThickLinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_Q4_thick_linear_static_struct_scordelis_lo_roof_orthotropic"
     
-class ShellQ4ThinLinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_Q4_thin_linear_static_struct_scordelis_lo_roof_orthotropic"
 
-class ShellT3ThickLinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
+class ShellT3AndQ4LinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3_thick_linear_static_struct_scordelis_lo_roof_orthotropic"
-
-class ShellT3ThinLinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_struct_scordelis_lo_roof_orthotropic"
-
-class ShellQ4ThickLinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_struct_pinched_cylinder"
-
-class ShellQ4ThinLinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_struct_pinched_cylinder"
-
-class ShellT3ThickLinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_struct_pinched_cylinder"
-
-class ShellT3ThinLinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_struct_pinched_cylinder"
-
-class ShellT3ThickLinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_struct_pinched_hemisphere"
-
-class ShellT3ThinLinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_struct_pinched_hemisphere"
-
-class ShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_nonlinear_static_struct_hinged_cyl_roof_snapthrough"
-
-class ShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_nonlinear_static_struct_hinged_cyl_roof_snapthrough"
-    
-class ShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_nonlinear_static_struct_hinged_cyl_roof_snapthrough"
-
-class ShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_nonlinear_static_struct_hinged_cyl_roof_snapthrough"
-
-class ShellQ4ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_nonlinear_static_struct_hinged_cyl_roof_snapthrough_orthotropic"
-
-class ShellQ4ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_nonlinear_static_struct_hinged_cyl_roof_snapthrough_orthotropic"
-
-class ShellT3ThickNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_nonlinear_static_struct_hinged_cyl_roof_snapthrough_orthotropic"
-
-class ShellT3ThinNonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_nonlinear_static_struct_hinged_cyl_roof_snapthrough_orthotropic"
-
-class ShellQ4ThickLinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_dynamic_struct_oscillating_plate"
-
-class ShellQ4ThinLinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_dynamic_struct_oscillating_plate"
-
-class ShellT3ThickLinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_dynamic_struct_oscillating_plate"
-    
-class ShellT3ThinLinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_dynamic_struct_oscillating_plate"

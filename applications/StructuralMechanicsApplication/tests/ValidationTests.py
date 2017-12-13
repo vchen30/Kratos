@@ -53,92 +53,38 @@ class PendulusULTest(StructuralMechanichsTestFactory):
     file_name = "pendulus_test/pendulus_UL_test"
 
 ## From here new shell tests
-class ShellQ4ThickLinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_unstruct_scordelis_lo_roof"
-class ShellQ4ThinLinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_unstruct_scordelis_lo_roof"
-class ShellT3ThickLinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_unstruct_scordelis_lo_roof"
-class ShellT3ThinLinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_unstruct_scordelis_lo_roof"
+class ShellT3AndQ4LinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof"
 
-class ShellQ4ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_unstruct_scordelis_lo_roof_orthotropic"
-class ShellQ4ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_unstruct_scordelis_lo_roof_orthotropic"
-class ShellT3ThickLinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_unstruct_scordelis_lo_roof_orthotropic"
-class ShellT3ThinLinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_unstruct_scordelis_lo_roof_orthotropic"
+class ShellT3AndQ4LinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof_orthotropic"
 
-class ShellQ4ThickLinearStaticUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_unstruct_pinched_cylinder"
-class ShellQ4ThinLinearStaticUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_unstruct_pinched_cylinder"
-class ShellT3ThickLinearStaticUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_unstruct_pinched_cylinder"
-class ShellT3ThinLinearStaticUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_unstruct_pinched_cylinder"
+class ShellT3AndQ4LinearStaticUnstructUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_pinched_cylinder"
 
-class ShellQ4ThickLinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_unstruct_pinched_hemisphere"
-class ShellQ4ThinLinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_unstruct_pinched_hemisphere"
-class ShellT3ThickLinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_unstruct_pinched_hemisphere"
-class ShellT3ThinLinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_unstruct_pinched_hemisphere"
+class ShellT3AndQ4LinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_pinched_hemisphere"
 
-class ShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
-class ShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
-class ShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
-class ShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
+class ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
 
-class ShellQ4ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
-class ShellQ4ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
-class ShellT3ThickNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
-class ShellT3ThinNonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
+class ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
 
-class ShellQ4ThickLinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellQ4ThinLinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThickLinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThinLinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_dynamic_unstruct_oscillating_plate"
+class ShellT3AndQ4LinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_oscillating_plate"
 
-class ShellQ4ThickLinearDynamicUnstructLumpedOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellQ4ThinLinearDynamicUnstructLumpedOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThickLinearDynamicUnstructLumpedOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThinLinearDynamicUnstructLumpedOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_dynamic_unstruct_oscillating_plate"
+class ShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_oscillating_plate_lumped"
 
-class ShellQ4ThickPendulusTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellQ4ThinPendulusTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThickPendulusTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThinPendulusTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_dynamic_unstruct_oscillating_plate"
+class ShellT3AndQ4NonLinearDynamicStructPendulusTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_pendulus"
 
-class ShellQ4ThickPendulusLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellQ4ThinPendulusLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThickPendulusLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_dynamic_unstruct_oscillating_plate"
-class ShellT3ThinPendulusLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_dynamic_unstruct_oscillating_plate"
+class ShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_pendulus_lumped"
+
+class ShellT3AndQ4NonLinearDynamicUnstructPendulusTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_pendulus"
+
+class ShellT3AndQ4NonLinearDynamicUnstructPendulusLumpedTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_pendulus_lumped"
