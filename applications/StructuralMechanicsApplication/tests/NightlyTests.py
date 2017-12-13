@@ -120,5 +120,8 @@ class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralM
 class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_nonlinear_static_struct_hinged_cyl_roof_snapthrough_orthotropic"
 
-class ShellT3AndQ4LinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_struct_oscillating_plate"
+class ShellT3AndQ4NonLinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_struct_oscillating_plate"
+
+class ShellT3AndQ4NonLinearDynamicStructOscillatingPlateLumpedTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_struct_oscillating_plate_lumped"

@@ -71,11 +71,11 @@ class ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests(Structura
 class ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough_orthotropic"
 
-class ShellT3AndQ4LinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_oscillating_plate"
+class ShellT3AndQ4NonLinearDynamicUnstructOscillatingPlateTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_oscillating_plate"
 
-class ShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_oscillating_plate_lumped"
+class ShellT3AndQ4NonLinearDynamicUnstructOscillatingPlateLumpedTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_oscillating_plate_lumped"
 
 class ShellT3AndQ4NonLinearDynamicStructPendulusTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_struct_pendulus"
