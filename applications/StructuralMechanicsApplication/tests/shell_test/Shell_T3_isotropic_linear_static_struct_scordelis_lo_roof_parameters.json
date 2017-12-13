@@ -18,7 +18,7 @@
             "input_filename" : "shell_test/Shell_T3_isotropic_linear_static_struct_scordelis_lo_roof"
         },
         "material_import_settings"           : {
-            "materials_filename" : "shell_test/Shell_linear_static_scordelis_lo_roof_materials_isotropic.json"
+            "materials_filename" : "shell_test/Shell_linear_static_scordelis_lo_roof_isotropic_materials.json"
         },
         "line_search"                        : false,
         "convergence_criterion"              : "residual_criterion",
