@@ -78,10 +78,10 @@ class ShellT3AndQ4LinearDynamicUnstructOscillatingPlateLumpedTests(StructuralMec
     file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_oscillating_plate_lumped"
 
 class ShellT3AndQ4NonLinearDynamicStructPendulusTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_pendulus"
+    file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_struct_pendulus"
 
 class ShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_unstruct_pendulus_lumped"
+    file_name = "shell_test/Shell_T3andQ4_linear_dynamic_struct_pendulus_lumped"
 
 class ShellT3AndQ4NonLinearDynamicUnstructPendulusTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_nonlinear_dynamic_unstruct_pendulus"
