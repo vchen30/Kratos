@@ -795,8 +795,8 @@ namespace Kratos
 
 
 
-		if (this->GetProperties().Has(LUMPED_MASS_MATRIX)) {
-			this->mIsLumpedMassMatrix = GetProperties()[LUMPED_MASS_MATRIX];
+		if (this->GetProperties().Has(USE_LUMPED_MASS_MATRIX)) {
+			this->mIsLumpedMassMatrix = GetProperties()[USE_LUMPED_MASS_MATRIX];
 		}
 		else this->mIsLumpedMassMatrix = true;
 
