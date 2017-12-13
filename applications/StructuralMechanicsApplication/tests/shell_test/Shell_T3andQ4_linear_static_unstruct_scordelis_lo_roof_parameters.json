@@ -1,6 +1,6 @@
 {
     "problem_data"             : {
-        "problem_name"    : "Shell_T3_thick_linear_static_unstruct_pinched_hemisphere",
+        "problem_name"    : "Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof",
         "model_part_name" : "Structure",
         "domain_size"     : 3,
         "parallel_type"   : "OpenMP",
@@ -15,10 +15,10 @@
         "analysis_type"                      : "linear",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
-            "input_filename" : "shell_test/Shell_T3_thick_linear_static_unstruct_pinched_hemisphere"
+            "input_filename" : "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof"
         },
         "material_import_settings"           : {
-            "materials_filename" : "shell_test/Shell_linear_static_pinched_hemisphere_materials.json"
+            "materials_filename" : "shell_test/Shell_linear_static_scordelis_lo_roof_materials.json"
         },
         "line_search"                        : false,
         "convergence_criterion"              : "residual_criterion",
@@ -27,8 +27,8 @@
         "residual_relative_tolerance"        : 0.0001,
         "residual_absolute_tolerance"        : 1e-9,
         "max_iteration"                      : 10,
-        "problem_domain_sub_model_part_list" : ["Parts_Parts_Auto1"],
-        "processes_sub_model_part_list"      : ["DISPLACEMENT_Displacement_Auto1","DISPLACEMENT_Displacement_Auto2","DISPLACEMENT_Displacement_Auto3","ROTATION_Rotation_Auto1","ROTATION_Rotation_Auto2","PointLoad3D_Load_on_points_Auto1","PointLoad3D_Load_on_points_Auto2"],
+        "problem_domain_sub_model_part_list" : ["Parts_Surface_T3_thin","Parts_Surface_Q4_thin","Parts_Surface_T3_thick","Parts_Surface_Q4_thick"],
+        "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","DISPLACEMENT_XZ_sym","DISPLACEMENT_YZ_sym","ROTATION_XZ_sym","ROTATION_YZ_sym","SurfaceLoad3D_Surface_Q4_thick","SurfaceLoad3D_Surface_Q4_thin","SurfaceLoad3D_Surface_T3_thick","SurfaceLoad3D_Surface_T3_thin"],
         "rotation_dofs"                      : true
     },
     "constraints_process_list" : [{
@@ -38,9 +38,9 @@
         "process_name"  : "AssignVectorVariableProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "DISPLACEMENT_Displacement_Auto1",
+            "model_part_name" : "DISPLACEMENT_Dirichlet",
             "variable_name"   : "DISPLACEMENT",
-            "constrained"     : [true,true,true],
+            "constrained"     : [true,false,true],
             "value"           : [0.0,0.0,0.0],
             "interval"        : [0.0,"End"]
         }
@@ -51,20 +51,7 @@
         "process_name"  : "AssignVectorVariableProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "DISPLACEMENT_Displacement_Auto2",
-            "variable_name"   : "DISPLACEMENT",
-            "constrained"     : [true,false,false],
-            "value"           : [0.0,0.0,0.0],
-            "interval"        : [0.0,"End"]
-        }
-    },{
-        "python_module" : "assign_vector_variable_process",
-        "kratos_module" : "KratosMultiphysics",
-        "help"          : "This process fixes the selected components of a given vector variable",
-        "process_name"  : "AssignVectorVariableProcess",
-        "Parameters"    : {
-            "mesh_id"         : 0,
-            "model_part_name" : "DISPLACEMENT_Displacement_Auto3",
+            "model_part_name" : "DISPLACEMENT_XZ_sym",
             "variable_name"   : "DISPLACEMENT",
             "constrained"     : [false,true,false],
             "value"           : [0.0,0.0,0.0],
@@ -77,9 +64,9 @@
         "process_name"  : "AssignVectorVariableProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "ROTATION_Rotation_Auto1",
-            "variable_name"   : "ROTATION",
-            "constrained"     : [false,true,true],
+            "model_part_name" : "DISPLACEMENT_YZ_sym",
+            "variable_name"   : "DISPLACEMENT",
+            "constrained"     : [true,false,false],
             "value"           : [0.0,0.0,0.0],
             "interval"        : [0.0,"End"]
         }
@@ -90,9 +77,22 @@
         "process_name"  : "AssignVectorVariableProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "ROTATION_Rotation_Auto2",
+            "model_part_name" : "ROTATION_XZ_sym",
             "variable_name"   : "ROTATION",
             "constrained"     : [true,false,true],
+            "value"           : [0.0,0.0,0.0],
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "ROTATION_YZ_sym",
+            "variable_name"   : "ROTATION",
+            "constrained"     : [false,true,true],
             "value"           : [0.0,0.0,0.0],
             "interval"        : [0.0,"End"]
         }
@@ -106,10 +106,10 @@
         "process_name"  : "AssignVectorByDirectionToConditionProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "PointLoad3D_Load_on_points_Auto1",
-            "variable_name"   : "POINT_LOAD",
-            "modulus"         : -1.0,
-            "direction"       : [0.0,1,0.0],
+            "model_part_name" : "SurfaceLoad3D_Surface_Q4_thick",
+            "variable_name"   : "SURFACE_LOAD",
+            "modulus"         : 90.0,
+            "direction"       : [0.0,0.0,-1],
             "interval"        : [0.0,"End"]
         }
     },{
@@ -120,10 +120,38 @@
         "process_name"  : "AssignVectorByDirectionToConditionProcess",
         "Parameters"    : {
             "mesh_id"         : 0,
-            "model_part_name" : "PointLoad3D_Load_on_points_Auto2",
-            "variable_name"   : "POINT_LOAD",
-            "modulus"         : 1.0,
-            "direction"       : [1,0.0,0.0],
+            "model_part_name" : "SurfaceLoad3D_Surface_Q4_thin",
+            "variable_name"   : "SURFACE_LOAD",
+            "modulus"         : 90.0,
+            "direction"       : [0.0,0.0,-1],
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_vector_by_direction_to_condition_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process sets a vector variable value over a condition according to a given modulus an direction",
+        "check"         : "DirectorVectorNonZero direction",
+        "process_name"  : "AssignVectorByDirectionToConditionProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "SurfaceLoad3D_Surface_T3_thick",
+            "variable_name"   : "SURFACE_LOAD",
+            "modulus"         : 90.0,
+            "direction"       : [0.0,0.0,-1],
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_vector_by_direction_to_condition_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process sets a vector variable value over a condition according to a given modulus an direction",
+        "check"         : "DirectorVectorNonZero direction",
+        "process_name"  : "AssignVectorByDirectionToConditionProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "SurfaceLoad3D_Surface_T3_thin",
+            "variable_name"   : "SURFACE_LOAD",
+            "modulus"         : 90.0,
+            "direction"       : [0.0,0.0,-1],
             "interval"        : [0.0,"End"]
         }
     }],
@@ -164,9 +192,9 @@
         "help"                  : "",
         "process_name"          : "FromJsonCheckResultProcess",
         "Parameters"            : {
-            "check_variables"  : ["DISPLACEMENT_X"],
-            "input_file_name"  : "shell_test/Shell_T3_thick_linear_static_unstruct_pinched_hemisphere_results.json",
-            "model_part_name"  : "PointLoad3D_Load_on_points_Auto2",
+            "check_variables"  : ["DISPLACEMENT_Z"],
+            "input_file_name"  : "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof_results.json",
+            "model_part_name"  : "GENERIC_ref_node",
             "time_frequency"   : 0.01
         }
     }],
@@ -177,9 +205,9 @@
         "help"                  : "",
         "process_name"          : "JsonOutputProcess",
         "Parameters"            : {
-            "output_variables" : ["DISPLACEMENT_X"],
-            "output_file_name" : "shell_test/Shell_T3_thick_linear_static_unstruct_pinched_hemisphere_results.json",
-            "model_part_name"  : "PointLoad3D_Load_on_points_Auto2",
+            "output_variables" : ["DISPLACEMENT_Z"],
+            "output_file_name" : "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof_results.json",
+            "model_part_name"  : "GENERIC_ref_node",
             "time_frequency"   : 0.01
         }
     }]

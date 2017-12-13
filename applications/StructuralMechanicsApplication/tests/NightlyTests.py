@@ -103,22 +103,22 @@ class ShellT3IsotropicLinearStaticStructScordelisLoRoofTests(StructuralMechanich
     file_name = "shell_test/Shell_T3_isotropic_linear_static_struct_scordelis_lo_roof"
 
 class ShellT3AndQ4LinearStaticStructScordelisLoRoofTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_struct_scordelis_lo_roof"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof"
 
 class ShellT3AndQ4LinearStaticStructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_struct_scordelis_lo_roof"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof"
 
 class ShellT3AndQ4LinearStaticStructPinchedCylinderTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_struct_scordelis_lo_roof"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof"
 
 class ShellT3AndQ4LinearStaticStructPinchedHemisphereTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thin_linear_static_struct_scordelis_lo_roof"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof"
 
 class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thick_linear_static_struct_scordelis_lo_roof_orthotropic"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof_orthotropic"
     
 class ShellT3AndQ4NonLinearStaticStructHingedCylRoofSnapthroughOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_Q4_thin_linear_static_struct_scordelis_lo_roof_orthotropic"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof_orthotropic"
 
 class ShellT3AndQ4LinearDynamicStructOscillatingPlateTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3_thick_linear_static_struct_scordelis_lo_roof_orthotropic"
+    file_name = "shell_test/Shell_T3andQ4_linear_static_struct_scordelis_lo_roof_orthotropic"
