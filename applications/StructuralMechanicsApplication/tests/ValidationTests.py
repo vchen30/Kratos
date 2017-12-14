@@ -56,14 +56,14 @@ class PendulusULTest(StructuralMechanichsTestFactory):
 class ShellT3AndQ4LinearStaticUnstructScordelisLoRoofTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof"
 
-class ShellT3AndQ4LinearStaticUnstructScordelisLoRoofOrthotropicTests(StructuralMechanichsTestFactory):
-    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_scordelis_lo_roof_orthotropic"
-
 class ShellT3AndQ4LinearStaticUnstructUnstructPinchedCylinderTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_pinched_cylinder"
 
 class ShellT3AndQ4LinearStaticUnstructPinchedHemisphereTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_pinched_hemisphere"
+
+class ShellT3AndQ4LinearStaticUnstructClampedCylinderOrthotropicTests(StructuralMechanichsTestFactory):
+    file_name = "shell_test/Shell_T3andQ4_linear_static_unstruct_clamped_cylinder_orthotropic"
 
 class ShellT3AndQ4NonLinearStaticUnstructHingedCylRoofSnapthroughTests(StructuralMechanichsTestFactory):
     file_name = "shell_test/Shell_T3andQ4_nonlinear_static_unstruct_hinged_cyl_roof_snapthrough"
