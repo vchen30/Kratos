@@ -266,22 +266,22 @@ def AssambleTestSuites():
     # Shell tests
     # nightSuite.addTest(TShellQ4ThickBendingRollUpTests('test_execution'))
     # nightSuite.addTest(TShellQ4ThickDrillingRollUpTests('test_execution'))
-    # nightSuite.addTest(TShellQ4ThickOrthotropicLaminateLinearStaticTests('test_execution'))
+    nightSuite.addTest(TShellQ4ThickOrthotropicLaminateLinearStaticTests('test_execution'))
 
     # nightSuite.addTest(TShellT3ThinBendingRollUpTests('test_execution'))
-    # nightSuite.addTest(TShellT3ThinOrthotropicLaminateLinearStaticTests('test_execution'))
+    nightSuite.addTest(TShellT3ThinOrthotropicLaminateLinearStaticTests('test_execution'))
 
     # nightSuite.addTest(TShellT3ThickLinearStaticTests('test_execution'))
     # nightSuite.addTest(TShellT3ThickNonLinearStaticTests('test_execution'))
     # nightSuite.addTest(TShellT3ThickLinearDynamicTests('test_execution'))
     # nightSuite.addTest(TShellT3ThickNonLinearDynamicTests('test_execution'))
-    # nightSuite.addTest(TShellT3ThickOrthotropicLaminateLinearStaticTests('test_execution'))
+    nightSuite.addTest(TShellT3ThickOrthotropicLaminateLinearStaticTests('test_execution'))
 
     # nightSuite.addTest(TShellQ4ThinLinearStaticTests('test_execution'))
     # nightSuite.addTest(TShellQ4ThinNonLinearStaticTests('test_execution'))
     # nightSuite.addTest(TShellQ4ThinLinearDynamicTests('test_execution'))
     # nightSuite.addTest(TShellQ4ThinNonLinearDynamicTests('test_execution'))
-    # nightSuite.addTest(TShellQ4ThinOrthotropicLaminateLinearStaticTests('test_execution'))
+    nightSuite.addTest(TShellQ4ThinOrthotropicLaminateLinearStaticTests('test_execution'))
 
 
     nightSuite.addTest(TShellT3IsotropicLinearStaticStructScordelisLoRoofTests('test_execution'))

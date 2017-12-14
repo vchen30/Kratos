@@ -87,7 +87,8 @@ class TestPatchTestShellsOrthotropic(KratosUnittest.TestCase):
         orthotropic_props[0,7] = 625 #G_13
         orthotropic_props[0,8] = 625 #G_23
         
-        # Orthotropic mechanical strengths. (T)ensile, (C)ompression, (S)hear
+        # Orthotropic mechanical strengths. (T)ensile, (C)ompression, (S)hear 
+        # => this is needed for the calculation of the TSAI_WU_RESERVE_FACTOR
         # along 1, 2, 3 lamina directions
         orthotropic_props[0,9] = 800 #T1
         orthotropic_props[0,10] = 500 #C1
