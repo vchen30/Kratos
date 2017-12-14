@@ -14,7 +14,7 @@
 "BoundingBoxMinZ"                  : -0.003,
 "dem_inlet_option"                 : false,
 "GravityX"                         : 0.0,
-"GravityY"                         : -9.81
+"GravityY"                         : -9.81,
 "GravityZ"                         : 0.0,
 "VelocityTrapOption"               : false,
 "RotationOption"                   : true,
@@ -33,7 +33,8 @@
 "OutputFileType"                   : "Binary",
 "Multifile"                        : "multiple_files",
 "HorizontalFixVel"                 : true,
-"IntegrationScheme"                : "Forward_Euler",
+"TranslationalIntegrationScheme"   : "Forward_Euler",
+"RotationalIntegrationScheme"      : "Direct_Integration",
 "AutomaticTimestep"                : false,
 "DeltaTimeSafetyFactor"            : 1.0,
 "MaxTimeStep"                      : 5e-7,

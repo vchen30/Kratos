@@ -20,13 +20,15 @@
 #include "includes/define.h"
 #include "includes/constitutive_law.h"
 #include "custom_python/add_custom_constitutive_laws_to_python.h"
+#include "custom_constitutive/truss_constitutive_law.h"
+#include "custom_constitutive/beam_constitutive_law.h"
 #include "custom_constitutive/linear_plane_stress.h"
 #include "custom_constitutive/linear_plane_strain.h"
 #include "custom_constitutive/elastic_isotropic_3d.h"
 #include "custom_constitutive/axisym_elastic_isotropic.h"
 #include "custom_constitutive/hyper_elastic_isotropic_neo_hookean_3d.h"
 #include "custom_constitutive/hyper_elastic_isotropic_neo_hookean_plane_strain_2d.h"
-#include "custom_constitutive/linear_elastic_orthotropic_2D_law.hpp"
+#include "custom_constitutive/linear_elastic_orthotropic_2D_law.h"
 
 namespace Kratos
 {
@@ -38,6 +40,16 @@ using namespace boost::python;
 
 void  AddCustomConstitutiveLawsToPython()
 {
+
+    class_< TrussConstitutiveLaw, bases< ConstitutiveLaw >, boost::noncopyable >
+    ( "TrussConstitutiveLaw",
+      init<>() )
+    ;
+
+    class_< BeamConstitutiveLaw, bases< ConstitutiveLaw >, boost::noncopyable >
+    ( "BeamConstitutiveLaw",
+      init<>() )
+    ;
 
     class_< LinearPlaneStress, bases< ConstitutiveLaw >, boost::noncopyable >
     ( "LinearElasticPlaneStress2DLaw",

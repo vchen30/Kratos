@@ -120,7 +120,7 @@ void TransformNeighbourCoorsToClosestInPeriodicDomain(const ProcessInfo& r_proce
                                                       const double coors[3],
                                                       double neighbour_coors[3]);
 
-virtual void CalculateRelativePositions(ParticleDataBuffer & data_buffer);
+virtual bool CalculateRelativePositionsOrSkipContact(ParticleDataBuffer & data_buffer);
 
 using DiscreteElement::Initialize; //To avoid Clang Warning. We tell the compiler that we are aware of the existence of this function, but we overload it still.
 virtual void Initialize(const ProcessInfo& r_process_info);
@@ -153,8 +153,9 @@ virtual void CalculateMaxBallToFaceIndentation(double& rCurrentMaxIndentation);
 virtual double CalculateLocalMaxPeriod(const bool has_mpi, const ProcessInfo& r_process_info);
 
 virtual void Move(const double delta_t, const bool rotation_option, const double force_reduction_factor, const int StepFlag);
-virtual void SetIntegrationScheme(DEMIntegrationScheme::Pointer& integration_scheme); 
-virtual DEMIntegrationScheme& GetIntegrationScheme() { return *mpIntegrationScheme; }
+virtual void SetIntegrationScheme(DEMIntegrationScheme::Pointer& translational_integration_scheme, DEMIntegrationScheme::Pointer& rotational_integration_scheme);
+virtual DEMIntegrationScheme& GetTranslationalIntegrationScheme() { return *mpTranslationalIntegrationScheme; }
+virtual DEMIntegrationScheme& GetRotationalIntegrationScheme() { return *mpRotationalIntegrationScheme; }
 
 virtual void ComputeConditionRelativeData(int rigid_neighbour_index,
                                           DEMWall* const wall,
@@ -178,11 +179,9 @@ virtual double CalculateVolume();
 virtual double GetInteractionRadius(const int radius_index = 0);
 virtual void SetInteractionRadius(const double radius, const int radius_index = 0);
 virtual double GetSearchRadius();
-virtual double GetSearchRadiusWithFem();
 DEMDiscontinuumConstitutiveLaw::Pointer GetConstitutiveLawPointer();
 virtual void SetDefaultRadiiHierarchy(const double radius);
 virtual void SetSearchRadius(const double radius);
-virtual void SetSearchRadiusWithFem(const double radius);
 virtual double GetMass();
 virtual void   SetMass(double real_mass);
 virtual double   CalculateMomentOfInertia();
@@ -209,13 +208,11 @@ void   SetParticleKNormalFromProperties(double* particle_k_normal);
 virtual double GetParticleKTangential();
 void   SetParticleKTangentialFromProperties(double* particle_k_tangential);
 
-//Conical damage
+//Dependent Friction
 virtual double GetParticleContactRadius();
 void   SetParticleContactRadiusFromProperties(double* particle_contact_radius);
 virtual double GetParticleMaxStress();
 void   SetParticleMaxStressFromProperties(double* particle_max_stress);
-virtual double GetParticleAlpha();
-void   SetParticleAlphaFromProperties(double* particle_alpha);
 virtual double GetParticleGamma();
 void   SetParticleGammaFromProperties(double* particle_gamma);
 
@@ -404,7 +401,7 @@ virtual void AddUpMomentsAndProject(double LocalCoordSystem[3][3],
                                     double ViscoLocalRotationalMoment[3]) final;
 
 virtual void ComputeWear(double LocalCoordSystem[3][3], array_1d<double, 3>& vel, double tangential_vel[3],
-                         double mTimeStep, double density, bool sliding, double inverse_of_volume,
+                         double mTimeStep, bool sliding, double inverse_of_volume,
                          double LocalElasticContactForce, DEMWall* cast_neighbour);
 
 virtual void AdditionalCalculate(const Variable<double>& rVariable, double& Output, const ProcessInfo& r_process_info);
@@ -427,12 +424,12 @@ virtual void ApplyGlobalDampingToContactForces();
 DEMDiscontinuumConstitutiveLaw::Pointer mDiscontinuumConstitutiveLaw;
 double mRadius;
 double mSearchRadius;
-double mSearchRadiusWithFem;
 double mRealMass;
 PropertiesProxy* mFastProperties;
 int mClusterId;
 double mBoundDeltaDispSq;
-DEMIntegrationScheme* mpIntegrationScheme;
+DEMIntegrationScheme* mpTranslationalIntegrationScheme;
+DEMIntegrationScheme* mpRotationalIntegrationScheme;
 double mGlobalDamping;
 
 private:
@@ -444,7 +441,6 @@ virtual void save(Serializer& rSerializer) const override
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, DiscreteElement );
     rSerializer.save("mRadius",mRadius);
     rSerializer.save("mSearchRadius", mSearchRadius);
-    rSerializer.save("mSearchRadiusWithFem", mSearchRadiusWithFem);
     rSerializer.save("mRealMass",mRealMass);
     rSerializer.save("mClusterId",mClusterId);
     rSerializer.save("mBoundDeltaDispSq",mBoundDeltaDispSq);
@@ -459,7 +455,6 @@ virtual void load(Serializer& rSerializer) override
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, DiscreteElement );
     rSerializer.load("mRadius",mRadius);
     rSerializer.load("mSearchRadius", mSearchRadius);
-    rSerializer.load("mSearchRadiusWithFem", mSearchRadiusWithFem);
     rSerializer.load("mRealMass",mRealMass);
     rSerializer.load("mClusterId",mClusterId);
     rSerializer.load("mBoundDeltaDispSq",mBoundDeltaDispSq); 

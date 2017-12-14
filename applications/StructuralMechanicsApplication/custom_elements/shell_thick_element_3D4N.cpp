@@ -12,9 +12,7 @@
 #include "shell_thick_element_3D4N.hpp"
 #include "custom_utilities/shellq4_corotational_coordinate_transformation.hpp"
 #include "structural_mechanics_application_variables.h"
-
-#include "custom_constitutive/linear_elastic_orthotropic_2D_law.hpp"
-
+#include "custom_utilities/shell_utilities.h"
 #include "geometries/quadrilateral_3d_4.h"
 
 #include <string>
@@ -29,56 +27,56 @@ namespace Kratos
 //
 // =====================================================================================
 
-namespace Utilities
-{
-
-template<class TVec>
-inline void ShapeFunc(double xi, double eta, TVec & N)
-{
-    N(0) = 0.25 * (1.0 - xi) * (1.0 - eta); // node 1
-    N(1) = 0.25 * (1.0 + xi) * (1.0 - eta); // node 2
-    N(2) = 0.25 * (1.0 + xi) * (1.0 + eta); // node 3
-    N(3) = 0.25 * (1.0 - xi) * (1.0 + eta); // node 4
-}
-
-template<class TVec>
-inline void ShapeFuncSerendipity(double xi, double eta, TVec & N)
-{
-    N(0) = 0.5 * (1.0 - xi * xi) * (1.0 - eta);  // node 5
-    N(1) = 0.5 * (1.0 + xi) * (1.0 - eta * eta); // node 6
-    N(2) = 0.5 * (1.0 - xi * xi) * (1.0 + eta);  // node 7
-    N(3) = 0.5 * (1.0 - xi) * (1.0 - eta * eta); // node 8
-}
-
-template<class TMat>
-inline void ShapeFunc_NaturalDerivatives(double xi, double eta, TMat & dN)
-{
-    dN(0, 0) = -(1.0 - eta) * 0.25;
-    dN(1, 0) =  (1.0 - eta) * 0.25;
-    dN(2, 0) =  (1.0 + eta) * 0.25;
-    dN(3, 0) = -(1.0 + eta) * 0.25;
-
-    dN(0, 1) = -(1.0 - xi)  * 0.25;
-    dN(1, 1) = -(1.0 + xi)  * 0.25;
-    dN(2, 1) =  (1.0 + xi)  * 0.25;
-    dN(3, 1) =  (1.0 - xi)  * 0.25;
-}
-
-template<class TMat>
-inline void ShapeFuncSerendipity_NaturalDerivatives(double xi, double eta, TMat & dN)
-{
-    dN(0, 0) = -xi * (1.0 - eta);
-    dN(1, 0) =  0.5 * (1.0 - eta * eta);
-    dN(2, 0) = -xi * (1.0 - eta);
-    dN(3, 0) = -0.5 * (1.0 - eta * eta);
-
-    dN(0, 1) = -0.5 * (1.0 - xi * xi);
-    dN(1, 1) = -eta * (1.0 + xi);
-    dN(2, 1) =  0.5 * (1.0 - xi * xi);
-    dN(3, 1) = -eta * (1.0 + xi);
-}
-
-}
+// namespace Utilities
+// {
+// 
+// template<class TVec>
+// inline void ShapeFunc(double xi, double eta, TVec & N)
+// {
+//     N(0) = 0.25 * (1.0 - xi) * (1.0 - eta); // node 1
+//     N(1) = 0.25 * (1.0 + xi) * (1.0 - eta); // node 2
+//     N(2) = 0.25 * (1.0 + xi) * (1.0 + eta); // node 3
+//     N(3) = 0.25 * (1.0 - xi) * (1.0 + eta); // node 4
+// }
+// 
+// template<class TVec>
+// inline void ShapeFuncSerendipity(double xi, double eta, TVec & N)
+// {
+//     N(0) = 0.5 * (1.0 - xi * xi) * (1.0 - eta);  // node 5
+//     N(1) = 0.5 * (1.0 + xi) * (1.0 - eta * eta); // node 6
+//     N(2) = 0.5 * (1.0 - xi * xi) * (1.0 + eta);  // node 7
+//     N(3) = 0.5 * (1.0 - xi) * (1.0 - eta * eta); // node 8
+// }
+// 
+// template<class TMat>
+// inline void ShapeFunc_NaturalDerivatives(double xi, double eta, TMat & dN)
+// {
+//     dN(0, 0) = -(1.0 - eta) * 0.25;
+//     dN(1, 0) =  (1.0 - eta) * 0.25;
+//     dN(2, 0) =  (1.0 + eta) * 0.25;
+//     dN(3, 0) = -(1.0 + eta) * 0.25;
+// 
+//     dN(0, 1) = -(1.0 - xi)  * 0.25;
+//     dN(1, 1) = -(1.0 + xi)  * 0.25;
+//     dN(2, 1) =  (1.0 + xi)  * 0.25;
+//     dN(3, 1) =  (1.0 - xi)  * 0.25;
+// }
+// 
+// template<class TMat>
+// inline void ShapeFuncSerendipity_NaturalDerivatives(double xi, double eta, TMat & dN)
+// {
+//     dN(0, 0) = -xi * (1.0 - eta);
+//     dN(1, 0) =  0.5 * (1.0 - eta * eta);
+//     dN(2, 0) = -xi * (1.0 - eta);
+//     dN(3, 0) = -0.5 * (1.0 - eta * eta);
+// 
+//     dN(0, 1) = -0.5 * (1.0 - xi * xi);
+//     dN(1, 1) = -eta * (1.0 + xi);
+//     dN(2, 1) =  0.5 * (1.0 - xi * xi);
+//     dN(3, 1) = -eta * (1.0 + xi);
+// }
+// 
+// }
 
 // =====================================================================================
 //
@@ -283,7 +281,7 @@ ShellThickElement3D4N::EASOperator::EASOperator(const ShellQ4_LocalCoordinateSys
     double eta(0.0);
 
     Matrix dN(4, 2);
-    Utilities::ShapeFunc_NaturalDerivatives(xi, eta, dN);
+    ShellUtilities::ShapeFunc_NaturalDerivatives(xi, eta, dN);
 
     Matrix Jac0(2, 2);
     Jac0(0, 0) = dN(0, 0) * LCS.X1() + dN(1, 0) * LCS.X2() + dN(2, 0) * LCS.X3() + dN(3, 0) * LCS.X4();
@@ -467,10 +465,6 @@ void ShellThickElement3D4N::Initialize()
 			// make new instance of shell cross section
 			theSection =
 				ShellCrossSection::Pointer(new ShellCrossSection());
-
-			// // Assign orthotropic material law for entire element
-			// LinearElasticOrthotropic2DLaw OrthoLaw;
-			// props.SetValue(CONSTITUTIVE_LAW, OrthoLaw.Clone());
 
 			// Parse material properties for each layer
 			theSection->ParseOrthotropicPropertyMatrix(this->pGetProperties());
@@ -1072,9 +1066,9 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<Vector>& 
         std::vector<Vector>& rValues,
         const ProcessInfo& rCurrentProcessInfo)
 {
-	if (rVariable == LOCAL_AXIS_VECTOR_1)
+	if (rVariable == LOCAL_AXIS_1)
 	{
-		// LOCAL_AXIS_VECTOR_1 output DOES NOT include the effect of section
+		// LOCAL_AXIS_1 output DOES NOT include the effect of section
 		// orientation, which rotates the entrire element section in-plane
 		// and is used in element stiffness calculation.
 
@@ -1093,9 +1087,9 @@ void ShellThickElement3D4N::GetValueOnIntegrationPoints(const Variable<Vector>& 
 			rValues[GP] = localCoordinateSystem.Vx();
 		}
 	}
-	else if (rVariable == ORTHOTROPIC_FIBER_ORIENTATION_1)
+	else if (rVariable == LOCAL_MATERIAL_ORIENTATION_VECTOR_1)
 	{
-		// ORTHOTROPIC_FIBER_ORIENTATION_1 output DOES include the effect of 
+		// LOCAL_MATERIAL_ORIENTATION_VECTOR_1 output DOES include the effect of 
 		// section orientation, which rotates the entrire element section 
 		// in-plane and is used in element stiffness calculation.
 
@@ -1623,10 +1617,10 @@ void ShellThickElement3D4N::DecimalCorrection(Vector& a)
 
 void ShellThickElement3D4N::SetupOrientationAngles()
 {
-    if (this->Has(FIBER_ORIENTATION_ANGLE)) 
+    if (this->Has(MATERIAL_ORIENTATION_ANGLE)) 
     { 
         for (CrossSectionContainerType::iterator it = mSections.begin(); it != mSections.end(); ++it) 
-        (*it)->SetOrientationAngle(this->GetValue(FIBER_ORIENTATION_ANGLE)); 
+        (*it)->SetOrientationAngle(this->GetValue(MATERIAL_ORIENTATION_ANGLE)); 
     } 
     else 
     { 

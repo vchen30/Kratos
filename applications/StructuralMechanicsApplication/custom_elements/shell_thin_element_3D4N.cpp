@@ -14,8 +14,7 @@
 #include "custom_utilities/shellq4_corotational_coordinate_transformation.hpp"
 #include "structural_mechanics_application_variables.h"
 
-#include "custom_constitutive/linear_elastic_orthotropic_2D_law.hpp"
-
+#include "custom_utilities/shell_utilities.h"
 #include "geometries/quadrilateral_3d_4.h"
 
 #include <string>
@@ -59,122 +58,122 @@ Southern California, 2012.
 
 namespace Kratos
 {
-	namespace Utilities
-	{
-		template<class TVec>
-		inline void ShapeFunc(double xi, double eta, TVec & N)
-		{
-			N(0) = 0.25 * (1.0 - xi) * (1.0 - eta); // node 1
-			N(1) = 0.25 * (1.0 + xi) * (1.0 - eta); // node 2
-			N(2) = 0.25 * (1.0 + xi) * (1.0 + eta); // node 3
-			N(3) = 0.25 * (1.0 - xi) * (1.0 + eta); // node 4
-		}
-
-		template<class TMat>
-		inline void ShapeFunc_NaturalDerivatives(double xi, double eta,
-			TMat & dN)
-		{
-			dN(0, 0) = -(1.0 - eta) * 0.25;
-			dN(1, 0) = (1.0 - eta) * 0.25;
-			dN(2, 0) = (1.0 + eta) * 0.25;
-			dN(3, 0) = -(1.0 + eta) * 0.25;
-
-			dN(0, 1) = -(1.0 - xi)  * 0.25;
-			dN(1, 1) = -(1.0 + xi)  * 0.25;
-			dN(2, 1) = (1.0 + xi)  * 0.25;
-			dN(3, 1) = (1.0 - xi)  * 0.25;
-		}
-
-		inline double dN_seren_dxi(const int actualNodeNumber,const double xi,
-			const double eta)
-		{
-			// Natural derivatives of 8-node serendipity shape functions
-
-			double returnValue;
-			switch (actualNodeNumber)
-			{
-			case 1:
-				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
-					0.25*(-eta + 1.0)*(-eta - xi - 1.0);
-				break;
-			case 2:
-				returnValue = (-eta + 1.0)*(0.25*xi + 0.25) +
-					0.25*(-eta + 1.0)*(-eta + xi - 1.0);
-				break;
-			case 3:
-				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
-					0.25*(eta + 1.0)*(eta + xi - 1.0);
-				break;
-			case 4:
-				returnValue = -(eta + 1.0)*(-0.25*xi + 0.25) -
-					0.25*(eta + 1.0)*(eta - xi - 1.0);
-				break;
-			case 5:
-				returnValue = -1.0*xi*(-eta + 1.0);
-				break;
-			case 6:
-				returnValue = -0.5*eta*eta + 0.5;
-				break;
-			case 7:
-				returnValue = -1.0*xi*(eta + 1.0);
-				break;
-			case 8:
-				returnValue = 0.5*eta*eta - 0.5;
-				break;
-			default:
-				KRATOS_ERROR <<
-					"Error: ELEMENT ShellThinElement3D4N, METHOD dN_seren_dxi"
-					<< std::endl;
-			}
-
-			return returnValue;
-		}
-
-		inline double dN_seren_deta(const int actualNodeNumber,const double xi,
-			const double eta)
-		{
-			// Natural derivatives of 8-node serendipity shape functions
-
-			double returnValue;
-			switch (actualNodeNumber)
-			{
-			case 1:
-				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
-					(-0.25*xi + 0.25)*(-eta - xi - 1.0);
-				break;
-			case 2:
-				returnValue = -(-eta + 1.0)*(0.25*xi + 0.25) -
-					(0.25*xi + 0.25)*(-eta + xi - 1.0);
-				break;
-			case 3:
-				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
-					(0.25*xi + 0.25)*(eta + xi - 1.0);
-				break;
-			case 4:
-				returnValue = (eta + 1.0)*(-0.25*xi + 0.25) +
-					(-0.25*xi + 0.25)*(eta - xi - 1.0);
-				break;
-			case 5:
-				returnValue = 0.5*xi*xi - 0.5;
-				break;
-			case 6:
-				returnValue = -1.0*eta*(xi + 1.0);
-				break;
-			case 7:
-				returnValue = -0.5*xi*xi + 0.5;
-				break;
-			case 8:
-				returnValue = -1.0*eta*(-xi + 1.0);
-				break;
-			default:
-				KRATOS_ERROR <<
-					"Error: ELEMENT ShellThinElement3D4N, METHOD dN_seren_dxi"
-					<< std::endl;
-			}
-
-			return returnValue;
-		}
-	}
+// 	namespace Utilities
+// 	{
+// 		template<class TVec>
+// 		inline void ShapeFunc(double xi, double eta, TVec & N)
+// 		{
+// 			N(0) = 0.25 * (1.0 - xi) * (1.0 - eta); // node 1
+// 			N(1) = 0.25 * (1.0 + xi) * (1.0 - eta); // node 2
+// 			N(2) = 0.25 * (1.0 + xi) * (1.0 + eta); // node 3
+// 			N(3) = 0.25 * (1.0 - xi) * (1.0 + eta); // node 4
+// 		}
+// 
+// 		template<class TMat>
+// 		inline void ShapeFunc_NaturalDerivatives(double xi, double eta,
+// 			TMat & dN)
+// 		{
+// 			dN(0, 0) = -(1.0 - eta) * 0.25;
+// 			dN(1, 0) = (1.0 - eta) * 0.25;
+// 			dN(2, 0) = (1.0 + eta) * 0.25;
+// 			dN(3, 0) = -(1.0 + eta) * 0.25;
+// 
+// 			dN(0, 1) = -(1.0 - xi)  * 0.25;
+// 			dN(1, 1) = -(1.0 + xi)  * 0.25;
+// 			dN(2, 1) = (1.0 + xi)  * 0.25;
+// 			dN(3, 1) = (1.0 - xi)  * 0.25;
+// 		}
+// 
+// 		inline double dN_seren_dxi(const int actualNodeNumber,const double xi,
+// 			const double eta)
+// 		{
+// 			// Natural derivatives of 8-node serendipity shape functions
+// 
+// 			double returnValue;
+// 			switch (actualNodeNumber)
+// 			{
+// 			case 1:
+// 				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
+// 					0.25*(-eta + 1.0)*(-eta - xi - 1.0);
+// 				break;
+// 			case 2:
+// 				returnValue = (-eta + 1.0)*(0.25*xi + 0.25) +
+// 					0.25*(-eta + 1.0)*(-eta + xi - 1.0);
+// 				break;
+// 			case 3:
+// 				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
+// 					0.25*(eta + 1.0)*(eta + xi - 1.0);
+// 				break;
+// 			case 4:
+// 				returnValue = -(eta + 1.0)*(-0.25*xi + 0.25) -
+// 					0.25*(eta + 1.0)*(eta - xi - 1.0);
+// 				break;
+// 			case 5:
+// 				returnValue = -1.0*xi*(-eta + 1.0);
+// 				break;
+// 			case 6:
+// 				returnValue = -0.5*eta*eta + 0.5;
+// 				break;
+// 			case 7:
+// 				returnValue = -1.0*xi*(eta + 1.0);
+// 				break;
+// 			case 8:
+// 				returnValue = 0.5*eta*eta - 0.5;
+// 				break;
+// 			default:
+// 				KRATOS_ERROR <<
+// 					"Error: ELEMENT ShellThinElement3D4N, METHOD dN_seren_dxi"
+// 					<< std::endl;
+// 			}
+// 
+// 			return returnValue;
+// 		}
+// 
+// 		inline double dN_seren_deta(const int actualNodeNumber,const double xi,
+// 			const double eta)
+// 		{
+// 			// Natural derivatives of 8-node serendipity shape functions
+// 
+// 			double returnValue;
+// 			switch (actualNodeNumber)
+// 			{
+// 			case 1:
+// 				returnValue = -(-eta + 1.0)*(-0.25*xi + 0.25) -
+// 					(-0.25*xi + 0.25)*(-eta - xi - 1.0);
+// 				break;
+// 			case 2:
+// 				returnValue = -(-eta + 1.0)*(0.25*xi + 0.25) -
+// 					(0.25*xi + 0.25)*(-eta + xi - 1.0);
+// 				break;
+// 			case 3:
+// 				returnValue = (eta + 1.0)*(0.25*xi + 0.25) +
+// 					(0.25*xi + 0.25)*(eta + xi - 1.0);
+// 				break;
+// 			case 4:
+// 				returnValue = (eta + 1.0)*(-0.25*xi + 0.25) +
+// 					(-0.25*xi + 0.25)*(eta - xi - 1.0);
+// 				break;
+// 			case 5:
+// 				returnValue = 0.5*xi*xi - 0.5;
+// 				break;
+// 			case 6:
+// 				returnValue = -1.0*eta*(xi + 1.0);
+// 				break;
+// 			case 7:
+// 				returnValue = -0.5*xi*xi + 0.5;
+// 				break;
+// 			case 8:
+// 				returnValue = -1.0*eta*(-xi + 1.0);
+// 				break;
+// 			default:
+// 				KRATOS_ERROR <<
+// 					"Error: ELEMENT ShellThinElement3D4N, METHOD dN_seren_dxi"
+// 					<< std::endl;
+// 			}
+// 
+// 			return returnValue;
+// 		}
+// 	}
 
 	// =========================================================================
 	//
@@ -319,10 +318,6 @@ namespace Kratos
 				// make new instance of shell cross section
 				theSection =
 					ShellCrossSection::Pointer(new ShellCrossSection());
-
-				// // Assign orthotropic material law for entire element
-				// LinearElasticOrthotropic2DLaw OrthoLaw;
-				// props.SetValue(CONSTITUTIVE_LAW, OrthoLaw.Clone());
 
 				// Parse material properties for each layer
 				theSection->ParseOrthotropicPropertyMatrix(this->pGetProperties());
@@ -992,9 +987,9 @@ namespace Kratos
 		std::vector<Vector>& rValues,
 		const ProcessInfo& rCurrentProcessInfo)
 	{
-		if (rVariable == LOCAL_AXIS_VECTOR_1)
+		if (rVariable == LOCAL_AXIS_1)
 		{
-			// LOCAL_AXIS_VECTOR_1 output DOES NOT include the effect of section
+			// LOCAL_AXIS_1 output DOES NOT include the effect of section
 			// orientation, which rotates the entrire element section in-plane
 			// and is used in element stiffness calculation.
 
@@ -1012,9 +1007,9 @@ namespace Kratos
 				rValues[GP] = localCoordinateSystem.Vx();
 			}
 		}
-		else if (rVariable == ORTHOTROPIC_FIBER_ORIENTATION_1)
+		else if (rVariable == LOCAL_MATERIAL_ORIENTATION_VECTOR_1)
 		{
-			// ORTHOTROPIC_FIBER_ORIENTATION_1 output DOES include the effect of 
+			// LOCAL_MATERIAL_ORIENTATION_VECTOR_1 output DOES include the effect of 
 			// section orientation, which rotates the entrire element section 
 			// in-plane and is used in element stiffness calculation.
 
@@ -1510,10 +1505,10 @@ namespace Kratos
 
 	void ShellThinElement3D4N::SetupOrientationAngles()
 	{
-        if (this->Has(FIBER_ORIENTATION_ANGLE)) 
+        if (this->Has(MATERIAL_ORIENTATION_ANGLE)) 
         { 
             for (CrossSectionContainerType::iterator it = mSections.begin(); it != mSections.end(); ++it) 
-            (*it)->SetOrientationAngle(this->GetValue(FIBER_ORIENTATION_ANGLE)); 
+            (*it)->SetOrientationAngle(this->GetValue(MATERIAL_ORIENTATION_ANGLE)); 
         } 
         else 
         {
@@ -1656,7 +1651,7 @@ namespace Kratos
 			data.s_eta.clear();
 
 			//set values of SFs to xi = 1 and eta = 0
-			Utilities::ShapeFunc(1, 0, data.N);
+			ShellUtilities::ShapeFunc(1, 0, data.N);
 			for (int i = 0; i < 4; i++)
 			{
 				data.s_xi(0) += data.r_cartesian[i][0] * data.N(i);
@@ -1667,7 +1662,7 @@ namespace Kratos
 
 			//set values of SFs to xi = 0 and eta = 1
 			data.N.clear();
-			Utilities::ShapeFunc(0, 1, data.N);
+			ShellUtilities::ShapeFunc(0, 1, data.N);
 			for (int i = 0; i < 4; i++)
 			{
 				data.s_eta(0) += data.r_cartesian[i][0] * data.N(i);
@@ -1839,17 +1834,15 @@ namespace Kratos
 			r_eta /= 2.0;
 			double l_xi = std::sqrt(inner_prod(r_xi, r_xi));
 			double l_eta = std::sqrt(inner_prod(r_eta, r_eta));
-
+                        
 			for (int i = 0; i < 4; i++)
 			{
 				//eqn 5.2.29
-				Vector vec1 = Vector(MathUtils<double>::CrossProduct
-				(data.r_cartesian[i], s_xi));
+                                const Vector vec1 = MathUtils<double>::CrossProduct(data.r_cartesian[i], s_xi);
 				d_xi_i[i] = std::sqrt(inner_prod(vec1, vec1));
 				chi_xi_i[i] = d_xi_i[i] / l_xi;
 
-				Vector vec2 = Vector(MathUtils<double>::CrossProduct
-				(data.r_cartesian[i], s_eta));
+				const Vector vec2 = MathUtils<double>::CrossProduct(data.r_cartesian[i], s_eta);
 				d_eta_i[i] = std::sqrt(inner_prod(vec2, vec2));
 				chi_eta_i[i] = d_eta_i[i] / l_eta;
 			}
@@ -1860,18 +1853,19 @@ namespace Kratos
 			double l_13 = std::sqrt(inner_prod(r_13, r_13));
 
 			Vector e_24 = Vector(r_24 / l_24);
-			Vector vec1 = Vector(MathUtils<double>::CrossProduct(r_13*-1.0, e_24));
-			Vector vec2 = Vector(MathUtils<double>::CrossProduct(r_13, e_24));
-			double d_24 = std::sqrt(inner_prod(vec1, vec2));
-			double d_13 = std::sqrt(inner_prod(vec1, vec2));
-			double chi_24 = d_24 / 2.0 / l_24;
-			double chi_13 = d_13 / 2.0 / l_13;
+			const Vector vec1 = Vector(MathUtils<double>::CrossProduct(r_13*-1.0, e_24)); // NOTE: This operation is marked as deprecated by the compiler, but it is not deprecated...not my fault
+                        const Vector vec2 = Vector(MathUtils<double>::CrossProduct(r_13, e_24));
+                        
+			const double d_24 = std::sqrt(inner_prod(vec1, vec2));
+			const double d_13 = std::sqrt(inner_prod(vec1, vec2));
+			const double chi_24 = d_24 / 2.0 / l_24;
+			const double chi_13 = d_13 / 2.0 / l_13;
 
-			double chi_xi_t = l_eta / l_xi;
-			double chi_eta_t = l_xi / l_eta;
+			const double chi_xi_t = l_eta / l_xi;
+			const double chi_eta_t = l_xi / l_eta;
 
-			double chi_xi_hat = 0.0;
-			double chi_eta_hat = 0.0;
+                        double chi_xi_hat = 0.0;
+                        double chi_eta_hat = 0.0;
 			for (int i = 0; i < 4; i++)
 			{
 				chi_xi_hat += chi_xi_i[i];
@@ -2245,7 +2239,7 @@ namespace Kratos
 			Matrix dN(4, 2, 0.0);
 
 			// dN/dxi and dN/deta
-			Utilities::ShapeFunc_NaturalDerivatives(xi, eta, dN);
+			ShellUtilities::ShapeFunc_NaturalDerivatives(xi, eta, dN);
 			Matrix temp = Matrix(prod(data.DKQ_invJac[data.gpIndex], trans(dN)));
 
 			// dN/dx and dN/dy
@@ -2329,59 +2323,59 @@ namespace Kratos
 			// d( ) / dxi
 			// Compute vector of dPsi_x/dxi
 			dpsiX_dxi[3 * node] = 1.5 *
-				(ar*Utilities::dN_seren_dxi(r, xi, eta) -
-					as*Utilities::dN_seren_dxi(s, xi, eta));
+				(ar*ShellUtilities::dN_seren_dxi(r, xi, eta) -
+					as*ShellUtilities::dN_seren_dxi(s, xi, eta));
 
-			dpsiX_dxi[3 * node + 1] = br*Utilities::dN_seren_dxi(r, xi, eta) +
-				bs*Utilities::dN_seren_dxi(s, xi, eta);
+			dpsiX_dxi[3 * node + 1] = br*ShellUtilities::dN_seren_dxi(r, xi, eta) +
+				bs*ShellUtilities::dN_seren_dxi(s, xi, eta);
 
 			dpsiX_dxi[3 * node + 2] =
-				Utilities::dN_seren_dxi(node + 1, xi, eta) -
-				cr*Utilities::dN_seren_dxi(r, xi, eta) -
-				cs*Utilities::dN_seren_dxi(s, xi, eta);
+				ShellUtilities::dN_seren_dxi(node + 1, xi, eta) -
+				cr*ShellUtilities::dN_seren_dxi(r, xi, eta) -
+				cs*ShellUtilities::dN_seren_dxi(s, xi, eta);
 
 			// Compute vector of dPsi_y/dxi
 			dpsiY_dxi[3 * node] = 1.5 *
-				(dr*Utilities::dN_seren_dxi(r, xi, eta) -
-					ds*Utilities::dN_seren_dxi(s, xi, eta));
+				(dr*ShellUtilities::dN_seren_dxi(r, xi, eta) -
+					ds*ShellUtilities::dN_seren_dxi(s, xi, eta));
 
 			dpsiY_dxi[3 * node + 1] = -1.0 *
-				Utilities::dN_seren_dxi(node + 1, xi, eta) +
-				er*Utilities::dN_seren_dxi(r, xi, eta) +
-				es*Utilities::dN_seren_dxi(s, xi, eta);
+				ShellUtilities::dN_seren_dxi(node + 1, xi, eta) +
+				er*ShellUtilities::dN_seren_dxi(r, xi, eta) +
+				es*ShellUtilities::dN_seren_dxi(s, xi, eta);
 
 			dpsiY_dxi[3 * node + 2] = -1.0 * br*
-				Utilities::dN_seren_dxi(r, xi, eta) -
-				bs*Utilities::dN_seren_dxi(s, xi, eta);
+				ShellUtilities::dN_seren_dxi(r, xi, eta) -
+				bs*ShellUtilities::dN_seren_dxi(s, xi, eta);
 
 			// d( ) / deta
 			// Compute vector of dPsi_x/deta
 			dpsiX_deta[3 * node] = 1.5 *
-				(ar*Utilities::dN_seren_deta(r, xi, eta) -
-					as*Utilities::dN_seren_deta(s, xi, eta));
+				(ar*ShellUtilities::dN_seren_deta(r, xi, eta) -
+					as*ShellUtilities::dN_seren_deta(s, xi, eta));
 
 			dpsiX_deta[3 * node + 1] = br*
-				Utilities::dN_seren_deta(r, xi, eta) +
-				bs*Utilities::dN_seren_deta(s, xi, eta);
+				ShellUtilities::dN_seren_deta(r, xi, eta) +
+				bs*ShellUtilities::dN_seren_deta(s, xi, eta);
 
 			dpsiX_deta[3 * node + 2] =
-				Utilities::dN_seren_deta(node + 1, xi, eta) -
-				cr*Utilities::dN_seren_deta(r, xi, eta) -
-				cs*Utilities::dN_seren_deta(s, xi, eta);
+				ShellUtilities::dN_seren_deta(node + 1, xi, eta) -
+				cr*ShellUtilities::dN_seren_deta(r, xi, eta) -
+				cs*ShellUtilities::dN_seren_deta(s, xi, eta);
 
 			// Compute vector of dPsi_y/deta
 			dpsiY_deta[3 * node] = 1.5 *
-				(dr*Utilities::dN_seren_deta(r, xi, eta) -
-					ds*Utilities::dN_seren_deta(s, xi, eta));
+				(dr*ShellUtilities::dN_seren_deta(r, xi, eta) -
+					ds*ShellUtilities::dN_seren_deta(s, xi, eta));
 
 			dpsiY_deta[3 * node + 1] = -1.0 *
-				Utilities::dN_seren_deta(node + 1, xi, eta) +
-				er*Utilities::dN_seren_deta(r, xi, eta) +
-				es*Utilities::dN_seren_deta(s, xi, eta);
+				ShellUtilities::dN_seren_deta(node + 1, xi, eta) +
+				er*ShellUtilities::dN_seren_deta(r, xi, eta) +
+				es*ShellUtilities::dN_seren_deta(s, xi, eta);
 
 			dpsiY_deta[3 * node + 2] = -1.0 * br*
-				Utilities::dN_seren_deta(r, xi, eta) -
-				bs*Utilities::dN_seren_deta(s, xi, eta);
+				ShellUtilities::dN_seren_deta(r, xi, eta) -
+				bs*ShellUtilities::dN_seren_deta(s, xi, eta);
 		}
 
 		double j11, j12, j21, j22;

@@ -12,10 +12,9 @@
 #include <iostream>
 
 // External includes
-#include<cmath>
+// #include<cmath>
 
 // Project includes
-#include "includes/properties.h"
 #include "custom_constitutive/linear_plane_strain.h"
 
 #include "structural_mechanics_application_variables.h"
@@ -158,6 +157,18 @@ void LinearPlaneStrain::FinalizeMaterialResponseCauchy (Parameters& rValues)
 //************************************************************************************
 //************************************************************************************
 
+bool& LinearPlaneStrain::GetValue(const Variable<bool>& rThisVariable, bool& rValue)
+{
+    // This Constitutive Law has been checked with Stenberg Stabilization
+    if (rThisVariable == STENBERG_SHEAR_STABILIZATION_SUITABLE)
+        rValue = true;
+    
+    return rValue;
+}
+
+//************************************************************************************
+//************************************************************************************
+
 double& LinearPlaneStrain::CalculateValue(Parameters& rParameterValues, const Variable<double>& rThisVariable, double& rValue)
 {
     const Properties& MaterialProperties  = rParameterValues.GetMaterialProperties();
@@ -186,7 +197,6 @@ void LinearPlaneStrain::GetLawFeatures(Features& rFeatures)
     rFeatures.mOptions.Set( PLANE_STRESS_LAW );
     rFeatures.mOptions.Set( INFINITESIMAL_STRAINS );
     rFeatures.mOptions.Set( ISOTROPIC );
-	rFeatures.mOptions.Set(STENBERG_STABILIZATION_SUITABLE);
 
     //Set strain measure required by the consitutive law
     rFeatures.mStrainMeasures.push_back(StrainMeasure_Infinitesimal);
