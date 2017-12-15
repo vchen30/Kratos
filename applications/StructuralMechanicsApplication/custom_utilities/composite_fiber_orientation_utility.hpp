@@ -179,11 +179,11 @@ namespace Kratos {
 
             if (element_data_file.is_open())
             {
-                element_data_file << "Begin ElementalData FIBER_ORIENTATION_ANGLE" << std::endl;
+                element_data_file << "Begin ElementalData MATERIAL_ORIENTATION_ANGLE" << std::endl;
                 for (auto& element : mrModelPart.Elements())
                 {
                     element_data_file << "\t" << element.Id() 
-                                      << " " << element.GetValue(FIBER_ORIENTATION_ANGLE) 
+                                      << " " << element.GetValue(MATERIAL_ORIENTATION_ANGLE) 
                                       << std::endl;
                 }
                 element_data_file << "End ElementalData" << std::endl;
@@ -193,7 +193,7 @@ namespace Kratos {
             else std::cout << "Unable to open file " << FileName << std::endl;
 
             std::cout << "Use \"cat " << FileName << " >> your_mdpa_file.mdpa\" to append "
-                      << "the FIBER_ORIENTATION_ANGLE values to the mdpa-file" << std::endl;
+                      << "the MATERIAL_ORIENTATION_ANGLE values to the mdpa-file" << std::endl;
         }
 
 
@@ -282,7 +282,7 @@ namespace Kratos {
             // Just look at the first element to save time
             const ElementsIteratorType& firstElement = mrModelPart.ElementsBegin();
 
-            if ((*firstElement).Has(FIBER_ORIENTATION_ANGLE))
+            if ((*firstElement).Has(MATERIAL_ORIENTATION_ANGLE))
             {
                 // the composite orientation assignment has already been done
                 std::cout << "Composite Assignment is skipped, because Fiber Angles are already Present in the first element" << std::endl;
@@ -303,7 +303,7 @@ namespace Kratos {
             // Just look at the first element to save time
             const ElementsIteratorType& firstElement = mrModelPart.ElementsBegin();
 
-            if ((*firstElement).Has(FIBER_ORIENTATION_ANGLE))
+            if ((*firstElement).Has(MATERIAL_ORIENTATION_ANGLE))
             {
                 // the composite orientation assignment has already been done
                 std::cout << "Composite Assignment is skipped, because Fiber Angles are already present in the first element" << std::endl;             
@@ -356,7 +356,7 @@ namespace Kratos {
 
                 // Rotate the UCS by the given angle about the user specified 
                 // normal-most axis
-                double rotationAngleRad = normalRotationDegrees / 180.0 * KRATOS_M_PI;
+                double rotationAngleRad = normalRotationDegrees / 180.0 * Globals::Pi;
                 R = setUpRotationMatrix(rotationAngleRad, ucsNormal);
                 ucsToBeProjectedOntoShell = prod(R, ucsToBeProjectedOntoShell);
 
@@ -431,7 +431,7 @@ namespace Kratos {
                     }
 
                     // set required rotation in element
-                    element.SetValue(FIBER_ORIENTATION_ANGLE, theta);
+                    element.SetValue(MATERIAL_ORIENTATION_ANGLE, theta);
 
 					if (mEchoLevel > 1)
 					{
@@ -656,7 +656,7 @@ namespace Kratos {
 				}
 
 				// set required rotation in element
-				element.SetValue(FIBER_ORIENTATION_ANGLE, theta);
+				element.SetValue(MATERIAL_ORIENTATION_ANGLE, theta);
 
 				if (mEchoLevel > 1)
 				{
@@ -673,7 +673,7 @@ namespace Kratos {
 		{
 			double tolerance = 1E-9;
 			double steps = 16.0;
-			double step_size = 2.0*KRATOS_M_PI / steps; // initially 45 degrees
+			double step_size = 2.0*Globals::Pi / steps; // initially 45 degrees
 			double central_angle = 0.0; // from current alignment
 			double min_dot_prod = 10.0;
 			double best_angle = 0.0;
@@ -724,7 +724,7 @@ namespace Kratos {
 			// Make sure we are pointing in the right direction.
 			if (inner_prod(bestFiber, GlobalFiberDirection) < 0.0)
 			{
-				best_angle += KRATOS_M_PI;
+				best_angle += Globals::Pi;
 			}
 
 			return best_angle;
