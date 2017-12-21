@@ -47,7 +47,8 @@ namespace Kratos
 
 // Matrix I/O routines
 
-template <typename CompressedMatrixType> inline bool ReadMatrixMarketMatrix(const char *FileName, CompressedMatrixType &M)
+template <typename CompressedMatrixType>
+inline bool ReadMatrixMarketMatrix(const char *FileName, CompressedMatrixType &M)
 {
     // Open MM file for reading
     FILE *f = fopen(FileName, "r");
@@ -76,7 +77,7 @@ template <typename CompressedMatrixType> inline bool ReadMatrixMarketMatrix(cons
     }
 
     // Check for supported types of MM file
-    if (!((mm_is_real(mm_code) || mm_is_integer(mm_code) || mm_is_pattern(mm_code)) && mm_is_coordinate(mm_code) && mm_is_sparse(mm_code)))
+    if (!((mm_is_real(mm_code) || mm_is_complex(mm_code) || mm_is_integer(mm_code) || mm_is_pattern(mm_code)) && mm_is_coordinate(mm_code) && mm_is_sparse(mm_code)))
     {
         printf("ReadMatrixMarketMatrix(): invalid MatrixMarket type, \"%s\".\n",  mm_typecode_to_str(mm_code));
         fclose(f);
@@ -96,7 +97,7 @@ template <typename CompressedMatrixType> inline bool ReadMatrixMarketMatrix(cons
     // Allocate temporary arrays
     int *I = new int[nnz];
     int *J = new int[nnz];
-    double *V = new double[nnz];
+    typename CompressedMatrixType::value_type *V = new typename CompressedMatrixType::value_type[nnz];
 
     // Read MM file
 
@@ -187,7 +188,7 @@ template <typename CompressedMatrixType> inline bool ReadMatrixMarketMatrix(cons
     int *filled = new int[size1];
     int *indices = new int[size1];
     int *columns = new int[nnz2];
-    double *values = new double[nnz2];
+    typename CompressedMatrixType::value_type *values = new typename CompressedMatrixType::value_type[nnz2];
 
     indices[0] = 0;
     for (int i = 1; i < size1; i++)
