@@ -225,34 +225,44 @@ namespace Kratos
             if(pTheElement->pGetProperties() == nullptr)
                 KRATOS_ERROR << "Properties not provided for element " << pTheElement->Id() << std::endl;
 
-            const PropertiesType & props = pTheElement->GetProperties();
+            const PropertiesType & r_props = pTheElement->GetProperties();
 
-            const GeometryType& geom = pTheElement->GetGeometry(); // TODO check if this can be const
+            const GeometryType& r_geom = pTheElement->GetGeometry(); // TODO check if this can be const
 
-            if(props.Has(SHELL_CROSS_SECTION)) // if the user specified a cross section ...
+            if(r_props.Has(SHELL_CROSS_SECTION)) // if the user specified a cross section ...
             {
-                const ShellCrossSection::Pointer & section = props[SHELL_CROSS_SECTION];
+                const ShellCrossSection::Pointer & section = r_props[SHELL_CROSS_SECTION];
                 if(section == nullptr)
                     KRATOS_ERROR << "SHELL_CROSS_SECTION not provided for element " << pTheElement->Id() << std::endl;
         
-                section->Check(props, geom, rCurrentProcessInfo);
+                section->Check(r_props, r_geom, rCurrentProcessInfo);
             }
-            else if (props.Has(SHELL_ORTHOTROPIC_LAYERS))
+            else if (r_props.Has(SHELL_ORTHOTROPIC_LAYERS))
             {
-                CheckSpecificProperties(pTheElement, props, IsThickShell);
+                CheckSpecificProperties(pTheElement, r_props, IsThickShell);
         
                 // perform detailed orthotropic check later in shell_cross_section
             }
             else // ... allow the automatic creation of a homogeneous section from a material and a thickness
             {
-                CheckSpecificProperties(pTheElement, props, IsThickShell);
+                CheckSpecificProperties(pTheElement, r_props, IsThickShell);
+                
+                if(!r_props.Has(THICKNESS))
+                    KRATOS_ERROR << "THICKNESS not provided for element " << pTheElement->Id() << std::endl;
+                if(r_props[THICKNESS] <= 0.0)
+                    KRATOS_ERROR << "wrong THICKNESS value provided for element " << pTheElement->Id() << std::endl;
+                    
+                if(!r_props.Has(DENSITY))
+                    KRATOS_ERROR << "DENSITY not provided for element " << pTheElement->Id() << std::endl;
+                if(r_props[DENSITY] < 0.0)
+                    KRATOS_ERROR << "wrong DENSITY value provided for element " << pTheElement->Id() << std::endl;
         
                 ShellCrossSection::Pointer dummySection = ShellCrossSection::Pointer(new ShellCrossSection());
                 dummySection->BeginStack();
-                dummySection->AddPly(props[THICKNESS], 0.0, 5, pTheElement->pGetProperties());
+                dummySection->AddPly(r_props[THICKNESS], 0.0, 5, pTheElement->pGetProperties());
                 dummySection->EndStack();
                 dummySection->SetSectionBehavior(ShellCrossSection::Thick);
-                dummySection->Check(props, geom, rCurrentProcessInfo);
+                dummySection->Check(r_props, r_geom, rCurrentProcessInfo);
             }
 
         }
@@ -264,16 +274,6 @@ namespace Kratos
             const ConstitutiveLaw::Pointer& claw = rProps[CONSTITUTIVE_LAW];
             if (claw == nullptr)
                 KRATOS_ERROR << "CONSTITUTIVE_LAW not provided for element " << pTheElement->Id() << std::endl;
-
-            if(!rProps.Has(THICKNESS))
-                KRATOS_ERROR << "THICKNESS not provided for element " << pTheElement->Id() << std::endl;
-            if(rProps[THICKNESS] <= 0.0)
-                KRATOS_ERROR << "wrong THICKNESS value provided for element " << pTheElement->Id() << std::endl;
-                
-            if(!rProps.Has(DENSITY))
-                KRATOS_ERROR << "DENSITY not provided for element " << pTheElement->Id() << std::endl;
-            if(rProps[DENSITY] < 0.0)
-                KRATOS_ERROR << "wrong DENSITY value provided for element " << pTheElement->Id() << std::endl;
             
             if(IsThickShell)
             {

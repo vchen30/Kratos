@@ -884,8 +884,8 @@ void ShellCrossSection::ParseOrthotropicPropertyMatrix(const Properties::Pointer
     }
 
     this->EndStack();
-    KRATOS_ERROR_IF_NOT(pProps->GetValue(THICKNESS) == accum_thickness) << "The sum of ply thicknesses ( " << accum_thickness 
-                << " ) is different from the element property THICKNESS ( " << pProps->GetValue(THICKNESS) << std::endl;
+    // KRATOS_ERROR_IF_NOT(pProps->GetValue(THICKNESS) == accum_thickness) << "The sum of ply thicknesses ( " << accum_thickness 
+    //             << " ) is different from the element property THICKNESS ( " << pProps->GetValue(THICKNESS) << std::endl;
 }
 
 void ShellCrossSection::GetLaminaeOrientation(Vector & rOrientation_Vector)
@@ -910,6 +910,8 @@ void ShellCrossSection::GetLaminaeStrengths(std::vector<Matrix> & rLaminae_Stren
 
     // figure out the format of material properties based on it's width
     int my_format = (rProps)[SHELL_ORTHOTROPIC_LAYERS].size2();
+    KRATOS_WATCH(my_format)
+    KRATOS_WATCH((rProps)[SHELL_ORTHOTROPIC_LAYERS])
     int offset = 0;
     if(my_format == 16)
     {
