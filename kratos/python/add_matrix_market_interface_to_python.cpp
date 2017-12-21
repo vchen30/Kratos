@@ -23,6 +23,7 @@
 #include "includes/define.h"
 #include "includes/matrix_market_interface.h"
 #include "includes/ublas_interface.h"
+#include "includes/ublas_complex_interface.h"
 #include "python/add_matrix_market_interface_to_python.h"
 
 namespace Kratos
@@ -41,6 +42,8 @@ void  AddMatrixMarketInterfaceToPython()
     def("ReadMatrixMarketVector", ReadMatrixMarketVector <Kratos::Vector>);
     def("WriteMatrixMarketVector", WriteMatrixMarketVector <Kratos::Vector>);
 
+    def("ReadComplexMatrixMarketMatrix", ReadMatrixMarketMatrix <Kratos::ComplexCompressedMatrix>);
+    def("WriteComplexMatrixMarketMatrix", WriteMatrixMarketMatrix <Kratos::ComplexCompressedMatrix>);
 }
 
 }  // namespace Python.
