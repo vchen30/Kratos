@@ -158,10 +158,9 @@ namespace Kratos
 			MatrixType& rLeftHandSideMatrix,
 			const std::vector<int> & DofList);
 
-		void ReformOriginalLeftHandSide(
-			MatrixType& rLeftHandSideMatrix,
-			const std::vector<int> & DofList,
-			const std::vector<int>& RemainingDofList);
+		std::vector<MatrixType> CalculateSchurComplements(
+			const MatrixType& rLeftHandSideMatrix,
+			const std::vector<int> & DofList);
 
 		std::vector<int> CreateRemainingDofList(
 			const std::vector<int> & DofList);
