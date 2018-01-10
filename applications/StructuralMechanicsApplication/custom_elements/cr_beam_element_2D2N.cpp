@@ -272,18 +272,6 @@ namespace Kratos
 			}
 
 			rRightHandSideVector += this->CalculateBodyForces();
-
-
-			// testing
-			std::vector<int> dofList = {2};
-			MatrixType TestMatrix = ZeroMatrix(msElementSize);
-			for (size_t i=0;i<6;++i) TestMatrix(0,i) = 11+i;
-			for (size_t i=0;i<6;++i) TestMatrix(1,i) = 21+i;
-			for (size_t i=0;i<6;++i) TestMatrix(2,i) = 31+i;
-			for (size_t i=0;i<6;++i) TestMatrix(3,i) = 41+i;
-			for (size_t i=0;i<6;++i) TestMatrix(4,i) = 51+i;
-			for (size_t i=0;i<6;++i) TestMatrix(5,i) = 61+i;
-			this->CondenseLeftHandSide(TestMatrix, dofList);
 			KRATOS_CATCH("")
 		}
 
@@ -306,6 +294,20 @@ namespace Kratos
 		{
 			KRATOS_TRY;
 			rLeftHandSideMatrix = this->CreateElementStiffnessMatrix_Total();
+
+
+			// testing static condensation
+			if (this->GetProperties().Has(DoFListVector))
+			{
+				Vector dof_list_input = this->GetProperties()[DoFListVector];
+				std::vector<int> dofList(0);
+				for (size_t i=0;i<dof_list_input.size();++i) dofList.push_back(dof_list_input[i]);
+				this->CondenseLeftHandSide(rLeftHandSideMatrix,dofList);
+			}
+			// testing static condensation
+
+
+
 			this->GlobalizeMatrix(rLeftHandSideMatrix);
 			this->K_master = rLeftHandSideMatrix;
 			KRATOS_CATCH("")
