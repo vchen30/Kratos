@@ -272,6 +272,17 @@ namespace Kratos
 
 			rRightHandSideVector += this->CalculateBodyForces();
 
+
+			// testing
+			std::vector<int> dofList = {1,5};
+			MatrixType TestMatrix = ZeroMatrix(msElementSize);
+			for (size_t i=0;i<6;++i) TestMatrix(0,i) = 11+i;
+			for (size_t i=0;i<6;++i) TestMatrix(1,i) = 21+i;
+			for (size_t i=0;i<6;++i) TestMatrix(2,i) = 31+i;
+			for (size_t i=0;i<6;++i) TestMatrix(3,i) = 41+i;
+			for (size_t i=0;i<6;++i) TestMatrix(4,i) = 51+i;
+			for (size_t i=0;i<6;++i) TestMatrix(5,i) = 61+i;
+			this->CondenseLeftHandSide(TestMatrix, dofList);
 			KRATOS_CATCH("")
 		}
 
@@ -765,7 +776,159 @@ namespace Kratos
 		A = prod(R,A);
 		KRATOS_CATCH("")
 	}
+
+	////// Condensation
+	std::vector<int> CrBeamElement2D2N::CreateRemainingDofList(
+		const std::vector<int> & DofList)
+	{
+		KRATOS_TRY;
+		const size_t dofs_condensed = DofList.size();
+
+		//fill remaining dofs
+		int current_dof = 0;
+		bool check = false;
+		std::vector<int> remaining_dofs_vec(0);
+		for (size_t i=0;i<msElementSize;++i)
+		{
+			current_dof = i;
+			check = false;
+			for (size_t j = 0;j<dofs_condensed;++j)
+			{
+				if (current_dof == DofList[j]) check = true;
+			}
+			if (check) continue;
+			else remaining_dofs_vec.push_back(current_dof);
+		}
+		return remaining_dofs_vec;
+
+		KRATOS_CATCH("");
+	}
 	
+	void CrBeamElement2D2N::FillSchurComplements(
+		MatrixType& Submatrix,const MatrixType& rLeftHandSideMatrix,
+		const std::vector<int>& VecA,const std::vector<int>& VecB,
+		const size_t& sizeA,const size_t& sizeB)
+	{
+		KRATOS_TRY;
+		size_t current_dof_a = 0;
+		size_t current_dof_b = 0;
+
+		for (size_t i=0;i<sizeA;++i)
+		{
+			current_dof_a = VecA[i];
+			for (size_t j=0;j<sizeB;++j)
+			{
+				current_dof_b = VecB[j];				
+				Submatrix(i,j) = rLeftHandSideMatrix(current_dof_a,current_dof_b);
+			}
+		}
+		KRATOS_CATCH("")
+	}
+
+	void CrBeamElement2D2N::ReformOriginalLeftHandSide(MatrixType& rLeftHandSideMatrix,
+		const std::vector<int>& DofList, const std::vector<int>& RemainingDofList)
+	{
+		KRATOS_TRY;
+		// K11(0) K12(1)	
+		// K21(2) K22(3)		K22->dofs to be cond.
+		// DofList -> List of dofs to be condensed
+		const size_t dofs_condensed = DofList.size();
+		const size_t dofs_remaining = msElementSize-dofs_condensed;
+		if (dofs_remaining!=RemainingDofList.size()) KRATOS_ERROR << "unequal remaining dof size" << std::endl;
+
+		std::vector<MatrixType> SubMatrices(4);
+		SubMatrices[0] = ZeroMatrix(dofs_remaining,dofs_remaining);
+		SubMatrices[1] = ZeroMatrix(dofs_remaining,dofs_condensed);
+		SubMatrices[2] = ZeroMatrix(dofs_condensed,dofs_remaining);
+		SubMatrices[3] = ZeroMatrix(dofs_condensed,dofs_condensed);
+
+
+/* 		// Fill K11
+		size_t sizeA = dofs_remaining;
+		size_t sizeB = dofs_remaining;
+		int current_dof_a = 0;
+		int current_dof_b = 0;
+
+		for (size_t i=0;i<sizeA;++i)
+		{
+			current_dof_a = RemainingDofList[i];
+			for (size_t j=0;j<sizeB;++j)
+			{
+				current_dof_b = RemainingDofList[j];				
+				SubMatrices[0](i,j) = rLeftHandSideMatrix(current_dof_a,current_dof_b);
+			}
+		}	
+
+		//Fill K12
+		sizeA = dofs_remaining;
+		sizeB = dofs_condensed;
+
+		for (size_t i=0;i<sizeA;++i)
+		{
+			current_dof_a = RemainingDofList[i];
+			for (size_t j=0;j<sizeB;++j)
+			{
+				current_dof_b = DofList[j];				
+				SubMatrices[1](i,j) = rLeftHandSideMatrix(current_dof_a,current_dof_b);
+			}
+		}	
+
+		//Fill K21
+		sizeA = dofs_condensed;
+		sizeB = dofs_remaining;
+
+		for (size_t i=0;i<sizeA;++i)
+		{
+			current_dof_a = DofList[i];
+			for (size_t j=0;j<sizeB;++j)
+			{
+				current_dof_b = RemainingDofList[j];				
+				SubMatrices[2](i,j) = rLeftHandSideMatrix(current_dof_a,current_dof_b);
+			}
+		}	
+
+		//Fill K21
+		sizeA = dofs_condensed;
+		sizeB = dofs_condensed;
+
+		for (size_t i=0;i<sizeA;++i)
+		{
+			current_dof_a = DofList[i];
+			for (size_t j=0;j<sizeB;++j)
+			{
+				current_dof_b = DofList[j];				
+				SubMatrices[3](i,j) = rLeftHandSideMatrix(current_dof_a,current_dof_b);
+			}
+		}	 */
+
+		this->FillSchurComplements(SubMatrices[0],rLeftHandSideMatrix,RemainingDofList,RemainingDofList,dofs_remaining,dofs_remaining);
+		this->FillSchurComplements(SubMatrices[1],rLeftHandSideMatrix,RemainingDofList,DofList,dofs_remaining,dofs_condensed);
+		this->FillSchurComplements(SubMatrices[2],rLeftHandSideMatrix,DofList,RemainingDofList,dofs_condensed,dofs_remaining);
+		this->FillSchurComplements(SubMatrices[3],rLeftHandSideMatrix,DofList,DofList,dofs_condensed,dofs_condensed);
+
+
+		KRATOS_WATCH(SubMatrices[0]);	
+		KRATOS_WATCH(SubMatrices[1]);	
+		KRATOS_WATCH(SubMatrices[2]);	
+		KRATOS_WATCH(SubMatrices[3]);	
+
+		//for (size_t i=0;i<RemainingDofList.size();++i) std::cout << RemainingDofList[i] << std::endl;
+		KRATOS_CATCH("")
+	}
+
+	void CrBeamElement2D2N::CondenseLeftHandSide(MatrixType& rLeftHandSideMatrix,
+		const std::vector<int>& DofList)
+	{
+		KRATOS_TRY;
+		std::vector<int> remaining_dofs_vec = this->CreateRemainingDofList(DofList);
+		this->ReformOriginalLeftHandSide(rLeftHandSideMatrix,DofList,remaining_dofs_vec);
+
+
+		KRATOS_CATCH("")
+	}
+
+
+
 	bounded_vector<double,CrBeamElement2D2N::msElementSize>
 	 CrBeamElement2D2N::ReturnElementForces_Local()
 	 {

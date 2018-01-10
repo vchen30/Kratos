@@ -148,6 +148,33 @@ namespace Kratos
 		bounded_vector<double,msLocalSize> CalculateInternalStresses_DeformationModes();
 		bounded_vector<double,msElementSize> ReturnElementForces_Local();
 
+
+
+	/////////////////////////////////////////////////
+	///////////// Static Condensation FUNCTIONS --->>
+	/////////////////////////////////////////////////
+
+		void CondenseLeftHandSide(
+			MatrixType& rLeftHandSideMatrix,
+			const std::vector<int> & DofList);
+
+		void ReformOriginalLeftHandSide(
+			MatrixType& rLeftHandSideMatrix,
+			const std::vector<int> & DofList,
+			const std::vector<int>& RemainingDofList);
+
+		std::vector<int> CreateRemainingDofList(
+			const std::vector<int> & DofList);
+
+		void FillSchurComplements(
+			MatrixType& Submatrix,
+			const MatrixType& rLeftHandSideMatrix,
+			const std::vector<int>& VecA,
+			const std::vector<int>& VecB,
+			const size_t& sizeA,
+			const size_t& sizeB); //maybe inline
+		
+
 	private:
 
 		bool mIsLinearElement = false;
