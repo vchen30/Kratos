@@ -275,7 +275,7 @@ namespace Kratos
 
 
 			// testing
-			std::vector<int> dofList = {5};
+			std::vector<int> dofList = {2};
 			MatrixType TestMatrix = ZeroMatrix(msElementSize);
 			for (size_t i=0;i<6;++i) TestMatrix(0,i) = 11+i;
 			for (size_t i=0;i<6;++i) TestMatrix(1,i) = 21+i;
@@ -858,22 +858,35 @@ namespace Kratos
 		const std::vector<int>& DofList)
 	{
 		KRATOS_TRY;
-		std::vector<MatrixType> SubMatrices = this->CalculateSchurComplements(rLeftHandSideMatrix,DofList);
+		const size_t dofs_condensed = DofList.size();
+		const size_t dofs_remaining = msElementSize-dofs_condensed;
 
-		for (size_t i = 0;i<4;++i) KRATOS_WATCH(SubMatrices[i]);
+		std::vector<MatrixType> SubMatrices = this->CalculateSchurComplements(rLeftHandSideMatrix,DofList);
  		//1.) inverse K22
 		MatrixType K_temp = ZeroMatrix(SubMatrices[3].size1());
 		double detK22 = 0.00;
 		MathUtils<double>::InvertMatrix(SubMatrices[3],K_temp,detK22);
 
-		//2.) K_cond = K11 - K12*inv(K22)*K21
+		//2.) K_cond = K11 - K12*inv(K22)*K21 
 		K_temp = prod(K_temp,SubMatrices[2]);
 		K_temp = prod(SubMatrices[1],K_temp);
 		K_temp = SubMatrices[0]-K_temp;
 
 		//3.) Fill rLeftHandSide to maintain same matrix size
-		
+		const std::vector<int> RemainingDofList = this->CreateRemainingDofList(DofList);
+		rLeftHandSideMatrix.clear();
 
+		size_t dofA = 0;
+		size_t dofB = 0;
+		for (size_t i =0;i<dofs_remaining;++i)
+		{
+			dofA = RemainingDofList[i];
+			for (size_t j=0;j<dofs_remaining;++j)
+			{
+				dofB = RemainingDofList[j];
+				rLeftHandSideMatrix(dofA,dofB) = K_temp(i,j);
+			}
+		}
 		KRATOS_CATCH("")
 	}
 
