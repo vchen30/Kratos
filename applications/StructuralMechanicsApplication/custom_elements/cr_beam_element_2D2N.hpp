@@ -156,22 +156,27 @@ namespace Kratos
 
 		void CondenseLeftHandSide(
 			MatrixType& rLeftHandSideMatrix,
-			const std::vector<int> & DofList);
+			const std::vector<int> & rDofList);
 
 		std::vector<MatrixType> CalculateSchurComplements(
 			const MatrixType& rLeftHandSideMatrix,
-			const std::vector<int> & DofList);
+			const std::vector<int> & rDofList);
 
 		std::vector<int> CreateRemainingDofList(
-			const std::vector<int> & DofList);
+			const std::vector<int> & rDofList);
 
 		void FillSchurComplements(
 			MatrixType& Submatrix,
 			const MatrixType& rLeftHandSideMatrix,
-			const std::vector<int>& VecA,
-			const std::vector<int>& VecB,
-			const size_t& sizeA,
-			const size_t& sizeB); //maybe inline
+			const std::vector<int>& rVecA,
+			const std::vector<int>& rVecB,
+			const size_t& rSizeA,
+			const size_t& rSizeB); //maybe inline
+
+		void ConvertingCondensation(
+			Vector& rValues,
+			const std::vector<int>& rDofList,
+			const MatrixType& rLeftHandSideMatrix);
 		
 
 	private:
