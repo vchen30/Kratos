@@ -964,7 +964,7 @@ namespace Kratos
 			{
 				if (i==rDofList[j])
 				{
-					rValues[i] = rDofList[j];
+					rValues[i] = CondensedDofsDisp[j];
 					check = true;
 					break;
 				} 
