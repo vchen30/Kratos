@@ -288,7 +288,22 @@ namespace Kratos
 			rRightHandSideVector += this->CalculateBodyForces();
 			
 
-			//testing recalcualtion of condesation
+			// testing recalcualtion of condensation
+			// TODO:: dont forget to localize disps !!!
+			Vector CurrentDisp = ZeroVector(msElementSize);
+			if (this->GetProperties().Has(DoFListVector))
+			{
+				Vector dof_list_input = this->GetProperties()[DoFListVector];
+				std::vector<int> dofList(0);
+				for (size_t i=0;i<dof_list_input.size();++i) dofList.push_back(dof_list_input[i]);
+				//this->GetValuesVector(CurrentDisp);
+				MatrixType TempK = this->CreateElementStiffnessMatrix_Total();
+				this->ConvertingCondensation(CurrentDisp,dofList,TempK);
+			}
+			else this->GetValuesVector(CurrentDisp);
+			KRATOS_WATCH(CurrentDisp);
+			// testing recalcualtion of condensation
+
 
 			KRATOS_CATCH("")
 		}
@@ -741,7 +756,9 @@ namespace Kratos
 	 CrBeamElement2D2N::CreateRotationMatrix()
 	{
 		KRATOS_TRY;
-		const double current_element_angle = this->CalculateDeformedElementAngle();
+		double current_element_angle = 0.00;
+		if (this->mIsLinearElement) current_element_angle = this->CalculateInitialElementAngle();
+		else current_element_angle = this->CalculateDeformedElementAngle();
 		const double c = std::cos(current_element_angle);
 		const double s = std::sin(current_element_angle);
 
@@ -784,6 +801,13 @@ namespace Kratos
 		KRATOS_CATCH("")
 	}
 
+	void CrBeamElement2D2N::LocalizeVector(Vector &A)
+	{
+		KRATOS_TRY;
+		bounded_matrix<double,msElementSize,msElementSize> R = this->CreateRotationMatrix();
+		A = prod(Matrix(trans(R)),A);
+		KRATOS_CATCH("")
+	}
 	////// Condensation
 	std::vector<int> CrBeamElement2D2N::CreateRemainingDofList(
 		const std::vector<int> & rDofList)
@@ -914,6 +938,7 @@ namespace Kratos
 		Vector RemainingDofsDisp = ZeroVector(dofs_remaining);
 		Vector AllDofsDisp = ZeroVector(msElementSize);
 		this->GetValuesVector(AllDofsDisp);
+		this->LocalizeVector(AllDofsDisp); // localize global displacement -> element lvl
 		for (size_t i=0;i<dofs_remaining;++i) RemainingDofsDisp[i] = AllDofsDisp[RemainingDofList[i]];
 
 		//2.) inverse K22
@@ -928,7 +953,7 @@ namespace Kratos
 		CondensedDofsDisp = prod(SubMatrices[2],RemainingDofsDisp);
 		CondensedDofsDisp = -prod(K22_inv,CondensedDofsDisp);
 
-		//4.) Fill rValues to maintin same matrix size
+		//4.) Fill rValues to maintain same matrix size
 		rValues = ZeroVector(msElementSize);
 		bool check;
 		for (int i=0;i<msElementSize;++i)
@@ -960,6 +985,7 @@ namespace Kratos
 			}
 
 		}
+		this->GlobalizeVector(rValues); // globalize local displacements -> global lvl
 		KRATOS_CATCH("")
 	}
 
