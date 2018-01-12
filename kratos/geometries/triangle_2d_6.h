@@ -662,6 +662,26 @@ public:
     }
 
 
+    /** This method checks if an axis-aliged bounding box (AABB)
+    intersects the triangle
+
+    @return bool if the quadrilateral overlaps the box
+    @param rLowPoint first corner of the box
+    @param rHighPoint second corner of the box
+    @see Triangle2D3::HasIntersection
+    */
+    bool HasIntersection( const Point& rLowPoint, const Point& rHighPoint ) override
+    {
+        Triangle2D3<PointType> triangle (this->pGetPoint( 0 ),
+                                         this->pGetPoint( 1 ),
+                                         this->pGetPoint( 2 )
+        );
+
+        if      ( triangle.HasIntersection(rLowPoint, rHighPoint) ) return true;
+        else return false;
+    }
+
+
     /**
      * Calculates the local gradients for all integration points for
      * given integration method
