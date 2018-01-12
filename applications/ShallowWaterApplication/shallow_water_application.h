@@ -207,17 +207,17 @@ namespace Kratos
         const ConservedVarElement<3> mConservedVarElement2D3N;
         const ConservedVarElement<4> mConservedVarElement2D4N;
 
-        // Pfem2 Taylor Hood elements
-        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D3N; // Unstable element!!
-        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D6N; // Stable triangle
-        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D4N; // Unstalbe element!!
-        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D9N; // Stable quadrilateral
-
         // Eulerian elements
         const EulerPrimVarElement<3> mEulerPrimVarElement2D3N;
         const EulerPrimVarElement<4> mEulerPrimVarElement2D4N;
         const EulerConsVarElement<3> mEulerConsVarElement2D3N;
         const EulerConsVarElement<4> mEulerConsVarElement2D4N;
+
+        // Pfem2 Taylor Hood elements
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D3N; // Unstable element!!
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D6N; // Stable triangle
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D4N; // Unstalbe element!!
+        const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D9N; // Stable quadrilateral
 
         // Condition
         const NothingCondition<2> mNothingCondition2D2N;

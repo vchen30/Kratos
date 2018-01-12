@@ -43,13 +43,13 @@ namespace Kratos
         mEulerPrimVarElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
         mEulerPrimVarElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
 
+        mEulerConsVarElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
+        mEulerConsVarElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
+
         mPrimitiveVarTaylorHoodElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
         mPrimitiveVarTaylorHoodElement2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6<Node<3>      >( Element::GeometryType::PointsArrayType (6) ) ) ),
         mPrimitiveVarTaylorHoodElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
         mPrimitiveVarTaylorHoodElement2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9<Node<3> >( Element::GeometryType::PointsArrayType (9) ) ) ),
-
-        mEulerConsVarElement2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
-        mEulerConsVarElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
 
         mNothingCondition2D2N( 0, Element::GeometryType::Pointer( new Line2D2< Node<3> >( Element::GeometryType::PointsArrayType (2) ) ) )
 
