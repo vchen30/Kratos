@@ -22,6 +22,10 @@
 namespace Kratos
 {
 
+KratosConstitutiveLawsApplication::KratosConstitutiveLawsApplication():
+    KratosApplication("ConstitutiveLawsApplication")
+{}
+
 void KratosConstitutiveLawsApplication::Register()
 {
     // calling base class register to register Kratos components

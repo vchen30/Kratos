@@ -71,7 +71,7 @@ public:
     ///@{
 
     /// Default constructor.
-    KratosConstitutiveLawsApplication() {}
+    KratosConstitutiveLawsApplication();
 
     /// Destructor.
     virtual ~KratosConstitutiveLawsApplication() {}
