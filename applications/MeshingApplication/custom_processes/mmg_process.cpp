@@ -122,8 +122,7 @@ void MmgProcess<TDim>::Execute()
     InitMesh();
     
     /* We print the original model part */
-    if (mEchoLevel > 0)
-    {
+    if (mEchoLevel > 0) {
         std::cout << "//---------------------------------------------------//" << std::endl;
         std::cout << "//---------------------------------------------------//" << std::endl;
         std::cout << "//---------------  BEFORE REMESHING   ---------------//" << std::endl;
@@ -147,8 +146,7 @@ void MmgProcess<TDim>::Execute()
     ExecuteRemeshing();
     
     /* We print the resulting model part */
-    if (mEchoLevel > 0)
-    {
+    if (mEchoLevel > 0) {
         std::cout << "//---------------------------------------------------//" << std::endl;
         std::cout << "//---------------------------------------------------//" << std::endl;
         std::cout << "//---------------   AFTER REMESHING   ---------------//" << std::endl;
@@ -189,22 +187,17 @@ void MmgProcess<TDim>::InitializeMeshData()
     
     // Iterate in the conditions
     ConditionsArrayType& conditions_array = mrThisModelPart.Conditions();
-    const SizeType num_conditions = conditions_array.end() - conditions_array.begin();
     
     // Iterate in the elements
     ElementsArrayType& elements_array = mrThisModelPart.Elements();
-    const SizeType num_elements = elements_array.end() - elements_array.begin();
     
     /* Manually set of the mesh */
     array_1d<SizeType, TDim - 1> num_array_elements;
     array_1d<SizeType, TDim - 1> num_array_conditions;
-    if (TDim == 2)
-    {
-        num_array_conditions[0] = num_conditions;
-        num_array_elements[0]   = num_elements;
-    }
-    else
-    {
+    if (TDim == 2) {
+        num_array_conditions[0] = conditions_array.size();
+        num_array_elements[0]   = elements_array.size();
+    } else {
         // We initialize the values
         num_array_elements[0] = 0; // Tetrahedron
         num_array_elements[1] = 0; // Prisms
@@ -214,40 +207,31 @@ void MmgProcess<TDim>::InitializeMeshData()
         
         /* Elements */
         #pragma omp parallel for
-        for(SizeType i = 0; i < num_elements; ++i) 
-        {
+        for(int i = 0; i < static_cast<int>(elements_array.size()); ++i) {
             auto it_elem = elements_array.begin() + i;
             
-            if ((it_elem->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Tetrahedra3D4) // Tetrahedron
-            {
+            if ((it_elem->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Tetrahedra3D4) { // Tetrahedron
                 #pragma omp atomic
                 num_array_elements[0] += 1;
-            }
-            else if ((it_elem->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Prism3D6) // Prisms
-            {
+            } else if ((it_elem->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Prism3D6) { // Prisms
                 #pragma omp atomic
                 num_array_elements[1] += 1;
-            }
-            else
+            } else
                 std::cout << "WARNING: YOUR GEOMETRY CONTAINS HEXAEDRON THAT CAN NOT BE REMESHED" << std::endl;
         }
         
-        if (((num_array_elements[0] + num_array_elements[1]) < num_elements) && mEchoLevel > 0)
-            std::cout << "Number of Elements: " << num_elements << " Number of Tetrahedron: " << num_array_elements[0] << " Number of Prisms: " << num_array_elements[1] << std::endl;
+        if (((num_array_elements[0] + num_array_elements[1]) < elements_array.size()) && mEchoLevel > 0)
+            std::cout << "Number of Elements: " << elements_array.size() << " Number of Tetrahedron: " << num_array_elements[0] << " Number of Prisms: " << num_array_elements[1] << std::endl;
         
         /* Conditions */
         #pragma omp parallel for
-        for(SizeType i = 0; i < num_conditions; ++i) 
-        {
+        for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i) {
             auto it_cond = conditions_array.begin() + i;
             
-            if ((it_cond->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Triangle3D3) // Triangles
-            {
+            if ((it_cond->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Triangle3D3) { // Triangles
                 #pragma omp atomic
                 num_array_conditions[0] += 1;
-            }
-            else if ((it_cond->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Quadrilateral3D4)  // Quadrilaterals
-            {
+            } else if ((it_cond->GetGeometry()).GetGeometryType() == GeometryData::KratosGeometryType::Kratos_Quadrilateral3D4) { // Quadrilaterals
                 #pragma omp atomic
                 num_array_conditions[1] += 1;
             }
@@ -264,7 +248,7 @@ void MmgProcess<TDim>::InitializeMeshData()
     
     if (mFramework == Lagrangian){ // NOTE: The code is repeated due to performance reasons
         #pragma omp parallel for firstprivate(nodes_colors)
-        for(SizeType i = 0; i < num_nodes; ++i) {
+        for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
             auto it_node = nodes_array.begin() + i;
             
             SetNodes(it_node->X0(), it_node->Y0(), it_node->Z0(), nodes_colors[it_node->Id()], i + 1);
@@ -281,7 +265,7 @@ void MmgProcess<TDim>::InitializeMeshData()
     }
     else {
         #pragma omp parallel for firstprivate(nodes_colors)
-        for(SizeType i = 0; i < num_nodes; ++i) {
+        for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
             auto it_node = nodes_array.begin() + i;
             
             SetNodes(it_node->X(), it_node->Y(), it_node->Z(), nodes_colors[it_node->Id()], i + 1);
@@ -299,14 +283,14 @@ void MmgProcess<TDim>::InitializeMeshData()
     
     /* Conditions */
     #pragma omp parallel for firstprivate(cond_colors)
-    for(SizeType i = 0; i < num_conditions; ++i)  {
+    for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i)  {
         auto it_cond = conditions_array.begin() + i;
         SetConditions(it_cond->GetGeometry(), cond_colors[it_cond->Id()], i + 1);
     }
     
     /* Elements */
     #pragma omp parallel for firstprivate(elem_colors)
-    for(SizeType i = 0; i < num_elements; ++i) {
+    for(int i = 0; i < static_cast<int>(elements_array.size()); ++i) {
         auto it_elem = elements_array.begin() + i;
         SetElements(it_elem->GetGeometry(), elem_colors[it_elem->Id()], i + 1);
     }
@@ -315,14 +299,14 @@ void MmgProcess<TDim>::InitializeMeshData()
     // First we add the main model part
     bool to_check_cond = false;
     bool to_check_elem = false;
-    if (num_conditions > 0) {
+    if (conditions_array.size() > 0) {
         const std::string type_name = (TDim == 2) ? "Condition2D2N" : "Condition3D";
         Condition const& r_clone_condition = KratosComponents<Condition>::Get(type_name);
         mpRefCondition[0] = r_clone_condition.Create(0, r_clone_condition.GetGeometry(), conditions_array.begin()->pGetProperties());
 //         mpRefCondition[0] = conditions_array.begin()->Create(0, conditions_array.begin()->GetGeometry(), conditions_array.begin()->pGetProperties());
         to_check_cond = true;
     }
-    if (num_elements > 0) {
+    if (elements_array.size() > 0) {
         mpRefElement[0] = elements_array.begin()->Create(0, elements_array.begin()->GetGeometry(), elements_array.begin()->pGetProperties());
         to_check_elem = true;
     }
@@ -374,12 +358,12 @@ void MmgProcess<TDim>::InitializeSolData()
     
     // Iterate in the nodes
     NodesArrayType& nodes_array = mrThisModelPart.Nodes();
-    const SizeType num_nodes = nodes_array.end() - nodes_array.begin();
     
-    SetSolSizeTensor(num_nodes);
+    // Set size of the solution
+    SetSolSizeTensor(nodes_array.size());
 
     #pragma omp parallel for 
-    for(SizeType i = 0; i < num_nodes; ++i) {
+    for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
         auto it_node = nodes_array.begin() + i;
         
     #ifdef KRATOS_DEBUG 
@@ -433,8 +417,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
         n_conditions[1] = mmgMesh->nquad;
     }
     array_1d<unsigned int, 2> n_elements;
-    if (TDim == 2)
-    {
+    if (TDim == 2) {
         n_elements[0] = mmgMesh->nt;
         n_elements[1] = 0;
     } else {
@@ -485,7 +468,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
     mrThisModelPart.RemoveElementsFromAllLevels(TO_ERASE);  
     
     // Create a new model part // TODO: Use a different kind of element for each submodelpart (in order to be able of remeshing more than one kind o element or condition)
-    std::unordered_map<int, std::vector<IndexType>>color_nodes, color_cond_0, color_cond_1, color_elem_0, color_elem_1;
+    std::unordered_map<int, std::vector<IndexType>> color_nodes, color_cond_0, color_cond_1, color_elem_0, color_elem_1;
     
     /* NODES */ // TODO: ADD OMP
     for (unsigned int i_node = 1; i_node <= n_nodes; ++i_node) {
