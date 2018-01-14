@@ -69,7 +69,7 @@ namespace Kratos
     typedef Element                                                 ElementType;
     typedef Condition                                             ConditionType;
     
-    // Index defintion
+    // Index definition
     typedef std::size_t                                               IndexType;
     typedef std::size_t                                                SizeType;
     
@@ -249,9 +249,9 @@ private:
     ///@name Member Variables
     ///@{
     
-    ModelPart& mrThisModelPart;      // The model part to compute           
-    Parameters mThisParameters;      // The parameters (can be used for general pourposes)
-    Node<3>::DofsContainerType  mDofs;   // Storage for the dof of the node
+    ModelPart& mrThisModelPart;                                   // The model part to compute           
+    Parameters mThisParameters;                                   // The parameters (can be used for general pourposes)
+    Node<3>::DofsContainerType  mDofs;                            // Storage for the dof of the node
     
     char* mFilename;                                              // I/O file name
     std::string mStdStringFilename;                               // I/O file name (string)
@@ -385,7 +385,7 @@ private:
     
     /**
      * It creates the new element
-     * @param CondId The id of the element
+     * @param ElemId The id of the element
      * @param PropId The submodelpart id
      * @param IsRequired MMG value (I don't know that it does)
      * @return pElement The pointer to the new condition created
@@ -400,7 +400,7 @@ private:
     
     /**
      * It creates the new element
-     * @param CondId The id of the element
+     * @param ElemId The id of the element
      * @param PropId The submodelpart id
      * @param IsRequired MMG value (I don't know that it does)
      * @return pElement The pointer to the new condition created

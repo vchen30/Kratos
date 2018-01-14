@@ -30,6 +30,7 @@
 #include "utilities/binbased_fast_point_locator.h"
 // Include the spatial containers needed for search
 #include "spatial_containers/spatial_containers.h" // kd-tree 
+#include "utilities/compute_colors_utility.h"
 #include "includes/io.h"
 #include "includes/model_part_io.h"
 
