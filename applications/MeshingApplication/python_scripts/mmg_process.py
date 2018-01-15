@@ -79,7 +79,6 @@ class MmgProcess(KratosMultiphysics.Process):
 
         self.model_part= Model[self.params["model_part_name"].GetString()]
         self.dim = self.model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
-        self.params = params
 
         self.enforce_current = self.params["enforce_current"].GetBool()
 
