@@ -310,16 +310,19 @@ double ComputeHessianSolMetricProcess<TDim, TVarType>::CalculateAnisotropicRatio
     const Interpolation rInterpolation
     )
 {
-    const double tolerance = 1.0e-12;
+    const double abs_dist = std::abs(Distance);
+    const double ratio_dist = abs_dist/BoundLayer;
+    
     double ratio = 1.0; // NOTE: Isotropic mesh
     if (AnisotropicRatio < 1.0) {                           
-        if (std::abs(Distance) <= BoundLayer) {
-            if (rInterpolation == Constant)
-                ratio = AnisotropicRatio;
-            else if (rInterpolation == Linear)
-                ratio = AnisotropicRatio + (std::abs(Distance)/BoundLayer) * (1.0 - AnisotropicRatio);
-            else if (rInterpolation == Exponential) {
-                ratio = - std::log(std::abs(Distance)/BoundLayer) * AnisotropicRatio + tolerance;
+        if (ratio_dist <= 1.0) {
+                if (rInterpolation == Constant)
+                    ratio = AnisotropicRatio;
+                else if (rInterpolation == Linear)
+                    ratio = AnisotropicRatio + ratio_dist * (1.0 - AnisotropicRatio);
+                else if (rInterpolation == Exponential) {
+                    ratio = AnisotropicRatio + std::exp(4.0 * (abs_dist - BoundLayer)) * (1.0 - AnisotropicRatio);
+            
                 if (ratio > 1.0) ratio = 1.0;
             }
         }

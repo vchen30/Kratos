@@ -232,7 +232,7 @@ private:
         const double Distance,
         const double AnisotropicRatio,
         const double BoundLayer,
-        const Interpolation& rInterpolation
+        const Interpolation rInterpolation
         );
     
     ///@}
