@@ -105,7 +105,7 @@ class TestRemeshMMG(KratosUnittest.TestCase):
         #gid_output.ExecuteFinalize()  
         
         import filecmp 
-        value = filecmp.cmp(file_path + "/mmg_eulerian_test/coarse_sphere_test_result.mesh", file_path + "/mmg_eulerian_test/coarse_sphere_test_step=0.o.mesh")
+        value = filecmp.cmp(file_path + "/mmg_eulerian_test/coarse_sphere_test_result.sol", file_path + "/mmg_eulerian_test/coarse_sphere_test_step=0.sol")
         self.assertTrue(value)
         
 if __name__ == '__main__':
