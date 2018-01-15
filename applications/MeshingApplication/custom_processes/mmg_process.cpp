@@ -181,19 +181,13 @@ void MmgProcess<TDim>::InitializeMeshData()
     /////////* MESH FILE */////////
     // Build mesh in MMG5 format //
     
-    // Iterate in the nodes
+    // Iterate over components
     NodesArrayType& nodes_array = mrThisModelPart.Nodes();
-    const SizeType num_nodes = nodes_array.end() - nodes_array.begin();
-    
-    // Iterate in the conditions
     ConditionsArrayType& conditions_array = mrThisModelPart.Conditions();
-    
-    // Iterate in the elements
     ElementsArrayType& elements_array = mrThisModelPart.Elements();
     
     /* Manually set of the mesh */
-    array_1d<SizeType, TDim - 1> num_array_elements;
-    array_1d<SizeType, TDim - 1> num_array_conditions;
+    array_1d<SizeType, TDim - 1> num_array_elements, num_array_conditions;
     if (TDim == 2) {
         num_array_conditions[0] = conditions_array.size();
         num_array_elements[0]   = elements_array.size();
@@ -238,7 +232,7 @@ void MmgProcess<TDim>::InitializeMeshData()
         }
     }
     
-    SetMeshSize(num_nodes, num_array_elements, num_array_conditions);
+    SetMeshSize(nodes_array.size(), num_array_elements, num_array_conditions);
     
     /* Nodes */
     // We copy the DOF from the first node (after we release, to avoid problem with previous conditions)
@@ -297,8 +291,7 @@ void MmgProcess<TDim>::InitializeMeshData()
     
     /* We clone the first condition and element of each type (we will assume that each sub model part has just one kind of condition, in my opinion it is quite reccomended to create more than one sub model part if you have more than one element or condition) */
     // First we add the main model part
-    bool to_check_cond = false;
-    bool to_check_elem = false;
+    bool to_check_cond = false, to_check_elem = false;
     if (conditions_array.size() > 0) {
         const std::string type_name = (TDim == 2) ? "Condition2D2N" : "Condition3D";
         Condition const& r_clone_condition = KratosComponents<Condition>::Get(type_name);
@@ -314,35 +307,32 @@ void MmgProcess<TDim>::InitializeMeshData()
     for (auto & color_list : mColors) {
         const int key = color_list.first;
         
-        if (((to_check_cond == false) && (to_check_elem == false)) == true) break;
+        if (((to_check_cond == false) && (to_check_elem == false))) break;
         
         if (key != 0) { // NOTE: key == 0 is the MainModelPart
-            bool cond_added = false;
-            bool elem_added = false;
+            bool cond_added = false, elem_added = false;
             
             for (auto sub_model_part_name : color_list.second) {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name); 
                 
                 if (to_check_cond == true) {
                     ConditionsArrayType& conditions_array_sub_model_part = r_sub_model_part.Conditions();
-                    const SizeType num_conditions_sub_model_part = conditions_array_sub_model_part.end() - conditions_array_sub_model_part.begin();
                     
-                    if (num_conditions_sub_model_part > 0) {
+                    if (conditions_array_sub_model_part.size() > 0) {
                         mpRefCondition[key] = conditions_array_sub_model_part.begin()->Create(0, conditions_array_sub_model_part.begin()->GetGeometry(), conditions_array_sub_model_part.begin()->pGetProperties());
                         cond_added = true;
                     }
                 }
                 if (to_check_elem == true) {
                     ElementsArrayType& elements_array_sub_model_part = r_sub_model_part.Elements();
-                    const SizeType num_elements_sub_model_part = elements_array_sub_model_part.end() - elements_array_sub_model_part.begin();
                     
-                    if (num_elements_sub_model_part > 0) {
+                    if (elements_array_sub_model_part.size() > 0) {
                         mpRefElement[key] = elements_array_sub_model_part.begin()->Create(0, elements_array_sub_model_part.begin()->GetGeometry(), elements_array_sub_model_part.begin()->pGetProperties());
                         elem_added = true;
                     }
                 }
                 
-                if ((cond_added && elem_added) == true) break;
+                if ((cond_added && elem_added)) break;
             }
         }
     }
