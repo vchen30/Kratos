@@ -77,9 +77,8 @@ class MmgProcess(KratosMultiphysics.Process):
         self.params = params
         self.params.RecursivelyValidateAndAssignDefaults(default_parameters)
 
-        self.Model= Model
-        self.model_part_name = self.params["model_part_name"].GetString()
-        self.dim = self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+        self.model_part= Model[self.params["model_part_name"].GetString()]
+        self.dim = self.model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
         self.params = params
 
         self.enforce_current = self.params["enforce_current"].GetBool()
@@ -92,14 +91,14 @@ class MmgProcess(KratosMultiphysics.Process):
     def ExecuteInitialize(self):
 
         # Calculate NODAL_H
-        self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.Model[self.model_part_name])
+        self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.model_part)
         self.find_nodal_h.Execute()
 
         # Calculate the parameters of automatic remeshing
         if (self.params["automatic_remesh"].GetBool() == True):
             import statistics as stat
             nodal_h_values = []
-            for node in self.Model[self.model_part_name].Nodes:
+            for node in self.model_part.Nodes:
                 nodal_h_values.append(node.GetSolutionStepValue(KratosMultiphysics.NODAL_H))
 
             # Calculate the minimum size
@@ -151,9 +150,9 @@ class MmgProcess(KratosMultiphysics.Process):
             self._CreateGradientProcess()
 
         if (self.dim == 2):
-            self.initialize_metric = MeshingApplication.MetricFastInit2D(self.Model[self.model_part_name])
+            self.initialize_metric = MeshingApplication.MetricFastInit2D(self.model_part)
         else:
-            self.initialize_metric = MeshingApplication.MetricFastInit3D(self.Model[self.model_part_name])
+            self.initialize_metric = MeshingApplication.MetricFastInit3D(self.model_part)
             
         self.initialize_metric.Execute()
 
@@ -167,9 +166,9 @@ class MmgProcess(KratosMultiphysics.Process):
         mmg_parameters.AddValue("max_number_of_searchs",self.params["max_number_of_searchs"])
         mmg_parameters.AddValue("echo_level",self.params["echo_level"])
         if (self.dim == 2):
-            self.MmgProcess = MeshingApplication.MmgProcess2D(self.Model[self.model_part_name], mmg_parameters)
+            self.MmgProcess = MeshingApplication.MmgProcess2D(self.model_part, mmg_parameters)
         else:
-            self.MmgProcess = MeshingApplication.MmgProcess3D(self.Model[self.model_part_name], mmg_parameters)
+            self.MmgProcess = MeshingApplication.MmgProcess3D(self.model_part, mmg_parameters)
 
         if (self.initial_remeshing == True):
             self._ExecuteRefinement()
@@ -179,14 +178,14 @@ class MmgProcess(KratosMultiphysics.Process):
 
     def ExecuteInitializeSolutionStep(self):
         # We need to check if the model part has been modified recently
-        if (self.Model[self.model_part_name].Is(KratosMultiphysics.MODIFIED) == True):
-            self.Model[self.model_part_name].Set(KratosMultiphysics.MODIFIED, False)
+        if (self.model_part.Is(KratosMultiphysics.MODIFIED) == True):
+            self.model_part.Set(KratosMultiphysics.MODIFIED, False)
             self.step = 0  # Reset (just to be sure)
         else:
             self.step += 1
             if self.step_frequency > 0:
                 if self.step >= self.step_frequency:
-                    if self.Model[self.model_part_name].ProcessInfo[KratosMultiphysics.STEP] >= self.initial_step:
+                    if self.model_part.ProcessInfo[KratosMultiphysics.STEP] >= self.initial_step:
                         self._ExecuteRefinement()
                         self.step = 0  # Reset
 
@@ -212,13 +211,13 @@ class MmgProcess(KratosMultiphysics.Process):
             level_set_parameters.AddValue("anisotropy_parameters",self.params["anisotropy_parameters"])
             if (self.dim == 2):
                 self.MetricsProcess.append(MeshingApplication.ComputeLevelSetSolMetricProcess2D(
-                    self.Model[self.model_part_name],
+                    self.model_part,
                     self.gradient_variable,
                     level_set_parameters))
 
             else:
                 self.MetricsProcess.append(MeshingApplication.ComputeLevelSetSolMetricProcess3D(
-                    self.Model[self.model_part_name],
+                    self.model_part,
                     self.gradient_variable,
                     level_set_parameters))
 
@@ -234,32 +233,32 @@ class MmgProcess(KratosMultiphysics.Process):
                 if (type(current_metric_variable) is KratosMultiphysics.Array1DComponentVariable):
                     if (self.dim == 2):
                         self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcessComp2D(
-                            self.Model[self.model_part_name],
+                            self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                     else:
                         self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcessComp3D(
-                            self.Model[self.model_part_name],
+                            self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                 else:
                     if (self.dim == 2):
                         self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcess2D(
-                            self.Model[self.model_part_name],
+                            self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                     else:
                         self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcess3D(
-                            self.Model[self.model_part_name],
+                            self.model_part,
                             current_metric_variable,
                             hessian_parameters))
 
     def _CreateGradientProcess(self):
         # We compute the scalar value gradient
         if (self.dim == 2):
-            self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.Model[self.model_part_name], self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
+            self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.model_part, self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
         else:
-            self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess3D(self.Model[self.model_part_name], self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
+            self.local_gradient = KratosMultiphysics.ComputeNodalGradientProcess3D(self.model_part, self.scalar_variable, self.gradient_variable, KratosMultiphysics.NODAL_AREA)
 
     def _ExecuteRefinement(self):
         if (self.strategy == "LevelSet"):
@@ -294,7 +293,7 @@ class MmgProcess(KratosMultiphysics.Process):
         self.find_nodal_h.Execute()
 
         # We need to set that the model part has been modified (later on we will act in consequence)
-        self.Model[self.model_part_name].Set(KratosMultiphysics.MODIFIED, True)
+        self.model_part.Set(KratosMultiphysics.MODIFIED, True)
 
         print("Remesh finished")
 
@@ -305,7 +304,7 @@ class MmgProcess(KratosMultiphysics.Process):
             raise Exception("{0} Error: Variable list is unreadable".format(self.__class__.__name__))
 
         # Retrieve submodelparts name from input (a string) and request the corresponding C++ object to the kernel
-        return [self.Model[self.model_part_name].GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
+        return [self.model_part.GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
 
     def __generate_variable_list_from_input(self,param):
       '''Parse a list of variables from input.'''
@@ -316,8 +315,8 @@ class MmgProcess(KratosMultiphysics.Process):
       # Retrieve variable name from input (a string) and request the corresponding C++ object to the kernel
 
       variable_list = []
-      if (len(self.Model[self.model_part_name].Nodes) > 0):
-          node = (self.Model[self.model_part_name].Nodes)[1]
+      if (len(self.model_part.Nodes) > 0):
+          node = (self.model_part.Nodes)[1]
           for i in range( 0,param.size()):
               aux_var = KratosMultiphysics.KratosGlobals.GetVariable( param[i].GetString() )
               val = node.GetSolutionStepValue(aux_var, 0)
@@ -352,15 +351,15 @@ class MmgProcess(KratosMultiphysics.Process):
         gid_io = KratosMultiphysics.GidIO("REMESHING_"+name+"_STEP_"+str(label), self.gid_mode, self.singlefile, self.deformed_mesh_flag, self.write_conditions)
         
         gid_io.InitializeMesh(label)
-        gid_io.WriteMesh(self.Model[self.model_part_name].GetMesh())
+        gid_io.WriteMesh(self.model_part.GetMesh())
         gid_io.FinalizeMesh()
-        gid_io.InitializeResults(label, self.Model[self.model_part_name].GetMesh())
+        gid_io.InitializeResults(label, self.model_part.GetMesh())
         if (self.params["framework"].GetString() ==  "Lagrangian"):
-            gid_io.WriteNodalResults(KratosMultiphysics.DISPLACEMENT, self.Model[self.model_part_name].Nodes, label, 0)
+            gid_io.WriteNodalResults(KratosMultiphysics.DISPLACEMENT, self.model_part.Nodes, label, 0)
             for var in self.internal_variable_interpolation_list:
-                gid_io.PrintOnGaussPoints(var, self.Model[self.model_part_name], label)
+                gid_io.PrintOnGaussPoints(var, self.model_part, label)
         else:
-            gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY, self.Model[self.model_part_name].Nodes, label, 0)
+            gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY, self.model_part.Nodes, label, 0)
         gid_io.FinalizeResults()
         
         #raise NameError("DEBUG")
