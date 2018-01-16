@@ -169,23 +169,27 @@ class MmgProcess(KratosMultiphysics.Process):
             self.MmgProcess = MeshingApplication.MmgProcess3D(self.model_part, mmg_parameters)
 
         if (self.initial_remeshing == True):
-            self._ExecuteRefinement()
+            if (self.model_part.Is(KratosMultiphysics.MODIFIED) == False):
+                self._ExecuteRefinement()
+            else:
+                self.model_part.Set(KratosMultiphysics.MODIFIED, False)
 
     def ExecuteBeforeSolutionLoop(self):
         self.step = 0
 
     def ExecuteInitializeSolutionStep(self):
-        # We need to check if the model part has been modified recently
-        if (self.model_part.Is(KratosMultiphysics.MODIFIED) == True):
-            self.model_part.Set(KratosMultiphysics.MODIFIED, False)
-            self.step = 0  # Reset (just to be sure)
-        else:
-            self.step += 1
-            if self.step_frequency > 0:
-                if self.step >= self.step_frequency:
-                    if self.model_part.ProcessInfo[KratosMultiphysics.STEP] >= self.initial_step:
-                        self._ExecuteRefinement()
-                        self.step = 0  # Reset
+        if (self.initial_remeshing == False):
+            # We need to check if the model part has been modified recently
+            if (self.model_part.Is(KratosMultiphysics.MODIFIED) == True):
+                self.model_part.Set(KratosMultiphysics.MODIFIED, False)
+                self.step = 0  # Reset (just to be sure)
+            else:
+                self.step += 1
+                if self.step_frequency > 0:
+                    if self.step >= self.step_frequency:
+                        if self.model_part.ProcessInfo[KratosMultiphysics.STEP] >= self.initial_step:
+                            self._ExecuteRefinement()
+                            self.step = 0  # Reset
 
     def ExecuteFinalizeSolutionStep(self):
         pass
