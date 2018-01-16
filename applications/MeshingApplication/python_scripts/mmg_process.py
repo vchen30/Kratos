@@ -164,10 +164,14 @@ class MmgProcess(KratosMultiphysics.Process):
         mmg_parameters.AddValue("max_number_of_searchs",self.settings["max_number_of_searchs"])
         mmg_parameters.AddValue("echo_level",self.settings["echo_level"])
         if (self.dim == 2):
-            self.MmgProcess = MeshingApplication.MmgProcess2D(self.model_part, mmg_parameters)
+            self.mmg_process = MeshingApplication.MmgProcess2D(self.model_part, mmg_parameters)
         else:
-            self.MmgProcess = MeshingApplication.MmgProcess3D(self.model_part, mmg_parameters)
+            self.mmg_process = MeshingApplication.MmgProcess3D(self.model_part, mmg_parameters)
 
+        # We reset the step
+        self.step = 0
+
+        # We compute initial remeshing is desired
         if (self.initial_remeshing == True):
             if (self.model_part.Is(KratosMultiphysics.MODIFIED) == False):
                 self._ExecuteRefinement()
@@ -175,7 +179,7 @@ class MmgProcess(KratosMultiphysics.Process):
                 self.model_part.Set(KratosMultiphysics.MODIFIED, False)
 
     def ExecuteBeforeSolutionLoop(self):
-        self.step = 0
+        pass
 
     def ExecuteInitializeSolutionStep(self):
         if (self.initial_remeshing == False):
@@ -204,7 +208,7 @@ class MmgProcess(KratosMultiphysics.Process):
         pass
 
     def _CreateMetricsProcess(self):
-        self.MetricsProcess = []
+        self.metric_processes = []
         if (self.strategy == "LevelSet"):
             level_set_parameters = KratosMultiphysics.Parameters("""{}""")
             level_set_parameters.AddValue("minimal_size",self.settings["minimal_size"])
@@ -212,13 +216,13 @@ class MmgProcess(KratosMultiphysics.Process):
             level_set_parameters.AddValue("anisotropy_remeshing",self.settings["anisotropy_remeshing"])
             level_set_parameters.AddValue("anisotropy_parameters",self.settings["anisotropy_parameters"])
             if (self.dim == 2):
-                self.MetricsProcess.append(MeshingApplication.ComputeLevelSetSolMetricProcess2D(
+                self.metric_processes.append(MeshingApplication.ComputeLevelSetSolMetricProcess2D(
                     self.model_part,
                     self.gradient_variable,
                     level_set_parameters))
 
             else:
-                self.MetricsProcess.append(MeshingApplication.ComputeLevelSetSolMetricProcess3D(
+                self.metric_processes.append(MeshingApplication.ComputeLevelSetSolMetricProcess3D(
                     self.model_part,
                     self.gradient_variable,
                     level_set_parameters))
@@ -234,23 +238,23 @@ class MmgProcess(KratosMultiphysics.Process):
             for current_metric_variable in self.metric_variable:
                 if (type(current_metric_variable) is KratosMultiphysics.Array1DComponentVariable):
                     if (self.dim == 2):
-                        self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcessComp2D(
+                        self.metric_processes.append(MeshingApplication.ComputeHessianSolMetricProcessComp2D(
                             self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                     else:
-                        self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcessComp3D(
+                        self.metric_processes.append(MeshingApplication.ComputeHessianSolMetricProcessComp3D(
                             self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                 else:
                     if (self.dim == 2):
-                        self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcess2D(
+                        self.metric_processes.append(MeshingApplication.ComputeHessianSolMetricProcess2D(
                             self.model_part,
                             current_metric_variable,
                             hessian_parameters))
                     else:
-                        self.MetricsProcess.append(MeshingApplication.ComputeHessianSolMetricProcess3D(
+                        self.metric_processes.append(MeshingApplication.ComputeHessianSolMetricProcess3D(
                             self.model_part,
                             current_metric_variable,
                             hessian_parameters))
@@ -275,11 +279,11 @@ class MmgProcess(KratosMultiphysics.Process):
 
         print("Calculating the metrics")
         # Execute metric computation
-        for metric_process in self.MetricsProcess:
+        for metric_process in self.metric_processes:
             metric_process.Execute()
 
         print("Remeshing")
-        self.MmgProcess.Execute()
+        self.mmg_process.Execute()
 
         if (self.settings["debug_mode"].GetBool() == True):
             self.gid_mode = KratosMultiphysics.GiDPostMode.GiD_PostBinary
