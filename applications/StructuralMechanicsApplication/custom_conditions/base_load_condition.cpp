@@ -68,9 +68,15 @@ namespace Kratos
         
         const unsigned int NumberOfNodes = GetGeometry().size();
         const unsigned int dim = GetGeometry().WorkingSpaceDimension();
-        if (rResult.size() != dim * NumberOfNodes)
+        unsigned int vectorSize = dim*NumberOfNodes;
+
+        if (this->HasRotDof() && dim == 2) vectorSize = (dim+1)*NumberOfNodes;
+        else if (this->HasRotDof() && dim == 3) vectorSize = dim*NumberOfNodes*2;
+        else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+
+        if (rResult.size() != vectorSize)
         {
-            rResult.resize(dim*NumberOfNodes,false);
+            rResult.resize(vectorSize,false);
         }
 
         const unsigned int pos = this->GetGeometry()[0].GetDofPosition(DISPLACEMENT_X);
@@ -79,19 +85,29 @@ namespace Kratos
         {
             for (unsigned int i = 0; i < NumberOfNodes; ++i)
             {
-                const unsigned int index = i * 2;
+                unsigned int index = i * 2;
+                if (this->HasRotDof()) index = i*3;
                 rResult[index    ] = GetGeometry()[i].GetDof(DISPLACEMENT_X,pos    ).EquationId();
                 rResult[index + 1] = GetGeometry()[i].GetDof(DISPLACEMENT_Y,pos + 1).EquationId();
+                if (this->HasRotDof()) rResult[index + 2] = GetGeometry()[i].GetDof(ROTATION_Z,pos + 2).EquationId();
+                
             }
         }
         else
         {
             for (unsigned int i = 0; i < NumberOfNodes; ++i)
             {
-                const unsigned int index = i * 3;
+                unsigned int index = i * 3;
+                if (this->HasRotDof()) index = i*6;
                 rResult[index    ] = GetGeometry()[i].GetDof(DISPLACEMENT_X,pos    ).EquationId();
                 rResult[index + 1] = GetGeometry()[i].GetDof(DISPLACEMENT_Y,pos + 1).EquationId();
                 rResult[index + 2] = GetGeometry()[i].GetDof(DISPLACEMENT_Z,pos + 2).EquationId();
+                if (this->HasRotDof())
+                {
+                    rResult[index + 3] = GetGeometry()[i].GetDof(ROTATION_X,pos    ).EquationId();
+                    rResult[index + 4] = GetGeometry()[i].GetDof(ROTATION_Y,pos + 1).EquationId();
+                    rResult[index + 5] = GetGeometry()[i].GetDof(ROTATION_Z,pos + 2).EquationId();                    
+                }
             }
         }
         KRATOS_CATCH("")
@@ -108,8 +124,14 @@ namespace Kratos
         
         const unsigned int NumberOfNodes = GetGeometry().size();
         const unsigned int dim =  GetGeometry().WorkingSpaceDimension();
+        unsigned int vectorSize = dim*NumberOfNodes;        
+
+        if (this->HasRotDof() && dim == 2) vectorSize = (dim+1)*NumberOfNodes;
+        else if (this->HasRotDof() && dim == 3) vectorSize = dim*NumberOfNodes*2;
+        else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+
         ElementalDofList.resize(0);
-        ElementalDofList.reserve(dim * NumberOfNodes);
+        ElementalDofList.reserve(vectorSize);
 
         if(dim == 2)
         {
@@ -117,6 +139,7 @@ namespace Kratos
             {
                 ElementalDofList.push_back( GetGeometry()[i].pGetDof(DISPLACEMENT_X));
                 ElementalDofList.push_back( GetGeometry()[i].pGetDof(DISPLACEMENT_Y));
+                if (this->HasRotDof()) ElementalDofList.push_back( GetGeometry()[i].pGetDof(ROTATION_Z));
             }
         }
         else
@@ -126,6 +149,12 @@ namespace Kratos
                 ElementalDofList.push_back( GetGeometry()[i].pGetDof(DISPLACEMENT_X));
                 ElementalDofList.push_back( GetGeometry()[i].pGetDof(DISPLACEMENT_Y));
                 ElementalDofList.push_back( GetGeometry()[i].pGetDof(DISPLACEMENT_Z));
+                if(this->HasRotDof())
+                {
+                    ElementalDofList.push_back( GetGeometry()[i].pGetDof(ROTATION_X));
+                    ElementalDofList.push_back( GetGeometry()[i].pGetDof(ROTATION_Y));
+                    ElementalDofList.push_back( GetGeometry()[i].pGetDof(ROTATION_Z));                    
+                }
             }
         }
         KRATOS_CATCH("")
@@ -142,7 +171,7 @@ namespace Kratos
         const unsigned int NumberOfNodes = GetGeometry().size();
         const unsigned int dim = GetGeometry().WorkingSpaceDimension();
         const unsigned int MatSize = NumberOfNodes * dim;
-        
+
         if (rValues.size() != MatSize)
         {
             rValues.resize(MatSize, false);
@@ -156,6 +185,7 @@ namespace Kratos
             {
                 rValues[index + k] = Displacement[k];
             }
+
         }
     }
     

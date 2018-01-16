@@ -57,6 +57,11 @@ public:
         ) const override;
 
 
+    /*     Adds work equivalent nodal moments  */
+    void CalculateAndAddWorkEquivalentNodalForcesLineLoad(
+        const Vector& ForceInput, VectorType& rRightHandSideVector) const;
+
+
 protected:
     /**
      * This functions calculates both the RHS and the LHS
@@ -79,8 +84,6 @@ protected:
 
 
 private:
-
-    static constexpr int msDimension = 2;
 
     friend class Serializer;
 
