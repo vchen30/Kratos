@@ -161,79 +161,79 @@ namespace Kratos
      }
 
     void LineLoadCondition::CalculateAndAddWorkEquivalentNodalForcesLineLoad(
-        const Vector& ForceInput, VectorType& rRightHandSideVector) const
+        const Vector& rForceInput, VectorType& rRightHandSideVector) const
     {
         KRATOS_TRY;
         const int dimension = this->GetGeometry().WorkingSpaceDimension();
         //calculate orthogonal load vector
-        const Vector& Node1 = this->mNodeA;
-        const Vector& Node2 = this->mNodeB;
+        const Vector& r_node_1 = this->mNodeA;
+        const Vector& r_node_2 = this->mNodeB;
 
-        Vector GeometricOrientation = ZeroVector(dimension);
-        GeometricOrientation[0] = Node2[0]-Node1[0];
-        GeometricOrientation[1] = Node2[1]-Node1[1];
+        Vector geometric_orientation = ZeroVector(dimension);
+        geometric_orientation[0] = r_node_2[0]-r_node_1[0];
+        geometric_orientation[1] = r_node_2[1]-r_node_1[1];
         if (dimension == 3)
         {
-            GeometricOrientation[2] = Node2[2]-Node1[2];
+            geometric_orientation[2] = r_node_2[2]-r_node_1[2];
         }
 
-        const double VectorNormA = MathUtils<double>::Norm(GeometricOrientation);
-        if (VectorNormA != 0.00) GeometricOrientation /= VectorNormA;
+        const double vector_norm_a = MathUtils<double>::Norm(geometric_orientation);
+        if (vector_norm_a != 0.00) geometric_orientation /= vector_norm_a;
 
-        Vector LineLoadDir = ZeroVector(dimension);
+        Vector line_load_dir = ZeroVector(dimension);
         for (int i = 0; i < dimension; ++i)
         {
-            LineLoadDir[i] = ForceInput[i];
+            line_load_dir[i] = rForceInput[i];
         }
 
-        const double VectorNormB = MathUtils<double>::Norm(LineLoadDir);
-        if (VectorNormB != 0.00) LineLoadDir /= VectorNormB;
+        const double vector_norm_b = MathUtils<double>::Norm(line_load_dir);
+        if (vector_norm_b != 0.00) line_load_dir /= vector_norm_b;
 
-        double cosAngle = 0.00;
+        double cos_angle = 0.00;
         for (int i = 0; i < dimension; ++i)
         {
-            cosAngle += LineLoadDir[i] * GeometricOrientation[i];
+            cos_angle += line_load_dir[i] * geometric_orientation[i];
         }
 
-        const double sinAngle = std::sqrt(1.00 - (cosAngle*cosAngle));
-        const double NormForceVectorOrth = sinAngle * VectorNormB;
+        const double sin_angle = std::sqrt(1.00 - (cos_angle*cos_angle));
+        const double norm_force_vector_orth = sin_angle * vector_norm_b;
 
 
-        Vector NodeB = ZeroVector(dimension);
-        NodeB = Node1 + LineLoadDir;
+        Vector node_b = ZeroVector(dimension);
+        node_b = r_node_1 + line_load_dir;
 
-        Vector NodeC = ZeroVector(dimension);
-        NodeC = Node1 + (GeometricOrientation*cosAngle);
+        Vector node_c = ZeroVector(dimension);
+        node_c = r_node_1 + (geometric_orientation*cos_angle);
 
-        Vector LoadOrthogonalDir = ZeroVector(dimension);
-        LoadOrthogonalDir = NodeB - NodeC;
-        const double VectorNormC = MathUtils<double>::Norm(LoadOrthogonalDir);
-        if(VectorNormC != 0.00) LoadOrthogonalDir /= VectorNormC;
+        Vector load_orthogonal_dir = ZeroVector(dimension);
+        load_orthogonal_dir = node_b - node_c;
+        const double vector_norm_c = MathUtils<double>::Norm(load_orthogonal_dir);
+        if(vector_norm_c != 0.00) load_orthogonal_dir /= vector_norm_c;
 
 
 
         // now caluclate respective work equivilent nodal moments
 
-        const double CustomMoment = (NormForceVectorOrth *
+        const double custom_moment = (norm_force_vector_orth *
             this->mL*this->mL) / 12.00;
 
-        Vector MomentNodeA = ZeroVector(dimension);
-        MomentNodeA = MathUtils<double>::CrossProduct(GeometricOrientation,
-            LoadOrthogonalDir);
-        MomentNodeA *= CustomMoment;
+        Vector moment_node_a = ZeroVector(dimension);
+        moment_node_a = MathUtils<double>::CrossProduct(geometric_orientation,
+            load_orthogonal_dir);
+        moment_node_a *= custom_moment;
 
         if(dimension == 3)
         {        
             for (int i = 0; i < dimension; ++i)
             {
-                rRightHandSideVector[(1 * dimension) + i] += MomentNodeA[i];
-                rRightHandSideVector[(3 * dimension) + i] -= MomentNodeA[i];
+                rRightHandSideVector[(1 * dimension) + i] += moment_node_a[i];
+                rRightHandSideVector[(3 * dimension) + i] -= moment_node_a[i];
             }
         }
         else if(dimension == 2)
         {
-            rRightHandSideVector[2] += MomentNodeA[2];
-            rRightHandSideVector[5] -= MomentNodeA[2];
+            rRightHandSideVector[2] += moment_node_a[2];
+            rRightHandSideVector[5] -= moment_node_a[2];
         }
         else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
 

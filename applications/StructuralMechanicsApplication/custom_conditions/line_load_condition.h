@@ -59,7 +59,7 @@ public:
 
     /*     Adds work equivalent nodal moments  */
     void CalculateAndAddWorkEquivalentNodalForcesLineLoad(
-        const Vector& ForceInput, VectorType& rRightHandSideVector) const;
+        const Vector& rForceInput, VectorType& rRightHandSideVector) const;
 
     void AddLineLoad(VectorType& rRightHandSideVector);
 
