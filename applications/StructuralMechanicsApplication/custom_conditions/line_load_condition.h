@@ -61,6 +61,11 @@ public:
     void CalculateAndAddWorkEquivalentNodalForcesLineLoad(
         const Vector& ForceInput, VectorType& rRightHandSideVector) const;
 
+    void AddLineLoad(VectorType& rRightHandSideVector);
+
+    void UpdateMemberLength();
+
+    void UpdateNodalPosition();
 
 protected:
     /**
@@ -84,6 +89,10 @@ protected:
 
 
 private:
+
+    double mL;
+    int mTimeStep = 0;
+    Vector mNodeA,mNodeB;
 
     friend class Serializer;
 

@@ -81,12 +81,10 @@ namespace Kratos
     {
         KRATOS_TRY;
         const unsigned int number_of_nodes = GetGeometry().size();
-        const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
         const unsigned int block_size = this->GetBlockSize();
-
-        // Resizing as needed the LHS
         unsigned int mat_size = number_of_nodes * block_size;
 
+        // Resizing as needed the LHS
         if ( CalculateStiffnessMatrixFlag == true ) //calculation of the matrix is required
         {
             if ( rLeftHandSideMatrix.size1() != mat_size )
@@ -96,8 +94,6 @@ namespace Kratos
 
             noalias( rLeftHandSideMatrix ) = ZeroMatrix( mat_size, mat_size ); //resetting LHS
         }
-
-
         //resizing as needed the RHS
         if ( CalculateResidualVectorFlag == true ) //calculation of the matrix is required
         {
@@ -109,6 +105,22 @@ namespace Kratos
             noalias( rRightHandSideVector ) = ZeroVector( mat_size ); //resetting RHS
         }
 
+        // update length for each time step --> reaction forces !
+        if (rCurrentProcessInfo[TIME_STEPS]!=this->mTimeStep) this->UpdateMemberLength();
+
+        // add respective loads
+        if (this->Has( LINE_LOAD )) this->AddLineLoad(rRightHandSideVector);
+       
+        KRATOS_CATCH( "" )
+    }
+   
+
+    void LineLoadCondition::AddLineLoad(VectorType& rRightHandSideVector)
+     {
+        KRATOS_TRY;
+        const unsigned int number_of_nodes = GetGeometry().size();
+        const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+        const unsigned int block_size = this->GetBlockSize();
 
         IntegrationMethod integration_method = IntegrationUtilities::GetIntegrationMethodForExactMassMatrixEvaluation(GetGeometry());
         const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints(integration_method);
@@ -119,18 +131,14 @@ namespace Kratos
 
          // Vector with a loading applied to the elemnt
         array_1d<double, 3 > line_load = ZeroVector(3);
-        if( this->Has( LINE_LOAD ) )
-        {
-            noalias(line_load) = this->GetValue( LINE_LOAD );
-        }
+        noalias(line_load) = this->GetValue( LINE_LOAD );
+
         
         for ( unsigned int point_number = 0; point_number < integration_points.size(); point_number++ )
         {                   
             const double det_j = GetGeometry().DeterminantOfJacobian( integration_points[point_number] );
 
             const double integration_weight = GetIntegrationWeight(integration_points, point_number, det_j); 
-
-            //set move_mesh_flag = false ! otherwise RHS for reaction forces uses new length in integration_weight
             
             for (unsigned int ii = 0; ii < number_of_nodes; ++ii)
             {
@@ -141,16 +149,16 @@ namespace Kratos
                     rRightHandSideVector[base + k] += integration_weight * Ncontainer( point_number, ii ) * line_load[k];
                 }
             }
-
-
         } 
 
-       if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);
+
+        rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
+
+        if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);
 
         KRATOS_WATCH(rRightHandSideVector);
-        KRATOS_CATCH( "" )
-    }
-
+        KRATOS_CATCH("");
+     }
 
     void LineLoadCondition::CalculateAndAddWorkEquivalentNodalForcesLineLoad(
         const Vector& ForceInput, VectorType& rRightHandSideVector) const
@@ -158,15 +166,15 @@ namespace Kratos
         KRATOS_TRY;
         const int dimension = this->GetGeometry().WorkingSpaceDimension();
         //calculate orthogonal load vector
+        const Vector& Node1 = this->mNodeA;
+        const Vector& Node2 = this->mNodeB;
+
         Vector GeometricOrientation = ZeroVector(dimension);
-        GeometricOrientation[0] = this->GetGeometry()[1].X() 
-            - this->GetGeometry()[0].X();
-        GeometricOrientation[1] = this->GetGeometry()[1].Y() 
-            - this->GetGeometry()[0].Y();
+        GeometricOrientation[0] = Node2[0]-Node1[0];
+        GeometricOrientation[1] = Node2[1]-Node1[1];
         if (dimension == 3)
         {
-            GeometricOrientation[2] = this->GetGeometry()[1].Z() 
-                - this->GetGeometry()[0].Z();
+            GeometricOrientation[2] = Node2[2]-Node1[2];
         }
 
         const double VectorNormA = MathUtils<double>::Norm(GeometricOrientation);
@@ -191,16 +199,11 @@ namespace Kratos
         const double NormForceVectorOrth = sinAngle * VectorNormB;
 
 
-        Vector NodeA = ZeroVector(dimension);
-        NodeA[0] = this->GetGeometry()[0].X();
-        NodeA[1] = this->GetGeometry()[0].Y();
-        if (dimension == 3)	NodeA[2] = this->GetGeometry()[0].Z();
-
         Vector NodeB = ZeroVector(dimension);
-        NodeB = NodeA + LineLoadDir;
+        NodeB = Node1 + LineLoadDir;
 
         Vector NodeC = ZeroVector(dimension);
-        NodeC = NodeA + (GeometricOrientation*cosAngle);
+        NodeC = Node1 + (GeometricOrientation*cosAngle);
 
         Vector LoadOrthogonalDir = ZeroVector(dimension);
         LoadOrthogonalDir = NodeB - NodeC;
@@ -212,7 +215,7 @@ namespace Kratos
         // now caluclate respective work equivilent nodal moments
 
         const double CustomMoment = (NormForceVectorOrth *
-            VectorNormA*VectorNormA) / 12.00;
+            this->mL*this->mL) / 12.00;
 
         Vector MomentNodeA = ZeroVector(dimension);
         MomentNodeA = MathUtils<double>::CrossProduct(GeometricOrientation,
@@ -239,5 +242,43 @@ namespace Kratos
     }
 
 
+    void LineLoadCondition::UpdateMemberLength()
+    {
+        KRATOS_TRY;
+        this->mL = this->GetGeometry().Length();
+        this->UpdateNodalPosition();
+        this->mTimeStep++;
+        KRATOS_CATCH("")
+    }
+
+    void LineLoadCondition::UpdateNodalPosition()
+    {
+        KRATOS_TRY;
+        const int dimension = this->GetGeometry().WorkingSpaceDimension();
+        const unsigned int number_of_nodes = GetGeometry().size();
+
+
+        this->mNodeA = ZeroVector(dimension);
+        this->mNodeA[0] = this->GetGeometry()[0].X();
+        this->mNodeA[1] = this->GetGeometry()[0].Y();
+        if (dimension == 3)
+        {
+            this->mNodeA[2] = this->GetGeometry()[0].Z();
+        }
+
+        this->mNodeB = ZeroVector(dimension);
+        this->mNodeB[0] = this->GetGeometry()[number_of_nodes-1].X();
+        this->mNodeB[1] = this->GetGeometry()[number_of_nodes-1].Y();
+        if (dimension == 3)
+        {
+            this->mNodeB[2] = this->GetGeometry()[number_of_nodes-1].Z();
+        }
+
+
+        KRATOS_CATCH("");
+    }
+
 
 } // Namespace Kratos
+
+

@@ -219,7 +219,8 @@ public:
     /**
      * Check if Rotational Dof existant
      */
-    bool HasRotDof(){return (GetGeometry()[0].HasDofFor(ROTATION_Z) && GetGeometry().size() == 2);};
+    //bool HasRotDof(){return (GetGeometry()[0].HasDofFor(ROTATION_Z) && GetGeometry().size() == 2);};
+    bool HasRotDof(){return (GetGeometry()[0].HasDofFor(ROTATION_Z));};
     
     unsigned int GetBlockSize()
     {
