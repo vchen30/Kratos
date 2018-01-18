@@ -72,7 +72,7 @@ namespace Kratos
 
         if (this->HasRotDof() && dim == 2) vectorSize = (dim+1)*NumberOfNodes;
         else if (this->HasRotDof() && dim == 3) vectorSize = dim*NumberOfNodes*2;
-        else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+        else if (this->HasRotDof()) KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
 
         if (rResult.size() != vectorSize)
         {
@@ -128,7 +128,8 @@ namespace Kratos
 
         if (this->HasRotDof() && dim == 2) vectorSize = (dim+1)*NumberOfNodes;
         else if (this->HasRotDof() && dim == 3) vectorSize = dim*NumberOfNodes*2;
-        else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+        else if (this->HasRotDof()) KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+         
 
         ElementalDofList.resize(0);
         ElementalDofList.reserve(vectorSize);

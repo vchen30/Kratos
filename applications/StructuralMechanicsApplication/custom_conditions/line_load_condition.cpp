@@ -227,7 +227,7 @@ namespace Kratos
             }
             else{
                 if(!Has(LOCAL_AXIS_2))
-                    KRATOS_ERROR << "the variable LOCAL_AXES_2 is needed to compute the normal";
+                    KRATOS_ERROR << "the variable LOCAL_AXIS_2 is needed to compute the normal";
                 const auto& v2 = GetValue(LOCAL_AXIS_2);
                 
                 array_1d<double,3> v1 = GetGeometry()[1].Coordinates() - GetGeometry()[0].Coordinates();
