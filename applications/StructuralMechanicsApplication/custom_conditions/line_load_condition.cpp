@@ -116,9 +116,7 @@ namespace Kratos
             rLeftHandSideMatrix,CalculateStiffnessMatrixFlag,CalculateResidualVectorFlag);
        
 
-        // divide by current length and multiply with length of the start of current time_step
-        // this must be done to assure the reaction forces to be correct
-        rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
+
 
         KRATOS_WATCH(rRightHandSideVector);
         KRATOS_CATCH( "" )
@@ -161,6 +159,10 @@ namespace Kratos
                 }
             }
         } 
+
+        // divide by current length and multiply with length of the start of current time_step
+        // this must be done to assure the reaction forces to be correct
+        rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
 
         if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);
         KRATOS_CATCH("");
@@ -221,6 +223,7 @@ namespace Kratos
             const double integration_weight = GetIntegrationWeight(integration_points, point_number, det_j); 
             
             array_1d<double, 3> normal;
+            KRATOS_WATCH((GetGeometry().WorkingSpaceDimension()));
             if(GetGeometry().WorkingSpaceDimension() == 2 )
             {
                 noalias(normal) = GetGeometry().UnitNormal( integration_points[point_number] );
@@ -325,6 +328,8 @@ namespace Kratos
         const double custom_moment = (norm_force_vector_orth *
             this->mL*this->mL) / 12.00;
 
+
+
         Vector moment_node_a = ZeroVector(dimension);
         moment_node_a = MathUtils<double>::CrossProduct(geometric_orientation,
             load_orthogonal_dir);
@@ -344,6 +349,7 @@ namespace Kratos
             rRightHandSideVector[5] -= moment_node_a[2];
         }
         else KRATOS_ERROR << "the conditions only works for 2D and 3D elements";
+
 
 
         KRATOS_CATCH("")            
