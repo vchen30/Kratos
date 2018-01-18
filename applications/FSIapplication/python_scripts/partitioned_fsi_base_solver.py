@@ -376,7 +376,7 @@ class PartitionedFSIBaseSolver:
 
     def _ComputeMeshPredictionSingleFaced(self):
 
-            print("Computing time step ",self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.TIME_STEPS]," prediction...")
+            print("Computing time step ",self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP]," prediction...")
             # Get the previous step fluid interface nodal fluxes
             keep_sign = False
             distribute_load = True
@@ -404,7 +404,7 @@ class PartitionedFSIBaseSolver:
 
     def _ComputeMeshPredictionDoubleFaced(self):
 
-            print("Computing time step ",self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.TIME_STEPS],"double faced prediction...")
+            print("Computing time step ",self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.STEP],"double faced prediction...")
             # Get the previous step fluid interface nodal fluxes from both positive and negative faces
             keep_sign = False
             distribute_load = True
