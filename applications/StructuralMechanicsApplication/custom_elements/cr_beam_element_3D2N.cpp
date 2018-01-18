@@ -427,10 +427,21 @@ namespace Kratos
 		// take user defined local axis 2 from GID input
 		if (this->Has(LOCAL_AXIS_2)) 
 		{
+			KRATOS_WATCH(this->GetValue(LOCAL_AXIS_2));
 			double VectorNorm = MathUtils<double>::Norm(DirectionVectorX);
 			if (VectorNorm > numerical_limit) DirectionVectorX /= VectorNorm;
 
 			DirectionVectorY = this->GetValue(LOCAL_AXIS_2);
+
+
+			//check if LOCAL_AXIS_2 is orth to beam axis
+			double cos_angle = 0.00;
+			for (size_t i=0;i<msDimension;++i) cos_angle += DirectionVectorX[i]*DirectionVectorY[i];
+			if (std::abs(cos_angle)>numerical_limit)
+			 KRATOS_ERROR << "LOCAL_AXIS_2 must be orthogonal to beam axis 1 :: angle is ::"
+			  << std::cos(cos_angle)*360/(2*Globals::Pi) << "° in element " << this->Id() << std::endl;
+			//continue 
+
 			DirectionVectorZ[0] = DirectionVectorX[1]*DirectionVectorY[2]-DirectionVectorX[2]*DirectionVectorY[1];
 			DirectionVectorZ[1] = DirectionVectorX[2]*DirectionVectorY[0]-DirectionVectorX[0]*DirectionVectorY[2];
 			DirectionVectorZ[2] = DirectionVectorX[0]*DirectionVectorY[1]-DirectionVectorX[1]*DirectionVectorY[0];
