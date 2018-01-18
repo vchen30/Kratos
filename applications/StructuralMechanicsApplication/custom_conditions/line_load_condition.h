@@ -99,11 +99,19 @@ private:
     void save( Serializer& rSerializer ) const override
     {
         KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, BaseLoadCondition );
+        rSerializer.save("MemberLength", this->mL);
+        rSerializer.save("TimeStep", this->mTimeStep);
+        rSerializer.save("PositionNodeA", this->mNodeA);
+        rSerializer.save("PositionNodeB", this->mNodeB);
     }
 
     void load( Serializer& rSerializer ) override
     {
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, BaseLoadCondition );
+        rSerializer.load("MemberLength", this->mL);
+        rSerializer.load("TimeStep", this->mTimeStep);
+        rSerializer.load("PositionNodeA", this->mNodeA);
+        rSerializer.load("PositionNodeB", this->mNodeB);
     }
 
 

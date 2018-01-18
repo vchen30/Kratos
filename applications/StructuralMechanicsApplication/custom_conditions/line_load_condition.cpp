@@ -106,6 +106,7 @@ namespace Kratos
         }
 
         // update length for each time step --> reaction forces !
+        // this must be done to assure the reaction forces to be correct
         if (rCurrentProcessInfo[TIME_STEPS]!=this->mTimeStep) this->UpdateMemberLength();
 
         // add respective loads
@@ -113,7 +114,10 @@ namespace Kratos
        
         KRATOS_CATCH( "" )
     }
-   
+
+    //************************************************************************************
+    //************************************************************************************
+ 
 
     void LineLoadCondition::AddLineLoad(VectorType& rRightHandSideVector)
      {
@@ -151,7 +155,8 @@ namespace Kratos
             }
         } 
 
-
+        // divide by current length and multiply with length of the start of current time_step
+        // this must be done to assure the reaction forces to be correct
         rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
 
         if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);
@@ -159,6 +164,9 @@ namespace Kratos
         KRATOS_WATCH(rRightHandSideVector);
         KRATOS_CATCH("");
      }
+
+    //************************************************************************************
+    //************************************************************************************
 
     void LineLoadCondition::CalculateAndAddWorkEquivalentNodalForcesLineLoad(
         const Vector& rForceInput, VectorType& rRightHandSideVector) const
@@ -241,6 +249,8 @@ namespace Kratos
         KRATOS_CATCH("")            
     }
 
+    //************************************************************************************
+    //************************************************************************************
 
     void LineLoadCondition::UpdateMemberLength()
     {
@@ -250,6 +260,10 @@ namespace Kratos
         this->mTimeStep++;
         KRATOS_CATCH("")
     }
+
+    //************************************************************************************
+    //************************************************************************************
+
 
     void LineLoadCondition::UpdateNodalPosition()
     {
@@ -277,6 +291,7 @@ namespace Kratos
 
         KRATOS_CATCH("");
     }
+
 
 
 } // Namespace Kratos
