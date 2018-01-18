@@ -148,6 +148,8 @@ void PrimitiveVarTaylorHoodElement::Initialize()
     mDNh_DX[0].resize(NumHNodes,Dim);
     noalias( mDNh_DX[0] ) = prod( DNh_De[0], InvJ );
 
+    // Interpolate the projected variables
+    this->InterpolateProjectedVariables();
 
     KRATOS_CATCH( "" )
 }
@@ -317,6 +319,60 @@ void PrimitiveVarTaylorHoodElement::GetProjectedValuesVector(Vector &rValues, in
         rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(PROJECTED_SCALAR1,Step);
 }
 
+
+void PrimitiveVarTaylorHoodElement::InterpolateProjectedVariables()
+{
+    KRATOS_TRY;
+
+    GeometryType &rGeom = this->GetGeometry();
+    const SizeType NumVNodes = rGeom.PointsNumber();
+    switch (NumVNodes)
+    {
+    case 3: // P1P1, both geometries have the same nodes, do nothing
+    {
+        break;
+    }
+    case 4: // Q1Q1, both geometries have the same nodes, do nothing
+    {
+        break;
+    }
+    case 6: // triangle
+    {
+        const array_1d<double,3> v0 = rGeom[0].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v1 = rGeom[1].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v2 = rGeom[2].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v3 = 0.5 * (v0 + v1);
+        const array_1d<double,3> v4 = 0.5 * (v1 + v2);
+        const array_1d<double,3> v5 = 0.5 * (v2 + v0);
+        ThreadSafeNodeWrite(rGeom[3],PROJECTED_VECTOR1, v3 );
+        ThreadSafeNodeWrite(rGeom[4],PROJECTED_VECTOR1, v4 );
+        ThreadSafeNodeWrite(rGeom[5],PROJECTED_VECTOR1, v5 );
+        break;
+    }
+    case 9: // quadrilateral
+    {
+        const array_1d<double,3> v0 = rGeom[0].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v1 = rGeom[1].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v2 = rGeom[2].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v3 = rGeom[3].FastGetSolutionStepValue(PROJECTED_VECTOR1);
+        const array_1d<double,3> v4 = 0.5 * (v0 + v1);
+        const array_1d<double,3> v5 = 0.5 * (v1 + v2);
+        const array_1d<double,3> v6 = 0.5 * (v2 + v3);
+        const array_1d<double,3> v7 = 0.5 * (v3 + v0);
+        const array_1d<double,3> v8 = 0.25 * (v0 + v1 + v2 + v3);
+        ThreadSafeNodeWrite(rGeom[4],PROJECTED_VECTOR1, v4 );
+        ThreadSafeNodeWrite(rGeom[5],PROJECTED_VECTOR1, v5 );
+        ThreadSafeNodeWrite(rGeom[6],PROJECTED_VECTOR1, v6 );
+        ThreadSafeNodeWrite(rGeom[7],PROJECTED_VECTOR1, v7 );
+        ThreadSafeNodeWrite(rGeom[8],PROJECTED_VECTOR1, v8 );
+        break;
+    }
+    default:
+        KRATOS_ERROR << "Unexpected geometry type for Primitive Variables Taylor-Hood elements" << std::endl;
+    }
+
+    KRATOS_CATCH("");
+}
 
 void PrimitiveVarTaylorHoodElement::FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo)
 {

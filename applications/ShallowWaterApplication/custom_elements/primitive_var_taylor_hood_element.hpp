@@ -269,6 +269,8 @@ protected:
         }
     }
 
+    void InterpolateProjectedVariables();
+
     ///@}
     ///@name Protected  Access
     ///@{
