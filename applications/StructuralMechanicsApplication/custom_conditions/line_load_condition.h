@@ -63,6 +63,11 @@ public:
 
     void AddLineLoad(VectorType& rRightHandSideVector);
 
+    void AddLinePressure(VectorType& rRightHandSideVector,
+         MatrixType& rLeftHandSideMatrix,
+         bool CalculateStiffnessMatrixFlag,
+         bool CalculateResidualVectorFlag);
+
     void UpdateMemberLength();
 
     void UpdateNodalPosition();
@@ -83,6 +88,22 @@ protected:
         bool CalculateStiffnessMatrixFlag,
         bool CalculateResidualVectorFlag 
         ) override;
+
+    void CalculateAndSubKp(
+        Matrix& K,
+        const Matrix& DN_De,
+        const Vector& N,
+        const double Pressure,
+        const double IntegrationWeight
+        );
+
+    void CalculateAndAddPressureForce(
+        VectorType& rRightHandSideVector,
+        const Vector& N,
+        const array_1d<double, 3>& Normal,
+        const double Pressure,
+        const double IntegrationWeight 
+        );
 
     // A protected default constructor necessary for serialization
     LineLoadCondition() {};

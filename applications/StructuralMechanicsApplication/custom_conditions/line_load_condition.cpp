@@ -111,7 +111,16 @@ namespace Kratos
 
         // add respective loads
         if (this->Has( LINE_LOAD )) this->AddLineLoad(rRightHandSideVector);
+        if (this->Has ( PRESSURE) || this->Has( NEGATIVE_FACE_PRESSURE)
+         || this->Has( POSITIVE_FACE_PRESSURE)) this->AddLinePressure(rRightHandSideVector,
+            rLeftHandSideMatrix,CalculateStiffnessMatrixFlag,CalculateResidualVectorFlag);
        
+
+        // divide by current length and multiply with length of the start of current time_step
+        // this must be done to assure the reaction forces to be correct
+        rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
+
+        KRATOS_WATCH(rRightHandSideVector);
         KRATOS_CATCH( "" )
     }
 
@@ -120,7 +129,7 @@ namespace Kratos
  
 
     void LineLoadCondition::AddLineLoad(VectorType& rRightHandSideVector)
-     {
+    {
         KRATOS_TRY;
         const unsigned int number_of_nodes = GetGeometry().size();
         const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
@@ -130,10 +139,8 @@ namespace Kratos
         const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints(integration_method);
         const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(integration_method);
 
-        
-
-
-         // Vector with a loading applied to the elemnt
+    
+        // Vector with a loading applied to the elemnt
         array_1d<double, 3 > line_load = ZeroVector(3);
         noalias(line_load) = this->GetValue( LINE_LOAD );
 
@@ -155,15 +162,108 @@ namespace Kratos
             }
         } 
 
-        // divide by current length and multiply with length of the start of current time_step
-        // this must be done to assure the reaction forces to be correct
-        rRightHandSideVector = (rRightHandSideVector/this->GetGeometry().Length())*this->mL;
-
         if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);
-
-        KRATOS_WATCH(rRightHandSideVector);
         KRATOS_CATCH("");
-     }
+    }
+
+    //************************************************************************************
+    //************************************************************************************
+
+    void LineLoadCondition::AddLinePressure(VectorType& rRightHandSideVector,
+        MatrixType& rLeftHandSideMatrix,bool CalculateStiffnessMatrixFlag,
+        bool CalculateResidualVectorFlag)
+    {
+        KRATOS_TRY;
+        const unsigned int number_of_nodes = GetGeometry().size();
+        const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+        const unsigned int block_size = this->GetBlockSize();
+
+        IntegrationMethod integration_method = IntegrationUtilities::GetIntegrationMethodForExactMassMatrixEvaluation(GetGeometry());
+        const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints(integration_method);
+        const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(integration_method);
+        const GeometryType::ShapeFunctionsGradientsType& DN_De = GetGeometry().ShapeFunctionsLocalGradients(integration_method);
+
+    
+        // Pressure applied to the element itself
+        Vector pressure_on_nodes = ZeroVector( number_of_nodes );
+        double pressure_on_condition = 0.0;
+
+        if( this->Has( PRESSURE ) )
+        {
+            pressure_on_condition += this->GetValue( PRESSURE );
+        }
+        if( this->Has( NEGATIVE_FACE_PRESSURE ) )
+        {
+            pressure_on_condition += this->GetValue( NEGATIVE_FACE_PRESSURE );
+        }
+        if( this->Has( POSITIVE_FACE_PRESSURE ) )
+        {
+            pressure_on_condition -= this->GetValue( POSITIVE_FACE_PRESSURE );
+        }
+
+        for ( unsigned int i = 0; i < pressure_on_nodes.size(); i++ )
+        {
+            pressure_on_nodes[i] = pressure_on_condition;
+            if( GetGeometry()[i].SolutionStepsDataHas( NEGATIVE_FACE_PRESSURE) )
+            {
+                pressure_on_nodes[i] += GetGeometry()[i].FastGetSolutionStepValue( NEGATIVE_FACE_PRESSURE );
+            }
+            if( GetGeometry()[i].SolutionStepsDataHas( POSITIVE_FACE_PRESSURE) )
+            {
+                pressure_on_nodes[i] -= GetGeometry()[i].FastGetSolutionStepValue( POSITIVE_FACE_PRESSURE );
+            }
+        }
+
+        for ( unsigned int point_number = 0; point_number < integration_points.size(); point_number++ )
+        {                   
+            const double det_j = GetGeometry().DeterminantOfJacobian( integration_points[point_number] );
+
+            const double integration_weight = GetIntegrationWeight(integration_points, point_number, det_j); 
+            
+            array_1d<double, 3> normal;
+            if(GetGeometry().WorkingSpaceDimension() == 2 )
+            {
+                noalias(normal) = GetGeometry().UnitNormal( integration_points[point_number] );
+            }
+            else{
+                if(!Has(LOCAL_AXIS_2))
+                    KRATOS_ERROR << "the variable LOCAL_AXES_2 is needed to compute the normal";
+                const auto& v2 = GetValue(LOCAL_AXIS_2);
+                
+                array_1d<double,3> v1 = GetGeometry()[1].Coordinates() - GetGeometry()[0].Coordinates();
+                
+                MathUtils<double>::CrossProduct(normal,v1,v2 );
+                normal /= norm_2(normal);
+            }
+            // Calculating the pressure on the gauss point
+            double gauss_pressure = 0.0;
+            for ( unsigned int ii = 0; ii < number_of_nodes; ii++ )
+            {
+                gauss_pressure += Ncontainer( point_number, ii ) * pressure_on_nodes[ii];
+            }
+
+            if ( CalculateStiffnessMatrixFlag == true )
+            {
+                if ( gauss_pressure != 0.0 )
+                {
+                    CalculateAndSubKp( rLeftHandSideMatrix, DN_De[point_number], row( Ncontainer, point_number ), gauss_pressure, integration_weight );
+                }
+            }
+            // Adding contributions to the residual vector
+            if ( CalculateResidualVectorFlag == true )
+            {
+                if ( gauss_pressure != 0.0 )
+                {
+                    CalculateAndAddPressureForce( rRightHandSideVector, row( Ncontainer, point_number ), normal, gauss_pressure, integration_weight );
+                }
+            }
+        }
+
+
+        //if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);    
+        KRATOS_CATCH("");
+    }
+
 
     //************************************************************************************
     //************************************************************************************
@@ -292,7 +392,73 @@ namespace Kratos
         KRATOS_CATCH("");
     }
 
+    //************************************************************************************
+    //************************************************************************************
 
+    void LineLoadCondition::CalculateAndSubKp(
+    Matrix& K,
+    const Matrix& DN_De,
+    const Vector& N,
+    const double Pressure,
+    const double IntegrationWeight)
+    {
+        KRATOS_TRY
+
+        Matrix Kij( 2, 2 );
+        Matrix Cross_gn( 2, 2 );
+
+        //TODO: decide what to do with thickness
+        //const double h0 = GetProperties()[THICKNESS];
+        const double h0 = 1.00;
+        Cross_gn( 0, 0 ) = 0.0;
+        Cross_gn( 0, 1 ) = -h0;
+        Cross_gn( 1, 0 ) = -h0;
+        Cross_gn( 1, 1 ) = 0.0;
+
+        for ( unsigned int i = 0; i < GetGeometry().size(); i++ )
+        {
+            const unsigned int RowIndex = i * 2;
+
+            for ( unsigned int j = 0; j < GetGeometry().size(); j++ )
+            {
+                const unsigned int ColIndex = j * 2;
+
+                const double coeff = Pressure * N[i] * DN_De( j, 0 ) * IntegrationWeight;
+                Kij = -coeff * Cross_gn;
+
+                //TAKE CARE: the load correction matrix should be SUBTRACTED not added
+                MathUtils<double>::SubtractMatrix( K, Kij, RowIndex, ColIndex );
+            }
+        }
+
+        KRATOS_CATCH( "" )
+    }
+
+    //***********************************************************************
+    //***********************************************************************
+
+    void LineLoadCondition::CalculateAndAddPressureForce(
+        Vector& rRightHandSideVector,
+        const Vector& N,
+        const array_1d<double, 3>& Normal,
+        double Pressure,
+        double IntegrationWeight 
+        )
+    {
+        const unsigned int number_of_nodes = GetGeometry().size();
+        const unsigned int block_size = this->GetBlockSize();
+
+        for ( unsigned int i = 0; i < number_of_nodes; i++ )
+        {
+            unsigned int index = block_size * i;
+            
+
+            const double coeff = Pressure * N[i] * IntegrationWeight;
+            
+            rRightHandSideVector[index   ]  -= coeff * Normal[0];
+            rRightHandSideVector[index + 1] -= coeff * Normal[1];
+        }
+    }
 
 } // Namespace Kratos
 
