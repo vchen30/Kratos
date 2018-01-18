@@ -459,12 +459,12 @@ void PrimitiveVarTaylorHoodElement::AddMassTerms(MatrixType& rLHS,
     }
 
     // Add mass contribution to LHS
-    rLHS = rDeltaTInv * mass_matrix;
+    rLHS += rDeltaTInv * mass_matrix;
 
     // Add mass contribution to RHS
     VectorType projected_values = ZeroVector(local_size);
     this->GetProjectedValuesVector(projected_values,0);
-    rRHS = rDeltaTInv * prod (mass_matrix, projected_values);
+    rRHS += rDeltaTInv * prod (mass_matrix, projected_values);
 }
 
 void PrimitiveVarTaylorHoodElement::AddWaveEquationTerms(MatrixType &rLHS,
