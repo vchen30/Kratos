@@ -235,6 +235,13 @@ protected:
                               const ShapeDerivativesType &DNh_DX,
                               const double& rWeigth);
 
+    void AddStabTerms(MatrixType &rLHS,
+                      const double& rTau_v,
+                      const double& rTau_h,
+                      const ShapeDerivativesType& rDNv_DX,
+                      const ShapeDerivativesType& rDNh_DX,
+                      const double& rWeight);
+
     void AddSourceTerms(VectorType &rRHS,
                         const array_1d<double,2>& rDepthGrad,
                         const ShapeFunctionsType &Nv,

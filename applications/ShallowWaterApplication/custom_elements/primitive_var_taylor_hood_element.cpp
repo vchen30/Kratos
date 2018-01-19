@@ -122,7 +122,6 @@ void PrimitiveVarTaylorHoodElement::Initialize()
     J = GetGeometry().Jacobian( J, mIntegrationMethod );
 
     const GeometryType::ShapeFunctionsGradientsType& DNv_De = rGeom.ShapeFunctionsLocalGradients( this->mIntegrationMethod );
-    const GeometryType::ShapeFunctionsGradientsType& DNh_De = mpHeightGeometry->ShapeFunctionsLocalGradients( GeometryData::GI_GAUSS_1 );
 
     // Temporary container for inverse of J
     Matrix InvJ;
@@ -138,15 +137,10 @@ void PrimitiveVarTaylorHoodElement::Initialize()
         noalias( mDNv_DX[g] ) = prod( DNv_De[g], InvJ );
     }
 
-    // Geting the jacobian for the height geometry
-    mpHeightGeometry->Jacobian( J, GeometryData::GI_GAUSS_1 );
-
-    // Calculate inverse of the jacobian and its determinant
-    MathUtils<double>::InvertMatrix( J[0], InvJ, mDetJ[0] );
-
-    // Calculate the height shape function derivatives in global coordinates
-    mDNh_DX[0].resize(NumHNodes,Dim);
-    noalias( mDNh_DX[0] ) = prod( DNh_De[0], InvJ );
+    GeometryType::ShapeFunctionsGradientsType DNh_De;
+    DNh_De = mpHeightGeometry->ShapeFunctionsIntegrationPointsGradients(DNh_De, GeometryData::GI_GAUSS_1 );
+    mDNh_DX[0].resize(NumHNodes, Dim);
+    noalias( mDNh_DX[0] ) = DNh_De[0];
 
     // Interpolate the projected variables
     this->InterpolateProjectedVariables();
@@ -185,6 +179,17 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
 
     rRightHandSideVector = ZeroVector(LocalSize);
 
+    // Evaluate variables in the Height geometry: linear interpolation
+    double Height = 0;
+    double Depth = 0;
+    for (SizeType i = 0; i < NumHNodes; i++) // so, nGauss = nNodes
+    {
+        Height += mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT);
+        Depth  += mpHeightGeometry->operator[](i).FastGetSolutionStepValue(BATHYMETRY);
+    }
+    Height /= static_cast<double>(NumHNodes);
+    Depth /= static_cast<double>(NumHNodes);
+
     // Loop on integration points
     for (SizeType g = 0; g < NumGauss; g++)
     {
@@ -194,12 +199,12 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
         const ShapeDerivativesType& DNh_DX = mDNh_DX[0];
         const double GaussWeight = mDetJ[g] * IntegrationPoints[g].Weight();
 
-        double Height;
+        //~ double Height;
         array_1d<double,3> depth_grad(3,0.0);
         array_1d<double,3> Velocity(3,0.0);
 
         // Interpolation using height is linear
-        this->EvaluateInPoint(Height,HEIGHT,Nh,*mpHeightGeometry);
+        //~ this->EvaluateInPoint(Height,HEIGHT,Nh,*mpHeightGeometry);
         this->EvaluateGradient(depth_grad,BATHYMETRY,DNh_DX,*mpHeightGeometry);
         this->EvaluateInPoint(Velocity,VELOCITY,Nv,this->GetGeometry());
 
@@ -555,6 +560,47 @@ void PrimitiveVarTaylorHoodElement::AddWaveEquationTerms(MatrixType &rLHS,
         // Update matrix indices
         FirstRow += Dim;
         Col = NumVNodes * Dim;
+    }
+}
+
+void PrimitiveVarTaylorHoodElement::AddStabTerms(MatrixType &rLHS,
+                                                 const double& rTau_v,
+                                                 const double& rTau_h,
+                                                 const ShapeDerivativesType& rDNv_DX,
+                                                 const ShapeDerivativesType& rDNh_DX,
+                                                 const double& rWeight)
+{
+    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
+    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
+    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
+    
+    SizeType FirstRow = 0;
+    SizeType FirstCol = 0;
+
+    // Add diffusion terms for velocity unknown
+    for (unsigned int i = 0; i < NumVNodes; ++i)
+    {
+        for (unsigned int j = 0; j < NumVNodes; ++j)
+        {
+            rLHS(FirstRow  ,FirstCol  ) += rWeight * rTau_v * rDNv_DX(i,0) * rDNv_DX(j,0);
+            rLHS(FirstRow  ,FirstCol+1) += rWeight * rTau_v * rDNv_DX(i,0) * rDNv_DX(j,1);
+            rLHS(FirstRow+1,FirstCol  ) += rWeight * rTau_v * rDNv_DX(i,1) * rDNv_DX(j,0);
+            rLHS(FirstRow+1,FirstCol+1) += rWeight * rTau_v * rDNv_DX(i,1) * rDNv_DX(j,1);
+            FirstCol += Dim;
+        }
+        FirstCol = 0;
+        FirstRow += Dim;
+    }
+
+    // Add diffusion terms for height unknown
+    FirstRow = NumVNodes * Dim;
+    FirstCol = NumVNodes * Dim;
+    for (unsigned int i = 0; i < NumHNodes; ++i)
+    {
+        for (unsigned int j = 0; j < NumHNodes; ++j)
+        {
+            rLHS(FirstRow+i,FirstCol+j) += rWeight * rTau_h * ( rDNh_DX(i,0) * rDNh_DX(j,0) + rDNh_DX(i,1) * rDNh_DX(j,1) );
+        }
     }
 }
 
