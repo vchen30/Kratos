@@ -43,6 +43,7 @@
 #include "custom_elements/euler_prim_var_element.hpp"
 #include "custom_elements/euler_cons_var_element.hpp"
 #include "custom_elements/primitive_var_taylor_hood_element.hpp"
+#include "custom_elements/test_taylor_hood.hpp"
 #include "custom_conditions/nothing_condition.hpp"
 
 
@@ -218,6 +219,11 @@ namespace Kratos
         const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D6N; // Stable triangle
         const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D4N; // Unstalbe element!!
         const PrimitiveVarTaylorHoodElement mPrimitiveVarTaylorHoodElement2D9N; // Stable quadrilateral
+        // Testing eulerian Taylor Hood elements
+        const TestTaylorHood mTestTaylorHood2D3N; // Unstable element!!
+        const TestTaylorHood mTestTaylorHood2D6N; // Stable triangle
+        const TestTaylorHood mTestTaylorHood2D4N; // Unstalbe element!!
+        const TestTaylorHood mTestTaylorHood2D9N; // Stable quadrilateral
 
         // Condition
         const NothingCondition<2> mNothingCondition2D2N;

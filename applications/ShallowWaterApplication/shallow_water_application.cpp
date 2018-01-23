@@ -51,6 +51,11 @@ namespace Kratos
         mPrimitiveVarTaylorHoodElement2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
         mPrimitiveVarTaylorHoodElement2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9<Node<3> >( Element::GeometryType::PointsArrayType (9) ) ) ),
 
+        mTestTaylorHood2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3<Node<3>      >( Element::GeometryType::PointsArrayType (3) ) ) ),
+        mTestTaylorHood2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6<Node<3>      >( Element::GeometryType::PointsArrayType (6) ) ) ),
+        mTestTaylorHood2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4<Node<3> >( Element::GeometryType::PointsArrayType (4) ) ) ),
+        mTestTaylorHood2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9<Node<3> >( Element::GeometryType::PointsArrayType (9) ) ) ),
+
         mNothingCondition2D2N( 0, Element::GeometryType::Pointer( new Line2D2< Node<3> >( Element::GeometryType::PointsArrayType (2) ) ) )
 
     {}
@@ -92,16 +97,21 @@ namespace Kratos
         KRATOS_REGISTER_ELEMENT("ConservedVarElement2D3N", mConservedVarElement2D3N)   // mesh stage element
         KRATOS_REGISTER_ELEMENT("ConservedVarElement2D4N", mConservedVarElement2D4N)   // mesh stage element
 
-        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D3N", mPrimitiveVarTaylorHoodElement2D3N)   // Pfem2 Taylor Hood element
-        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D6N", mPrimitiveVarTaylorHoodElement2D6N)   // Pfem2 Taylor Hood element
-        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D4N", mPrimitiveVarTaylorHoodElement2D4N)   // Pfem2 Taylor Hood element
-        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D9N", mPrimitiveVarTaylorHoodElement2D9N)   // Pfem2 Taylor Hood element
-
         KRATOS_REGISTER_ELEMENT("EulerPrimVarElement2D3N", mEulerPrimVarElement2D3N)   // eulerian element
         KRATOS_REGISTER_ELEMENT("EulerPrimVarElement2D4N", mEulerPrimVarElement2D4N)   // eulerian element
 
         KRATOS_REGISTER_ELEMENT("EulerConsVarElement2D3N", mEulerConsVarElement2D3N)   // eulerian element
         KRATOS_REGISTER_ELEMENT("EulerConsVarElement2D4N", mEulerConsVarElement2D4N)   // eulerian element
+
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D3N", mPrimitiveVarTaylorHoodElement2D3N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D6N", mPrimitiveVarTaylorHoodElement2D6N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D4N", mPrimitiveVarTaylorHoodElement2D4N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("PrimitiveVarTaylorHoodElement2D9N", mPrimitiveVarTaylorHoodElement2D9N)   // Pfem2 Taylor Hood element
+
+        KRATOS_REGISTER_ELEMENT("TestTaylorHood2D3N", mTestTaylorHood2D3N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("TestTaylorHood2D6N", mTestTaylorHood2D6N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("TestTaylorHood2D4N", mTestTaylorHood2D4N)   // Pfem2 Taylor Hood element
+        KRATOS_REGISTER_ELEMENT("TestTaylorHood2D9N", mTestTaylorHood2D9N)   // Pfem2 Taylor Hood element
 
         KRATOS_REGISTER_CONDITION("NothingCondition2D2N", mNothingCondition2D2N)
     }
