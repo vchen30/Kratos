@@ -184,10 +184,10 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
     double Depth = 0;
     for (SizeType i = 0; i < NumHNodes; i++) // so, nGauss = nNodes
     {
-        Height += mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT);
+        //~ Height += mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT);
         Depth  += mpHeightGeometry->operator[](i).FastGetSolutionStepValue(BATHYMETRY);
     }
-    Height /= static_cast<double>(NumHNodes);
+    //~ Height /= static_cast<double>(NumHNodes);
     Depth /= static_cast<double>(NumHNodes);
 
     // Loop on integration points
@@ -204,7 +204,7 @@ void PrimitiveVarTaylorHoodElement::CalculateLocalSystem(MatrixType &rLeftHandSi
         array_1d<double,3> Velocity(3,0.0);
 
         // Interpolation using height is linear
-        //~ this->EvaluateInPoint(Height,HEIGHT,Nh,*mpHeightGeometry);
+        this->EvaluateInPoint(Height,HEIGHT,Nh,*mpHeightGeometry);
         this->EvaluateGradient(depth_grad,BATHYMETRY,DNh_DX,*mpHeightGeometry);
         this->EvaluateInPoint(Velocity,VELOCITY,Nv,this->GetGeometry());
 
@@ -605,9 +605,9 @@ void PrimitiveVarTaylorHoodElement::AddStabTerms(MatrixType &rLHS,
 }
 
 void PrimitiveVarTaylorHoodElement::AddSourceTerms(VectorType &rRHS,
-                                         const array_1d<double,2>& rDepthGrad,
-                                         const ShapeFunctionsType &Nv,
-                                         const double& rWeight)
+                                                   const array_1d<double,2>& rDepthGrad,
+                                                   const ShapeFunctionsType &Nv,
+                                                   const double& rWeight)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
     const SizeType NumVNodes = this->GetGeometry().PointsNumber();

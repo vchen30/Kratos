@@ -146,9 +146,6 @@ public:
     /// Fill given vector with the unknowns
     virtual void GetValuesVector(Vector& rValues, int Step = 0);
 
-    /// Fill given vector with the projected unknowns
-    virtual void GetProjectedValuesVector(Vector& rValues, int Step = 0);
-
     /// Update the water hwight value for the velocity-only nodes, so it is properly printed in the postprocess.
     virtual void FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo);
 
@@ -235,6 +232,14 @@ protected:
                               const ShapeDerivativesType &DNh_DX,
                               const double& rWeigth);
 
+    void AddConvectiveTerms(MatrixType &rLHS,
+                            const array_1d<double,3>& rConvVel,
+                            const ShapeFunctionsType &Nv,
+                            const ShapeFunctionsType &Nh,
+                            const ShapeDerivativesType &DNv_DX,
+                            const ShapeDerivativesType &DNh_DX,
+                            const double& rWeigth);
+
     void AddStabTerms(MatrixType &rLHS,
                       const double& rTau_v,
                       const double& rTau_h,
@@ -276,7 +281,7 @@ protected:
         }
     }
 
-    void InterpolateProjectedVariables();
+    //~ void ComputeStabilizationParameters(double& rTauv, double& rTauh, const double& rHeight, const double& rGravity, ProcessInfo& rCurrentProcessInfo);
 
     ///@}
     ///@name Protected  Access

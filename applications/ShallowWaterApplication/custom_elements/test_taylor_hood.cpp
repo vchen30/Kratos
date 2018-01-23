@@ -25,6 +25,7 @@ Element::Pointer TestTaylorHood::Create(IndexType NewId, NodesArrayType const& T
     return Element::Pointer(new TestTaylorHood(NewId, this->GetGeometry().Create(ThisNodes), pProperties) );
 }
 
+
 int TestTaylorHood::Check(const ProcessInfo &rCurrentProcessInfo)
 {
     KRATOS_TRY
@@ -36,8 +37,6 @@ int TestTaylorHood::Check(const ProcessInfo &rCurrentProcessInfo)
     // Check that all required variables have been registered
     KRATOS_CHECK_VARIABLE_KEY(VELOCITY)
     KRATOS_CHECK_VARIABLE_KEY(HEIGHT)
-    KRATOS_CHECK_VARIABLE_KEY(PROJECTED_VECTOR1)
-    KRATOS_CHECK_VARIABLE_KEY(PROJECTED_SCALAR1)
     KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME)
     KRATOS_CHECK_VARIABLE_KEY(BATHYMETRY)
     KRATOS_CHECK_VARIABLE_KEY(GRAVITY)
@@ -50,8 +49,6 @@ int TestTaylorHood::Check(const ProcessInfo &rCurrentProcessInfo)
         Node<3> &rNode = this->GetGeometry()[i];
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, rNode)
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(HEIGHT, rNode)
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(PROJECTED_VECTOR1, rNode)
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(PROJECTED_SCALAR1, rNode)
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(BATHYMETRY, rNode)
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RAIN, rNode)
     }
@@ -70,6 +67,7 @@ int TestTaylorHood::Check(const ProcessInfo &rCurrentProcessInfo)
 
     KRATOS_CATCH("")
 }
+
 
 void TestTaylorHood::Initialize()
 {
@@ -142,11 +140,9 @@ void TestTaylorHood::Initialize()
     mDNh_DX[0].resize(NumHNodes, Dim);
     noalias( mDNh_DX[0] ) = DNh_De[0];
 
-    // Interpolate the projected variables
-    this->InterpolateProjectedVariables();
-
     KRATOS_CATCH( "" )
 }
+
 
 void TestTaylorHood::CalculateLocalSystem(MatrixType &rLeftHandSideMatrix, VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo)
 {
@@ -190,6 +186,15 @@ void TestTaylorHood::CalculateLocalSystem(MatrixType &rLeftHandSideMatrix, Vecto
     Height /= static_cast<double>(NumHNodes);
     Depth /= static_cast<double>(NumHNodes);
 
+    double tau_v;
+    double tau_h;
+    double Ctau = rCurrentProcessInfo[DYNAMIC_TAU];
+    double abs_height = std::abs(Height);
+    double elem_size = mpHeightGeometry->Length();
+    tau_v = Ctau * elem_size * std::sqrt(mGravity/abs_height);
+    tau_h = Ctau * elem_size * std::sqrt(abs_height/mGravity);
+    //~ ComputeStabilizationParameters(tau_v,tau_h,Height,mGravity,rCurrentProcessInfo);
+
     // Loop on integration points
     for (SizeType g = 0; g < NumGauss; g++)
     {
@@ -214,6 +219,11 @@ void TestTaylorHood::CalculateLocalSystem(MatrixType &rLeftHandSideMatrix, Vecto
 
         // Add mixed wave equation terms in mass and momentum equations
         this->AddWaveEquationTerms(rLeftHandSideMatrix,Height,Nv,Nh,DNv_DX,DNh_DX,GaussWeight);
+
+        // Add convective terms
+        this->AddConvectiveTerms(rLeftHandSideMatrix,Velocity,Nv,Nh,DNv_DX,DNh_DX,GaussWeight);
+
+        this->AddStabTerms(rLeftHandSideMatrix,tau_v,tau_h,DNv_DX,DNh_DX,GaussWeight);
 
         // Add velocity-height terms
         this->AddSourceTerms(rRightHandSideVector,depth_grad,Nh,GaussWeight);
@@ -276,6 +286,7 @@ void TestTaylorHood::EquationIdVector(Element::EquationIdVectorType &rResult, Pr
         rResult[Index++] = mpHeightGeometry->operator[](i).GetDof(HEIGHT).EquationId();
 }
 
+
 void TestTaylorHood::GetValuesVector(Vector &rValues, int Step)
 {
     const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
@@ -300,84 +311,6 @@ void TestTaylorHood::GetValuesVector(Vector &rValues, int Step)
         rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(HEIGHT,Step);
 }
 
-void TestTaylorHood::GetProjectedValuesVector(Vector &rValues, int Step)
-{
-    const SizeType Dim = this->GetGeometry().WorkingSpaceDimension();
-    const SizeType NumVNodes = this->GetGeometry().PointsNumber();
-    const SizeType NumHNodes = mpHeightGeometry->PointsNumber();
-
-    const SizeType LocalSize = NumVNodes * Dim + NumHNodes;
-
-    if (rValues.size() != LocalSize)
-        rValues.resize(LocalSize);
-
-    SizeType Index = 0;
-
-    for (SizeType i = 0; i < NumVNodes; i++)
-    {
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_X,Step);
-        rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_Y,Step);
-        if(Dim > 2) rValues[Index++] = GetGeometry()[i].FastGetSolutionStepValue(PROJECTED_VECTOR1_Z,Step);
-    }
-
-    for (SizeType i = 0; i < NumHNodes; i++)
-        rValues[Index++] = mpHeightGeometry->operator[](i).FastGetSolutionStepValue(PROJECTED_SCALAR1,Step);
-}
-
-
-void TestTaylorHood::InterpolateProjectedVariables()
-{
-    KRATOS_TRY;
-
-    GeometryType &rGeom = this->GetGeometry();
-    const SizeType NumVNodes = rGeom.PointsNumber();
-    switch (NumVNodes)
-    {
-    case 3: // P1P1, both geometries have the same nodes, do nothing
-    {
-        break;
-    }
-    case 4: // Q1Q1, both geometries have the same nodes, do nothing
-    {
-        break;
-    }
-    case 6: // triangle
-    {
-        const array_1d<double,3> v0 = rGeom[0].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v1 = rGeom[1].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v2 = rGeom[2].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v3 = 0.5 * (v0 + v1);
-        const array_1d<double,3> v4 = 0.5 * (v1 + v2);
-        const array_1d<double,3> v5 = 0.5 * (v2 + v0);
-        ThreadSafeNodeWrite(rGeom[3],PROJECTED_VECTOR1, v3 );
-        ThreadSafeNodeWrite(rGeom[4],PROJECTED_VECTOR1, v4 );
-        ThreadSafeNodeWrite(rGeom[5],PROJECTED_VECTOR1, v5 );
-        break;
-    }
-    case 9: // quadrilateral
-    {
-        const array_1d<double,3> v0 = rGeom[0].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v1 = rGeom[1].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v2 = rGeom[2].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v3 = rGeom[3].FastGetSolutionStepValue(PROJECTED_VECTOR1);
-        const array_1d<double,3> v4 = 0.5 * (v0 + v1);
-        const array_1d<double,3> v5 = 0.5 * (v1 + v2);
-        const array_1d<double,3> v6 = 0.5 * (v2 + v3);
-        const array_1d<double,3> v7 = 0.5 * (v3 + v0);
-        const array_1d<double,3> v8 = 0.25 * (v0 + v1 + v2 + v3);
-        ThreadSafeNodeWrite(rGeom[4],PROJECTED_VECTOR1, v4 );
-        ThreadSafeNodeWrite(rGeom[5],PROJECTED_VECTOR1, v5 );
-        ThreadSafeNodeWrite(rGeom[6],PROJECTED_VECTOR1, v6 );
-        ThreadSafeNodeWrite(rGeom[7],PROJECTED_VECTOR1, v7 );
-        ThreadSafeNodeWrite(rGeom[8],PROJECTED_VECTOR1, v8 );
-        break;
-    }
-    default:
-        KRATOS_ERROR << "Unexpected geometry type for Primitive Variables Taylor-Hood elements" << std::endl;
-    }
-
-    KRATOS_CATCH("");
-}
 
 void TestTaylorHood::FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo)
 {
@@ -475,6 +408,20 @@ void TestTaylorHood::FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo)
     KRATOS_CATCH("");
 }
 
+
+//~ void TestTaylorHood::ComputeStabilizationParameters(double& rTauv, double& rTauh, const double rHeight, const double rGravity, ProcessInfo& rCurrentProcessInfo)
+//~ {
+    //~ // Initialize outputs
+    //~ rTauv = 0;
+    //~ rTauh = 0;
+    //~ double Ctau = rCurrentProcessInfo[DYNAMIC_TAU];
+    //~ double abs_height = std::abs(rHeight);
+    //~ double elem_size = mpHeightGeometry->Length();
+    //~ rTauv = Ctau * elem_size * std::sqrt(rGravity/abs_height);
+    //~ rTauh = Ctau * elem_size * std::sqrt(abs_height/rGravity);
+//~ }
+
+
 void TestTaylorHood::AddMassTerms(MatrixType& rLHS,
                                   VectorType& rRHS,
                                   const double& rDeltaTInv,
@@ -523,9 +470,9 @@ void TestTaylorHood::AddMassTerms(MatrixType& rLHS,
     rLHS += rDeltaTInv * mass_matrix;
 
     // Add mass contribution to RHS
-    VectorType projected_values = ZeroVector(local_size);
-    this->GetProjectedValuesVector(projected_values,0);
-    rRHS += rDeltaTInv * prod (mass_matrix, projected_values);
+    VectorType old_values = ZeroVector(local_size);
+    this->GetValuesVector(old_values,1);
+    rRHS += rDeltaTInv * prod (mass_matrix, old_values);
 }
 
 void TestTaylorHood::AddWaveEquationTerms(MatrixType &rLHS,
@@ -564,7 +511,7 @@ void TestTaylorHood::AddWaveEquationTerms(MatrixType &rLHS,
 }
 
 void TestTaylorHood::AddConvectiveTerms(MatrixType &rLHS,
-                                        const array_1d<double>& rConvVel,
+                                        const array_1d<double,3>& rConvVel,
                                         const ShapeFunctionsType& rNv,
                                         const ShapeFunctionsType& rNh,
                                         const ShapeDerivativesType& rDNv_DX,
@@ -603,11 +550,14 @@ void TestTaylorHood::AddConvectiveTerms(MatrixType &rLHS,
     {
         for (unsigned int j = 0; j < NumHNodes; j++)
         {
-            // TODO: ADD HERE THE CONVECTION
-            FirstCol += Dim;
+            term_ij = rWeight * rNh[i] * ( rConvVel[0] * rDNh_DX(j,0) + rConvVel[1] * rDNh_DX(j,1) );
+            
+            rLHS(FirstRow,FirstCol) += term_ij;
+            
+            FirstCol += 1;
         }
         FirstCol = 0;
-        FirstRow += Dim;
+        FirstRow += 1;
     }
 }
 
