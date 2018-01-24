@@ -193,7 +193,6 @@ void TestTaylorHood::CalculateLocalSystem(MatrixType &rLeftHandSideMatrix, Vecto
     double elem_size = mpHeightGeometry->Length();
     tau_v = Ctau * elem_size * std::sqrt(mGravity/abs_height);
     tau_h = Ctau * elem_size * std::sqrt(abs_height/mGravity);
-    //~ ComputeStabilizationParameters(tau_v,tau_h,Height,mGravity,rCurrentProcessInfo);
 
     // Loop on integration points
     for (SizeType g = 0; g < NumGauss; g++)
@@ -407,19 +406,6 @@ void TestTaylorHood::FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo)
 
     KRATOS_CATCH("");
 }
-
-
-//~ void TestTaylorHood::ComputeStabilizationParameters(double& rTauv, double& rTauh, const double rHeight, const double rGravity, ProcessInfo& rCurrentProcessInfo)
-//~ {
-    //~ // Initialize outputs
-    //~ rTauv = 0;
-    //~ rTauh = 0;
-    //~ double Ctau = rCurrentProcessInfo[DYNAMIC_TAU];
-    //~ double abs_height = std::abs(rHeight);
-    //~ double elem_size = mpHeightGeometry->Length();
-    //~ rTauv = Ctau * elem_size * std::sqrt(rGravity/abs_height);
-    //~ rTauh = Ctau * elem_size * std::sqrt(abs_height/rGravity);
-//~ }
 
 
 void TestTaylorHood::AddMassTerms(MatrixType& rLHS,
