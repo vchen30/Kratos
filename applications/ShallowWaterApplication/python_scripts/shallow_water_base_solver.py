@@ -1,8 +1,10 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 # importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.ShallowWaterApplication as KratosShallow
+import KratosMultiphysics.ShallowWaterApplication as KratosShallow       # Importing our application
 import KratosMultiphysics.FluidDynamicsApplication as KratosFluid
+import KratosMultiphysics.PFEM2Application as KratosPfem2
+import KratosMultiphysics.MeshingApplication as KratosMeshing
 
 # Check that KratosMultiphysics was imported in the main script
 KratosMultiphysics.CheckForPreviousImport()
@@ -59,6 +61,21 @@ class ShallowWaterBaseSolver(object):
         import linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
+        #neighbour search
+        number_of_avg_elems = 10
+        number_of_avg_nodes = 10
+        self.neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.model_part, number_of_avg_elems, number_of_avg_nodes)
+
+        self.mark_outer_nodes_process = KratosPfem2.MarkOuterNodesProcess(model_part)
+
+        self.Mesher = KratosMeshing.TriGenPFEMModeler()
+
+        self.fluid_neigh_finder     = KratosMultiphysics.FindNodalNeighboursProcess(model_part,9,18)
+        self.condition_neigh_finder = KratosMultiphysics.FindConditionsNeighboursProcess(model_part,2, 10)
+        self.elem_neighbor_finder   = KratosMultiphysics.FindElementalNeighboursProcess(model_part, 2, 10)
+
+        self.mark_fluid_process = KratosPfem2.MarkFluidProcess(model_part);
+
         # Initialize shallow water variables utility
         self.ShallowVariableUtils = KratosShallow.ShallowWaterVariablesUtility(self.model_part)
 
@@ -95,6 +112,9 @@ class ShallowWaterBaseSolver(object):
 
     def Initialize(self):
         self.computing_model_part = self.GetComputingModelPart()
+
+        (self.neighbour_search).Execute()
+        (self.fluid_neigh_finder).Execute();
 
         # If needed, create the estimate time step utility
         if (self.settings["time_stepping"]["automatic_time_step"].GetBool()):
@@ -147,6 +167,19 @@ class ShallowWaterBaseSolver(object):
             delta_time = self.settings["time_stepping"]["time_step"].GetDouble()
         # Move particles utility needs to access delta_time
         return delta_time
+
+    def Remesh(self):
+
+        h_factor=1.0;
+        alpha_shape=1.2;
+
+        node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part);
+
+        (self.Mesher).ReGenerateMesh("Fluid3DGLS","Condition3D", self.model_part, node_erase_process, False, False, alpha_shape, h_factor)
+
+        (self.fluid_neigh_finder).Execute();
+        (self.condition_neigh_finder).Execute();
+
 
     #### Specific internal functions ####
 
