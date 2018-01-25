@@ -111,9 +111,12 @@ namespace Kratos
 
         // add respective loads
         if (this->Has( LINE_LOAD )) this->AddLineLoad(rRightHandSideVector);
-        if (this->Has ( PRESSURE) || this->Has( NEGATIVE_FACE_PRESSURE)
-         || this->Has( POSITIVE_FACE_PRESSURE)) this->AddLinePressure(rRightHandSideVector,
-            rLeftHandSideMatrix,CalculateStiffnessMatrixFlag,CalculateResidualVectorFlag);
+
+        // pressure only for 2D right now
+        if ((this->Has ( PRESSURE) || this->Has( NEGATIVE_FACE_PRESSURE)
+         || this->Has( POSITIVE_FACE_PRESSURE))&&GetGeometry().WorkingSpaceDimension() == 2)
+          this->AddLinePressure(rRightHandSideVector,rLeftHandSideMatrix,
+          CalculateStiffnessMatrixFlag,CalculateResidualVectorFlag);
        
 
 

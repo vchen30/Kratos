@@ -740,13 +740,6 @@ namespace Kratos
 		RotationMatrix(4, 4) = c;
 		RotationMatrix(5, 5) = 1.00;
 
-
-		// update LOCAL_AXIS_2
-		Vector axis_2 = ZeroVector(3);
-		axis_2[0] = -s;
-		axis_2[1] = c;
-		this->SetValue(LOCAL_AXIS_2,axis_2); 
-
 		return RotationMatrix;
 		KRATOS_CATCH("")
 	}

@@ -714,10 +714,6 @@ namespace Kratos
 			this->mPhiS = ZeroVector(msDimension);
 			this->mPhiA = ZeroVector(msDimension);
 		}
-
-		//update LOCAL_AXIS_2
-		this->SetValue(LOCAL_AXIS_2,this->mNY); 
-
 		return n_xyz;
 		KRATOS_CATCH("")
 	}
