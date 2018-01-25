@@ -427,7 +427,6 @@ namespace Kratos
 		// take user defined local axis 2 from GID input
 		if (this->Has(LOCAL_AXIS_2)) 
 		{
-			KRATOS_WATCH(this->GetValue(LOCAL_AXIS_2));
 			double VectorNorm = MathUtils<double>::Norm(DirectionVectorX);
 			if (VectorNorm > numerical_limit) DirectionVectorX /= VectorNorm;
 
