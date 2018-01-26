@@ -37,6 +37,8 @@ class ShallowWaterBaseSolver(object):
             "reform_dofs_at_each_step"     : false,
             "calculate_norm_dx"            : true,
             "move_mesh_flag"               : false,
+            "element_name"                 : "PrimitiveVarElement2D3N",
+            "condition_name"               : "NothingCondition2D2N",
             "volume_model_part_name"       : "volume_model_part",
             "linear_solver_settings"       : {
                     "solver_type"     : "SkylineLUFactorizationSolver"
@@ -74,7 +76,8 @@ class ShallowWaterBaseSolver(object):
         self.condition_neigh_finder = KratosMultiphysics.FindConditionsNeighboursProcess(model_part,2, 10)
         self.elem_neighbor_finder   = KratosMultiphysics.FindElementalNeighboursProcess(model_part, 2, 10)
 
-        self.mark_fluid_process = KratosPfem2.MarkFluidProcess(model_part);
+        self.element_name = self.settings["element_name"].GetString()
+        self.condition_name = self.settings["condition_name"].GetString()
 
         # Initialize shallow water variables utility
         self.ShallowVariableUtils = KratosShallow.ShallowWaterVariablesUtility(self.model_part)
@@ -89,9 +92,13 @@ class ShallowWaterBaseSolver(object):
         self.model_part.AddNodalSolutionStepVariable(KratosShallow.BATHYMETRY);
         self.model_part.AddNodalSolutionStepVariable(KratosShallow.RAIN);
         # Auxiliar variables
-        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_STRUCTURE)
-        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
-        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_VELOCITY)
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_STRUCTURE)   # To compute the normals
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)         # Slip condition needs the normal
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_VELOCITY)  # Some utilities needs the variable, but not the application
+        # Variables required by TriGenPFEM
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_FREE_SURFACE) # deprecated_variables
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_BOUNDARY)     # deprecated_variables
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_FLUID)        # deprecated_variables
 
     def AddDofs(self):
         raise Exception("Calling the base class instead of the derived one")
@@ -175,7 +182,7 @@ class ShallowWaterBaseSolver(object):
 
         node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part);
 
-        (self.Mesher).ReGenerateMesh("Fluid3DGLS","Condition3D", self.model_part, node_erase_process, False, False, alpha_shape, h_factor)
+        (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.model_part, node_erase_process, False, False, alpha_shape, h_factor)
 
         (self.fluid_neigh_finder).Execute();
         (self.condition_neigh_finder).Execute();
