@@ -55,6 +55,7 @@ message("HDF5_APPLICATION........................... ${HDF5_APPLICATION}")
 message("SHALLOW_WATER_APPLICATION.................. ${SHALLOW_WATER_APPLICATION}")
 message("EIGEN_SOLVERS_APPLICATION.................. ${EIGEN_SOLVERS_APPLICATION}")
 message("STABILIZED_CFD_APPLICATION................. ${STABILIZED_CFD_APPLICATION}")
+message("FEM_TO_DEM_APPLICATION..................... ${FEM_TO_DEM_APPLICATION}")
 message( " ")
 
 
@@ -283,5 +284,8 @@ if(${STABILIZED_CFD_APPLICATION} MATCHES ON)
   add_subdirectory(StabilizedCFDApplication)
 endif(${STABILIZED_CFD_APPLICATION} MATCHES ON)
 
+if(${FEM_TO_DEM_APPLICATION} MATCHES ON)
+  add_subdirectory(FemToDemApplication)
+endif(${FEM_TO_DEM_APPLICATION} MATCHES ON)
 # get_property(inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
 # message("applications subdir inc_dirs = ${inc_dirs}")

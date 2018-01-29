@@ -1,0 +1,7 @@
+{
+   "AMR_data": {
+        "activate_AMR":                    false,
+        "plane_state":                    "Plane_Stress",
+        "mesh_optimality_criteria":       "Global_Error_Equidistribution",
+        "permissible_error":               0.09,
+        "refinement_frequency":            1.0,
