@@ -9,15 +9,15 @@
 //  Main authors:    Vicente Mataix Ferrándiz
 //
 
-#if !defined(KRATOS_AXISYM_LINE_LOAD_CONDITION_2D_H_INCLUDED )
-#define  KRATOS_AXISYM_LINE_LOAD_CONDITION_2D_H_INCLUDED
+#if !defined(KRATOS_AXISYM_LINE_LOAD_CONDITION_H_INCLUDED )
+#define  KRATOS_AXISYM_LINE_LOAD_CONDITION_H_INCLUDED
 
 // System includes
 
 // External includes
 
 // Project includes
-#include "custom_conditions/line_load_condition_2d.h"
+#include "custom_conditions/line_load_condition.h"
 
 namespace Kratos
 {
@@ -44,26 +44,26 @@ namespace Kratos
  * Implements a line load condition for structural analysis.
  */
 
-class AxisymLineLoadCondition2D
-    : public LineLoadCondition2D
+class AxisymLineLoadCondition
+    : public LineLoadCondition
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Counted pointer of AxisymLineLoadCondition2D
-    KRATOS_CLASS_POINTER_DEFINITION(AxisymLineLoadCondition2D);
+    /// Counted pointer of AxisymLineLoadCondition
+    KRATOS_CLASS_POINTER_DEFINITION(AxisymLineLoadCondition);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    AxisymLineLoadCondition2D(IndexType NewId, GeometryType::Pointer pGeometry);
-    AxisymLineLoadCondition2D(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
+    AxisymLineLoadCondition(IndexType NewId, GeometryType::Pointer pGeometry);
+    AxisymLineLoadCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
 
     /// Destructor.
-    ~AxisymLineLoadCondition2D() override;
+    ~AxisymLineLoadCondition() override;
 
     ///@}
     ///@name Operators
@@ -121,7 +121,7 @@ protected:
     ///@name Protected Operators
     ///@{
     
-    AxisymLineLoadCondition2D() : LineLoadCondition2D()
+    AxisymLineLoadCondition() : LineLoadCondition()
     {
     }
     
@@ -190,12 +190,12 @@ private:
     ///@name Un accessible methods
     ///@{
     /// Assignment operator.
-    //AxisymLineLoadCondition2D& operator=(const AxisymLineLoadCondition2D& rOther);
+    //AxisymLineLoadCondition& operator=(const AxisymLineLoadCondition& rOther);
     /// Copy constructor.
-    //AxisymLineLoadCondition2D(const AxisymLineLoadCondition2D& rOther);
+    //AxisymLineLoadCondition(const AxisymLineLoadCondition& rOther);
     ///@}
 
-}; // Class AxisymLineLoadCondition2D
+}; // Class AxisymLineLoadCondition
 
 ///@}
 ///@name Type Definitions
