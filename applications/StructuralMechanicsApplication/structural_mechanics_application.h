@@ -356,7 +356,8 @@ private:
     // Line load
     const LineLoadCondition2D mLineLoadCondition2D2N;
     const LineLoadCondition2D mLineLoadCondition2D3N;
-    const LineLoadCondition mLineLoadCondition2N;
+    const LineLoadCondition mLineLoadCondition2N2D;
+    const LineLoadCondition mLineLoadCondition2N3D;
     
     const AxisymLineLoadCondition2D mAxisymLineLoadCondition2D2N;
     const AxisymLineLoadCondition2D mAxisymLineLoadCondition2D3N;

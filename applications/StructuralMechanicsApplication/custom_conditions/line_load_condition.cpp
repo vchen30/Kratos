@@ -114,11 +114,12 @@ namespace Kratos
         if (this->Has( LINE_LOAD )) this->AddLineLoad(rRightHandSideVector);
 
 
-        // pressure only for 2D right now
+
         if ((this->Has ( PRESSURE) || this->Has( NEGATIVE_FACE_PRESSURE)
          || this->Has( POSITIVE_FACE_PRESSURE)))
           this->AddLinePressure(rRightHandSideVector,rLeftHandSideMatrix,
           CalculateStiffnessMatrixFlag,CalculateResidualVectorFlag);       
+          
 
         KRATOS_CATCH( "" )
     }
@@ -199,6 +200,8 @@ namespace Kratos
         const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(integration_method);
         const GeometryType::ShapeFunctionsGradientsType& DN_De = GetGeometry().ShapeFunctionsLocalGradients(integration_method);
 
+        //Temp Vector to make sure extra calculations are only done ones
+        VectorType temp_vector_rhs = ZeroVector(rRightHandSideVector.size());
     
         // Pressure applied to the element itself
         Vector pressure_on_nodes = ZeroVector( number_of_nodes );
@@ -237,15 +240,21 @@ namespace Kratos
             const double integration_weight = GetIntegrationWeight(integration_points, point_number, det_j); 
             
 
-            // manually calculating normal as pressure is only available for 2D which is
-            // x-y plane
             array_1d<double, 3> normal;
-            array_1d<double,3> v1 = GetGeometry()[1].Coordinates() - GetGeometry()[0].Coordinates();
-            array_1d<double,3> v2 = ZeroVector(3);
-            v2(2) = 1.00;
-            
-            MathUtils<double>::CrossProduct(normal,v1,v2 );
-            normal /= norm_2(normal);                
+            if(GetGeometry().WorkingSpaceDimension() == 2 )
+            {
+                noalias(normal) = GetGeometry().UnitNormal( integration_points[point_number] );
+            }
+            else{
+                if(!Has(LOCAL_AXIS_2))
+                    KRATOS_ERROR << "the variable LOCAL_AXES_2 is needed to compute the normal";
+                const auto& v2 = GetValue(LOCAL_AXIS_2);
+                
+                array_1d<double,3> v1 = GetGeometry()[1].Coordinates() - GetGeometry()[0].Coordinates();
+                
+                MathUtils<double>::CrossProduct(normal,v1,v2 );
+                normal /= norm_2(normal);
+            }              
             
 
             // Calculating the pressure on the gauss point
@@ -267,13 +276,17 @@ namespace Kratos
             {
                 if ( gauss_pressure != 0.0 )
                 {
-                    CalculateAndAddPressureForce( rRightHandSideVector, row( Ncontainer, point_number ), normal, gauss_pressure, integration_weight );
+                    CalculateAndAddPressureForce( temp_vector_rhs, row( Ncontainer, point_number ), normal, gauss_pressure, integration_weight );
                 }
             }
         }
 
+        // divide by current length and multiply with length of the start of current time_step
+        // this must be done to assure the reaction forces to be correct
+        temp_vector_rhs = (temp_vector_rhs/this->GetGeometry().Length())*this->mL;
 
-        //if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,rRightHandSideVector);    
+        //if (this->HasRotDof()) this->CalculateAndAddWorkEquivalentNodalForcesLineLoad(line_load,temp_vector_rhs);  
+        rRightHandSideVector += temp_vector_rhs;  
         KRATOS_CATCH("");
     }
 
