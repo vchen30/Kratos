@@ -145,8 +145,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       // Adding line load conditions
       mLineLoadCondition2D2N(0, Condition::GeometryType::Pointer(new Line2D2<Node<3> >(Condition::GeometryType::PointsArrayType(2)))),
       mLineLoadCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<Node<3> >(Condition::GeometryType::PointsArrayType(3)))),
-      mLineLoadCondition2N3D(0, Condition::GeometryType::Pointer(new Line3D2<Node<3> >(Condition::GeometryType::PointsArrayType(2)))),
-      mLineLoadCondition2N2D(0, Condition::GeometryType::Pointer(new Line2D2<Node<3> >(Condition::GeometryType::PointsArrayType(2)))),
+      mLineLoadCondition3D2N(0, Condition::GeometryType::Pointer(new Line3D2<Node<3> >(Condition::GeometryType::PointsArrayType(2)))),
       mAxisymLineLoadCondition2D2N(0, Condition::GeometryType::Pointer(new Line2D2<Node<3> >(Condition::GeometryType::PointsArrayType(2)))),
       mAxisymLineLoadCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<Node<3> >(Condition::GeometryType::PointsArrayType(3)))),
       // Adding surface load conditions
@@ -402,10 +401,7 @@ void KratosStructuralMechanicsApplication::Register() {
     // Line loads
     KRATOS_REGISTER_CONDITION("LineLoadCondition2D2N", mLineLoadCondition2D2N)
     KRATOS_REGISTER_CONDITION("LineLoadCondition2D3N", mLineLoadCondition2D3N)
-
-    //klaus -> todo: change name and replace old ones
-    KRATOS_REGISTER_CONDITION("LineLoadCondition2N2D", mLineLoadCondition2N2D)
-    KRATOS_REGISTER_CONDITION("LineLoadCondition2N3D", mLineLoadCondition2N3D)
+    KRATOS_REGISTER_CONDITION("LineLoadCondition3D2N", mLineLoadCondition3D2N)
 
     KRATOS_REGISTER_CONDITION("AxisymLineLoadCondition2D2N", mAxisymLineLoadCondition2D2N)
     KRATOS_REGISTER_CONDITION("AxisymLineLoadCondition2D3N", mAxisymLineLoadCondition2D3N)

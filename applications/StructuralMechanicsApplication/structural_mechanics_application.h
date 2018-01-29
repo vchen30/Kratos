@@ -63,7 +63,6 @@
 #include "custom_conditions/point_load_condition.h"
 #include "custom_conditions/point_contact_condition.h"
 #include "custom_conditions/axisym_point_load_condition.h"
-#include "custom_conditions/line_load_condition_2d.h"
 #include "custom_conditions/line_load_condition.h"
 #include "custom_conditions/axisym_line_load_condition.h"
 #include "custom_conditions/surface_load_condition_3d.h"
@@ -354,10 +353,9 @@ private:
     const AxisymPointLoadCondition mAxisymPointLoadCondition2D1N;
     
     // Line load
-    const LineLoadCondition2D mLineLoadCondition2D2N;
-    const LineLoadCondition2D mLineLoadCondition2D3N;
-    const LineLoadCondition mLineLoadCondition2N2D;
-    const LineLoadCondition mLineLoadCondition2N3D;
+    const LineLoadCondition mLineLoadCondition2D2N;
+    const LineLoadCondition mLineLoadCondition2D3N;
+    const LineLoadCondition mLineLoadCondition3D2N;
     
     const AxisymLineLoadCondition mAxisymLineLoadCondition2D2N;
     const AxisymLineLoadCondition mAxisymLineLoadCondition2D3N;

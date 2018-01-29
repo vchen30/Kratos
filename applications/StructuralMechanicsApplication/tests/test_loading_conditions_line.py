@@ -86,7 +86,7 @@ class TestLoadingConditionsLine(KratosUnittest.TestCase):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Y, KratosMultiphysics.REACTION_Y,mp)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Z, KratosMultiphysics.REACTION_Z,mp)
             
-        cond = mp.CreateNewCondition("LineLoadCondition2N2D", 1, [1,2], mp.GetProperties()[1])
+        cond = mp.CreateNewCondition("LineLoadCondition2D2N", 1, [1,2], mp.GetProperties()[1])
         
         lhs = KratosMultiphysics.Matrix(0,0)
         rhs = KratosMultiphysics.Vector(0)
@@ -154,8 +154,8 @@ class TestLoadingConditionsLine(KratosUnittest.TestCase):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Y, KratosMultiphysics.REACTION_Y,mp)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Z, KratosMultiphysics.REACTION_Z,mp)
             
-        cond1 = mp.CreateNewCondition("LineLoadCondition2N2D", 1, [1,2], mp.GetProperties()[1])
-        cond2 = mp.CreateNewCondition("LineLoadCondition2N2D", 2, [2,3], mp.GetProperties()[1])
+        cond1 = mp.CreateNewCondition("LineLoadCondition2D2N", 1, [1,2], mp.GetProperties()[1])
+        cond2 = mp.CreateNewCondition("LineLoadCondition2D2N", 2, [2,3], mp.GetProperties()[1])
         
         rhs = KratosMultiphysics.Vector(6)
         rhs[0] = 0.0
