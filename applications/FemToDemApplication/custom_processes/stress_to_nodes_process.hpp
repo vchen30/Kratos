@@ -108,7 +108,7 @@ namespace Kratos
             }
     
             // Ponderate over the elements coincident on that node
-            for(unsigned int i = 0; i < mNNodes; i++)
+            for (unsigned int i = 0; i < mNNodes; i++)
             {
                 if (pNodeStressesVector[i].NElems == 0) pNodeStressesVector[i].NElems = 1; // node surrounded by inactive elems
     
@@ -116,12 +116,17 @@ namespace Kratos
             }
 
             // Loop over nodes to assign the value of NODAL_STRESS_VECTOR
-            for(ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
+            for (ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
             {
                 int Id = (*it).Id();
                 //(*it).SetValue(NODAL_STRESS_VECTOR, pNodeStressesVector[Id-1].EffectiveStressVector);
 				Vector& nodal_stress = it->GetSolutionStepValue(NODAL_STRESS_VECTOR);
 				nodal_stress = pNodeStressesVector[Id - 1].EffectiveStressVector;
+
+                // Compute the norm of the vector
+                double& norm = it->GetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
+                norm = pow(nodal_stress[0]*nodal_stress[0] + nodal_stress[1]*nodal_stress[1] + nodal_stress[2]*nodal_stress[2] ,0.5);
+
             }
         }
 

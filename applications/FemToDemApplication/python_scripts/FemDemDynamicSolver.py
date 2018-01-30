@@ -13,15 +13,7 @@ def CreateSolver(main_model_part, custom_settings):
     return ImplicitMechanicalSolver(main_model_part, custom_settings)
 
 class ImplicitMechanicalSolver(BaseSolver.FemDemMechanicalSolver):
-    """The solid mechanics implicit dynamic solver.
 
-    This class creates the mechanical solvers for implicit dynamic analysis.
-
-    Public member variables:
-    dynamic_settings -- settings for the implicit dynamic solvers.
-
-    See solid_mechanics_solver.py for more information.
-    """
     def __init__(self, main_model_part, custom_settings): 
         
         # Set defaults and validate custom settings.

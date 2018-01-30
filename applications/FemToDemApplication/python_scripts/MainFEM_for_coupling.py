@@ -25,6 +25,7 @@ class FEM_for_coupling_Solution(MainFemDem.FEM_Solution):
 		# For remeshing purposes
 		self.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
 		self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_AREA)
+		self.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.EQUIVALENT_NODAL_STRESS)
 		
 		# Read model_part (note: the buffer_size is set here) (restart is read here)
 		self.solver.ImportModelPart()

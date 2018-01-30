@@ -57,7 +57,8 @@ namespace Kratos {
 
 KratosFemToDemApplication::KratosFemToDemApplication(): KratosApplication("FemToDemApplication"),
 //mZaratipitoElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-mAleCornVelElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3))))
+mAleCornVelElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+mFemDem3DElement(0, Element::GeometryType::Pointer(new Tetrahedra3D4 <Node<3> >(Element::GeometryType::PointsArrayType(4))))
 {}
 
 
@@ -105,6 +106,7 @@ void KratosFemToDemApplication::Register()
 	KRATOS_REGISTER_VARIABLE(NODAL_FORCE_X)
 	KRATOS_REGISTER_VARIABLE(NODAL_FORCE_Y)
 	KRATOS_REGISTER_VARIABLE(NODAL_STRESS_VECTOR)
+	KRATOS_REGISTER_VARIABLE(EQUIVALENT_NODAL_STRESS)
 
 	
 	//Register element
