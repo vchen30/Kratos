@@ -34,9 +34,9 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     ## solver_settings
     puts $FileVar "   \"solver_settings\": \{"
     if {[GiD_AccessValue get gendata Solution_Type] eq "Static"} {
-        puts $FileVar "            \"solver_type\":                       \"FemDemDynamicSolver\","
+        puts $FileVar "            \"solver_type\":                       \"FemDemStaticSolver\","
         puts $FileVar "            \"solution_type\":                     \"Static\","
-        puts $FileVar "            \"analysis_type\":                     \"Non-Linear\","
+        puts $FileVar "            \"time_integration_method\":           \"Implicit\","
     } else {
         puts $FileVar "            \"solver_type\":                       \"FemDemDynamicSolver\","
         puts $FileVar "            \"solution_type\":                     \"Dynamic\","
