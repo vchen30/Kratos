@@ -178,16 +178,16 @@ class ShallowWaterBaseSolver(object):
 
     def Remesh(self):
 
-        h_factor = 1.0;
+        h_factor = 0.1;
         alpha_shape = 1.2;
 
         for node in (self.model_part).Nodes:
             node.Set(KratosMultiphysics.TO_ERASE, False)
-            node.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0,0.01)
+            node.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0,0.1)
 
         node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part);
 
-        rem_nodes = True
+        rem_nodes = False
         add_nodes = True
         (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.model_part, node_erase_process, rem_nodes, add_nodes, alpha_shape, h_factor)
 
