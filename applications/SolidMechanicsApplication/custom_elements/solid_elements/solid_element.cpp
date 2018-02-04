@@ -851,6 +851,8 @@ void SolidElement::CalculateAndAddLHS(LocalSystemComponents& rLocalSystem, Eleme
 		KRATOS_ERROR << " ELEMENT can not supply the required local system variable: " << rLeftHandSideVariables[i] << std::endl;
 	      }
 
+
+
 	  }
       } 
     else{

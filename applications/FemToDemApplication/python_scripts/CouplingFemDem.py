@@ -436,7 +436,7 @@ class FEMDEM_Solution:
 				is_active = Element.Is(KratosMultiphysics.ACTIVE)
 
 			NumberOfDEM = 0         # Number of nodes with DEM Associated
-			for node in range(0,3): # Loop over nodes of the FE
+			for node in range(0, 3): # Loop over nodes of the FE
 				Node = Element.GetNodes()[node]
 				if Node.GetValue(KratosFemDem.IS_DEM) == True:
 					NumberOfDEM += 1
@@ -689,9 +689,15 @@ class FEMDEM_Solution:
 					dy = node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y)
 					Rx = node.GetSolutionStepValue(KratosMultiphysics.REACTION_X)
 					Ry = node.GetSolutionStepValue(KratosMultiphysics.REACTION_Y)
+					vx = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)
+					vy = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)
+					ax = node.GetSolutionStepValue(KratosMultiphysics.ACCELERATION_X)
+					ay = node.GetSolutionStepValue(KratosMultiphysics.ACCELERATION_Y)
 
 					self.PlotFilesNodesList[inode].write("    " + "{0:.4e}".format(time).rjust(11) + "    " +
 					 "{0:.4e}".format(dx).rjust(11) + "    " + "{0:.4e}".format(dy).rjust(11) + "    " + 
+					 "{0:.4e}".format(vx).rjust(11) + "    " + "{0:.4e}".format(vy).rjust(11) + "    " +
+					 "{0:.4e}".format(ax).rjust(11) + "    " + "{0:.4e}".format(ay).rjust(11) + "    " +
 					 "{0:.4e}".format(Rx).rjust(11) + "    " + "{0:.4e}".format(Ry).rjust(11) + "\n")
 
 					self.PlotFilesNodesList[inode].close()
@@ -754,7 +760,7 @@ class FEMDEM_Solution:
 				Id = self.FEM_Solution.ProjectParameters["watch_nodes_list"][node].GetInt()
 				iPlotFileNode = open("PlotNode_" + str(Id) + ".txt","w")
 				iPlotFileNode.write("\n")
-				iPlotFileNode.write("       time          displ_x        displ_y       Reaction_x     Reaction_y    \n")
+				iPlotFileNode.write("       time          displ_x        displ_y         vel_x           vel_y         acc_x          acc_y        Reaction_x     Reaction_y    \n")
 				iPlotFileNode.close()
 				self.PlotFilesNodesList.append(iPlotFileNode)
 				self.PlotFilesNodesIdList.append(Id)

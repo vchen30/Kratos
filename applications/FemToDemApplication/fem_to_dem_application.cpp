@@ -112,6 +112,7 @@ void KratosFemToDemApplication::Register()
 	//Register element
 	//KRATOS_REGISTER_ELEMENT("ZaratipitoElement", mZaratipitoElement)
 	KRATOS_REGISTER_ELEMENT("AleCornVelElement", mAleCornVelElement)
+	KRATOS_REGISTER_ELEMENT("FemDem3DElement", mFemDem3DElement)
 			
 	//Register Constitutive Laws
 	Serializer::Register("ZarateLaw", mZarateLaw);

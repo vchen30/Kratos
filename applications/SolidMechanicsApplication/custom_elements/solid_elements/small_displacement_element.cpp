@@ -207,6 +207,7 @@ void SmallDisplacementElement::CalculateKinematics(ElementVariables& rVariables,
     //Compute the deformation matrix B
     this->CalculateDeformationMatrix( rVariables.B, rVariables.DN_DX );
 
+
     //Compute infinitessimal strain
     this->CalculateInfinitesimalStrain( rVariables.H, rVariables.StrainVector );
 

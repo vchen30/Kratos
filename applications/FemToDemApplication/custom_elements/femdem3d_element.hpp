@@ -191,7 +191,7 @@ namespace Kratos
 		void SetIntegratedStressVector(Vector toIntegratedStressVector) { toIntegratedStressVector.resize(3); mIntegratedStressVector = toIntegratedStressVector; }
 		Vector GetIntegratedStressVector() { return mIntegratedStressVector; }
 
-		void SetBMatrix(Matrix toBMatrix) { toBMatrix.resize(3, 6); mB = toBMatrix; }
+		void SetBMatrix(Matrix toBMatrix) {  mB = toBMatrix; }
 		Matrix GetBMatrix(){ return mB; }
 
 		void CalculateDeformationMatrix(Matrix& rB, const Matrix& rDN_DX);
@@ -201,6 +201,10 @@ namespace Kratos
 		
 	private:
 		int iteration = 0;
+
+		const unsigned int number_of_nodes = GetGeometry().size();
+		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
+		unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
 
 		// Each component == Each edge
 		Vector mF_sigmas = ZeroVector(3);   // Mohr-Coulomb equivalent stress
@@ -220,10 +224,10 @@ namespace Kratos
 
 		Vector mL_char = ZeroVector(3);  // Characteristic length on each edge
 
-		Vector mStressVector = ZeroVector(3);
-		Vector mStrainVector = ZeroVector(3);
-		Vector mIntegratedStressVector = ZeroVector(3);
-		Matrix mB = ZeroMatrix(3, 6);
+		Vector mStressVector = ZeroVector(voigt_size);
+		Vector mStrainVector = ZeroVector(voigt_size);
+		Vector mIntegratedStressVector = ZeroVector(voigt_size);
+		Matrix mB = ZeroMatrix(voigt_size, dimension*number_of_nodes);
 
 		double mJac = 0.0;
 		double mIntegrationCoefficient = 0.0;

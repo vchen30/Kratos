@@ -84,83 +84,62 @@ namespace Kratos
 	void FemDem3DElement::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
 
-		// After the mapping, the thresholds of the edges ( are equal to 0.0) are imposed equal to the IP threshold
-		Vector thresholds = this->GetThresholds();
-		double ElementThreshold = this->GetValue(STRESS_THRESHOLD);
-		
-		if (thresholds[0] == 0.0 && thresholds[1] == 0.0 && thresholds[2] == 0.0)
-		{
-			this->Set_threshold(ElementThreshold, 0);
-			this->Set_threshold(ElementThreshold, 1);
-			this->Set_threshold(ElementThreshold, 2);
-		}
-
-		// IDEM with the edge damages
-		Vector DamageEdges   = this->GetDamages();
-		double DamageElement  = this->GetValue(DAMAGE_ELEMENT);
-
-		if (DamageEdges[0] == 0.0 && DamageEdges[1] == 0.0 && DamageEdges[2] == 0.0)
-		{
-			this->Set_Convergeddamages(DamageElement, 0);
-			this->Set_Convergeddamages(DamageElement, 1);
-			this->Set_Convergeddamages(DamageElement, 2);
-		}
-
 	}
 
 	void FemDem3DElement::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
-		double CurrentfSigma = 0.0, damage_element = 0.0;
+		//double CurrentfSigma = 0.0, damage_element = 0.0;
 		
-		//Loop over edges
-		for (int cont = 0; cont < 3; cont++)
-		{
-			this->Set_Convergeddamages(this->Get_NonConvergeddamages(cont), cont);
-			this->SetConverged_f_sigmas(this->Get_NonConvergedf_sigma(cont), cont);
-			CurrentfSigma = this->GetConverged_f_sigmas(cont);
-			if (CurrentfSigma > this->Get_threshold(cont)) { this->Set_threshold(CurrentfSigma, cont); }
-		} // End Loop over edges
 
-		damage_element = this->Get_NonConvergeddamage();
-		this->Set_Convergeddamage(damage_element);
+		// //Loop over edges
+		// for (int cont = 0; cont < 3; cont++)
+		// {
+		// 	this->Set_Convergeddamages(this->Get_NonConvergeddamages(cont), cont);
+		// 	this->SetConverged_f_sigmas(this->Get_NonConvergedf_sigma(cont), cont);
+		// 	CurrentfSigma = this->GetConverged_f_sigmas(cont);
+		// 	if (CurrentfSigma > this->Get_threshold(cont)) { this->Set_threshold(CurrentfSigma, cont); }
+		// } // End Loop over edges
 
-		if (damage_element > 0.0) 
-		{
-			this->SetValue(IS_DAMAGED, 1);
-		}
+		// damage_element = this->Get_NonConvergeddamage();
+		// this->Set_Convergeddamage(damage_element);
+
+		// if (damage_element > 0.0) 
+		// {
+		// 	this->SetValue(IS_DAMAGED, 1);
+		// }
 		
-		if (damage_element >= 0.98)
-		{
-			this->Set(ACTIVE, false);
-			double old_threshold = this->GetValue(STRESS_THRESHOLD);
-			this->SetValue(INITIAL_THRESHOLD, old_threshold);
-		}
+		// if (damage_element >= 0.98)
+		// {
+		// 	this->Set(ACTIVE, false);
+		// 	double old_threshold = this->GetValue(STRESS_THRESHOLD);
+		// 	this->SetValue(INITIAL_THRESHOLD, old_threshold);
+		// }
 
-		this->ResetNonConvergedVars();
-		this->SetToZeroIteration();
+		// this->ResetNonConvergedVars();
+		// this->SetToZeroIteration();
 
-		// computation of the equivalent damage threshold and damage of the element for AMR mapping
-		Vector thresholds = this->GetThresholds();
+		// // computation of the equivalent damage threshold and damage of the element for AMR mapping
+		// Vector thresholds = this->GetThresholds();
 		
-		Vector TwoMinValues;
-		this->Get2MaxValues(TwoMinValues, thresholds[0], thresholds[1], thresholds[2]);  // todo ojo con la funcion modificada
-		double EqThreshold = 0.5*(TwoMinValues[0] + TwoMinValues[1]);  // El menor o mayor?? TODO
+		// Vector TwoMinValues;
+		// this->Get2MaxValues(TwoMinValues, thresholds[0], thresholds[1], thresholds[2]);  // todo ojo con la funcion modificada
+		// double EqThreshold = 0.5*(TwoMinValues[0] + TwoMinValues[1]);  // El menor o mayor?? TODO
 
 
-		this->SetValue(STRESS_THRESHOLD, EqThreshold); // AMR
-		this->Set_threshold(EqThreshold);
-		this->SetValue(DAMAGE_ELEMENT, damage_element);
+		// this->SetValue(STRESS_THRESHOLD, EqThreshold); // AMR
+		// this->Set_threshold(EqThreshold);
+		// this->SetValue(DAMAGE_ELEMENT, damage_element);
 
 
-		// Reset the nodal force flag for the next time step
-		Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
-		for (int i = 0; i < 3; i++)
-		{
-			#pragma omp critical
-			{
-				NodesElement[i].SetValue(NODAL_FORCE_APPLIED, false);
-			}
-		}
+		// // Reset the nodal force flag for the next time step
+		// Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
+		// for (int i = 0; i < 3; i++)
+		// {
+		// 	#pragma omp critical
+		// 	{
+		// 		NodesElement[i].SetValue(NODAL_FORCE_APPLIED, false);
+		// 	}
+		// }
 	}
 
 	void FemDem3DElement::InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo)
@@ -192,6 +171,7 @@ namespace Kratos
 			noalias(B) = ZeroMatrix(voigt_size, dimension*number_of_nodes);
 			Matrix DN_DX(number_of_nodes, dimension);
 			noalias(DN_DX) = ZeroMatrix(number_of_nodes, dimension);
+
 
 			//deffault values for the infinitessimal theory
 			double detF = 1;
@@ -246,10 +226,14 @@ namespace Kratos
 				//set shape functions for this integration point
 				Vector N = row(Ncontainer, PointNumber);
 
+
 				//b.-compute infinitessimal strain
 				this->CalculateInfinitesimalStrain(StrainVector, DN_DX);
-				//this->SetStrainVector(StrainVector);
 				this->SetValue(STRAIN_VECTOR, StrainVector);
+
+				//KRATOS_WATCH(DN_DX)
+				//KRATOS_WATCH(N)
+				//KRATOS_WATCH(StrainVector)
 
 				ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
 
@@ -277,6 +261,8 @@ namespace Kratos
 
 				this->CalculateDeformationMatrix(B, DN_DX);
 				this->SetBMatrix(B);
+
+				//KRATOS_WATCH(this->GetValue(STRESS_VECTOR))
 
 			}
 		}
@@ -316,19 +302,14 @@ namespace Kratos
 		{
 			const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(mThisIntegrationMethod);
 			Vector N = row(Ncontainer, PointNumber);
-		    //	Matrix InvJ(dimension, dimension);
-			//  noalias(InvJ) = ZeroMatrix(dimension, dimension);
+
 			double detJ = 0;
 			Matrix InvJ(dimension, dimension);
 			noalias(InvJ) = ZeroMatrix(dimension, dimension);
 			MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
-			//MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
 
 			double IntegrationWeight = integration_points[PointNumber].Weight() * detJ;
-			if (dimension == 2) IntegrationWeight *= GetProperties()[THICKNESS];
-			this->SetValue(INTEGRATION_COEFFICIENT, IntegrationWeight);
 
-			//Matrix B = ZeroMatrix(voigt_size, dimension*number_of_nodes);
 			const Matrix& B = this->GetBMatrix();
 
 			Vector IntegratedStressVector = ZeroVector(voigt_size);
@@ -337,163 +318,20 @@ namespace Kratos
 			WeakPointerVector< Element >& elem_neigb = this->GetValue(NEIGHBOUR_ELEMENTS);
 			if (elem_neigb.size() == 0) { KRATOS_THROW_ERROR(std::invalid_argument, " Neighbour Elements not calculated --> size = ", elem_neigb.size()) }
 
-
-
-			// check if one neighbour is inactive -> do not take into account
-			//WeakPointerVector< Element > Filtered_elem_neigb;
-			////Filtered_elem_neigb.resize(3);
-			//bool is_active_neigh = true;
-
-			//for (int neig = 0; neig < 3; neig++) 
-			//{
-			//	if (elem_neigb[neig].IsDefined(ACTIVE))
-			//	{
-			//		is_active_neigh = elem_neigb[neig].Is(ACTIVE);
-			//	}
-
-			//	if(is_active_neigh == false) 
-			//	{
-			//		//Filtered_elem_neigb[neig] = *this;
-			//		Filtered_elem_neigb.push_back(*this);
-			//	}
-			//	else 
-			//	{
-			//		//Filtered_elem_neigb[neig] = elem_neigb[neig];
-			//		Filtered_elem_neigb.push_back(elem_neigb[neig]);
-			//	}
-			//}
-			//***************************
-			
-
-
-
-
-			// Compute damage on each edge of the element
-			// check if one neighbour is inactive -> do not take into account
-			double damage[3] = { 0,0,0 };
-			//Element Filtered_elem_neigb;
-
-			// Loop Over Edges
-			for (int cont = 0; cont < 3; cont++)
-			{
-
-				bool is_active_neigh = true;
-				if (elem_neigb[cont].IsDefined(ACTIVE))
-				{
-					is_active_neigh = elem_neigb[cont].Is(ACTIVE);
-				}
-
-				//if(is_active_neigh == false) 
-				//{
-				//	//Filtered_elem_neigb[neig] = *this;
-				//	Filtered_elem_neigb = *this;
-				//}
-				//else 
-				//{
-				//	//Filtered_elem_neigb[neig] = elem_neigb[neig];
-				//	Filtered_elem_neigb = elem_neigb[cont];
-				//}
-
-				double damagee = 0.0;
-				Vector  AverageStress;
-				Vector  AverageStrain;
-
-				if (is_active_neigh)
-				{
-					Vector Stress1, Stress2;
-					Vector Strain1, Strain2;
-
-					Stress1 = this->GetValue(STRESS_VECTOR);
-					Stress2 = elem_neigb[cont].GetValue(STRESS_VECTOR);
-					
-					Strain1 = this->GetValue(STRAIN_VECTOR);
-					Strain2 = elem_neigb[cont].GetValue(STRAIN_VECTOR);
-				
-					this->AverageVector(AverageStress, Stress1, Stress2);
-					this->AverageVector(AverageStrain, Strain1, Strain2);
-				}
-				else 
-				{
-					AverageStress = this->GetValue(STRESS_VECTOR);
-					AverageStrain = this->GetValue(STRAIN_VECTOR);
-				}
-
-				if (this->GetIteration() < 3) // Computes the l_char on each side only once at each time step
-				{
-					this->CalculateLchar(this, elem_neigb[cont], cont);
-				}
-				double l_char = this->Get_l_char(cont);
-
-
-				this->IntegrateStressDamageMechanics(IntegratedStressVector, damagee, AverageStrain, AverageStress, cont, l_char);
-				damage[cont] = damagee;
-				this->Set_NonConvergeddamages(damagee, cont);
-
-				//if (this->Id() == 466 && rCurrentProcessInfo[STEP] > 15)
-				//{
-				//	KRATOS_WATCH(damagee)
-				//	KRATOS_WATCH(l_char)
-				//	KRATOS_WATCH(l_char)
-
-				//}
-
-			} // Loop Over Edges
-
-			Vector TwoMaxDamages;
-			TwoMaxDamages.resize(2);
-			this->Get2MaxValues(TwoMaxDamages,damage[0], damage[1], damage[2]);
-			double damage_element = (TwoMaxDamages[0] + TwoMaxDamages[1])*0.5;
-			if (damage_element >= 0.999) { damage_element = 0.999; }
-			this->Set_NonConvergeddamage(damage_element);
-
-
-			//Vector StressVector = ZeroVector(3);
 			const Vector& StressVector = this->GetValue(STRESS_VECTOR);
-			IntegratedStressVector = (1 - damage_element)*StressVector;
-
-			this->SetIntegratedStressVector(IntegratedStressVector);
-			//this->SetValue(STRESS_VECTOR_INTEGRATED ,IntegratedStressVector);
-
-			// Computation of the LHS with the Secant Constitutive Tensor
-			//if (this->GetProperties()[TANGENT_CONSTITUTIVE_TENSOR] == 0 || damage_element == 0.0)
-			//{
-				Matrix ConstitutiveMatrix = ZeroMatrix(voigt_size, voigt_size);
-				double E  = this->GetProperties()[YOUNG_MODULUS];
-				double nu = this->GetProperties()[POISSON_RATIO];
-				this->CalculateConstitutiveMatrix(ConstitutiveMatrix, E, nu);
-
-				noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight *(1 - damage_element)* Matrix(prod(ConstitutiveMatrix, B))); //LHS
-			//}
-			// else // Tangent Constitutive Tensor
-			// {
-			// 	KRATOS_WATCH(damage_element)
-			// 		KRATOS_WATCH(this->Id())
-			// 	Matrix Aux = ZeroMatrix(3, 3);
-			// 	Matrix TangentTensor = ZeroMatrix(3, 3);
-			// 	for (int cont = 0; cont < 3; cont++)
-			// 	{
-			// 		Vector Stress1, Stress2, AverageStress;
-			// 		Vector Strain1, Strain2, AverageStrain;
-
-			// 		Stress1 = this->GetValue(STRESS_VECTOR);
-			// 		Stress2 = elem_neigb[cont].GetValue(STRESS_VECTOR);
-
-			// 		Strain1 = this->GetValue(STRAIN_VECTOR);
-			// 		Strain2 = elem_neigb[cont].GetValue(STRAIN_VECTOR);
-
-			// 		this->AverageVector(AverageStress, Stress1, Stress2);
-			// 		this->AverageVector(AverageStrain, Strain1, Strain2);
-
-			// 		Matrix TangentTensor;
-			// 		this->CalculateTangentTensor(TangentTensor, AverageStrain, AverageStress, cont, this->Get_l_char(cont));
-			// 		Aux += TangentTensor;
-			// 	}
-			// 	TangentTensor = Aux / 3;
-			// 	noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(TangentTensor, B))); //LHS
-			// }
 			
+			Matrix ConstitutiveMatrix = ZeroMatrix(voigt_size, voigt_size);
+			double E  = this->GetProperties()[YOUNG_MODULUS];
+			double nu = this->GetProperties()[POISSON_RATIO];
+			this->CalculateConstitutiveMatrix(ConstitutiveMatrix, E, nu);
+
+			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(ConstitutiveMatrix, B))); //LHS
+
+			//KRATOS_WATCH(rLeftHandSideMatrix)
+			//KRATOS_WATCH(rLeftHandSideMatrix)
 			Vector VolumeForce = ZeroVector(dimension);
 			VolumeForce = this->CalculateVolumeForce(VolumeForce, N);
+
 			// RHS
 			for (unsigned int i = 0; i < number_of_nodes; i++)
 			{
@@ -505,47 +343,13 @@ namespace Kratos
 			}
 
 			//compute and add internal forces (RHS = rRightHandSideVector = Fext - Fint)
-			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), (1 - damage_element)*StressVector);
+			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), StressVector);
 
-			Vector NodalRHS = ZeroVector(6);
-
-			#pragma omp critical
-			{
-				Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
-
-				// Loop Over nodes to apply the DEM contact forces to the FEM
-				for (int i = 0; i < 3; i++)
-				{
-					bool IsDEM = NodesElement[i].GetValue(IS_DEM);
-					bool NodalForceApplied = NodesElement[i].GetValue(NODAL_FORCE_APPLIED);
-
-					if (IsDEM == true && NodalForceApplied == false)
-					{
-						double ForceX = NodesElement[i].GetValue(NODAL_FORCE_X);
-						double ForceY = NodesElement[i].GetValue(NODAL_FORCE_Y);
-
-						NodalRHS[2 * i]     += ForceX;
-						NodalRHS[2 * i + 1] += ForceY;
-
-						// Avoid double assignation of the nodal force and colision of threads
-						//#pragma omp critical
-						//{
-						NodesElement[i].SetValue(NODAL_FORCE_APPLIED, true);
-
-
-						// if (NodesElement[i].Id() == 65)
-						// {
-						// 	KRATOS_WATCH(ForceX)
-						// 	KRATOS_WATCH(ForceY)
-						// 	KRATOS_WATCH(NodalRHS)
-						// }
-						//}
-					}
-				}
-			}
-			
-			// Add nodal contact forces from the DEM
-			noalias(rRightHandSideVector) += NodalRHS;
+			//if (this->Id() == 1)
+			//{
+			//	KRATOS_WATCH(rLeftHandSideMatrix)
+			//		KRATOS_WATCH(rLeftHandSideMatrix)
+			//}
 
 		}
 		KRATOS_CATCH("")
@@ -558,25 +362,28 @@ namespace Kratos
 		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
 		unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
 
-		if (rB.size1() != voigt_size || rB.size2() != dimension*number_of_nodes)
-			rB.resize(voigt_size, dimension*number_of_nodes, false);
+		/*if (rB.size1() != voigt_size || rB.size2() != dimension*number_of_nodes)
+			rB.resize(voigt_size, dimension*number_of_nodes, false);*/
 
-		if (dimension == 2)
+		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
+			unsigned int index = 3 * i;
 
-			for (unsigned int i = 0; i < number_of_nodes; i++)
-			{
-				unsigned int index = 2 * i;
+			rB( 0, index + 0 ) = rDN_DX( i, 0 );
+			rB( 1, index + 1 ) = rDN_DX( i, 1 );
+			rB( 2, index + 2 ) = rDN_DX( i, 2 );
 
-				rB(0, index + 0) = rDN_DX(i, 0);
-				rB(0, index + 1) = 0.0;
-				rB(1, index + 0) = 0.0;
-				rB(1, index + 1) = rDN_DX(i, 1);
-				rB(2, index + 0) = rDN_DX(i, 1);
-				rB(2, index + 1) = rDN_DX(i, 0);
+			rB( 3, index + 0 ) = rDN_DX( i, 1 );
+			rB( 3, index + 1 ) = rDN_DX( i, 0 );
 
-			}
+			rB( 4, index + 1 ) = rDN_DX( i, 2 );
+			rB( 4, index + 2 ) = rDN_DX( i, 1 );
+
+			rB( 5, index + 0 ) = rDN_DX( i, 2 );
+			rB( 5, index + 2 ) = rDN_DX( i, 0 );
+
 		}
+		
 	}
 
 	void FemDem3DElement::CalculateConstitutiveMatrix(Matrix& rConstitutiveMatrix, const double &rYoungModulus,
@@ -584,24 +391,23 @@ namespace Kratos
 	{
 		rConstitutiveMatrix.clear();
 
-		if (this->GetProperties()[THICKNESS] == 1)
-		{
-			// Plane strain constitutive matrix
-			rConstitutiveMatrix(0, 0) = (rYoungModulus*(1.0 - rPoissonCoefficient) / ((1.0 + rPoissonCoefficient)*(1.0 - 2.0*rPoissonCoefficient)));
-			rConstitutiveMatrix(1, 1) = rConstitutiveMatrix(0, 0);
-			rConstitutiveMatrix(2, 2) = rConstitutiveMatrix(0, 0)*(1.0 - 2.0*rPoissonCoefficient) / (2.0*(1.0 - rPoissonCoefficient));
-			rConstitutiveMatrix(0, 1) = rConstitutiveMatrix(0, 0)*rPoissonCoefficient / (1.0 - rPoissonCoefficient);
-			rConstitutiveMatrix(1, 0) = rConstitutiveMatrix(0, 1);
-		}
-		else
-		{
-			// Plane stress constitutive matrix
-			rConstitutiveMatrix(0, 0) = (rYoungModulus) / (1.0 - rPoissonCoefficient*rPoissonCoefficient);
-			rConstitutiveMatrix(1, 1) = rConstitutiveMatrix(0, 0);
-			rConstitutiveMatrix(2, 2) = rConstitutiveMatrix(0, 0)*(1.0 - rPoissonCoefficient)*0.5;
-			rConstitutiveMatrix(0, 1) = rConstitutiveMatrix(0, 0)*rPoissonCoefficient;
-			rConstitutiveMatrix(1, 0) = rConstitutiveMatrix(0, 1);
-		}
+		// 3D linear elastic constitutive matrix
+		rConstitutiveMatrix ( 0 , 0 ) = (rYoungModulus*(1.0-rPoissonCoefficient)/((1.0+rPoissonCoefficient)*(1.0-2.0*rPoissonCoefficient)));
+		rConstitutiveMatrix ( 1 , 1 ) = rConstitutiveMatrix ( 0 , 0 );
+		rConstitutiveMatrix ( 2 , 2 ) = rConstitutiveMatrix ( 0 , 0 );
+
+		rConstitutiveMatrix ( 3 , 3 ) = rConstitutiveMatrix ( 0 , 0 )*(1.0-2.0*rPoissonCoefficient)/(2.0*(1.0-rPoissonCoefficient));
+		rConstitutiveMatrix ( 4 , 4 ) = rConstitutiveMatrix ( 3 , 3 );
+		rConstitutiveMatrix ( 5 , 5 ) = rConstitutiveMatrix ( 3 , 3 );
+
+		rConstitutiveMatrix ( 0 , 1 ) = rConstitutiveMatrix ( 0 , 0 )*rPoissonCoefficient/(1.0-rPoissonCoefficient);
+		rConstitutiveMatrix ( 1 , 0 ) = rConstitutiveMatrix ( 0 , 1 );
+
+		rConstitutiveMatrix ( 0 , 2 ) = rConstitutiveMatrix ( 0 , 1 );
+		rConstitutiveMatrix ( 2 , 0 ) = rConstitutiveMatrix ( 0 , 1 );
+
+		rConstitutiveMatrix ( 1 , 2 ) = rConstitutiveMatrix ( 0 , 1 );
+		rConstitutiveMatrix ( 2 , 1 ) = rConstitutiveMatrix ( 0 , 1 );
 	}
 
 	void FemDem3DElement::CalculateDN_DX(Matrix& rDN_DX, int PointNumber)
@@ -643,31 +449,43 @@ namespace Kratos
 	{
 		KRATOS_TRY
 
-			const unsigned int number_of_nodes = GetGeometry().PointsNumber();
+		const unsigned int number_of_nodes = GetGeometry().PointsNumber();
 		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
 
 		Matrix H = zero_matrix<double>(dimension); //[dU/dx_n]
+		
 
-		if (dimension == 2)
+		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
 
-			for (unsigned int i = 0; i < number_of_nodes; i++)
-			{
+			array_1d<double, 3 > & Displacement = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT);
 
-				array_1d<double, 3 > & Displacement = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT);
-
-				H(0, 0) += Displacement[0] * rDN_DX(i, 0);
-				H(0, 1) += Displacement[0] * rDN_DX(i, 1);
-				H(1, 0) += Displacement[1] * rDN_DX(i, 0);
-				H(1, 1) += Displacement[1] * rDN_DX(i, 1);
-			}
-			//Infinitesimal Strain Calculation
-			if (rStrainVector.size() != 3) rStrainVector.resize(3, false);
-
-			rStrainVector[0] = H(0, 0);
-			rStrainVector[1] = H(1, 1);
-			rStrainVector[2] = (H(0, 1) + H(1, 0)); // xy
+            H ( 0 , 0 ) += Displacement[0]*rDN_DX ( i , 0 );
+            H ( 0 , 1 ) += Displacement[0]*rDN_DX ( i , 1 );
+            H ( 0 , 2 ) += Displacement[0]*rDN_DX ( i , 2 );
+            H ( 1 , 0 ) += Displacement[1]*rDN_DX ( i , 0 );
+            H ( 1 , 1 ) += Displacement[1]*rDN_DX ( i , 1 );
+            H ( 1 , 2 ) += Displacement[1]*rDN_DX ( i , 2 );
+            H ( 2 , 0 ) += Displacement[2]*rDN_DX ( i , 0 );
+            H ( 2 , 1 ) += Displacement[2]*rDN_DX ( i , 1 );
+            H ( 2 , 2 ) += Displacement[2]*rDN_DX ( i , 2 );
 		}
+
+		//Infinitesimal Strain Calculation
+		if (rStrainVector.size() != 6) rStrainVector.resize(6, false);
+
+        rStrainVector[0] = H( 0, 0 );
+
+        rStrainVector[1] = H( 1, 1 );
+
+        rStrainVector[2] = H( 2, 2 );
+
+        rStrainVector[3] = ( H( 0, 1 ) + H( 1, 0 ) ); // xy
+
+        rStrainVector[4] = ( H( 1, 2 ) + H( 2, 1 ) ); // yz
+
+        rStrainVector[5] = ( H( 0, 2 ) + H( 2, 0 ) ); // xz
+		
 		KRATOS_CATCH("")
 	}
 
@@ -685,7 +503,6 @@ namespace Kratos
 
 	void FemDem3DElement::FinalizeNonLinearIteration(ProcessInfo& CurrentProcessInfo)
 	{
-
 	}
 
 	void FemDem3DElement::AverageVector(Vector& rAverageVector, const Vector& v, const Vector& w)
