@@ -12,6 +12,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
+#include "includes/table.h"
 #include "processes/process.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "spaces/ublas_space.h"
@@ -25,6 +26,9 @@
 #include "custom_processes/dam_uplift_circular_condition_load_process.hpp"
 #include "custom_processes/dam_westergaard_condition_load_process.hpp"
 #include "custom_processes/dam_nodal_young_modulus_process.hpp"
+#include "custom_processes/dam_input_table_nodal_young_modulus_process.hpp"
+#include "custom_processes/dam_list_table_nodal_young_modulus_process.hpp"
+#include "custom_processes/dam_apply_force_by_spatial_position_process.hpp"
 #include "custom_processes/dam_chemo_mechanical_aging_young_process.hpp"
 #include "custom_processes/dam_temperature_by_device_process.hpp"
 #include "custom_processes/dam_added_mass_condition_process.hpp"
@@ -42,7 +46,9 @@ namespace Python
 using namespace boost::python;
 
 void  AddCustomProcessesToPython() 
-{    
+{   
+    typedef Table<double,double> TableType;   
+    
     // Bofang Process
     class_< DamBofangConditionTemperatureProcess, bases< Process >, boost::noncopyable > ( "DamBofangConditionTemperatureProcess",
         init < ModelPart&, Parameters&>());
@@ -71,6 +77,12 @@ void  AddCustomProcessesToPython()
     class_< DamNodalYoungModulusProcess, bases< Process >, boost::noncopyable > ( "DamNodalYoungModulusProcess",
         init < ModelPart&, Parameters&>());
 
+    class_< DamInputTableNodalYoungModulusProcess, bases< Process >, boost::noncopyable > ( "DamInputTableNodalYoungModulusProcess",
+        init < ModelPart&, TableType&, Parameters&>());
+    
+    class_< DamListTableNodalYoungModulusProcess, bases< Process >, boost::noncopyable > ( "DamListTableNodalYoungModulusProcess",
+        init < ModelPart&, TableType&, Parameters&>());
+
     // Chemo Mechanical Aging Young Modulus Process     
     class_< DamChemoMechanicalAgingYoungProcess, bases< Process >, boost::noncopyable > ( "DamChemoMechanicalAgingYoungProcess",
         init < ModelPart&, Parameters&>());
@@ -81,6 +93,10 @@ void  AddCustomProcessesToPython()
 
     //Temperature by device     
     class_< DamTemperaturebyDeviceProcess, bases< Process >, boost::noncopyable > ( "DamTemperaturebyDeviceProcess",
+        init < ModelPart&, Parameters&>());
+
+    //Apply force by spatial position     
+        class_< DamApplyForceBySpatialPositionProcess, bases< Process >, boost::noncopyable > ( "DamApplyForceBySpatialPositionProcess",
         init < ModelPart&, Parameters&>());
 
     // Heat Flux by t_sol_air      
