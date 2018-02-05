@@ -68,6 +68,8 @@ namespace Kratos
 
 		void CalculateOnIntegrationPoints(const Variable<Vector>& rVariable, std::vector<Vector>& rOutput, const ProcessInfo& rCurrentProcessInfo);
 		void CalculateOnIntegrationPoints(const Variable<double>& rVariable, std::vector<double>& rOutput, const ProcessInfo& rCurrentProcessInfo);
+		void CalculateOnIntegrationPoints(const Variable<Matrix >& rVariable, std::vector< Matrix >& rOutput, const ProcessInfo& rCurrentProcessInfo);
+
 		void CalculateLocalSystem
 			(MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector,
 				ProcessInfo& rCurrentProcessInfo);
@@ -79,6 +81,10 @@ namespace Kratos
 
 		void GetValueOnIntegrationPoints(const Variable<Vector>& rVariable,
 			std::vector<Vector>& rValues,
+			const ProcessInfo& rCurrentProcessInfo);
+
+		void GetValueOnIntegrationPoints(const Variable<Matrix>& rVariable,
+			std::vector<Matrix>& rValues,
 			const ProcessInfo& rCurrentProcessInfo);
 
 		void Get2MaxValues(Vector& MaxValues, double a, double b, double c);

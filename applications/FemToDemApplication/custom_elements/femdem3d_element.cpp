@@ -517,6 +517,7 @@ namespace Kratos
 		}
 	}
 
+	// Double values
 	void FemDem3DElement::GetValueOnIntegrationPoints(const Variable<double>& rVariable, std::vector<double>& rValues,
 		const ProcessInfo& rCurrentProcessInfo)
 	{
@@ -528,6 +529,7 @@ namespace Kratos
 		
 	}
 
+	// Vector Values
 	void FemDem3DElement::GetValueOnIntegrationPoints(const Variable<Vector>& rVariable,
 		std::vector<Vector>& rValues,
 		const ProcessInfo& rCurrentProcessInfo)
@@ -548,43 +550,29 @@ namespace Kratos
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
 
-		const unsigned int& integration_points_number = mConstitutiveLawVector.size();
+		
+	}
 
-		if (rValues.size() != integration_points_number)
-			rValues.resize(integration_points_number);
+	// Tensor variables
+	void FemDem3DElement::GetValueOnIntegrationPoints( const Variable<Matrix>& rVariable,
+		std::vector<Matrix>& rValues,
+		const ProcessInfo& rCurrentProcessInfo )
 
-
-		if (rVariable == PK2_STRESS_TENSOR || rVariable == CAUCHY_STRESS_TENSOR)
+	{
+		if (rVariable == STRAIN_TENSOR)
 		{
-
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-
 		}
-		else if (rVariable == PK2_STRESS_VECTOR || rVariable == CAUCHY_STRESS_VECTOR)
-		{
 
+		if (rVariable == STRESS_TENSOR)
+		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-
 		}
-		else if (rVariable == GREEN_LAGRANGE_STRAIN_TENSOR || rVariable == ALMANSI_STRAIN_TENSOR)
-		{
 
+		if (rVariable == STRESS_TENSOR_INTEGRATED)
+		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-
 		}
-		else
-		{
-
-			for (unsigned int PointNumber = 0; PointNumber < integration_points_number; PointNumber++)
-			{
-				rValues[PointNumber] = mConstitutiveLawVector[PointNumber]->GetValue(rVariable, rValues[PointNumber]);
-			}
-
-		}
-		/*if (rVariable == SMOOTHED_STRESS_VECTOR)
-		{
-			rValues[0] = this->GetValue(SMOOTHED_STRESS_VECTOR);
-		}*/
 	}
 
 	// DOUBLE VARIABLES
@@ -616,7 +604,7 @@ namespace Kratos
 		}
 	}
 
-	// VECTOR VARIABLES
+	// 	VECTOR VARIABLES
 	void FemDem3DElement::CalculateOnIntegrationPoints(const Variable<Vector>& rVariable, std::vector<Vector>& rOutput, const ProcessInfo& rCurrentProcessInfo)
 	{
 
@@ -635,83 +623,39 @@ namespace Kratos
 		if (rVariable == STRESS_VECTOR_INTEGRATED)
 		{
 			rOutput[0] = this->GetIntegratedStressVector();
-			//rOutput[0] = this->GetValue(STRESS_VECTOR_INTEGRATED);
-		}
-
-		const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber(mThisIntegrationMethod);
-
-		if (rOutput.size() != integration_points_number)
-			rOutput.resize(integration_points_number);
-
-		// if (rVariable == CAUCHY_STRESS_VECTOR || rVariable == PK2_STRESS_VECTOR)
-		// {
-		// 	//create and initialize element variables:
-		// 	ElementVariables Variables;
-		// 	this->InitializeElementVariables(Variables, rCurrentProcessInfo);
-
-		// 	//create constitutive law parameters:
-		// 	ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
-
-		// 	//set constitutive law flags:
-		// 	Flags &ConstitutiveLawOptions = Values.GetOptions();
-
-		// 	ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
-
-
-		// 	//reading integration points
-		// 	for (unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++)
-		// 	{
-		// 		//compute element kinematics B, F, DN_DX ...
-		// 		this->CalculateKinematics(Variables, PointNumber);
-
-		// 		//set general variables to constitutivelaw parameters
-		// 		this->SetGeneralVariables(Variables, Values, PointNumber);
-
-		// 		//call the constitutive law to update material variables
-		// 		if (rVariable == CAUCHY_STRESS_VECTOR)
-		// 			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);
-		// 		else
-		// 			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponsePK2(Values);
-
-		// 		if (rOutput[PointNumber].size() != Variables.StressVector.size())
-		// 			rOutput[PointNumber].resize(Variables.StressVector.size(), false);
-
-		// 		rOutput[PointNumber] = Variables.StressVector;
-
-		// 	}
-
-		// }
-		else if (rVariable == GREEN_LAGRANGE_STRAIN_VECTOR || rVariable == ALMANSI_STRAIN_VECTOR)
-		{
-			//create and initialize element variables:
-			ElementVariables Variables;
-			this->InitializeElementVariables(Variables, rCurrentProcessInfo);
-
-			//reading integration points
-			for (unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++)
-			{
-				//compute element kinematics B, F, DN_DX ...
-				this->CalculateKinematics(Variables, PointNumber);
-
-				if (rOutput[PointNumber].size() != Variables.StrainVector.size())
-					rOutput[PointNumber].resize(Variables.StrainVector.size(), false);
-
-				rOutput[PointNumber] = Variables.StrainVector;
-
-			}
-
-		}
-		else
-		{
-			for (unsigned int ii = 0; ii < mConstitutiveLawVector.size(); ii++)
-			{
-				rOutput[ii] = mConstitutiveLawVector[ii]->GetValue(rVariable, rOutput[ii]);
-			}
 		}
 
 		KRATOS_CATCH("")
 		
 	}
+
+
+	// 	TENSOR VARIABLES
+	void FemDem3DElement::CalculateOnIntegrationPoints(const Variable<Matrix >& rVariable, std::vector< Matrix >& rOutput, const ProcessInfo& rCurrentProcessInfo)
+	{
+    	const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber( mThisIntegrationMethod );
+    	const unsigned int dimension       = GetGeometry().WorkingSpaceDimension();
+
+        if ( rOutput[0].size2() != dimension )
+            rOutput[0].resize( dimension, dimension, false );
+
+		if (rVariable == STRESS_TENSOR)
+		{
+			rOutput[0] = MathUtils<double>::StressVectorToTensor(this->GetValue(STRESS_VECTOR));
+		}
+
+		if (rVariable == STRAIN_TENSOR)
+		{
+			rOutput[0] =  MathUtils<double>::StrainVectorToTensor(this->GetValue(STRAIN_VECTOR));
+		}
+
+		if (rVariable == STRESS_TENSOR_INTEGRATED)
+		{
+			rOutput[0] =  MathUtils<double>::StressVectorToTensor(this->GetIntegratedStressVector());
+		}
+
+	}
+
 
 	double FemDem3DElement::CalculateLchar(FemDem3DElement* CurrentElement, const Element& NeibElement, int cont)
 	{
@@ -733,21 +677,9 @@ namespace Kratos
 					Xcoord[aux] = NodesElem1[cont].X0();
 					Ycoord[aux] = NodesElem1[cont].Y0();
 					aux++;                              // aux > 3 if the two elements are the same one (in fact aux == 9)
-
-
-					//if (this->Id() == 10792)
-					//{	
-					//	KRATOS_WATCH(NodesElem1[cont].Id())
-					//	KRATOS_WATCH(NodesElem1[cont].X0())
-					//	KRATOS_WATCH(NodesElem1[cont].Y0())
-		
-					//} 
 				}
 			}
 		} // End finding nodes
-
-		//if (aux < 2) { std::cout << " Something wrong with the elements " << std::endl; }        // Must have at least 2 shared nodes
-		//double length = 0;
 
 		// Computation of the l_char
 		if (aux < 3) 
@@ -759,13 +691,6 @@ namespace Kratos
 		{ 
 			double ElementArea = abs(this->GetGeometry().Area());
 			l_char = sqrt(4 * ElementArea / sqrt(3));   // Cervera's Formula
-
-			// if (this->Id() == 10792)
-			// {
-			// 	KRATOS_WATCH(ElementArea)
-			// 	KRATOS_WATCH(l_char)
-
-			// } 
 			
 		} // l_char computed
 
