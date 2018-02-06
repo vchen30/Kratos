@@ -409,7 +409,7 @@ class ALMContactProcess(python_process.PythonProcess):
         #raise NameError("DEBUG")
 
     def _write_contact_stress(self):
-        file = open("stresses.txt","w") 
+        file = open("stresses_"+str(self.database_step)+".txt","w") 
         computing_model_part = self.main_model_part.GetSubModelPart(self.computing_model_part_name)
         interface_model_part = computing_model_part.GetSubModelPart("Contact")
         for node in interface_model_part.Nodes:

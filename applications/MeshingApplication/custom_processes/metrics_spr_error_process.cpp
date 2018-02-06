@@ -16,7 +16,7 @@
 namespace Kratos
 {
 template<unsigned int TDim> 
-ComputeSPRErrorSolMetricProcess<TDim>::ComputeSPRErrorSolMetricProcess(
+SPRMetricProcess<TDim>::SPRMetricProcess(
     ModelPart& rThisModelPart,
     Parameters ThisParameters
     )
@@ -31,7 +31,8 @@ ComputeSPRErrorSolMetricProcess<TDim>::ComputeSPRErrorSolMetricProcess(
         "penalty_tangential"                  : 10000.0,
         "echo_level"                          : 0,
         "set_number_of_elements"              : false,
-        "number_of_elements"                  : 1000
+        "number_of_elements"                  : 1000,
+        "average_nodal_h"                     : false
     })" 
     );
     
@@ -46,24 +47,16 @@ ComputeSPRErrorSolMetricProcess<TDim>::ComputeSPRErrorSolMetricProcess(
     mSetElementNumber = ThisParameters["set_number_of_elements"].GetBool();
     mElementNumber = ThisParameters["number_of_elements"].GetInt();
     mTargetError = ThisParameters["error"].GetDouble();
+    mAverageNodalH = ThisParameters["average_nodal_h"].GetBool();
 }
     
 /***********************************************************************************/
 /***********************************************************************************/
     
 template<unsigned int TDim> 
-void ComputeSPRErrorSolMetricProcess<TDim>::Execute()
+void SPRMetricProcess<TDim>::Execute()
 {
-    const double error =SuperconvergentPatchRecovery();
-    mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE] = error;
-}
 
-/***********************************************************************************/
-/***********************************************************************************/
-
-template<unsigned int TDim> 
-double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
-{
     /************************************************************************
     --1-- calculate superconvergent stresses (at the nodes) --1--
     ************************************************************************/
@@ -112,7 +105,6 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
             }
             
             it_node->SetValue(RECOVERED_STRESS,sigma_recovered);
-            
             if(mEchoLevel > 2)
                 std::cout << "Recovered sigma: " << sigma_recovered << std::endl;
         }
@@ -134,7 +126,7 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
         std::vector<double> error_integration_point;
         auto& process_info = mThisModelPart.GetProcessInfo();
         it_elem->GetValueOnIntegrationPoints(ERROR_INTEGRATION_POINT, error_integration_point, process_info);
-        
+        //std::cout<<"Error:"<<error_integration_point<<std::endl;
         double error_energy_norm = 0.0;
         for(unsigned int i = 0;i < error_integration_point.size();++i)
             error_energy_norm += error_integration_point[i];
@@ -180,6 +172,7 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
         new_element_size = it_elem->GetValue(ELEMENT_H)/it_elem->GetValue(ELEMENT_ERROR);
 
         // if a target number for elements is given: use this, else: use current element number
+        //if(mSetElementNumber == true && mElementNumber<mThisModelPart.Elements().size())
         if(mSetElementNumber == true)
         new_element_size *= std::sqrt((std::pow(energy_norm_overall, 2)+ std::pow(error_overall, 2))/mElementNumber) * mTargetError;
         else
@@ -192,6 +185,7 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
         if(new_element_size > mMaxSize)
             new_element_size = mMaxSize;
 
+        
         it_elem->SetValue(ELEMENT_H, new_element_size);
     }
 
@@ -201,14 +195,23 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
 
     for(int i_node = 0; i_node < num_nodes; ++i_node) {
         auto it_node = nodes_array.begin() + i_node;
-        
-        // Get maximal element size from neighboring elements
+        /**************************************************************************
+        ** Determine nodal element size h:
+        ** if average_nodal_h == true : the nodal element size is averaged from the element size of neighboring elements
+        ** if average_nodal_h == false: the nodal element size is the minimum element size from neighboring elements
+        */
         double h_min = 0.0;
         auto& neigh_elements = it_node->GetValue(NEIGHBOUR_ELEMENTS);
         for(WeakElementItType i_neighbour_elements = neigh_elements.begin(); i_neighbour_elements != neigh_elements.end(); i_neighbour_elements++){
             const double element_h = i_neighbour_elements->GetValue(ELEMENT_H);
-            if(h_min == 0.0 || h_min > element_h) h_min = element_h;
+            if(mAverageNodalH == false){
+                if(h_min == 0.0 || h_min > element_h) h_min = element_h;
+            }
+            else
+                h_min += element_h;
         }
+        if(mAverageNodalH == true)
+        h_min = h_min/double(neigh_elements.size());
 
         // Set metric
         Matrix metric_matrix(TDim, TDim, 0.0);
@@ -223,14 +226,14 @@ double ComputeSPRErrorSolMetricProcess<TDim>::SuperconvergentPatchRecovery()
             std::cout<<"Node "<<it_node->Id()<<" has metric: "<<it_node->GetValue(MMG_METRIC)<<std::endl;
     }
     
-    return error_overall/std::pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
+    mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE] = error_overall/std::pow((error_overall*error_overall+energy_norm_overall*energy_norm_overall),0.5);
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
 template<unsigned int TDim> 
-void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatch(
+void SPRMetricProcess<TDim>::CalculatePatch(
     NodeItType itNode,
     NodeItType itPatchNode,
     unsigned int NeighbourSize,
@@ -261,7 +264,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatch(
 /***********************************************************************************/
     
 template<unsigned int TDim> 
-void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchStandard(
+void SPRMetricProcess<TDim>::CalculatePatchStandard(
     NodeItType itNode,
     NodeItType itPatchNode,
     unsigned int NeighbourSize,
@@ -304,6 +307,15 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchStandard(
     //std::cout <<A<<std::endl;
     //std::cout <<invA<<std::endl;
     //std::cout << det<< std::endl;
+    if(det<1e-10){
+        //std::cout<<A<<std::endl;
+        for( int i=0; i<TDim+1;i++){
+            for( int j=0; j<TDim+1; j++)
+                A(i,j)+= 0.001;
+        }
+        MathUtils<double>::InvertMatrix(A,invA,det);
+        std::cout <<"det: "<< det<< std::endl;
+    }
 
     Matrix coeff(TDim+1,mSigmaSize);
     coeff = prod(invA,b);
@@ -325,7 +337,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchStandard(
 /***********************************************************************************/
 
 template<unsigned int TDim> 
-void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchContact(
+void SPRMetricProcess<TDim>::CalculatePatchContact(
     NodeItType itNode,
     NodeItType itPatchNode,
     unsigned int NeighbourSize,
@@ -548,7 +560,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::CalculatePatchContact(
 /***********************************************************************************/
 
 template<unsigned int TDim> 
-void ComputeSPRErrorSolMetricProcess<TDim>::ComputeElementSize(ElementItType itElement){
+void SPRMetricProcess<TDim>::ComputeElementSize(ElementItType itElement){
 
     auto& this_geometry = itElement->GetGeometry(); 
     
@@ -566,7 +578,7 @@ void ComputeSPRErrorSolMetricProcess<TDim>::ComputeElementSize(ElementItType itE
 /***********************************************************************************/
 /***********************************************************************************/
 
-template class ComputeSPRErrorSolMetricProcess<2>;
-template class ComputeSPRErrorSolMetricProcess<3>;
+template class SPRMetricProcess<2>;
+template class SPRMetricProcess<3>;
 
 };// namespace Kratos.

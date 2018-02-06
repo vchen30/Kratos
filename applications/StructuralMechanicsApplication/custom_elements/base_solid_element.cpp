@@ -651,7 +651,9 @@ namespace Kratos
                 //calculate error_sigma
                 Vector error_sigma(strain_size);
                 error_sigma = sigma_recovered - sigma_FE_solution[point_number];
-
+                //std::cout<<"sigma recovered: "<<sigma_recovered<<std::endl;
+                //std::cout<<"sigma FE: "<<sigma_FE_solution[point_number]<<std::endl;
+        
                 //calculate inverse of material matrix
                 Matrix invD(strain_size,strain_size);
                 double detD;
@@ -1143,6 +1145,12 @@ namespace Kratos
         const ProcessInfo& rCurrentProcessInfo 
         )
     {
+        const unsigned int& size = GetGeometry().IntegrationPoints(  ).size();
+
+        if ( rValues.size() != size )
+        {
+            rValues.resize( size );
+        }
         CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
     }
 

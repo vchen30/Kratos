@@ -117,14 +117,14 @@ void  AddProcessesToPython()
         ;
         
         //SPR_ERROR
-        class_<ComputeSPRErrorSolMetricProcess<2>, bases<Process> >("ComputeSPRErrorSolMetricProcess2D", init<ModelPart&>())
+        class_<SPRMetricProcess<2>, bases<Process> >("SPRMetricProcess2D", init<ModelPart&>())
         .def(init<ModelPart&, Parameters>())
-        .def("Execute",&ComputeSPRErrorSolMetricProcess<2>::Execute)
+        .def("Execute",&SPRMetricProcess<2>::Execute)
         ;
    
-        class_<ComputeSPRErrorSolMetricProcess<3>, bases<Process> >("ComputeSPRErrorSolMetricProcess3D", init<ModelPart&>())
+        class_<SPRMetricProcess<3>, bases<Process> >("SPRMetricProcess3D", init<ModelPart&>())
         .def(init<ModelPart&, Parameters>())
-        .def("Execute",&ComputeSPRErrorSolMetricProcess<3>::Execute)
+        .def("Execute",&SPRMetricProcess<3>::Execute)
         ;
         
 

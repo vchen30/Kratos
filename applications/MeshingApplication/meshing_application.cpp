@@ -41,7 +41,8 @@ KRATOS_CREATE_VARIABLE(double, ANISOTROPIC_RATIO);   // The anisotropic aspect r
 KRATOS_CREATE_VARIABLE(Vector3, AUXILIAR_GRADIENT);  // An auxiliar gradient needed to compute the metric
 KRATOS_CREATE_VARIABLE(Vector,  AUXILIAR_HESSIAN);   // An auxiliar hessian needed to compute the metric
 KRATOS_CREATE_VARIABLE(double, ERROR_ESTIMATE);      // The nodal error estimate calculated by superconvergent patch recovery
-
+KRATOS_CREATE_VARIABLE(bool, EXECUTE_REMESHING);   // Variable which determines if the remeshing loop is left
+  
 KratosMeshingApplication::KratosMeshingApplication():
     mTestElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mTestElement3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
@@ -60,6 +61,7 @@ void KratosMeshingApplication::Register()
     KRATOS_REGISTER_VARIABLE(AUXILIAR_GRADIENT);    // An auxiliar gradient needed to compute the metric
     KRATOS_REGISTER_VARIABLE(AUXILIAR_HESSIAN);     // An auxiliar hessian needed to compute the metric
     KRATOS_REGISTER_VARIABLE(ERROR_ESTIMATE);       // The nodal error estimate calculated by superconvergent patch recovery
+    KRATOS_REGISTER_VARIABLE(EXECUTE_REMESHING);    // Variable which determines if the remeshing loop is left
     KRATOS_REGISTER_ELEMENT("TestElement2D", mTestElement2D);
     KRATOS_REGISTER_ELEMENT("TestElement3D", mTestElement3D);
     //KRATOS_REGISTER_VARIABLE( WEIGHT_FATHER_NODES )

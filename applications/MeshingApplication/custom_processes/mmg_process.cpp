@@ -600,6 +600,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
                 
                 cond_id += 1;
             }
+            
         }
         
         unsigned int counter_cond_1 = 0;
@@ -697,7 +698,7 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             {      
                 ModelPart& r_sub_model_part = mrThisModelPart.GetSubModelPart(sub_model_part_name);
                 
-                if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
+                //if (color_nodes.find(key) != color_nodes.end()) r_sub_model_part.AddNodes(color_nodes[key]);
                 if (color_cond_0.find(key) != color_cond_0.end()) r_sub_model_part.AddConditions(color_cond_0[key]);
                 if (color_cond_1.find(key) != color_cond_1.end()) r_sub_model_part.AddConditions(color_cond_1[key]);
                 if (color_elem_0.find(key) != color_elem_0.end()) r_sub_model_part.AddElements(color_elem_0[key]);
@@ -802,7 +803,8 @@ void MmgProcess<TDim>::ExecuteRemeshing()
             auto it_node = nodes_array.begin() + i;
 
             noalias(it_node->Coordinates())  = it_node->GetInitialPosition().Coordinates();
-            noalias(it_node->Coordinates()) += it_node->FastGetSolutionStepValue(DISPLACEMENT, step);
+            //if (step != 1)
+            //    noalias(it_node->Coordinates()) += it_node->FastGetSolutionStepValue(DISPLACEMENT, step-1);
         }
         
         /* We interpolate the internal variables */
@@ -1324,7 +1326,9 @@ ConditionType::Pointer MmgProcess<3>::CreateCondition0(
         condition_nodes[1] = mrThisModelPart.pGetNode(vertex_1);
         condition_nodes[2] = mrThisModelPart.pGetNode(vertex_2);
         
-        p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
+        if(mpRefCondition.count(PropId)==1)
+            p_condition = mpRefCondition[PropId]->Create(CondId, condition_nodes, mpRefCondition[PropId]->pGetProperties());
+        
     }
 #ifdef KRATOS_DEBUG 
     else if (mEchoLevel > 2)

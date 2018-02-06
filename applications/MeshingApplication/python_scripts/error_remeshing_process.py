@@ -33,6 +33,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
                 "error_threshold"                       : 0.05,
                 "interpolation_error"                   : 0.04
             },
+            "average_nodal_h"                  : false,
             "fix_contour_model_parts"          : [],
             "minimal_size"                     : 0.01,
             "maximal_size"                     : 10.0,
@@ -42,7 +43,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
             "debug_mode"                       : false,
             "echo_level"                       : 3,
             "set_number_of_elements"              : false,
-            "number_of_elements"                  : 1000
+            "number_of_elements"                  : 1000,
+            "max_iterations"                      : 3
         }
         """)
 
@@ -58,6 +60,8 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         
         self.error_threshold = self.params["error_parameters"]["error_threshold"].GetDouble()
         self.estimated_error = 0
+        self.remeshing_cycle = 0
+        self.main_model_part.ProcessInfo[MeshingApplication.EXECUTE_REMESHING] = True
 
     def ExecuteInitialize(self):
         # NOTE: Add more model part if interested
@@ -98,14 +102,16 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
              
     def ExecuteFinalizeSolutionStep(self):
         self.__error_calculation()
-        if (self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE] > self.error_threshold):
-            self.__execute_refinement()
 
     def ExecuteBeforeOutputStep(self):
         pass
 
     def ExecuteAfterOutputStep(self):
-        pass
+        if (self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE] > self.error_threshold):
+            self.__execute_refinement()
+        self.remeshing_cycle += 1
+        if (self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE] <= self.error_threshold or self.remeshing_cycle > self.params["max_iterations"].GetInt()):
+            self.main_model_part.ProcessInfo[MeshingApplication.EXECUTE_REMESHING] = False
 
     def ExecuteFinalize(self):
         pass
@@ -118,13 +124,14 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         spr_parameters.AddValue("echo_level", self.params["echo_level"])
         spr_parameters.AddValue("set_number_of_elements", self.params["set_number_of_elements"])
         spr_parameters.AddValue("number_of_elements", self.params["number_of_elements"])
+        spr_parameters.AddValue("average_nodal_h", self.params["average_nodal_h"])
             
         if (self.dim == 2):
-            self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess2D(
+            self.metric_process = MeshingApplication.SPRMetricProcess2D(
                 self.main_model_part, 
                 spr_parameters)
         else:
-            self.metric_process = MeshingApplication.ComputeSPRErrorSolMetricProcess3D(
+            self.metric_process = MeshingApplication.SPRMetricProcess3D(
                 self.main_model_part, 
                 spr_parameters)                     
 
@@ -139,7 +146,6 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
 
         # We need to set that the model part has been modified (later on we will act in consequence)
         self.main_model_part.Set(KratosMultiphysics.MODIFIED, True)
-
         print("Remesh finished")
 
     def __error_calculation(self):
@@ -151,6 +157,7 @@ class ErrorRemeshingProcess(KratosMultiphysics.Process):
         # Execute metric computation
         self.metric_process.Execute()
         self.estimated_error = self.main_model_part.ProcessInfo[MeshingApplication.ERROR_ESTIMATE]
+        
         
     def __generate_submodelparts_list_from_input(self, param):
         '''Parse a list of variables from input.'''

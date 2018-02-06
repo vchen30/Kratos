@@ -55,7 +55,7 @@ namespace Kratos
 
 //// This class is can be used to compute the metrics of the model part with a superconvergent patch recovery approach
 template<unsigned int TDim> 
-class ComputeSPRErrorSolMetricProcess
+class SPRMetricProcess
     : public Process
 {
 public:
@@ -63,8 +63,8 @@ public:
     ///@name Type Definitions
     ///@{
     
-    /// Pointer definition of ComputeSPRErrorSolMetricProcess
-    KRATOS_CLASS_POINTER_DEFINITION(ComputeSPRErrorSolMetricProcess);
+    /// Pointer definition of SPRMetricProcess
+    KRATOS_CLASS_POINTER_DEFINITION(SPRMetricProcess);
     
     ///@}
     ///@name Life Cycle
@@ -78,13 +78,13 @@ public:
      * @param ThisParameters: The input parameters
      */
     
-    ComputeSPRErrorSolMetricProcess(
+    SPRMetricProcess(
         ModelPart& rThisModelPart,
         Parameters ThisParameters = Parameters(R"({})")
         );
     
     /// Destructor.
-    virtual ~ComputeSPRErrorSolMetricProcess() {}
+    virtual ~SPRMetricProcess() {}
     
     ///@}
     ///@name Operators
@@ -122,13 +122,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        return "ComputeSPRErrorSolMetricProcess";
+        return "SPRMetricProcess";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream& rOStream) const
     {
-        rOStream << "ComputeSPRErrorSolMetricProcess";
+        rOStream << "SPRMetricProcess";
     }
 
     /// Print object"s data.
@@ -191,6 +191,7 @@ private:
     bool mSetElementNumber;                  // Determines if a target number of elements for the new mesh is set
     unsigned int mElementNumber;             // The target number of elements for the new mesh
     double mTargetError;                     // The overall target error for the new mesh
+    bool mAverageNodalH;                     // Determines if the nodal h is averaged from the surrounding elements or if the lowest value is taken
     
     ///@}
     ///@name Private Operators
@@ -258,15 +259,15 @@ private:
     ///@{
     
     /// Assignment operator.
-    ComputeSPRErrorSolMetricProcess& operator=(ComputeSPRErrorSolMetricProcess const& rOther)
+    SPRMetricProcess& operator=(SPRMetricProcess const& rOther)
     {
         return *this;
     };
 
     /// Copy constructor.
-    //ComputeSPRErrorSolMetricProcess(ComputeSPRErrorSolMetricProcess const& rOther);
+    //SPRMetricProcess(SPRMetricProcess const& rOther);
 
-};// class ComputeSPRErrorSolMetricProcess
+};// class SPRMetricProcess
 
 };// namespace Kratos.
 #endif /* KRATOS_SPR_ERROR_METRICS_PROCESS defined */

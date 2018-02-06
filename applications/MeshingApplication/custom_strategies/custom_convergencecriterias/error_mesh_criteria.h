@@ -277,7 +277,7 @@ public:
         {
             MetricFastInit<2> MetricInit = MetricFastInit<2>(mThisModelPart);
             MetricInit.Execute();           
-            ComputeSPRErrorSolMetricProcess<2> ComputeMetric = ComputeSPRErrorSolMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+            SPRMetricProcess<2> ComputeMetric = SPRMetricProcess<2>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
             ComputeMetric.Execute();
             estimated_error = mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE];
         }
@@ -285,7 +285,7 @@ public:
         {
             MetricFastInit<3> MetricInit = MetricFastInit<3>(mThisModelPart);
             MetricInit.Execute();
-            ComputeSPRErrorSolMetricProcess<3> ComputeMetric = ComputeSPRErrorSolMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
+            SPRMetricProcess<3> ComputeMetric = SPRMetricProcess<3>(mThisModelPart, mThisParameters["error_strategy_parameters"]);
             ComputeMetric.Execute();
             estimated_error = mThisModelPart.GetProcessInfo()[ERROR_ESTIMATE];
         }
