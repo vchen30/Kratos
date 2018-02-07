@@ -89,7 +89,7 @@ class FEM_for_coupling_Solution(MainFemDem.FEM_Solution):
 		###   ------  Initializing Adaptive Mesh Refinement  ----------####
 		self.cleaning_util = cleaning_utility.CleaningUtility(self.problem_path)
 
-		self.gid_output_util = gid_output_utility.GidOutputUtility(self.ProjectParameters,
+		"""self.gid_output_util = gid_output_utility.GidOutputUtility(self.ProjectParameters,
 			                                                       self.problem_name,
 			                                                       self.start_time,
 			                                                       self.end_time,
@@ -100,7 +100,7 @@ class FEM_for_coupling_Solution(MainFemDem.FEM_Solution):
 
 
 
-		self.activate_AMR = self.ProjectParameters["AMR_data"]["activate_AMR"].GetBool()
+		#self.activate_AMR = self.ProjectParameters["AMR_data"]["activate_AMR"].GetBool()
 		self.current_id = 1
 
 
@@ -114,3 +114,4 @@ class FEM_for_coupling_Solution(MainFemDem.FEM_Solution):
 				                                                                           self.conditions_util,
 				                                                                           self.problem_path)
 			self.activate_AMR = self.AMR_util.Initialize() # check the amr criteria
+			"""

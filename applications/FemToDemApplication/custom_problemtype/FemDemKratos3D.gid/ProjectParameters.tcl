@@ -87,8 +87,10 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     AppendGroupNames PutStrings Face_Load
     # Normal_Load
     AppendGroupNames PutStrings Normal_Load
-    # Body_Acceleration
-    AppendGroupNames PutStrings Body_Acceleration
+    # Surf_Load
+    AppendGroupNames PutStrings Surf_Load
+    # Pressure_Load
+    AppendGroupNames PutStrings Pressure_Load
 
     set PutStrings [string trimright $PutStrings ,]
     append PutStrings \]
@@ -109,6 +111,7 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     set Groups [GiD_Info conditions Solid_Displacement groups]
     WriteConstraintVectorProcess FileVar iGroup $Groups lines DISPLACEMENT $TableDict $NumGroups
     WriteConstraintVectorProcess FileVar iGroup $Groups points DISPLACEMENT $TableDict $NumGroups
+    WriteConstraintVectorProcess FileVar iGroup $Groups surfaces DISPLACEMENT $TableDict $NumGroups
 
     ## loads_process_list
     set Groups [GiD_Info conditions Force groups]
@@ -118,6 +121,10 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     set Groups [GiD_Info conditions Normal_Load groups]
     incr NumGroups [llength $Groups]
     set Groups [GiD_Info conditions Body_Acceleration groups]
+    incr NumGroups [llength $Groups]
+    set Groups [GiD_Info conditions Surf_Load groups]
+    incr NumGroups [llength $Groups]
+    set Groups [GiD_Info conditions Pressure_Load groups]
     incr NumGroups [llength $Groups]
 
     if {$NumGroups > 0} {
@@ -137,6 +144,14 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
         # Body_Acceleration
         set Groups [GiD_Info conditions Body_Acceleration groups]
         WriteGLoadVectorProcess FileVar iGroup $Groups VOLUME_ACCELERATION $TableDict $NumGroups
+
+        # Surf_Load
+        set Groups [GiD_Info conditions Surf_Load groups]
+        WriteLoadVectorProcess FileVar iGroup $Groups SURFACE_LOAD $TableDict $NumGroups
+
+        # Pressure_Load
+        set Groups [GiD_Info conditions Pressure_Load groups]
+        WriteNormalLoadProcess FileVar iGroup $Groups POSITIVE_FACE_PRESSURE $TableDict $NumGroups
     } else {
         puts $FileVar "    \"loads_process_list\":       \[\],"
     }
@@ -182,10 +197,10 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     # gauss_point_results
     set PutStrings \[
     set iGroup 0
-    AppendOutputVariables PutStrings iGroup Write_Strain STRAIN_VECTOR
+    AppendOutputVariables PutStrings iGroup Write_Strain STRAIN_TENSOR
     #AppendOutputVariables PutStrings iGroup Write_Predictive_Stress CAUCHY_STRESS_TENSOR
-    AppendOutputVariables PutStrings iGroup Write_Predictive_Stress STRESS_VECTOR
-    AppendOutputVariables PutStrings iGroup Write_Integrated_Stress STRESS_VECTOR_INTEGRATED
+    AppendOutputVariables PutStrings iGroup Write_Predictive_Stress STRESS_TENSOR
+    AppendOutputVariables PutStrings iGroup Write_Integrated_Stress STRESS_TENSOR_INTEGRATED
     AppendOutputVariables PutStrings iGroup Write_Damage DAMAGE_ELEMENT
     AppendOutputVariables PutStrings iGroup Write_Is_Damaged IS_DAMAGED
     AppendOutputVariables PutStrings iGroup Stress_Threshold STRESS_THRESHOLD
@@ -213,7 +228,7 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     puts $FileVar "        \"incremental_displacement\":        false"
     puts $FileVar "    \},"
 
-    #print the two lists to plot the displ-reaction
+    # print the two lists to plot the displ-reaction
     set Groups [GiD_Info conditions list_of_nodes_displacement groups]
     set Entities [GiD_EntitiesGroups get [lindex [lindex $Groups 0] 1] nodes]
     set MyString \[
@@ -245,6 +260,8 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     puts $FileVar "    \"interval_of_watching\"  :      0.0,"
     puts $FileVar "    \"watch_nodes_list\"      :      \[\],"
     puts $FileVar "    \"watch_elements_list\"   :      \[\],"
+
+
 
     # list of initial skin DEM's
     set DEMGroups [GiD_Info conditions Initial_DEM_Part groups]

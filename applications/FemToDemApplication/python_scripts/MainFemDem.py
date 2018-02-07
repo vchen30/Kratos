@@ -234,7 +234,6 @@ class FEM_Solution(MainSolidFEM.Solution):
 		self.activate_AMR = self.ProjectParameters["AMR_data"]["activate_AMR"].GetBool()
 		self.current_id = 1
 
-
 		# Initialize the AMR_util
 		if(self.activate_AMR):
 			self.AMR_util = adaptive_mesh_refinement_utility.AdaptiveMeshRefinementUtility(self.ProjectParameters,

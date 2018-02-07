@@ -13,7 +13,7 @@ def Wait():
 	input("Press Something")
 
 
-# Main script of the coupled FEM-DEM Application
+# Main script of the coupled FEM-DEM Application 2D
 class FEMDEM_Solution:
 #============================================================================================================================
 	def __init__(self):

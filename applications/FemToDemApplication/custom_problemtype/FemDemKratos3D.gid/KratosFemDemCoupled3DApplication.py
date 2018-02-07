@@ -1,6 +1,6 @@
 import KratosMultiphysics
 import KratosMultiphysics.SolidMechanicsApplication
 import KratosMultiphysics.FemToDemApplication
-import MainFemDem
+import CouplingFemDem3D
 
-MainFemDem.FEM_Solution().Run()
+CouplingFemDem3D.FEMDEM3D_Solution().Run()

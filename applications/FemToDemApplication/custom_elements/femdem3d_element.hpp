@@ -168,8 +168,8 @@ namespace Kratos
 		double Get_l_char(int cont) { return mL_char[cont]; }
 		double CalculateLchar(FemDem3DElement* CurrentElement, const Element& NeibElement, int cont);
 
-		void   SetJ(double af) { mJac = af; }
-		double GetJ() { return mJac; }
+		//void   SetJ(double af) { mJac = af; }
+		//double GetJ() { return mJac; }
 
 		// Auxiliar functions...
 		void IterationPlus() { iteration++; }
@@ -202,8 +202,30 @@ namespace Kratos
 
 		void CalculateDeformationMatrix(Matrix& rB, const Matrix& rDN_DX);
 
-		void SetIntegrationCoefficient(double tomIntegrationCoefficient){ mIntegrationCoefficient = tomIntegrationCoefficient;}
-		double GetIntegrationCoefficient(){ return mIntegrationCoefficient; }
+		//void SetIntegrationCoefficient(double tomIntegrationCoefficient){ mIntegrationCoefficient = tomIntegrationCoefficient;}
+		//double GetIntegrationCoefficient(){ return mIntegrationCoefficient; }
+
+		// Fills mEdgeNeighboursContainer
+		void ComputeEdgeNeighbours(ProcessInfo& rCurrentProcessInfo);
+
+		// Storages mEdgeNeighboursContainer
+		void SaveEdgeNeighboursContainer(std::vector <std::vector<Element*>> toSave) {mEdgeNeighboursContainer = toSave;}
+
+		void SetNodeIndexes(Matrix& M)
+		{
+			M(0,0) = 0;
+			M(0,1) = 1;
+			M(1,0) = 0;
+			M(1,1) = 2;
+			M(2,0) = 0;
+			M(2,1) = 3;
+			M(3,0) = 1;
+			M(3,1) = 2;
+			M(4,0) = 1;
+			M(4,1) = 3;
+			M(5,0) = 2;
+			M(5,1) = 3;
+		}
 		
 	private:
 		int iteration = 0;
@@ -235,8 +257,13 @@ namespace Kratos
 		Vector mIntegratedStressVector = ZeroVector(voigt_size);
 		Matrix mB = ZeroMatrix(voigt_size, dimension*number_of_nodes);
 
-		double mJac = 0.0;
-		double mIntegrationCoefficient = 0.0;
+		//double mJac = 0.0;
+		//double mIntegrationCoefficient = 0.0;
+
+		// Vector to storage the neigh elements sharing a certain edge
+		std::vector <std::vector<Element*>> mEdgeNeighboursContainer;
+
+
 
 	};// Class FemDem3DElement
 	

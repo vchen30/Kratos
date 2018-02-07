@@ -4,10 +4,12 @@
 #include "custom_constitutive/zarate_law.hpp"
 #include "femdem3d_element.hpp"
 #include "includes/element.h"
+#include "includes/node.h"
 #include "fem_to_dem_application_variables.h"
 #include "includes/kratos_flags.h"
 #include "containers/flags.h"
 #include "solid_mechanics_application_variables.h"
+#include "processes/find_nodal_neighbours_process.h"
 
 namespace Kratos
 {
@@ -83,7 +85,151 @@ namespace Kratos
 
 	void FemDem3DElement::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
+		//Geometry< Node < 3 > >& Nodes = this->GetGeometry();
 
+		//Node<3>& pNode = Nodes[0];
+		//WeakPointerVector< Element >& rneigh_el = pNode.GetValue(NEIGHBOUR_ELEMENTS); //elementos vecinos del nodo
+		//KRATOS_WATCH(Nodes[0].Id())
+		////KRATOS_WATCH(rneigh_el.size())
+		//KRATOS_WATCH(rneigh_el[0].Id())
+		//KRATOS_WATCH(rneigh_el[1].Id())
+		//KRATOS_WATCH(rneigh_el[2].Id())
+		//KRATOS_WATCH(rneigh_el[3].Id())
+		//KRATOS_WATCH(rneigh_el[3].Id())
+
+		//std::vector<Element> aux;
+		//std::vector <std::vector<Element>> AUX;
+		//aux.push_back(rneigh_el[2]);
+		//AUX.push_back(aux);
+
+		//mEdgeNeighboursContainer.push_back(aux);
+
+		this->ComputeEdgeNeighbours(rCurrentProcessInfo);
+
+
+	}
+
+	void FemDem3DElement::ComputeEdgeNeighbours(ProcessInfo& rCurrentProcessInfo)
+	{
+		std::vector <std::vector<Element*>> EdgeNeighboursContainer;
+
+		Geometry< Node < 3 > >& NodesCurrentElement = this->GetGeometry();
+
+		Node<3>& pNode0 = NodesCurrentElement[0];
+		Node<3>& pNode1 = NodesCurrentElement[1];
+		Node<3>& pNode2 = NodesCurrentElement[2];
+		Node<3>& pNode3 = NodesCurrentElement[3];
+		
+		// Neighbour elements of each node of the current element 
+		WeakPointerVector< Element >& NeighNode0 = pNode0.GetValue(NEIGHBOUR_ELEMENTS);
+		WeakPointerVector< Element >& NeighNode1 = pNode1.GetValue(NEIGHBOUR_ELEMENTS);
+		WeakPointerVector< Element >& NeighNode2 = pNode2.GetValue(NEIGHBOUR_ELEMENTS);
+		WeakPointerVector< Element >& NeighNode3 = pNode3.GetValue(NEIGHBOUR_ELEMENTS);
+
+		// Nodal neighbours container
+		std::vector<WeakPointerVector< Element >> NodalNeighbours;
+		NodalNeighbours.push_back(NeighNode0);
+		NodalNeighbours.push_back(NeighNode1);
+		NodalNeighbours.push_back(NeighNode2);
+		NodalNeighbours.push_back(NeighNode3);
+
+		// Aux indexes
+		Matrix NodeIndexes = ZeroMatrix(6, 2);
+		this->SetNodeIndexes(NodeIndexes);
+
+		// Loop over EDGES to assign the elements that share that edge -> Fill mEdgeNeighboursContainer
+		for (int edge = 0 ; edge < 4; edge++)
+		{
+			int NodeIndex1 = NodeIndexes(edge, 0);
+			int NodeIndex2 = NodeIndexes(edge, 1);
+
+			// Neigh elements of local node 1 and 2  // 
+			WeakPointerVector< Element >& NeighOfNode1 = NodalNeighbours[NodeIndex1];
+			WeakPointerVector< Element >& NeighOfNode2 = NodalNeighbours[NodeIndex2];
+
+			int NodeId1 = NodesCurrentElement[NodeIndex1].Id();
+			int NodeId2 = NodesCurrentElement[NodeIndex2].Id();
+
+			std::vector<Element*> EdgeSharedElementsNode1;
+			// Loop over neigh elements of the node 1
+			for (int neigh_elem = 0; neigh_elem < NeighOfNode1.size();neigh_elem++)
+			{
+				//std::vector<Element> EdgeSharedElementsNode1;
+
+				// Nodes of the neigh element
+				Geometry< Node < 3 > >& NodesNeighElem = NeighOfNode1[neigh_elem].GetGeometry();
+
+				// Loop over the nodes of the neigh element
+				for (int neigh_elem_node = 0; neigh_elem_node < 4 ; neigh_elem_node++)
+				{
+					int NeighElementNodeId = NodesNeighElem[neigh_elem_node].Id();
+
+					if (NeighElementNodeId == NodeId2 & this->Id() != NeighOfNode1[neigh_elem].Id())
+					{
+						EdgeSharedElementsNode1.push_back(&NeighOfNode1[neigh_elem]); // ( [] returns a Element object!!)
+					} 
+				}
+			}
+
+			std::vector<Element*> EdgeSharedElementsNode2;
+			// Loop over neigh elements of the node 2
+			for (int neigh_elem = 0; neigh_elem < NeighOfNode2.size();neigh_elem++)
+			{
+				//std::vector<Element> EdgeSharedElementsNode2;
+
+				// Nodes of the neigh element
+				Geometry< Node < 3 > >& NodesNeighElem = NeighOfNode2[neigh_elem].GetGeometry();
+
+				// Loop over the nodes of the neigh element
+				for (int neigh_elem_node = 0; neigh_elem_node < 4 ;neigh_elem_node++)
+				{
+					int NeighElementNodeId = NodesNeighElem[neigh_elem_node].Id();
+
+					if (NeighElementNodeId == NodeId1 & this->Id() != NeighOfNode2[neigh_elem].Id())
+					{
+						EdgeSharedElementsNode2.push_back(&NeighOfNode2[neigh_elem]);
+					}
+				}
+			}
+
+			// Let's create the vector of neighbour elements for this edge
+			std::vector<Element*> EdgeSharedElements = EdgeSharedElementsNode1;
+
+			// Add the neigh elements from the node 2
+			for (int i = 0; i < EdgeSharedElementsNode2.size(); i++)
+			{
+				int aux = 0;
+
+				for (int j = 0; j < EdgeSharedElements.size(); j++)
+				{
+					if (EdgeSharedElementsNode2[i]->Id() == EdgeSharedElements[j]->Id()) aux++;
+				}
+
+				if (aux == 0) EdgeSharedElements.push_back(EdgeSharedElementsNode2[i]);
+			}
+
+			EdgeNeighboursContainer.push_back(EdgeSharedElements);
+
+
+
+			KRATOS_WATCH(this->Id())
+			KRATOS_WATCH(NodeId1)
+			KRATOS_WATCH(NodeId2)
+			//KRATOS_WATCH(EdgeSharedElementsNode1[0].Id())
+			//KRATOS_WATCH(EdgeSharedElementsNode2[0].Id())
+			KRATOS_WATCH(EdgeSharedElementsNode1.size())
+			KRATOS_WATCH(EdgeSharedElementsNode2.size())
+			//KRATOS_WATCH(EdgeSharedElements.size())
+
+			for (int i=0;i<EdgeSharedElements.size();i++)
+			{
+				KRATOS_WATCH(EdgeSharedElements[i]->Id())
+			}
+
+		} // End loop edges
+
+		// Storages the information inside the element
+		this->SaveEdgeNeighboursContainer(EdgeNeighboursContainer);
 	}
 
 	void FemDem3DElement::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
@@ -141,6 +287,8 @@ namespace Kratos
 		// 	}
 		// }
 	}
+
+	
 
 	void FemDem3DElement::InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo)
 	{
@@ -231,10 +379,6 @@ namespace Kratos
 				this->CalculateInfinitesimalStrain(StrainVector, DN_DX);
 				this->SetValue(STRAIN_VECTOR, StrainVector);
 
-				//KRATOS_WATCH(DN_DX)
-				//KRATOS_WATCH(N)
-				//KRATOS_WATCH(StrainVector)
-
 				ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
 
 				//set constitutive law variables: (it passes only references to this local variables)
@@ -261,8 +405,6 @@ namespace Kratos
 
 				this->CalculateDeformationMatrix(B, DN_DX);
 				this->SetBMatrix(B);
-
-				//KRATOS_WATCH(this->GetValue(STRESS_VECTOR))
 
 			}
 		}
@@ -327,8 +469,6 @@ namespace Kratos
 
 			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(ConstitutiveMatrix, B))); //LHS
 
-			//KRATOS_WATCH(rLeftHandSideMatrix)
-			//KRATOS_WATCH(rLeftHandSideMatrix)
 			Vector VolumeForce = ZeroVector(dimension);
 			VolumeForce = this->CalculateVolumeForce(VolumeForce, N);
 
@@ -344,12 +484,6 @@ namespace Kratos
 
 			//compute and add internal forces (RHS = rRightHandSideVector = Fext - Fint)
 			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), StressVector);
-
-			//if (this->Id() == 1)
-			//{
-			//	KRATOS_WATCH(rLeftHandSideMatrix)
-			//		KRATOS_WATCH(rLeftHandSideMatrix)
-			//}
 
 		}
 		KRATOS_CATCH("")

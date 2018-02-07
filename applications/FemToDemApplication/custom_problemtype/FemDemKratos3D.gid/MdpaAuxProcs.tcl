@@ -295,6 +295,14 @@ proc Triangle2D3Connectivities { ElemId } {
 
 #-------------------------------------------------------------------------------
 
+proc Tetrahedron3D4Connectivities { ElemId } {
+    
+    set ElementInfo [GiD_Mesh get element $ElemId]
+    #ElementInfo: <layer> <elemtype> <NumNodes> <N1> <N2> ...
+    return "[lindex $ElementInfo 3] [lindex $ElementInfo 4] [lindex $ElementInfo 5] [lindex $ElementInfo 6]"
+}
+
+#-------------------------------------------------------------------------------
 proc Quadrilateral2D4Connectivities { ElemId } {
     
     #Note: It is the same for the Tethrahedron3D4
