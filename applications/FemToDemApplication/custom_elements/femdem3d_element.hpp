@@ -62,7 +62,7 @@ namespace Kratos
 
 		void CalculateStressVector(Vector& rStressVector, const Matrix& rConstitutiveMAtrix, const Vector& rInfinitesimalStrainVector);
 
-		void CalculatePrincipalStress(Vector& PrincipalStressVector, const Vector StressVector);
+		void CalculatePrincipalStresses(Vector& PrincipalStressVector, const Vector StressVector);
 
 		void FinalizeNonLinearIteration(ProcessInfo& CurrentProcessInfo);
 
@@ -91,7 +91,7 @@ namespace Kratos
 		void Get2MinValues(Vector& MaxValues, double a, double b, double c);
 
 		void IntegrateStressDamageMechanics(Vector& rIntegratedStress, 
-			double& Damage, const Vector StrainVector, const Vector StressVector, int cont, double L_char);
+			double& rDamage, const Vector StrainVector, const Vector StressVector, int cont, double L_char);
 
 
 		void ModifiedMohrCoulombCriterion(Vector& rIntegratedStress, double& Damage, const Vector& StressVector, int cont, double L_char);
@@ -102,15 +102,17 @@ namespace Kratos
 
 		void TangentModifiedMohrCoulombCriterion(Vector& rIntegratedStress, double& Damage, const Vector& StressVector, int cont, double L_char);
 
-		// Stress Invariants in 2D
-		double Calculate_I1_Invariant(double sigma1, double sigma2);
-		double Calculate_J2_Invariant(double sigma1, double sigma2);
-		double Calculate_J3_Invariant(double sigma1, double sigma2, double I1);
+		// Stress Invariants in 3D
+		double Calculate_I1_Invariant(Vector StressVector);
+		double Calculate_I2_Invariant(const Vector StressVector);
+		double Calculate_I3_Invariant(const Vector StressVector);
+		void   CalculateDeviatorVector(Vector& rDeviator, const Vector StressVector, const double I1);
+		double Calculate_J2_Invariant(const Vector Deviator);
+		double Calculate_J3_Invariant(const Vector Deviator);
 
 		void CalculateIntegratedStressVector(Vector& rIntegratedStressVector, const Vector rStressVector, const double Damage)
 		{
-			Vector res = ZeroVector(3);
-			res = (1 - Damage) * rStressVector;
+			rIntegratedStressVector = (1 - Damage) * rStressVector;
 		}
 
 		// Lode's angle
@@ -156,7 +158,7 @@ namespace Kratos
 			this->Set_NonConvergeddamage(0.0);
 			this->Set_NonConvergedf_sigma(0.0);
 
-			for (int cont = 0;cont < 3;cont++)
+			for (int cont = 0;cont < 6;cont++)
 			{
 				this->Set_NonConvergeddamages(0, cont);
 				this->Set_NonConvergedf_sigma(0, cont);
@@ -166,7 +168,7 @@ namespace Kratos
 		// Characteristic length Calculations
 		void   Set_l_char(double af, int cont) { mL_char[cont] = af; }
 		double Get_l_char(int cont) { return mL_char[cont]; }
-		double CalculateLchar(FemDem3DElement* CurrentElement, const Element& NeibElement, int cont);
+		void CalculateLchar();
 
 		//void   SetJ(double af) { mJac = af; }
 		//double GetJ() { return mJac; }
@@ -184,17 +186,17 @@ namespace Kratos
 		double GetMaxValue(Vector Strain);
 		double GetMaxAbsValue(Vector Strain);
 		double GetMinAbsValue(Vector Strain);
-		void PerturbateStrainComponent(const Vector& rStrainVector, Vector& PertubatedStrain, const double& perturbation, int component);
-		double CalculatePerturbation(const Vector& StrainVector, int component);
-		void CalculateTangentTensor(Matrix& rTangentTensor, const Vector& StrainVector, const Vector& IntegratedStressVector ,int cont, double L_char);
+		//void PerturbateStrainComponent(const Vector& rStrainVector, Vector& PertubatedStrain, const double& perturbation, int component);
+		//double CalculatePerturbation(const Vector& StrainVector, int component);
+		//void CalculateTangentTensor(Matrix& rTangentTensor, const Vector& StrainVector, const Vector& IntegratedStressVector ,int cont, double L_char);
 
-		void SetStressVector(Vector toStressVector) { toStressVector.resize(3); mStressVector = toStressVector; }
+		void SetStressVector(Vector toStressVector) { toStressVector.resize(6); mStressVector = toStressVector; }
 		Vector GetStressVector() { return mStressVector; }
 
-		void SetStrainVector(Vector toStrainVector) { toStrainVector.resize(3); mStrainVector = toStrainVector; }
+		void SetStrainVector(Vector toStrainVector) { toStrainVector.resize(6); mStrainVector = toStrainVector; }
 		Vector GetStrainVector() { return mStrainVector; }
 
-		void SetIntegratedStressVector(Vector toIntegratedStressVector) { toIntegratedStressVector.resize(3); mIntegratedStressVector = toIntegratedStressVector; }
+		void SetIntegratedStressVector(Vector toIntegratedStressVector) { toIntegratedStressVector.resize(6); mIntegratedStressVector = toIntegratedStressVector; }
 		Vector GetIntegratedStressVector() { return mIntegratedStressVector; }
 
 		void SetBMatrix(Matrix toBMatrix) {  mB = toBMatrix; }
@@ -210,10 +212,14 @@ namespace Kratos
 
 		// Storages mEdgeNeighboursContainer
 		void SaveEdgeNeighboursContainer(std::vector <std::vector<Element*>> toSave) {mEdgeNeighboursContainer = toSave;}
+		std::vector<Element*> GetEdgeNeighbourElements(int edge){return mEdgeNeighboursContainer[edge];}
 
-		void SetNodeIndexes(Matrix& M)
+		void CalculateAverageStressOnEdge(Vector& AverageVector, const std::vector<Element*> VectorOfElems);
+		void CalculateAverageStrainOnEdge(Vector& AverageVector, const std::vector<Element*> VectorOfElems);
+
+		void SetNodeIndexes(Matrix& M) // Defines the numbering of the edges with the corresponding nodes
 		{
-			M(0,0) = 0;
+			M(0,0) = 0; 
 			M(0,1) = 1;
 			M(1,0) = 0;
 			M(1,1) = 2;
@@ -235,22 +241,22 @@ namespace Kratos
 		unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
 
 		// Each component == Each edge
-		Vector mF_sigmas = ZeroVector(3);   // Mohr-Coulomb equivalent stress
-		Vector mThresholds = ZeroVector(3);   // Stress mThreshold on edge
+		Vector mF_sigmas = ZeroVector(6);     // Equivalent stress
+		Vector mThresholds = ZeroVector(6);   // Stress mThreshold on edge
 
 		double mThreshold = 0.0;
 		double mF_sigma   = 0.0;
 
-		Vector mDamages = ZeroVector(3);     // Converged mDamage on each edge
-		double mDamage = 0.0;                            // Converged mDamage
+		Vector mDamages = ZeroVector(6);     // Converged mDamage on each edge
+		double mDamage = 0.0;                // Converged mDamage
 
-		Vector mNonConvergedDamages = ZeroVector(3);    // mDamages on edges of "i" iteration
-		Vector mNonConvergedFsigmas  = ZeroVector(3);   // Equivalent stress of "i" iteration
+		Vector mNonConvergedDamages = ZeroVector(6);    // mDamages on edges of "i" iteration
+		Vector mNonConvergedFsigmas  = ZeroVector(6);   // Equivalent stress of "i" iteration
 
 		double mNonConvergedFsigma = 0.0;
 		double mNonConvergedDamage = 0.0;       // mDamage of the element of "i" iteration
 
-		Vector mL_char = ZeroVector(3);  // Characteristic length on each edge
+		Vector mL_char = ZeroVector(6);  // Characteristic length on each edge
 
 		Vector mStressVector = ZeroVector(voigt_size);
 		Vector mStrainVector = ZeroVector(voigt_size);
@@ -265,7 +271,7 @@ namespace Kratos
 
 
 
-	};// Class FemDem3DElement
+	}; // Class FemDem3DElement
 	
 }// Namespace Kratos
 #endif // KRATOS_FEMDEM3D_ELEMENT_H_INCLUDED  defined 

@@ -85,28 +85,8 @@ namespace Kratos
 
 	void FemDem3DElement::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
-		//Geometry< Node < 3 > >& Nodes = this->GetGeometry();
-
-		//Node<3>& pNode = Nodes[0];
-		//WeakPointerVector< Element >& rneigh_el = pNode.GetValue(NEIGHBOUR_ELEMENTS); //elementos vecinos del nodo
-		//KRATOS_WATCH(Nodes[0].Id())
-		////KRATOS_WATCH(rneigh_el.size())
-		//KRATOS_WATCH(rneigh_el[0].Id())
-		//KRATOS_WATCH(rneigh_el[1].Id())
-		//KRATOS_WATCH(rneigh_el[2].Id())
-		//KRATOS_WATCH(rneigh_el[3].Id())
-		//KRATOS_WATCH(rneigh_el[3].Id())
-
-		//std::vector<Element> aux;
-		//std::vector <std::vector<Element>> AUX;
-		//aux.push_back(rneigh_el[2]);
-		//AUX.push_back(aux);
-
-		//mEdgeNeighboursContainer.push_back(aux);
-
-		this->ComputeEdgeNeighbours(rCurrentProcessInfo);
-
-
+		this->ComputeEdgeNeighbours(rCurrentProcessInfo); // TODO: do this only once 
+		this->CalculateLchar(); // TODO: do this only once 
 	}
 
 	void FemDem3DElement::ComputeEdgeNeighbours(ProcessInfo& rCurrentProcessInfo)
@@ -138,7 +118,7 @@ namespace Kratos
 		this->SetNodeIndexes(NodeIndexes);
 
 		// Loop over EDGES to assign the elements that share that edge -> Fill mEdgeNeighboursContainer
-		for (int edge = 0 ; edge < 4; edge++)
+		for (int edge = 0 ; edge < 6; edge++)
 		{
 			int NodeIndex1 = NodeIndexes(edge, 0);
 			int NodeIndex2 = NodeIndexes(edge, 1);
@@ -166,7 +146,7 @@ namespace Kratos
 
 					if (NeighElementNodeId == NodeId2 & this->Id() != NeighOfNode1[neigh_elem].Id())
 					{
-						EdgeSharedElementsNode1.push_back(&NeighOfNode1[neigh_elem]); // ( [] returns a Element object!!)
+						EdgeSharedElementsNode1.push_back(&NeighOfNode1[neigh_elem]); // ( [] returns an Element object!!)
 					} 
 				}
 			}
@@ -210,27 +190,30 @@ namespace Kratos
 
 			EdgeNeighboursContainer.push_back(EdgeSharedElements);
 
+			// KRATOS_WATCH(this->Id())
+			// KRATOS_WATCH(NodeId1)
+			// KRATOS_WATCH(NodeId2)
+			// //KRATOS_WATCH(EdgeSharedElementsNode1[0].Id())
+			// //KRATOS_WATCH(EdgeSharedElementsNode2[0].Id())
+			// KRATOS_WATCH(EdgeSharedElementsNode1.size())
+			// KRATOS_WATCH(EdgeSharedElementsNode2.size())
+			// //KRATOS_WATCH(EdgeSharedElements.size())
 
-
-			KRATOS_WATCH(this->Id())
-			KRATOS_WATCH(NodeId1)
-			KRATOS_WATCH(NodeId2)
-			//KRATOS_WATCH(EdgeSharedElementsNode1[0].Id())
-			//KRATOS_WATCH(EdgeSharedElementsNode2[0].Id())
-			KRATOS_WATCH(EdgeSharedElementsNode1.size())
-			KRATOS_WATCH(EdgeSharedElementsNode2.size())
-			//KRATOS_WATCH(EdgeSharedElements.size())
-
-			for (int i=0;i<EdgeSharedElements.size();i++)
-			{
-				KRATOS_WATCH(EdgeSharedElements[i]->Id())
-			}
+			// for (int i=0;i<EdgeSharedElements.size();i++)
+			// {
+			// 	KRATOS_WATCH(EdgeSharedElements[i]->Id())
+			// }
 
 		} // End loop edges
 
 		// Storages the information inside the element
 		this->SaveEdgeNeighboursContainer(EdgeNeighboursContainer);
-	}
+
+		// std::cout<<"out of the loop"<<std::endl;
+		// std::vector<Element*> elems = this->GetEdgeNeighbourElements(0);
+		// KRATOS_WATCH(elems[1]->Id())
+
+	} // End finding edge neighbour elements
 
 	void FemDem3DElement::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
@@ -410,10 +393,8 @@ namespace Kratos
 		}
 		
 		KRATOS_CATCH("")
-
 	}
 
-	
 	void FemDem3DElement::CalculateLocalSystem (MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 	{
 		KRATOS_TRY
@@ -457,17 +438,46 @@ namespace Kratos
 			Vector IntegratedStressVector = ZeroVector(voigt_size);
 
 			// Find Neighbour Elements
-			WeakPointerVector< Element >& elem_neigb = this->GetValue(NEIGHBOUR_ELEMENTS);
-			if (elem_neigb.size() == 0) { KRATOS_THROW_ERROR(std::invalid_argument, " Neighbour Elements not calculated --> size = ", elem_neigb.size()) }
+			//WeakPointerVector< Element >& elem_neigb = this->GetValue(NEIGHBOUR_ELEMENTS);
+			//if (elem_neigb.size() == 0) { KRATOS_THROW_ERROR(std::invalid_argument, " Neighbour Elements not calculated --> size = ", elem_neigb.size()) }
 
 			const Vector& StressVector = this->GetValue(STRESS_VECTOR);
+			Vector DamagesOnEdges = ZeroVector(6);
 			
+			// Loop over edges of the element
+			for (int edge = 0; edge < 6; edge++)
+			{
+				std::vector<Element*> EdgeNeighbours = this->GetEdgeNeighbourElements(edge);
+
+				Vector AverageStressVector, AverageStrainVector, IntegratedStressVectorOnEdge;
+				this->CalculateAverageStressOnEdge(AverageStressVector, EdgeNeighbours);
+				this->CalculateAverageStrainOnEdge(AverageStrainVector, EdgeNeighbours);
+
+				double DamageEdge = 0.0; 
+				double Lchar = this->Get_l_char(edge);
+				this->IntegrateStressDamageMechanics(IntegratedStressVectorOnEdge, DamageEdge,
+					AverageStrainVector, AverageStressVector, edge, Lchar );
+				
+				this->Set_NonConvergeddamages(DamageEdge, edge);
+				DamagesOnEdges[edge] = DamageEdge;
+
+			} // End loop over edges
+
+			// todo: sacar daño del elemento a partir de los costados y FinalizeSolStep
+
+
+
+
+
+
+
+
 			Matrix ConstitutiveMatrix = ZeroMatrix(voigt_size, voigt_size);
 			double E  = this->GetProperties()[YOUNG_MODULUS];
 			double nu = this->GetProperties()[POISSON_RATIO];
 			this->CalculateConstitutiveMatrix(ConstitutiveMatrix, E, nu);
 
-			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(ConstitutiveMatrix, B))); //LHS
+			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(ConstitutiveMatrix, B))); // LHS
 
 			Vector VolumeForce = ZeroVector(dimension);
 			VolumeForce = this->CalculateVolumeForce(VolumeForce, N);
@@ -485,6 +495,8 @@ namespace Kratos
 			//compute and add internal forces (RHS = rRightHandSideVector = Fext - Fint)
 			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), StressVector);
 
+			// todo: Add nodal DEM forces
+
 		}
 		KRATOS_CATCH("")
 		//*****************************
@@ -495,9 +507,6 @@ namespace Kratos
 		const unsigned int number_of_nodes = GetGeometry().PointsNumber();
 		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
 		unsigned int voigt_size = dimension * (dimension + 1) * 0.5;
-
-		/*if (rB.size1() != voigt_size || rB.size2() != dimension*number_of_nodes)
-			rB.resize(voigt_size, dimension*number_of_nodes, false);*/
 
 		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
@@ -515,16 +524,13 @@ namespace Kratos
 
 			rB( 5, index + 0 ) = rDN_DX( i, 2 );
 			rB( 5, index + 2 ) = rDN_DX( i, 0 );
-
-		}
-		
+		}	
 	}
 
 	void FemDem3DElement::CalculateConstitutiveMatrix(Matrix& rConstitutiveMatrix, const double &rYoungModulus,
 		const double &rPoissonCoefficient)
 	{
 		rConstitutiveMatrix.clear();
-
 		// 3D linear elastic constitutive matrix
 		rConstitutiveMatrix ( 0 , 0 ) = (rYoungModulus*(1.0-rPoissonCoefficient)/((1.0+rPoissonCoefficient)*(1.0-2.0*rPoissonCoefficient)));
 		rConstitutiveMatrix ( 1 , 1 ) = rConstitutiveMatrix ( 0 , 0 );
@@ -628,11 +634,43 @@ namespace Kratos
 		noalias(rStressVector) = prod(rConstitutiveMAtrix, rInfinitesimalStrainVector);
 	}
 
-	void FemDem3DElement::CalculatePrincipalStress(Vector& PrincipalStressVector, const Vector StressVector)
+	void FemDem3DElement::CalculatePrincipalStresses(Vector& rPrincipalStressVector, const Vector StressVector)
 	{
-		PrincipalStressVector.resize(2);
-		PrincipalStressVector[0] = 0.5*(StressVector[0] + StressVector[1]) + sqrt(pow(0.5*(StressVector[0] - StressVector[1]), 2) + pow(StressVector[2], 2));
-		PrincipalStressVector[1] = 0.5*(StressVector[0] + StressVector[1]) - sqrt(pow(0.5*(StressVector[0] - StressVector[1]), 2) + pow(StressVector[2], 2));
+		rPrincipalStressVector.resize(3);
+		double I1, I2, I3, phi, Num, Denom, II1;
+		I1 = this->Calculate_I1_Invariant(StressVector);
+		I2 = this->Calculate_I2_Invariant(StressVector);
+		I3 = this->Calculate_I3_Invariant(StressVector);
+		II1 = I1*I1;
+
+		Num = (2.0*II1 - 9.0*I2)*I1 + 27.0*I3;
+		Denom = (II1 - 3.0*I2);
+
+		if (Denom != 0.0)
+		{
+			phi = Num / (2.0*Denom*sqrt(Denom));
+
+			if (abs(phi) > 1.0)
+			{
+				if (phi > 0.0) phi = 1.0;
+				else phi = -1.0;
+			}
+
+			double acosphi = acos(phi);
+			phi = acosphi / 3.0;
+
+			double aux1 = 0.666666666666667*sqrt(II1-3.0*I2);
+			double aux2 = I1 / 3.0;
+
+			rPrincipalStressVector[0] = aux2 + aux1*cos(phi);
+			rPrincipalStressVector[1] = aux2 + aux1*cos(phi - 2.09439510239);
+			rPrincipalStressVector[2] = aux2 + aux1*cos(phi - 4.18879020478);
+		}
+		else 
+		{
+			rPrincipalStressVector = ZeroVector(3);
+		}
+		
 	}
 
 	void FemDem3DElement::FinalizeNonLinearIteration(ProcessInfo& CurrentProcessInfo)
@@ -651,6 +689,32 @@ namespace Kratos
 		}
 	}
 
+	void FemDem3DElement::CalculateAverageStressOnEdge(Vector& rAverageVector, const std::vector<Element*> VectorOfElems)
+	{
+		Vector CurrentElementStress = this->GetValue(STRESS_VECTOR);
+		rAverageVector = CurrentElementStress;
+
+		for (int elem = 0; elem < VectorOfElems.size(); elem++)
+		{
+			rAverageVector += VectorOfElems[elem]->GetValue(STRESS_VECTOR);
+		}
+		
+		rAverageVector /= (VectorOfElems.size() + 1);
+	}
+
+	void FemDem3DElement::CalculateAverageStrainOnEdge(Vector& rAverageVector, const std::vector<Element*> VectorOfElems)
+	{
+		Vector CurrentElementStress = this->GetValue(STRAIN_VECTOR);
+		rAverageVector = CurrentElementStress;
+
+		for (int elem = 0; elem < VectorOfElems.size(); elem++)
+		{
+			rAverageVector += VectorOfElems[elem]->GetValue(STRAIN_VECTOR);
+		}
+		
+		rAverageVector /= (VectorOfElems.size() + 1);
+	}
+
 	// Double values
 	void FemDem3DElement::GetValueOnIntegrationPoints(const Variable<double>& rVariable, std::vector<double>& rValues,
 		const ProcessInfo& rCurrentProcessInfo)
@@ -658,9 +722,7 @@ namespace Kratos
 		if (rVariable == DAMAGE_ELEMENT || rVariable == IS_DAMAGED || rVariable == STRESS_THRESHOLD)
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-		}
-
-		
+		}	
 	}
 
 	// Vector Values
@@ -668,7 +730,6 @@ namespace Kratos
 		std::vector<Vector>& rValues,
 		const ProcessInfo& rCurrentProcessInfo)
 	{
-
 		if (rVariable == STRAIN_VECTOR)
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
@@ -683,15 +744,12 @@ namespace Kratos
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
-
-		
 	}
 
 	// Tensor variables
 	void FemDem3DElement::GetValueOnIntegrationPoints( const Variable<Matrix>& rVariable,
 		std::vector<Matrix>& rValues,
 		const ProcessInfo& rCurrentProcessInfo )
-
 	{
 		if (rVariable == STRAIN_TENSOR)
 		{
@@ -741,7 +799,6 @@ namespace Kratos
 	// 	VECTOR VARIABLES
 	void FemDem3DElement::CalculateOnIntegrationPoints(const Variable<Vector>& rVariable, std::vector<Vector>& rOutput, const ProcessInfo& rCurrentProcessInfo)
 	{
-
 		KRATOS_TRY
 
 		if (rVariable == STRESS_VECTOR)
@@ -758,11 +815,8 @@ namespace Kratos
 		{
 			rOutput[0] = this->GetIntegratedStressVector();
 		}
-
 		KRATOS_CATCH("")
-		
 	}
-
 
 	// 	TENSOR VARIABLES
 	void FemDem3DElement::CalculateOnIntegrationPoints(const Variable<Matrix >& rVariable, std::vector< Matrix >& rOutput, const ProcessInfo& rCurrentProcessInfo)
@@ -790,50 +844,26 @@ namespace Kratos
 
 	}
 
-
-	double FemDem3DElement::CalculateLchar(FemDem3DElement* CurrentElement, const Element& NeibElement, int cont)
+	// Fills the array of characteristic lengths of the element
+	void FemDem3DElement::CalculateLchar()
 	{
-		Geometry< Node < 3 > >& NodesElem1 = CurrentElement->GetGeometry();  // 3 nodes of the Element 1
-		Geometry< Node < 3 > > NodesElem2  = NeibElement.GetGeometry();      // "         " 2
-		Vector Xcoord, Ycoord;
-		Xcoord.resize(3);
-		Ycoord.resize(3);
-
-		// Let's find the two shared nodes between the 2 elements 
-		int aux = 0;
-		double l_char = 0;
-		for (int cont = 0; cont < 3; cont++)
+		Geometry< Node < 3 > >& NodesElem = this->GetGeometry(); 
+		Matrix Indexes;
+		this->SetNodeIndexes(Indexes);
+		
+		for (int edge = 0; edge < 6; edge++)
 		{
-			for (int cont2 = 0; cont2 < 3; cont2++)
-			{
-				if (NodesElem1[cont].Id() == NodesElem2[cont2].Id())
-				{
-					Xcoord[aux] = NodesElem1[cont].X0();
-					Ycoord[aux] = NodesElem1[cont].Y0();
-					aux++;                              // aux > 3 if the two elements are the same one (in fact aux == 9)
-				}
-			}
-		} // End finding nodes
+			double X1 = NodesElem[Indexes(edge,0)].X();
+			double X2 = NodesElem[Indexes(edge,1)].X();
+			double Y1 = NodesElem[Indexes(edge,0)].Y();
+			double Y2 = NodesElem[Indexes(edge,1)].Y();
+			double Z1 = NodesElem[Indexes(edge,0)].Z();
+			double Z2 = NodesElem[Indexes(edge,1)].Z();
 
-		// Computation of the l_char
-		if (aux < 3) 
-		{                                                                                        // It is not an edge element --> The 2 elements are not equal
-			l_char = pow((pow(Xcoord[0] - Xcoord[1], 2) + pow(Ycoord[0] - Ycoord[1], 2)), 0.5);  // Length of the edge between 2 elements
-			//l_char = length;                                                                   // Currently the characteristic length is the edge length (can be modified)
+			double lchar = sqrt((X1-X2)*(X1-X2) + (Y1-Y2)*(Y1-Y2) + (Z1-Z2)*(Z1-Z2));
+			this->Set_l_char(lchar, edge);
 		}
-		else  // Edge Element
-		{ 
-			double ElementArea = abs(this->GetGeometry().Area());
-			l_char = sqrt(4 * ElementArea / sqrt(3));   // Cervera's Formula
-			
-		} // l_char computed
-
-		CurrentElement->Set_l_char(l_char, cont);  // Storages the l_char of this side
-		CurrentElement->IterationPlus();
-
-		return 0.0;
 	}
-
 
 	void FemDem3DElement::Get2MaxValues(Vector& MaxValues, double a, double b, double c)
 	{
@@ -880,21 +910,52 @@ namespace Kratos
 		MaxValues[0] = V[1];
 		MaxValues[1] = V[0];
 	}
-	double FemDem3DElement::Calculate_I1_Invariant(double sigma1, double sigma2) { return sigma1 + sigma2; }
-	double FemDem3DElement::Calculate_J2_Invariant(double sigma1, double sigma2)
+	double FemDem3DElement::Calculate_I1_Invariant(Vector StressVector) 
 	{
-		return  (pow((sigma1 - sigma2), 2) + pow(sigma1, 2) + pow(sigma2, 2)) / 6;
+		return  StressVector[0] + StressVector[1] + StressVector[2];
 	}
-	double FemDem3DElement::Calculate_J3_Invariant(double sigma1, double sigma2, double I1)
+
+	double FemDem3DElement::Calculate_I2_Invariant(const Vector StressVector)
 	{
-		return	(sigma1 - I1 / 3)*((sigma2 - I1 / 3))*(-I1 / 3);
+		return (StressVector[0] + StressVector[2])*StressVector[1] + StressVector[0]*StressVector[2] +
+			- StressVector[3]*StressVector[3] - StressVector[4]*StressVector[4] - StressVector[5]*StressVector[5];
+	}
+
+	double FemDem3DElement::Calculate_I3_Invariant(const Vector StressVector)
+	{
+		return (StressVector[1]*StressVector[2] - StressVector[4]*StressVector[4])*StressVector[0] -
+			StressVector[1]*StressVector[5]*StressVector[5] - StressVector[2]*StressVector[3]*StressVector[3] +
+			2.0*StressVector[3]*StressVector[4]*StressVector[5];
+	}
+
+	void FemDem3DElement::CalculateDeviatorVector(Vector& rDeviator, const Vector StressVector, const double I1)
+	{
+		rDeviator.resize(6);
+		rDeviator = StressVector;
+		double Pmean = I1 / 3;
+
+		rDeviator[0] -= Pmean;
+		rDeviator[1] -= Pmean;
+		rDeviator[2] -= Pmean;
+	}
+
+	double FemDem3DElement::Calculate_J2_Invariant(const Vector Deviator)
+	{
+		return  0.5*(Deviator[0]*Deviator[0] + Deviator[1]*Deviator[1] + Deviator[2]*Deviator[2]) +
+			(Deviator[3]*Deviator[3] + Deviator[4]*Deviator[4] + Deviator[5]*Deviator[5]);
+	}
+	double FemDem3DElement::Calculate_J3_Invariant(const Vector Deviator)
+	{
+		return	 Deviator[0]*(Deviator[1]*Deviator[2] - Deviator[4]*Deviator[4]) +
+			Deviator[3]*(-Deviator[3]*Deviator[2] + Deviator[5]*Deviator[4])     +
+			Deviator[5]*(Deviator[3]*Deviator[4] - Deviator[5]*Deviator[1]);
 	}
 	double FemDem3DElement::Calculate_Theta_Angle(double J2, double J3)
 	{
 		double sint3;
 		sint3 = (-3.0*sqrt(3)*J3) / (2 * J2*sqrt(J2));
-		if (sint3 < -0.95) { sint3 = -1; }
-		if (sint3 > 0.95) { sint3 = 1; }
+		if (sint3 < -0.95) { sint3 = -1;}
+		if (sint3 > 0.95)  { sint3 = 1; }
 		return asin(sint3) / 3;
 	}
 
@@ -926,10 +987,8 @@ namespace Kratos
 
 			//Calculate elemental system
 			CalculateDynamicSystem(LocalSystem, rCurrentProcessInfo);
-
 		}
 		else {
-
 			//lumped
 			unsigned int dimension = GetGeometry().WorkingSpaceDimension();
 			const unsigned int number_of_nodes = GetGeometry().PointsNumber();
@@ -1013,7 +1072,6 @@ namespace Kratos
 				}
 			}
 		}
-
 		return V[n - 1];
 	}
 
@@ -1027,7 +1085,6 @@ namespace Kratos
 		{
 			V[cont] = abs(Strain[cont]);
 		}
-
 		int imin = 0;
 
 		for (int i = 0; i < n; i++) {
@@ -1039,7 +1096,6 @@ namespace Kratos
 				}
 			}
 		}
-
 		return V[n - 1];
 	}
 
@@ -1061,184 +1117,27 @@ namespace Kratos
 				}
 			}
 		}
-
 		return V[0];
 	}
 
 
-	// ****** Tangent Constitutive Tensor by Numerical Derivation ******
-	void FemDem3DElement::PerturbateStrainComponent(const Vector& rStrainVector, Vector& PertubatedStrain, const double& perturbation, int component)
-	{
-		PertubatedStrain = rStrainVector;
-		PertubatedStrain[component] += perturbation;
-	}
-
-	double FemDem3DElement::CalculatePerturbation(const Vector& StrainVector, int component)
-	{
-		double Pert = 0.0;
-		if (StrainVector[component] != 0.0) Pert = (1e-5)*StrainVector[component];
-		else Pert = (1e-5)*GetMinAbsValue(StrainVector);
-		if (Pert < this->GetMaxAbsValue(StrainVector)*(1e-10)) { Pert = GetMaxAbsValue(StrainVector)*(1e-10); }
-
-		return Pert;
-	}
-
-	void  FemDem3DElement::CalculateTangentTensor(Matrix& rTangentTensor, const Vector& StrainVector, 
-		const Vector& IntegratedStressVector, int cont, double l_char)
-	{
-		rTangentTensor.resize(3, 3);
-
-		double E =  this->GetProperties()[YOUNG_MODULUS];
-		double nu = this->GetProperties()[POISSON_RATIO];
-		Matrix ConstitutiveMatrix = ZeroMatrix(3, 3);
-		this->CalculateConstitutiveMatrix(ConstitutiveMatrix, E, nu);
-
-		// Perturbed Strain Vectors
-		Vector PerturbedStrain1 = ZeroVector(3);
-		Vector PerturbedStrain2 = ZeroVector(3);
-		Vector PerturbedStrain3 = ZeroVector(3);
-
-		Vector PerturbedIntegratedStress1 = ZeroVector(3);
-		Vector PerturbedIntegratedStress2 = ZeroVector(3);
-		Vector PerturbedIntegratedStress3 = ZeroVector(3);
-
-		Vector PerturbedStress1 = ZeroVector(3);
-		Vector PerturbedStress2 = ZeroVector(3);
-		Vector PerturbedStress3 = ZeroVector(3);
-
-		Vector DeltaStress1 = ZeroVector(3);
-		Vector DeltaStress2 = ZeroVector(3);
-		Vector DeltaStress3 = ZeroVector(3);
-
-		// Calculation of the perturbations
-		double Perturbation1 = this->CalculatePerturbation(StrainVector, 0);
-		double Perturbation2 = this->CalculatePerturbation(StrainVector, 1);
-		double Perturbation3 = this->CalculatePerturbation(StrainVector, 2);
-
-		// Calculation of the Perturbed Strain Vectors
-		this->PerturbateStrainComponent(StrainVector, PerturbedStrain1, Perturbation1, 0);
-		this->PerturbateStrainComponent(StrainVector, PerturbedStrain2, Perturbation2, 1);
-		this->PerturbateStrainComponent(StrainVector, PerturbedStrain3, Perturbation3, 2);
-
-		// Calculation of the Perturbed Predictive Stress Vectors
-		this->CalculateStressVector(PerturbedStress1, ConstitutiveMatrix, PerturbedStrain1);
-		this->CalculateStressVector(PerturbedStress2, ConstitutiveMatrix, PerturbedStrain2);
-		this->CalculateStressVector(PerturbedStress3, ConstitutiveMatrix, PerturbedStrain3);
-
-		// Integration of the Perturbed Predictive Stress Vectors
-		double damage1 = 0.0, damage2 = 0.0, damage3 = 0.0;
-
-		this->TangentModifiedMohrCoulombCriterion(PerturbedIntegratedStress1, damage1,  PerturbedStress1, cont, l_char);
-		this->TangentModifiedMohrCoulombCriterion(PerturbedIntegratedStress2, damage2,  PerturbedStress2, cont, l_char);
-		this->TangentModifiedMohrCoulombCriterion(PerturbedIntegratedStress3, damage3,  PerturbedStress3, cont, l_char);
-
-		DeltaStress1 = PerturbedIntegratedStress1 - IntegratedStressVector;
-		DeltaStress2 = PerturbedIntegratedStress2 - IntegratedStressVector;
-		DeltaStress3 = PerturbedIntegratedStress3 - IntegratedStressVector;
-
-		for (int row = 0;row < 3;row++) // DeltaStress is the i column of the Tangent Tensor
-		{
-			rTangentTensor(row, 0) = DeltaStress1[row] / (Perturbation1);
-			rTangentTensor(row, 1) = DeltaStress2[row] / (Perturbation2);
-			rTangentTensor(row, 2) = DeltaStress3[row] / (Perturbation3);
-		}
-	}
-
-	void FemDem3DElement::TangentModifiedMohrCoulombCriterion(Vector& rIntegratedStress, double& damage, const Vector& StressVector, int cont, double l_char)
-	{
-		rIntegratedStress.resize(3);
-		Vector PrincipalStressVector = ZeroVector(2);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
-
-		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0;
-		sigma_c = this->GetProperties()[YIELD_STRESS_C];
-		sigma_t = this->GetProperties()[YIELD_STRESS_T];
-		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159 / 180; // In radians!
-		E = this->GetProperties()[YOUNG_MODULUS];
-		Gt = this->GetProperties()[FRAC_ENERGY_T];
-
-		// Check input variables 
-		if (friction_angle < 1e-24) { friction_angle = 32 * 3.14159 / 180; std::cout << "Friction Angle not defined, assumed equal to 32� " << std::endl; }
-		if (sigma_c < 1e-24) { KRATOS_ERROR << " ERROR: Yield stress in compression not defined, include YIELD_STRESS_C in .mdpa "; }
-		if (sigma_t < 1e-24) { KRATOS_ERROR << " ERROR: Yield stress in tension not defined, include YIELD_STRESS_T in .mdpa "; }
-		if (Gt < 1e-24) { KRATOS_ERROR << " ERROR: Fracture Energy not defined in the model part, include FRAC_ENERGY_T in .mdpa "; }
-
-		double K1, K2, K3, Rmorh, R, alpha_r, c_max, theta, c_threshold;
-		R = abs(sigma_c / sigma_t);
-		Rmorh = pow(tan((3.14159 / 4) + friction_angle / 2), 2);
-		alpha_r = R / Rmorh;
-		c_max = abs(sigma_c);
-
-		double I1, J2, J3;
-		I1 = Calculate_I1_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
-		J2 = Calculate_J2_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
-		J3 = Calculate_J3_Invariant(PrincipalStressVector[0], PrincipalStressVector[1], I1);
-		K1 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r)*sin(friction_angle);
-		K2 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r) / sin(friction_angle);
-		K3 = 0.5*(1 + alpha_r)*sin(friction_angle) - 0.5*(1 - alpha_r);
-
-		double n = sigma_c / sigma_t;
-		//double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
-
-		double A = 1.00 / (n*n*Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
-		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
-
-		double f = 0.0, F = 0.0; /// F = f-c = 0 classical definition of yield surface
-
-		// Check Modified Mohr-Coulomb criterion
-		if (PrincipalStressVector[0] == 0 && PrincipalStressVector[1] == 0) { f = 0; }
-		else
-		{
-			theta = Calculate_Theta_Angle(J2, J3);
-			f = (2.00*tan(3.14159*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sin(friction_angle) / sqrt(3)));
-		}
-
-		if (this->Get_threshold(cont) == 0) 
-		{ 
-			this->Set_threshold(c_max, cont);
-			this->SetValue(INITIAL_THRESHOLD, c_max);
-		}   // 1st iteration sets threshold as c_max
-
-		c_threshold = this->Get_threshold(cont);
-		//this->Set_NonConvergedf_sigma(f, cont);
-
-		F = f - c_threshold;
-
-		if (F <= 0)  // Elastic region --> Damage is constant 
-		{
-			damage = this->Get_Convergeddamages(cont);
-		}
-		else
-		{
-			damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
-			if (damage > 0.99) { damage = 0.99; }
-		}
-
-		rIntegratedStress = StressVector;
-		rIntegratedStress *= (1 - damage);
-	}
-
-
 	// ******* DAMAGE MECHANICS YIELD SURFACES AND EXPONENTIAL SOFTENING ********
-	void FemDem3DElement::IntegrateStressDamageMechanics(Vector& rIntegratedStress, double& damage,
+	void FemDem3DElement::IntegrateStressDamageMechanics(Vector& rIntegratedStress, double& rdamage,
 		const Vector StrainVector, const Vector StressVector, int cont, double l_char)
 	{
 		std::string yield_surface = this->GetProperties()[YIELD_SURFACE];
 
-		if (yield_surface      == "ModifiedMohrCoulomb") { this->ModifiedMohrCoulombCriterion(rIntegratedStress, damage, StressVector, cont, l_char); }
-		else if (yield_surface == "SimoJu") { this->SimoJuCriterion(rIntegratedStress, damage, StrainVector, StressVector, cont, l_char); }
-		else if (yield_surface == "Rankine") { this->RankineCriterion(rIntegratedStress, damage, StressVector, cont, l_char); }
-		else if (yield_surface == "DruckerPrager") { this->DruckerPragerCriterion(rIntegratedStress, damage, StressVector, cont, l_char); }
-		else if (yield_surface == "RankineFragile") { this->RankineFragileLaw(rIntegratedStress, damage, StressVector, cont, l_char); }
+		if ( yield_surface     == "ModifiedMohrCoulomb") { this->ModifiedMohrCoulombCriterion(rIntegratedStress, rdamage, StressVector, cont, l_char); }
+		else if (yield_surface == "SimoJu") { this->SimoJuCriterion(rIntegratedStress, rdamage, StrainVector, StressVector, cont, l_char); }
+		else if (yield_surface == "Rankine") { this->RankineCriterion(rIntegratedStress, rdamage, StressVector, cont, l_char); }
+		else if (yield_surface == "DruckerPrager") { this->DruckerPragerCriterion(rIntegratedStress, rdamage, StressVector, cont, l_char); }
+		else if (yield_surface == "RankineFragile") { this->RankineFragileLaw(rIntegratedStress, rdamage, StressVector, cont, l_char); }
 		else { KRATOS_ERROR << " Yield Surface not defined "; }
 	}
 
-	void FemDem3DElement::ModifiedMohrCoulombCriterion(Vector& rIntegratedStress, double& damage, const Vector& StressVector,int cont, double l_char)
+	void FemDem3DElement::ModifiedMohrCoulombCriterion(Vector& rIntegratedStress, double& rdamage, const Vector& StressVector,int cont, double l_char)
 	{
-		rIntegratedStress.resize(3);
-		Vector PrincipalStressVector = ZeroVector(2);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
+		rIntegratedStress.resize(6);
 
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
@@ -1260,9 +1159,11 @@ namespace Kratos
 		c_max = abs(sigma_c);
 
 		double I1, J2, J3;
-		I1 = Calculate_I1_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
-		J2 = Calculate_J2_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
-		J3 = Calculate_J3_Invariant(PrincipalStressVector[0], PrincipalStressVector[1], I1);
+		I1 = Calculate_I1_Invariant(StressVector);
+		Vector Deviator = ZeroVector(6);
+		this->CalculateDeviatorVector(Deviator, StressVector, I1);
+		J2 = Calculate_J2_Invariant(Deviator);
+		J3 = Calculate_J3_Invariant(Deviator);
 		K1 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r)*sin(friction_angle);
 		K2 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r) / sin(friction_angle);
 		K3 = 0.5*(1 + alpha_r)*sin(friction_angle) - 0.5*(1 - alpha_r);
@@ -1277,11 +1178,11 @@ namespace Kratos
 		double f = 0.0, F = 0.0; /// F = f-c = 0 classical definition of yield surface
 
 		// Check Modified Mohr-Coulomb criterion
-		if (PrincipalStressVector[0] == 0 && PrincipalStressVector[1] == 0) { f = 0; }
+		if (I1 == 0.0) { f = 0; }
 		else
 		{
 			theta = Calculate_Theta_Angle(J2, J3);
-			f = (2.00*tan(3.14159*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sin(friction_angle) / sqrt(3)));
+			f = (2.00*tan(3.14159265359*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sin(friction_angle) / sqrt(3)));
 		}
 
 		if (this->Get_threshold(cont) == 0) { this->Set_threshold(c_max, cont); }   // 1st iteration sets threshold as c_max
@@ -1293,22 +1194,22 @@ namespace Kratos
 
 		if (F <= 0)  // Elastic region --> Damage is constant 
 		{
-			damage = this->Get_Convergeddamages(cont);
+			rdamage = this->Get_Convergeddamages(cont);
 		}
 		else
 		{
-			damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
-			if (damage > 0.99) { damage = 0.99; }
+			rdamage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
+			if (rdamage > 0.99) { rdamage = 0.99; }
 		}
 
 		rIntegratedStress = StressVector;
-		rIntegratedStress *= (1 - damage);
+		rIntegratedStress *= (1 - rdamage);
 	}
 
 	void FemDem3DElement::RankineCriterion(Vector& rIntegratedStress, double& damage, const Vector& StressVector, int cont, double l_char) 
 	{
 		Vector PrincipalStressVector = ZeroVector(3);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
+		this->CalculatePrincipalStresses(PrincipalStressVector, StressVector);
 
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0, c_max = 0.0, c_threshold = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
@@ -1318,7 +1219,7 @@ namespace Kratos
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 		c_max = abs(sigma_t);
 
-		double ElementArea = this->GetGeometry().Area();
+		//double ElementArea = this->GetGeometry().Area();
 		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
@@ -1350,7 +1251,7 @@ namespace Kratos
 	void FemDem3DElement::DruckerPragerCriterion(Vector& rIntegratedStress, double& damage, const Vector& StressVector, int cont, double l_char)
 	{
 		Vector PrincipalStressVector = ZeroVector(3);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
+		this->CalculatePrincipalStresses(PrincipalStressVector, StressVector);
 
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
@@ -1368,11 +1269,13 @@ namespace Kratos
 		double  c_max, c_threshold;
 		c_max = abs(sigma_t*(3 + sin(friction_angle)) / (3 * sin(friction_angle) - 3));
 
-		double I1, J2;
-		I1 = Calculate_I1_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
-		J2 = Calculate_J2_Invariant(PrincipalStressVector[0], PrincipalStressVector[1]);
+		double I1, J2; 
+		I1 = Calculate_I1_Invariant(StressVector);
+		Vector Deviator = ZeroVector(6);
+		this->CalculateDeviatorVector(Deviator, StressVector, I1);
+		J2 = Calculate_J2_Invariant(Deviator);
 
-		double ElementArea = this->GetGeometry().Area();
+		//double ElementArea = this->GetGeometry().Area();
 		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
@@ -1382,7 +1285,7 @@ namespace Kratos
 		double CFL = 0.0, TEN0 = 0.0;
 
 		// Check DruckerPrager criterion
-		if (PrincipalStressVector[0] == 0 && PrincipalStressVector[1] == 0) { f = 0; }
+		if (I1 == 0.0) { f = 0; }
 		else
 		{
 			CFL = -sqrt(3)*(3 - sin(friction_angle)) / (3 * sin(friction_angle) - 3);
@@ -1413,7 +1316,7 @@ namespace Kratos
 	void FemDem3DElement::SimoJuCriterion(Vector& rIntegratedStress, double& damage,  const Vector& StrainVector,  const Vector& StressVector, int cont, double l_char)
 	{
 		Vector PrincipalStressVector = ZeroVector(3);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
+		this->CalculatePrincipalStresses(PrincipalStressVector, StressVector);
 
 		double sigma_t = 0.0, E = 0.0, Gt = 0.0, sigma_c = 0.0, n = 0;
 		sigma_t = this->GetProperties()[YIELD_STRESS_T];
@@ -1426,7 +1329,7 @@ namespace Kratos
 		c_max = abs(sigma_c) / sqrt(E);
 
 		double SumA = 0.0, SumB = 0.0, SumC = 0.0, ere0 = 0.0, ere1 = 0.0;
-		for (int cont = 0;cont < 1;cont++)
+		for (int cont = 0;cont < 2;cont++)
 		{
 			SumA += abs(PrincipalStressVector[cont]);
 			SumB += 0.5*(PrincipalStressVector[cont] + abs(PrincipalStressVector[cont]));
@@ -1437,12 +1340,12 @@ namespace Kratos
 
 		double f = 0, F = 0; /// F = f-c = 0 classical definition of yield surface
 
-							 // Check SimoJu criterion
+		// Check SimoJu criterion
 		if (StrainVector[0] == 0 && StrainVector[1] == 0) { f = 0; }
 		else
 		{
 			double auxf = 0.0;
-			for (int cont = 0;cont < 2;cont++)
+			for (int cont = 0; cont < 5; cont++)
 			{
 				auxf += StrainVector[cont] * StressVector[cont];  // E*S
 			}
@@ -1455,7 +1358,7 @@ namespace Kratos
 		this->Set_NonConvergedf_sigma(f, cont);
 		F = f - c_threshold;
 
-		double ElementArea = this->GetGeometry().Area();
+		//double ElementArea = this->GetGeometry().Area();
 		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*n*n*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
@@ -1478,7 +1381,7 @@ namespace Kratos
 	void FemDem3DElement::RankineFragileLaw(Vector& rIntegratedStress, double& damage, const Vector& StressVector, int cont, double l_char) 
 	{
 		Vector PrincipalStressVector = ZeroVector(3);
-		this->CalculatePrincipalStress(PrincipalStressVector, StressVector);
+		this->CalculatePrincipalStresses(PrincipalStressVector, StressVector);
 
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0, c_max = 0.0, c_threshold = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
@@ -1488,7 +1391,7 @@ namespace Kratos
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 		c_max = abs(sigma_t);
 
-		double ElementArea = this->GetGeometry().Area();
+		//double ElementArea = this->GetGeometry().Area();
 		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
@@ -1509,8 +1412,6 @@ namespace Kratos
 		}
 		else
 		{
-			//damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
-			//if (damage > 0.99) { damage = 0.99; }
 			damage = 0.98;  // Fragile  law
 		}
 		rIntegratedStress = StressVector;

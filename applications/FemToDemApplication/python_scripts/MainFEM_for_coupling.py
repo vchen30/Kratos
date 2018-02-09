@@ -7,7 +7,7 @@ import cleaning_utility
 import adaptive_mesh_refinement_utility
 import gid_output_utility
 
-# Python script created to modify the existing one due to the coupling of the DEM app
+# Python script created to modify the existing one due to the coupling of the DEM app in 2D
 
 class FEM_for_coupling_Solution(MainFemDem.FEM_Solution):
 
