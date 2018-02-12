@@ -19,12 +19,19 @@ class ALENavierStokesSolverFractionalStep(navier_stokes_solver_fractionalstep.Na
         navier_stokes_settings["solver_type"].SetString("FractionalStep")
         super(ALENavierStokesSolverFractionalStep, self).__init__(model_part, navier_stokes_settings)
         # create ale solver
-        ale_solver_type = custom_settings["ale_settings"]["solver_type"].GetString()
-        valid_ale_solver_types = ["mesh_solver_structural_similarity", "mesh_solver_laplacian"]
-        if ale_solver_type not in valid_ale_solver_types:
-            raise Exception("Invalid ALE solver_type: " + ale_solver_type)
-        ale_solver_module = __import__(ale_solver_type)
-        self.ale_solver = ale_solver_module.CreateSolver(self.main_model_part, custom_settings["ale_settings"])
+        # rename "ale_settings" to "solver_settings" for the wrapper
+
+        custom_settings["ale_settings"].GetString() = "solver_settings"
+
+        import python_solvers_wrapper_mesh_motion
+        self.ale_solver = python_solvers_wrapper_mesh_motion.CreateSolver(self.main_model_part, custom_settings)
+
+        #ale_solver_type = custom_settings["ale_settings"]["solver_type"].GetString()
+        #valid_ale_solver_types = ["mesh_solver_structural_similarity", "mesh_solver_laplacian"]
+        #if ale_solver_type not in valid_ale_solver_types:
+        #    raise Exception("Invalid ALE solver_type: " + ale_solver_type)
+        #ale_solver_module = __import__(ale_solver_type)
+        #self.ale_solver = ale_solver_module.CreateSolver(self.main_model_part, custom_settings["ale_settings"])
         print("::[ALENavierStokesSolverFractionalStep]:: Construction finished")
 
     def AddVariables(self):

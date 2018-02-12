@@ -26,6 +26,7 @@ namespace Kratos {
 namespace Python {
 
 void AddCustomStrategiesToPython();
+void AddCustomStrategiesMPIToPython();
 
 } // namespace Python.
 

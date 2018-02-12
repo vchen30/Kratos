@@ -77,7 +77,8 @@ public:
                               typename TLinearSolver::Pointer pNewLinearSolver,
                               int TimeOrder = 1,
                               bool ReformDofSetAtEachStep = false,
-                              bool ComputeReactions = false, int EchoLevel = 0)
+                              bool ComputeReactions = false, 
+                              int EchoLevel = 0)
       : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(ModelPart) {
 
     KRATOS_TRY;

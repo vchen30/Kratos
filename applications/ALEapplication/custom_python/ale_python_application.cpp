@@ -37,6 +37,10 @@ BOOST_PYTHON_MODULE(KratosALEApplication) {
   AddCustomStrategiesToPython();
   AddCustomUtilitiesToPython();
 
+  #ifdef KRATOS_USING_MPI // mpi-parallel compilation
+    AddCustomStrategiesMPIToPython();
+  #endif
+
   // variables moved to core
   // MESH_VELOCITY currently put to the core since used in other applications
   // KRATOS_REGISTER_IN_PYTHON_VARIABLE(MESH_VELOCITY)

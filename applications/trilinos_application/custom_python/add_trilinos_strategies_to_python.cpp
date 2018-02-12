@@ -58,8 +58,8 @@
 #include "custom_strategies/convergencecriterias/trilinos_displacement_criteria.h"
 #include "custom_strategies/convergencecriterias/trilinos_up_criteria.h"
 #include "custom_strategies/strategies/trilinos_convdiff_strategy.h"
-#include "custom_strategies/strategies/trilinos_laplacian_meshmoving_strategy.h"
-#include "custom_strategies/strategies/trilinos_structural_meshmoving_strategy.h"
+//#include "custom_strategies/strategies/trilinos_laplacian_meshmoving_strategy.h"
+//#include "custom_strategies/strategies/trilinos_structural_meshmoving_strategy.h"
 
 //linear solvers
 // #include "linear_solvers/linear_solver.h"
@@ -133,7 +133,7 @@ void AddStrategies()
     .def( "SetEchoLevel", &TrilinosBuilderAndSolverType::SetEchoLevel )
     .def( "GetEchoLevel", &TrilinosBuilderAndSolverType::GetEchoLevel )
     ;
-    
+
     typedef TrilinosResidualBasedEliminationBuilderAndSolver< TrilinosSparseSpaceType, TrilinosLocalSpaceType, TrilinosLinearSolverType > TrilinosResidualBasedEliminationBuilderAndSolverType;
     class_< TrilinosResidualBasedEliminationBuilderAndSolverType, bases<TrilinosBuilderAndSolverType>, boost::noncopyable >
     ( "TrilinosEliminationBuilderAndSolver", init<Epetra_MpiComm&, int, TrilinosLinearSolverType::Pointer > () )
@@ -143,7 +143,7 @@ void AddStrategies()
     class_< TrilinosBlockBuilderAndSolverType,bases< TrilinosBuilderAndSolverType >, boost::noncopyable >
     ( "TrilinosBlockBuilderAndSolver", init<Epetra_MpiComm&, int, TrilinosLinearSolverType::Pointer > () )
     ;
-    
+
     class_< TrilinosBlockBuilderAndSolverPeriodic< TrilinosSparseSpaceType, TrilinosLocalSpaceType, TrilinosLinearSolverType >,
     bases< TrilinosBlockBuilderAndSolverType >, boost::noncopyable >
     ( "TrilinosBlockBuilderAndSolverPeriodic", init<Epetra_MpiComm&, int, TrilinosLinearSolverType::Pointer, Kratos::Variable<int>& >() )
@@ -154,7 +154,7 @@ void AddStrategies()
     ( "TrilinosConvectionDiffusionStrategy", init < Epetra_MpiComm&, ModelPart&, TrilinosLinearSolverType::Pointer, bool, int, int > () )
     .def( "Solve", &TrilinosConvectionDiffusionStrategy< TrilinosSparseSpaceType, TrilinosLocalSpaceType, TrilinosLinearSolverType >::Solve )
     ;
-    
+
     // Strategy base class
     class_< TrilinosBaseSolvingStrategyType, boost::noncopyable > ("TrilinosSolvingStrategy", init < ModelPart&, bool >())
     .def("Predict", &TrilinosBaseSolvingStrategyType::Predict)
@@ -190,13 +190,13 @@ void AddStrategies()
     class_< TrilinosLinearStrategy , bases< TrilinosBaseSolvingStrategyType >, boost::noncopyable >
     ("TrilinosLinearStrategy", init< ModelPart&, TrilinosBaseSchemeType::Pointer, TrilinosLinearSolverType::Pointer, TrilinosBuilderAndSolverType::Pointer, bool, bool, bool, bool >())
     ;
-            
+
     typedef ResidualBasedNewtonRaphsonStrategy< TrilinosSparseSpaceType, TrilinosLocalSpaceType, TrilinosLinearSolverType> TrilinosNewtonRaphsonStrategy;
     class_< TrilinosNewtonRaphsonStrategy , bases< TrilinosBaseSolvingStrategyType >, boost::noncopyable >
     ("TrilinosNewtonRaphsonStrategy", init< ModelPart&, TrilinosBaseSchemeType::Pointer, TrilinosLinearSolverType::Pointer, TrilinosConvergenceCriteria::Pointer, TrilinosBuilderAndSolverType::Pointer, int, bool, bool, bool >())
     ;
-            
-    // Mesh Moving ********************************************************************************************
+
+/*     // Mesh Moving ********************************************************************************************
     typedef TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector> TrilinosSparseSpaceType;
     typedef UblasSpace<double, Matrix, Vector> TrilinosLocalSpaceType;
 
@@ -210,7 +210,7 @@ void AddStrategies()
     class_< TrilinosStructuralMeshMovingStrategyType, bases< TrilinosBaseSolvingStrategyType >, boost::noncopyable >
     ("TrilinosStructuralMeshMovingStrategy", init<Epetra_MpiComm&, ModelPart&, TrilinosLinearSolverType::Pointer, int, bool >() )
     .def("CalculateMeshVelocities", &TrilinosStructuralMeshMovingStrategyType::CalculateMeshVelocities)
-    ;
+    ; */
 
 }
 

@@ -1,5 +1,4 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
-
 from KratosMultiphysics import *
 from KratosMultiphysics.ALEApplication import *
 from KratosMultiphysics.ExternalSolversApplication import *
@@ -40,7 +39,7 @@ class MainKratos:
         #    self.gid_output = GiDOutputProcessMPI(self.solver.GetComputingModelPart(),
         #                                          self.ProjectParameters["problem_data"]["problem_name"].GetString(),
         #                                          self.ProjectParameters["output_configuration"])
-        #self.gid_output.ExecuteInitialize() 
+        #self.gid_output.ExecuteInitialize()
 ##---------------------
 
         self.Model = Model()

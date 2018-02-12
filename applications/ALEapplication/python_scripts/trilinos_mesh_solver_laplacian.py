@@ -36,9 +36,9 @@ class TrilinosMeshSolverComponentwise(trilinos_mesh_solver_base.TrilinosMeshSolv
         comm = self.get_communicator()
         solver = TrilinosApplication.TrilinosLaplacianMeshMovingStrategy(
             comm,
-            self.model_part, 
-            linear_solver, 
+            self.model_part,
+            linear_solver,
             domain_size,
-            time_order, 
+            time_order,
             reform_dof_at_every_step)
 return solver
