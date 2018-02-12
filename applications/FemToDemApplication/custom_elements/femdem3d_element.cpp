@@ -85,8 +85,14 @@ namespace Kratos
 
 	void FemDem3DElement::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
-		this->ComputeEdgeNeighbours(rCurrentProcessInfo); // TODO: do this only once 
-		this->CalculateLchar(); // TODO: do this only once 
+		if (this->GetIteration() == 0)
+		{
+			this->ComputeEdgeNeighbours(rCurrentProcessInfo); 
+			this->CalculateLchar(); 
+			
+			this->IterationPlus();
+		}
+
 	}
 
 	void FemDem3DElement::ComputeEdgeNeighbours(ProcessInfo& rCurrentProcessInfo)
@@ -134,8 +140,6 @@ namespace Kratos
 			// Loop over neigh elements of the node 1
 			for (int neigh_elem = 0; neigh_elem < NeighOfNode1.size();neigh_elem++)
 			{
-				//std::vector<Element> EdgeSharedElementsNode1;
-
 				// Nodes of the neigh element
 				Geometry< Node < 3 > >& NodesNeighElem = NeighOfNode1[neigh_elem].GetGeometry();
 
@@ -155,8 +159,6 @@ namespace Kratos
 			// Loop over neigh elements of the node 2
 			for (int neigh_elem = 0; neigh_elem < NeighOfNode2.size();neigh_elem++)
 			{
-				//std::vector<Element> EdgeSharedElementsNode2;
-
 				// Nodes of the neigh element
 				Geometry< Node < 3 > >& NodesNeighElem = NeighOfNode2[neigh_elem].GetGeometry();
 
@@ -190,77 +192,59 @@ namespace Kratos
 
 			EdgeNeighboursContainer.push_back(EdgeSharedElements);
 
-			// KRATOS_WATCH(this->Id())
-			// KRATOS_WATCH(NodeId1)
-			// KRATOS_WATCH(NodeId2)
-			// //KRATOS_WATCH(EdgeSharedElementsNode1[0].Id())
-			// //KRATOS_WATCH(EdgeSharedElementsNode2[0].Id())
-			// KRATOS_WATCH(EdgeSharedElementsNode1.size())
-			// KRATOS_WATCH(EdgeSharedElementsNode2.size())
-			// //KRATOS_WATCH(EdgeSharedElements.size())
-
-			// for (int i=0;i<EdgeSharedElements.size();i++)
-			// {
-			// 	KRATOS_WATCH(EdgeSharedElements[i]->Id())
-			// }
-
 		} // End loop edges
 
 		// Storages the information inside the element
 		this->SaveEdgeNeighboursContainer(EdgeNeighboursContainer);
 
-		// std::cout<<"out of the loop"<<std::endl;
-		// std::vector<Element*> elems = this->GetEdgeNeighbourElements(0);
-		// KRATOS_WATCH(elems[1]->Id())
-
 	} // End finding edge neighbour elements
 
 	void FemDem3DElement::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
-		//double CurrentfSigma = 0.0, damage_element = 0.0;
+		double CurrentfSigma = 0.0, damage_element = 0.0;
 		
 
-		// //Loop over edges
-		// for (int cont = 0; cont < 3; cont++)
-		// {
-		// 	this->Set_Convergeddamages(this->Get_NonConvergeddamages(cont), cont);
-		// 	this->SetConverged_f_sigmas(this->Get_NonConvergedf_sigma(cont), cont);
-		// 	CurrentfSigma = this->GetConverged_f_sigmas(cont);
-		// 	if (CurrentfSigma > this->Get_threshold(cont)) { this->Set_threshold(CurrentfSigma, cont); }
-		// } // End Loop over edges
+		//Loop over edges
+		for (int cont = 0; cont < 6; cont++)
+		{
+			this->Set_Convergeddamages(this->Get_NonConvergeddamages(cont), cont);
+			this->SetConverged_f_sigmas(this->Get_NonConvergedf_sigma(cont), cont);
+			CurrentfSigma = this->GetConverged_f_sigmas(cont);
+			if (CurrentfSigma > this->Get_threshold(cont)) { this->Set_threshold(CurrentfSigma, cont); }
+		} // End Loop over edges
 
-		// damage_element = this->Get_NonConvergeddamage();
-		// this->Set_Convergeddamage(damage_element);
+		damage_element = this->Get_NonConvergeddamage();
+		this->Set_Convergeddamage(damage_element);
 
-		// if (damage_element > 0.0) 
-		// {
-		// 	this->SetValue(IS_DAMAGED, 1);
-		// }
+		if (damage_element > 0.0) 
+		{
+			this->SetValue(IS_DAMAGED, 1);
+		}
 		
-		// if (damage_element >= 0.98)
-		// {
-		// 	this->Set(ACTIVE, false);
-		// 	double old_threshold = this->GetValue(STRESS_THRESHOLD);
-		// 	this->SetValue(INITIAL_THRESHOLD, old_threshold);
-		// }
+		if (damage_element >= 0.98)
+		{
+			this->Set(ACTIVE, false);  
+			double old_threshold = this->GetValue(STRESS_THRESHOLD);
+			this->SetValue(INITIAL_THRESHOLD, old_threshold);
+		}
 
-		// this->ResetNonConvergedVars();
-		// this->SetToZeroIteration();
+		this->ResetNonConvergedVars();
+		//this->SetToZeroIteration();
 
-		// // computation of the equivalent damage threshold and damage of the element for AMR mapping
-		// Vector thresholds = this->GetThresholds();
+		// computation of the equivalent damage threshold and damage of the element for AMR mapping
+		//Vector thresholds = this->GetThresholds();
 		
-		// Vector TwoMinValues;
-		// this->Get2MaxValues(TwoMinValues, thresholds[0], thresholds[1], thresholds[2]);  // todo ojo con la funcion modificada
-		// double EqThreshold = 0.5*(TwoMinValues[0] + TwoMinValues[1]);  // El menor o mayor?? TODO
+		//Vector TwoMinValues;
+		//this->Get2MaxValues(TwoMinValues, thresholds[0], thresholds[1], thresholds[2]);  // todo ojo con la funcion modificada
+		//double EqThreshold = 0.5*(TwoMinValues[0] + TwoMinValues[1]);  // El menor o mayor?? TODO
 
 
-		// this->SetValue(STRESS_THRESHOLD, EqThreshold); // AMR
-		// this->Set_threshold(EqThreshold);
-		// this->SetValue(DAMAGE_ELEMENT, damage_element);
+		//this->SetValue(STRESS_THRESHOLD, EqThreshold); // AMR
+		//this->Set_threshold(EqThreshold);
+		this->SetValue(DAMAGE_ELEMENT, damage_element);
 
 
-		// // Reset the nodal force flag for the next time step
+		// Reset the nodal force flag for the next time step
 		// Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
 		// for (int i = 0; i < 3; i++)
 		// {
@@ -441,7 +425,7 @@ namespace Kratos
 			//WeakPointerVector< Element >& elem_neigb = this->GetValue(NEIGHBOUR_ELEMENTS);
 			//if (elem_neigb.size() == 0) { KRATOS_THROW_ERROR(std::invalid_argument, " Neighbour Elements not calculated --> size = ", elem_neigb.size()) }
 
-			const Vector& StressVector = this->GetValue(STRESS_VECTOR);
+			
 			Vector DamagesOnEdges = ZeroVector(6);
 			
 			// Loop over edges of the element
@@ -463,21 +447,20 @@ namespace Kratos
 
 			} // End loop over edges
 
-			// todo: sacar daño del elemento a partir de los costados y FinalizeSolStep
-
-
-
-
-
-
-
+			double damage_element = this->CalculateElementalDamage(DamagesOnEdges);
+			if (damage_element >= 0.999) { damage_element = 0.999; }
+			this->Set_NonConvergeddamage(damage_element);
+			
+			const Vector& StressVector = this->GetValue(STRESS_VECTOR);
+			IntegratedStressVector = (1 - damage_element)*StressVector;
+			this->SetIntegratedStressVector(IntegratedStressVector);
 
 			Matrix ConstitutiveMatrix = ZeroMatrix(voigt_size, voigt_size);
 			double E  = this->GetProperties()[YOUNG_MODULUS];
 			double nu = this->GetProperties()[POISSON_RATIO];
 			this->CalculateConstitutiveMatrix(ConstitutiveMatrix, E, nu);
 
-			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight * Matrix(prod(ConstitutiveMatrix, B))); // LHS
+			noalias(rLeftHandSideMatrix) += prod(trans(B), IntegrationWeight *(1 - damage_element)* Matrix(prod(ConstitutiveMatrix, B))); // LHS
 
 			Vector VolumeForce = ZeroVector(dimension);
 			VolumeForce = this->CalculateVolumeForce(VolumeForce, N);
@@ -493,7 +476,7 @@ namespace Kratos
 			}
 
 			//compute and add internal forces (RHS = rRightHandSideVector = Fext - Fint)
-			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), StressVector);
+			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), IntegratedStressVector);
 
 			// todo: Add nodal DEM forces
 
@@ -659,7 +642,7 @@ namespace Kratos
 			double acosphi = acos(phi);
 			phi = acosphi / 3.0;
 
-			double aux1 = 0.666666666666667*sqrt(II1-3.0*I2);
+			double aux1 = 0.666666666666667*sqrt(II1 - 3.0*I2);
 			double aux2 = I1 / 3.0;
 
 			rPrincipalStressVector[0] = aux2 + aux1*cos(phi);
@@ -1142,28 +1125,28 @@ namespace Kratos
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
 		sigma_t = this->GetProperties()[YIELD_STRESS_T];
-		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159 / 180; // In radians!
+		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159265359 / 180.0; // In radians!
 		E = this->GetProperties()[YOUNG_MODULUS];
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 
 		// Check input variables 
-		if (friction_angle < 1e-24) { friction_angle = 32 * 3.14159 / 180; std::cout << "Friction Angle not defined, assumed equal to 32� " << std::endl; }
+		if (friction_angle < 1e-24) { friction_angle = 32 * 3.14159 / 180; std::cout << "Friction Angle not defined, assumed equal to 32 deg " << std::endl; }
 		if (sigma_c < 1e-24) { KRATOS_ERROR << " ERROR: Yield stress in compression not defined, include YIELD_STRESS_C in .mdpa "; }
 		if (sigma_t < 1e-24) { KRATOS_ERROR << " ERROR: Yield stress in tension not defined, include YIELD_STRESS_T in .mdpa "; }
 		if (Gt < 1e-24) { KRATOS_ERROR << " ERROR: Fracture Energy not defined in the model part, include FRAC_ENERGY_T in .mdpa "; }
 
 		double K1, K2, K3, Rmorh, R, alpha_r, c_max, theta, c_threshold;
 		R = abs(sigma_c / sigma_t);
-		Rmorh = pow(tan((3.14159 / 4) + friction_angle / 2), 2);
+		Rmorh = pow(tan((3.14159265359 / 4) + friction_angle / 2), 2);
 		alpha_r = R / Rmorh;
 		c_max = abs(sigma_c);
 
 		double I1, J2, J3;
-		I1 = Calculate_I1_Invariant(StressVector);
+		I1 = this->Calculate_I1_Invariant(StressVector);
 		Vector Deviator = ZeroVector(6);
 		this->CalculateDeviatorVector(Deviator, StressVector, I1);
-		J2 = Calculate_J2_Invariant(Deviator);
-		J3 = Calculate_J3_Invariant(Deviator);
+		J2 = this->Calculate_J2_Invariant(Deviator);
+		J3 = this->Calculate_J3_Invariant(Deviator);
 		K1 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r)*sin(friction_angle);
 		K2 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r) / sin(friction_angle);
 		K3 = 0.5*(1 + alpha_r)*sin(friction_angle) - 0.5*(1 - alpha_r);
@@ -1187,7 +1170,6 @@ namespace Kratos
 
 		if (this->Get_threshold(cont) == 0) { this->Set_threshold(c_max, cont); }   // 1st iteration sets threshold as c_max
 		c_threshold = this->Get_threshold(cont);
-		//KRATOS_WATCH(c_threshold)
 		this->Set_NonConvergedf_sigma(f, cont);
 	
 		F = f - c_threshold;
@@ -1214,13 +1196,11 @@ namespace Kratos
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0, c_max = 0.0, c_threshold = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
 		sigma_t = this->GetProperties()[YIELD_STRESS_T];
-		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159 / 180; // In radians!
+		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159265359 / 180; // In radians!
 		E = this->GetProperties()[YOUNG_MODULUS];
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 		c_max = abs(sigma_t);
 
-		//double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
 
@@ -1236,13 +1216,11 @@ namespace Kratos
 		if (F <= 0)  // Elastic region --> Damage is constant 
 		{
 			damage = this->Get_Convergeddamage();
-			//this->Set_NonConvergeddamage(damage);
 		}
 		else
 		{
 			damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));  // Exponential softening law
 			if (damage > 0.99) { damage = 0.99; }
-			//this->Set_NonConvergeddamage(damage);
 		}
 		rIntegratedStress = StressVector;
 		rIntegratedStress *= (1 - damage);
@@ -1256,7 +1234,7 @@ namespace Kratos
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
 		sigma_t = this->GetProperties()[YIELD_STRESS_T];
-		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159 / 180; // In radians!
+		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159265359 / 180; // In radians!
 		E = this->GetProperties()[YOUNG_MODULUS];
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 
@@ -1275,8 +1253,6 @@ namespace Kratos
 		this->CalculateDeviatorVector(Deviator, StressVector, I1);
 		J2 = Calculate_J2_Invariant(Deviator);
 
-		//double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
 
@@ -1301,13 +1277,11 @@ namespace Kratos
 		if (F <= 0)  // Elastic region --> Damage is constant 
 		{
 			damage = this->Get_Convergeddamage();
-			//this->Set_NonConvergeddamage(damage);
 		}
 		else
 		{
 			damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
 			if (damage > 0.99) { damage = 0.99; }
-			//this->Set_NonConvergeddamage(damage);
 		}
 		rIntegratedStress = StressVector;
 		rIntegratedStress *= (1 - damage);
@@ -1332,7 +1306,7 @@ namespace Kratos
 		for (int cont = 0;cont < 2;cont++)
 		{
 			SumA += abs(PrincipalStressVector[cont]);
-			SumB += 0.5*(PrincipalStressVector[cont] + abs(PrincipalStressVector[cont]));
+			SumB += 0.5*(PrincipalStressVector[cont]  + abs(PrincipalStressVector[cont]));
 			SumC += 0.5*(-PrincipalStressVector[cont] + abs(PrincipalStressVector[cont]));
 		}
 		ere0 = SumB / SumA;
@@ -1358,21 +1332,17 @@ namespace Kratos
 		this->Set_NonConvergedf_sigma(f, cont);
 		F = f - c_threshold;
 
-		//double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*n*n*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
 
 		if (F <= 0)  // Elastic region --> Damage is constant 
 		{
 			damage = this->Get_Convergeddamage();
-			//this->Set_NonConvergeddamage(damage);
 		}
 		else
 		{
 			damage = 1 - (c_max / f)*exp(A*(1 - f / c_max));            // Exponential softening law
 			if (damage > 0.99) { damage = 0.99; }
-		//	this->Set_NonConvergeddamage(damage);
 		}
 		rIntegratedStress = StressVector;
 		rIntegratedStress *= (1 - damage);
@@ -1386,13 +1356,11 @@ namespace Kratos
 		double sigma_c = 0.0, sigma_t = 0.0, friction_angle = 0.0, E = 0.0, Gt = 0.0, c_max = 0.0, c_threshold = 0.0;
 		sigma_c = this->GetProperties()[YIELD_STRESS_C];
 		sigma_t = this->GetProperties()[YIELD_STRESS_T];
-		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159 / 180; // In radians!
+		friction_angle = this->GetProperties()[INTERNAL_FRICTION_ANGLE] * 3.14159265359 / 180; // In radians!
 		E = this->GetProperties()[YOUNG_MODULUS];
 		Gt = this->GetProperties()[FRAC_ENERGY_T];
 		c_max = abs(sigma_t);
 
-		//double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
 		double A = 1.00 / (Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
 
@@ -1408,7 +1376,6 @@ namespace Kratos
 		if (F <= 0)  // Elastic region --> Damage is constant 
 		{
 			damage = this->Get_Convergeddamage();
-			//this->Set_NonConvergeddamage(damage);
 		}
 		else
 		{
@@ -1416,6 +1383,22 @@ namespace Kratos
 		}
 		rIntegratedStress = StressVector;
 		rIntegratedStress *= (1 - damage);
+	}
+
+	// Computes the damage of the element considering different fracture modes
+	double FemDem3DElement::CalculateElementalDamage(const Vector& EdgeDamages)
+	{
+		// 7 modes of fracture of the tetrahedron
+		Vector DamageModeFracture = ZeroVector(7);
+		DamageModeFracture[0] = 0.3333333334*(EdgeDamages[0] + EdgeDamages[1] + EdgeDamages[2]);
+		DamageModeFracture[1] = 0.3333333334*(EdgeDamages[0] + EdgeDamages[3] + EdgeDamages[4]);
+		DamageModeFracture[2] = 0.3333333334*(EdgeDamages[1] + EdgeDamages[3] + EdgeDamages[5]);
+		DamageModeFracture[3] = 0.25*(EdgeDamages[1] + EdgeDamages[2] + EdgeDamages[3] + EdgeDamages[4]);
+		DamageModeFracture[4] = 0.25*(EdgeDamages[0] + EdgeDamages[1] + EdgeDamages[4] + EdgeDamages[5]);
+		DamageModeFracture[5] = 0.3333333334*(EdgeDamages[2] + EdgeDamages[4] + EdgeDamages[5]);
+		DamageModeFracture[6] = 0.25*(EdgeDamages[0] + EdgeDamages[2] + EdgeDamages[3] + EdgeDamages[5]);
+
+		return this->GetMaxValue(DamageModeFracture);
 	}
 
 } // Element

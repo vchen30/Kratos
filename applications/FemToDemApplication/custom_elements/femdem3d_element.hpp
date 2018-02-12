@@ -219,6 +219,8 @@ namespace Kratos
 
 		void SetNodeIndexes(Matrix& M) // Defines the numbering of the edges with the corresponding nodes
 		{
+			M.resize(6,2);
+
 			M(0,0) = 0; 
 			M(0,1) = 1;
 			M(1,0) = 0;
@@ -232,6 +234,8 @@ namespace Kratos
 			M(5,0) = 2;
 			M(5,1) = 3;
 		}
+
+		double CalculateElementalDamage(const Vector& EdgeDamages);
 		
 	private:
 		int iteration = 0;
