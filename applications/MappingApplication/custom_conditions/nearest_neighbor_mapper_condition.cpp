@@ -172,10 +172,10 @@ Condition::Pointer NearestNeighborMapperCondition::Clone(IndexType NewId, NodesA
 void NearestNeighborMapperCondition::CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix, ProcessInfo &rCurrentProcessInfo)
 {
     rLeftHandSideMatrix.resize(3,1); // TODO do it like this? And if so, I think this fct needs another argument
-    
+
     rLeftHandSideMatrix(0,0) = 1.0; // Weight
     rLeftHandSideMatrix(1,0) = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-    rLeftHandSideMatrix(2,0) = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
+    // rLeftHandSideMatrix(2,0) = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**

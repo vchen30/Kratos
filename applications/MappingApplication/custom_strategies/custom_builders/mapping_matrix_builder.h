@@ -12,19 +12,19 @@
 // See Master-Thesis P.Bucher
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
-//
+
 
 #if !defined(KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED)
 #define KRATOS_MAPPING_MATRIX_BUILDER_H_INCLUDED
 
 // System includes
+#include <unordered_map>
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
-#include "custom_conditions/mortar_mapper_condition.h"
-#include "mapping_application_variables.h"
+#include "base_mapping_matrix_builder.h"
 
 namespace Kratos
 {
@@ -54,9 +54,9 @@ namespace Kratos
 /** Detail class definition.
   */
 template <class TSparseSpace,
-          class TDenseSpace // = DenseSpace<double>,
+          class TDenseSpace  // = DenseSpace<double>,
           >
-class MappingMatrixBuilder
+class MappingMatrixBuilder : public BaseMappingMatrixBuilder<TSparseSpace, TDenseSpace>
 {
   public:
     ///@name Type Definitions
@@ -65,8 +65,10 @@ class MappingMatrixBuilder
     /// Pointer definition of MappingMatrixBuilder
     KRATOS_CLASS_POINTER_DEFINITION(MappingMatrixBuilder);
 
+    typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
+
     typedef typename TSparseSpace::DataType TDataType;
-    
+
     typedef typename TSparseSpace::MatrixType TSystemMatrixType;
 
     typedef typename TSparseSpace::VectorType TSystemVectorType;
@@ -78,25 +80,21 @@ class MappingMatrixBuilder
     typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
 
     typedef typename TDenseSpace::VectorType LocalSystemVectorType;
-    
+
     typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
+
+    typedef ModelPart::NodeIterator NodeIterator;
+    typedef ModelPart::ConditionIterator ConditionIterator;
+    typedef Condition::EquationIdVectorType EquationIdVectorType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MappingMatrixBuilder(const int EchoLevel) {
-
-        if (TSparseSpace::IsDistributed())
-        {
-            std::cout << "Using the TRILINOS Space" << std::endl;
-        }
-        else
-        {
-            std::cout << "Using the UBLAS Space" << std::endl;            
-        }
-        mEchoLevel = EchoLevel;
+    MappingMatrixBuilder(const int EchoLevel) : MappingMatrixBuilder<TSparseSpace, TDenseSpace>(EchoLevel)
+    {
+        KRATOS_ERROR_IF(TSparseSpace::IsDistributed()) << "WRONG SPACE!" << std::endl;
     }
 
     /// Destructor.
@@ -110,86 +108,115 @@ class MappingMatrixBuilder
     ///@name Operations
     ///@{
 
-    /** 
-    This function set up the structure of the system, i.e. the NodeSet,
-    which relates the nodes to the equation Ids
-    */
-    void SetUpSystem(ModelPart& rModelPart)
+    void UpdateSystemVector(ModelPart& rModelPart,
+                            TSystemVectorType& rB,
+                            const Variable<double>& rVariable) override
     {
-        // EquationIdNodeMap.clear();
-
-        // these ids are the positions in the global vectors and matrix
-        int equation_id = GetStartEquationId(rModelPart);
-
-        for (auto& node : rModelPart.GetCommunicator().LocalMesh().Nodes())
-        {
-        // EquationIdNodeMap.emplace(equation_id, &node); // TODO check if this is a pointer
-        node.SetValue(MAPPING_MATRIX_EQUATION_ID, equation_id); // TODO replace with sth faster?
-        ++equation_id;
-        }
-
-        rModelPart.GetCommunicator().SynchronizeVariable(MAPPING_MATRIX_EQUATION_ID);
+        TUpdateSystemVector(rModelPart, rB, rVariable);
     }
 
-    void Multiply(TSystemMatrixType& rA,
-                  TSystemVectorType& rX,
-                  TSystemVectorType& rY,
-                  const bool Transposed = false)
-    {   if (Transposed) // rY = rA^T * rX
-        {
-            TSparseSpace::TransposeMult(rA, rX, rY);
-        }
-        else // rY = rA * rX
-        { 
-            TSparseSpace::Mult(rA, rX, rY);
-        }
-        
+    void UpdateSystemVector(ModelPart& rModelPart,
+                            TSystemVectorType& rB,
+                            const VectorComponentType& rVariable) override
+    {
+        TUpdateSystemVector(rModelPart, rB, rVariable);
     }
 
-    // Variable is Scalar
-    virtual void UpdateSystemVector(ModelPart& rModelPart,
-                                    TSystemVectorType& rB,
-                                    const Variable<double>& rVariable) = 0;
 
-    // Variable is Vector Component
-    virtual void UpdateSystemVector(ModelPart& rModelPart,
-                                    TSystemVectorType& rB,
-                                    const VectorComponentType& rVariable) = 0;
+    void Update(ModelPart& rModelPart,
+                TSystemVectorType& rB,
+                const Variable<double>& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
+    {
+        TUpdate(rModelPart, rB, rVariable, MappingOptions, Factor);
+    }
 
-    // Variable is Scalar
-    virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorType& rB,
-                        const Variable<double>& rVariable,
-                        const Kratos::Flags& MappingOptions,
-                        const double Factor) = 0;
+    void Update(ModelPart& rModelPart,
+                TSystemVectorType& rB,
+                const VectorComponentType& rVariable,
+                const Kratos::Flags& MappingOptions,
+                const double Factor) override
+    {
+        TUpdate(rModelPart, rB, rVariable, MappingOptions, Factor);
+    }
 
-    // Variable is Vector Component
-    virtual void Update(ModelPart& rModelPart,
-                        TSystemVectorType& rB,
-                        const VectorComponentType& rVariable,
-                        const Kratos::Flags& MappingOptions,
-                        const double Factor) = 0;
-
-
-    virtual void ResizeAndInitializeVectors(
-        TSystemMatrixPointerType& pMdo, // TODO is ok tp pass by ref? I think so, but chek again
+    void ResizeAndInitializeVectors(
+        TSystemMatrixPointerType& pMdo,
         TSystemVectorPointerType& pQo,
         TSystemVectorPointerType& pQd,
         const unsigned int size_origin,
-        const unsigned int size_destination) = 0;
+        const unsigned int size_destination) override
+    {
+
+        if (!pMdo) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemMatrixPointerType pNewMdo = TSparseSpace::CreateEmptyMatrixPointer();
+            pMdo.swap(pNewMdo);
+        }
+        if (!pQo) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemVectorPointerType pNewQo = TSparseSpace::CreateEmptyVectorPointer();
+            pQo.swap(pNewQo);
+        }
+        if (!pQd) //if the pointer is not initialized initialize it to an empty matrix
+        {
+            TSystemVectorPointerType pNewQd = TSparseSpace::CreateEmptyVectorPointer();
+            pQd.swap(pNewQd);
+        }
 
 
-    virtual void BuildMappingMatrix(ModelPart& rModelPart,
-                                    TSystemMatrixType& rA) = 0;
+        TSystemMatrixType& Mdo = *pMdo;
+        TSystemVectorType& Qo = *pQo;
+        TSystemVectorType& Qd = *pQd;
 
-    // TODO is ok tp pass by ref? I think so, but chek again
-    // these functions are needed for now bcs the spaces are not consistent
-    virtual void ClearData(TSystemMatrixPointerType& pA) = 0;
-    virtual void ClearData(TSystemVectorPointerType& pB) = 0;
-    virtual void Clear(TSystemMatrixPointerType& pA) = 0;
-    virtual void Clear(TSystemVectorPointerType& pB) = 0;
+        //resizing the system vectors and matrix
+        if (Mdo.size1() == 0) //if the matrix is not initialized
+        {
+            Mdo.resize(size_destination, size_origin, false);
+            // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+            ConstructMatrixStructure();
+        }
+        else
+        {
+            if (Mdo.size1() != size_destination || Mdo.size2() != size_origin)
+            {
+                KRATOS_WATCH("it should not come here!!!!!!!! ... this is SLOW");
+                Mdo.resize(size_destination, size_origin, true);
+                // ConstructMatrixStructure(pScheme, A, rElements, rConditions, CurrentProcessInfo);
+                ConstructMatrixStructure();
+            }
+        }
 
+        if (Qo.size() != size_origin) Qo.resize(size_origin, false);
 
+        if (Qd.size() != size_destination) Qd.resize(size_destination, false);
+
+    }
+
+    void BuildMappingMatrix(ModelPart& rModelPart,
+                            TSystemMatrixType& rA) override
+    {
+        // contributions to the system
+        LocalSystemMatrixType mapper_local_system = LocalSystemMatrixType(0,0);
+
+        ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
+
+        const int num_conditions = rModelPart.NumberOfConditions();
+        ConditionIterator it_begin = rModelPart.ConditionsBegin();
+
+        // #pragma omp parallel for // TODO check if this works, i.e. if I write the same positions several times!
+        for(int i = 0; i < num_conditions; i++)
+        {
+            ConditionIterator cond_it = it_begin + i;
+
+            cond_it->CalculateLeftHandSide(mapper_local_system, r_current_process_info);
+
+            Assemble(rA, mapper_local_system);
+        }
+
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false); // TODO change Level to sth higher later
+    }
 
     // /**
     // This functions build the LHS (aka the Mapping Matrix Mdo) of the mapping problem
@@ -263,7 +290,7 @@ class MappingMatrixBuilder
     // }
 
     /**
-    This functions build the RHS (aka the vector of nodal quantities 
+    This functions build the RHS (aka the vector of nodal quantities
     for a given variable) of the mapping problem
      */
     // template <typename T>
@@ -305,11 +332,28 @@ class MappingMatrixBuilder
     // {
     // }
 
-    void Check()
+    // TODO check if those functions do what they are supposed to do!
+    // TODO do these two methods even make much of a difference?
+    // I have to Initialize the size of the vector again anyway ...
+    virtual void ClearData(TSystemMatrixPointerType& pA) override
     {
-        // compute the row sum:
-
+        TSystemMatrixType& rA = *pA;
+        TSparseSpace::ClearData(rA);
     }
+    virtual void ClearData(TSystemVectorPointerType& pB) override
+    {
+        TSystemVectorType& rB = *pB;
+        TSparseSpace::ClearData(rB);
+    }
+    virtual void Clear(TSystemMatrixPointerType& pA) override
+    {
+        TSparseSpace::Clear(pA);
+    }
+    virtual void Clear(TSystemVectorPointerType& pB) override
+    {
+        TSparseSpace::Clear(pB);
+    }
+
 
     ///@}
     ///@name Access
@@ -351,8 +395,6 @@ class MappingMatrixBuilder
     ///@name Protected member Variables
     ///@{
 
-    int mEchoLevel = 0;
-
     ///@}
     ///@name Protected Operators
     ///@{
@@ -366,16 +408,9 @@ class MappingMatrixBuilder
     aka the equation id of the global system
     */
     virtual int GetStartEquationId(ModelPart& rModelPart)
-    {   
+    {
         return 0;
     }
-
-    /**
-    This function does nothing in the serial case
-    It exists such that the BuildRHS only exists in this
-    class and can therefore be templated
-    */
-    // virtual void GlobalAssembleVector(TSystemVectorType& b) {}
 
     ///@}
     ///@name Protected  Access
@@ -406,6 +441,101 @@ class MappingMatrixBuilder
     ///@}
     ///@name Private Operations
     ///@{
+
+    template< class TVarType>
+    void TUpdateSystemVector(ModelPart& rModelPart,
+                             TSystemVectorType& rB,
+                             const TVarType& rVariable)
+    {
+        const int num_nodes = rModelPart.NumberOfNodes();
+        NodeIterator it_begin = rModelPart.NodesBegin();
+
+        #pragma omp parallel for // Don't modify, this is best suitable for this case
+        for (int i = 0; i<num_nodes; i++)
+        {
+            NodeIterator it = it_begin + i;
+            rB[i] = it->FastGetSolutionStepValue(rVariable);
+        }
+
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketVector("UpdateSystemVector", rB); // TODO change Level to sth higher later
+    }
+
+    template< class TVarType>
+    void TUpdate(ModelPart& rModelPart,
+                 TSystemVectorType& rB,
+                 const TVarType& rVariable,
+                 const Kratos::Flags& MappingOptions,
+                 const double Factor)
+    {
+        if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketVector("Update", rB); // TODO change Level to sth higher later
+
+        const int num_nodes = rModelPart.NumberOfNodes();
+        NodeIterator it_begin = rModelPart.NodesBegin();
+
+        #pragma omp parallel for // Don't modify, this is best suitable for this case
+        for (int i = 0; i<num_nodes; i++)
+        {
+            NodeIterator it = it_begin + i;
+
+            if (MappingOptions.Is(MapperFlags::ADD_VALUES))
+                it->FastGetSolutionStepValue(rVariable) += rB[i] * Factor;
+            else
+                it->FastGetSolutionStepValue(rVariable) = rB[i] * Factor;
+        }
+    }
+
+    void Assemble(TSystemMatrixType& rA, LocalSystemMatrixType& rLocalSystem)
+    {
+        /* The format of "rLocalSystem" is:
+        1. Row: Weight
+        2. Row: MAPPING_MATRIX_ID on Destination
+        3. Row: MAPPING_MATRIX_ID on Origin */
+
+        const unsigned int local_size = rLocalSystem.size2(); // for
+
+        // No openmp here, is done at higher level! => but maybe protect the writing with atomic?
+        for (unsigned int i = 0; i < local_size; ++i)
+            rA(rLocalSystem(1,i) , rLocalSystem(2,i)) += rLocalSystem(0,i);  // Big Question: "=" or "+=" ??? TODO
+
+        // const unsigned int local_size = LHS_Contribution.size1();
+        // int equation_id_destination;
+        // int equation_id_origin;
+
+        // for (unsigned int i = 0; i < local_size ; ++i)
+        // {
+        //     for (unsigned int j = 0; j < local_size ; ++j)
+        //     {
+        //         equation_id_destination = EquationId[i];
+        //         equation_id_origin = EquationId[i + local_size];
+
+        //         // std::cout << "equation_id_destination: " << equation_id_destination << " ;; equation_id_origin: "
+        //         //           << equation_id_origin << " ;; LHS_Contribution(i,j): " << LHS_Contribution(i,j) << std::endl;
+
+        //         A(equation_id_destination, equation_id_origin) += LHS_Contribution(i,j);
+        //     }
+        // }
+
+
+        // unsigned int local_size = LHS_Contribution.size1();
+
+        // for (unsigned int i_local = 0; i_local < local_size; i_local++)
+        // {
+        //     unsigned int i_global = EquationId[i_local];
+
+        //     for (unsigned int j_local = 0; j_local < local_size; j_local++)
+        //     {
+        //         unsigned int j_global = EquationId[j_local];
+
+        //         A(i_global, j_global) += LHS_Contribution(i_local, j_local);
+        //     }
+        // }
+
+    }
+
+    void ConstructMatrixStructure()
+    {
+        // TODO implement this function
+    }
 
     ///@}
     ///@name Private  Access

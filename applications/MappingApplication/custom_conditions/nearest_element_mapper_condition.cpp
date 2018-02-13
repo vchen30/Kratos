@@ -178,12 +178,12 @@ void NearestElementMapperCondition::EquationIdVector(EquationIdVectorType &rResu
     for (SizeType i=0; i < num_points; ++i)
     {
         rResult[i] = GetGeometry().GetPoint(i).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-        rResult[i+1] = GetGeometry().GetPoint(i).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
+        // rResult[i+1] = GetGeometry().GetPoint(i).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
     }
 
     rResult[0] = GetGeometry().GetPoint(0).GetValue(MAPPING_MATRIX_EQUATION_ID); // ID on Destination
-    
-    rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
+
+    // rResult[1] = GetGeometry().GetPoint(0).GetValue(MAPPER_NEIGHBOR_INFORMATION)[0]; // ID on Origin. This is written by the Communicator
 }
 
 /**

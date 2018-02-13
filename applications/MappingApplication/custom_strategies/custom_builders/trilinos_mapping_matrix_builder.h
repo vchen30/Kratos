@@ -24,7 +24,7 @@
 
 // Project includes
 #include "includes/define.h"
-#include "solving_strategies/schemes/scheme.h"
+#include "base_mapping_matrix_builder.h"
 
 
 namespace Kratos
@@ -57,7 +57,7 @@ namespace Kratos
 template <class TSparseSpace,
           class TDenseSpace // = DenseSpace<double>,
           >
-class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, TDenseSpace>
+class TrilinosMappingMatrixBuilder : public BaseMappingMatrixBuilder<TSparseSpace, TDenseSpace>
 {
   public:
     ///@name Type Definitions
@@ -65,11 +65,11 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
 
     /// Pointer definition of TrilinosMappingMatrixBuilder
     KRATOS_CLASS_POINTER_DEFINITION(TrilinosMappingMatrixBuilder);
-    
+
     typedef std::unordered_map<int, Node<3>*> EquationIdMapType;
 
     typedef typename TSparseSpace::DataType TDataType;
-    
+
     typedef typename TSparseSpace::MatrixType TSystemMatrixType;
 
     typedef typename TSparseSpace::VectorType TSystemVectorType;
@@ -81,7 +81,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     typedef typename TDenseSpace::MatrixType LocalSystemMatrixType;
 
     typedef typename TDenseSpace::VectorType LocalSystemVectorType;
-    
+
     typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > VectorComponentType;
 
     ///@}
@@ -176,7 +176,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         const unsigned int size_origin,
         const unsigned int size_destination) override
     {
-        
+
     }
 
 
@@ -184,7 +184,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     void BuildMappingMatrix(ModelPart& rModelPart,
                             TSystemMatrixType& rA) override
     {
-        
+
     }
 
     // TODO check if those functions do what they are supposed to do!
@@ -296,7 +296,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
     r2 : 8 Nodes (start EquationId: 12)
     */
     int GetStartEquationId(ModelPart& rModelPart) override
-    {   
+    {
         int* num_local_nodes = new int(rModelPart.GetCommunicator().LocalMesh().NumberOfNodes());
 
         const int comm_rank = rModelPart.GetCommunicator().MyPID();
@@ -313,7 +313,7 @@ class TrilinosMappingMatrixBuilder : public MappingMatrixBuilder<TSparseSpace, T
         {
             start_equation_id += num_nodes_list[i];
         }
- 
+
         delete num_local_nodes;
         delete [] num_nodes_list;
         KRATOS_WATCH(comm_rank)

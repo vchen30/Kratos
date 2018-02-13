@@ -3,22 +3,18 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 message("**** configuring KratosMappingApplication ****")
 
 include_directories( ${CMAKE_SOURCE_DIR}/kratos )
-# include_directories( ${CMAKE_SOURCE_DIR}/applications/mpi_search_application ) # TODO can be removed for now
-
 
 # generate variables with the sources
 set( KRATOS_MAPPING_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/mapping_application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mapping_application_variables.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/mapping_python_application.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_mappers_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/mapper_flags.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/mapper_factory.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/base_mapper_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/nearest_neighbor_mapper_condition.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/nearest_neighbor_mapper_condition.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/nearest_element_mapper_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/mortar_mapper_condition.cpp
 )
 

@@ -33,6 +33,9 @@
 #include "custom_utilities/interface_node.h"
 #include "custom_utilities/interface_geometry_object.h"
 
+#include "custom_conditions/nearest_neighbor_mapper_condition.h"
+#include "custom_conditions/nearest_element_mapper_condition.h"
+#include "custom_conditions/mortar_mapper_condition.h"
 
 namespace Kratos
 {
@@ -193,6 +196,21 @@ private:
     const InterfaceObject           mInterfaceObject;
     const InterfaceNode             mInterfaceNode;
     const InterfaceGeometryObject   mInterfaceGeometryObject;
+
+    const NearestNeighborMapperCondition   mNearestNeighborMapperCondition2D1N;
+    const NearestNeighborMapperCondition   mNearestNeighborMapperCondition3D1N;
+
+    const NearestElementMapperCondition   mNearestElementMapperCondition2D1N;
+    const NearestElementMapperCondition   mNearestElementMapperCondition3D1N;
+
+    const MortarMapperCondition   mMortarMapperCondition2D2NLine; // 2D-Line
+    const MortarMapperCondition   mMortarMapperCondition3D2NLine; // 3D-Line
+    const MortarMapperCondition   mMortarMapperCondition2D3NSurface;  // 2D-Tri
+    const MortarMapperCondition   mMortarMapperCondition3D3NSurface;  // 3D-Tri
+    const MortarMapperCondition   mMortarMapperCondition2D4NSurface; // 2D-Quad
+    const MortarMapperCondition   mMortarMapperCondition3D4NSurface; // 3D-Quad
+    const MortarMapperCondition   mMortarMapperCondition3D4N;     // Tetra
+    const MortarMapperCondition   mMortarMapperCondition3D8N;     // Hexa
 
     ///@}
     ///@name Private Operators

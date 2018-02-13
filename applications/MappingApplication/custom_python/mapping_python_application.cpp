@@ -24,9 +24,6 @@
 #include "includes/define.h"
 #include "mapping_application.h"
 #include "mapping_application_variables.h"
-#include "custom_python/add_custom_strategies_to_python.h"
-#include "custom_python/add_custom_utilities_to_python.h"
-#include "custom_python/add_custom_processes_to_python.h"
 #include "custom_python/add_custom_mappers_to_python.h"
 
 
@@ -48,9 +45,7 @@ BOOST_PYTHON_MODULE(KratosMappingApplication)
            bases<KratosApplication>, boost::noncopyable >("KratosMappingApplication")
            ;
 
-    AddCustomStrategiesToPython();
-    AddCustomUtilitiesToPython();
-    AddCustomProcessesToPython();
+
     AddCustomMappersToPython();
 
     //registering variables in python
