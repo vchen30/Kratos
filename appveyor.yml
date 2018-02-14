@@ -2,6 +2,10 @@
 branches:
   only:
     - master
+    
+# Skip branch merges
+skip_commits:
+  message: /Merge pull request \#[0-9]+ from KratosMultiphysics/
 
 # Specify version format
 version: "{build}"
