@@ -40,6 +40,8 @@ class ShallowWaterBaseSolver(object):
             "element_name"                 : "PrimitiveVarElement2D3N",
             "condition_name"               : "NothingCondition2D2N",
             "volume_model_part_name"       : "volume_model_part",
+            "skin_parts"                   : [""],
+            "no_skin_parts"                : [""],
             "linear_solver_settings"       : {
                     "solver_type"     : "SkylineLUFactorizationSolver"
             },
@@ -63,18 +65,7 @@ class ShallowWaterBaseSolver(object):
         import linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
-        #neighbour search
-        number_of_avg_elems = 10
-        number_of_avg_nodes = 10
-        self.neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.model_part, number_of_avg_elems, number_of_avg_nodes)
-
-        self.mark_outer_nodes_process = KratosPfem2.MarkOuterNodesProcess(model_part)
-
         self.Mesher = KratosMeshing.TriGenPFEMModeler()
-
-        self.fluid_neigh_finder = KratosMultiphysics.FindNodalNeighboursProcess(model_part,9,18)
-        self.elem_neigh_finder  = KratosMultiphysics.FindElementalNeighboursProcess(model_part, 2, 10)
-        self.cond_neigh_finder  = KratosMultiphysics.FindConditionsNeighboursProcess(model_part,2, 10)
 
         self.element_name = self.settings["element_name"].GetString()
         self.condition_name = self.settings["condition_name"].GetString()
@@ -121,12 +112,24 @@ class ShallowWaterBaseSolver(object):
     def Initialize(self):
         self.computing_model_part = self.GetComputingModelPart()
 
+        # Initializing the remesher
+        # neighbour search
+        number_of_avg_elems = 10
+        number_of_avg_nodes = 10
+        self.neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.computing_model_part, number_of_avg_elems, number_of_avg_nodes)
+
+        self.mark_outer_nodes_process = KratosPfem2.MarkOuterNodesProcess(self.computing_model_part)
+
+        self.fluid_neigh_finder = KratosMultiphysics.FindNodalNeighboursProcess(self.computing_model_part,9,18)
+        self.elem_neigh_finder  = KratosMultiphysics.FindElementalNeighboursProcess(self.computing_model_part, 2, 10)
+        self.cond_neigh_finder  = KratosMultiphysics.FindConditionsNeighboursProcess(self.computing_model_part,2, 10)
+
         (self.neighbour_search).Execute()
         (self.fluid_neigh_finder).Execute();
 
         # If needed, create the estimate time step utility
         if (self.settings["time_stepping"]["automatic_time_step"].GetBool()):
-            self.EstimateDeltaTimeUtility = KratosFluid.EstimateDtUtility2D(self.model_part,
+            self.EstimateDeltaTimeUtility = KratosFluid.EstimateDtUtility2D(self.computing_model_part,
                                                                             self.settings["time_stepping"])
 
         # Creating the solution strategy for the mesh stage
@@ -140,7 +143,7 @@ class ShallowWaterBaseSolver(object):
 
         builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolver(self.linear_solver)
 
-        self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(self.model_part,
+        self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(self.computing_model_part,
                                                                             self.time_scheme,
                                                                             self.linear_solver,
                                                                             self.conv_criteria,
@@ -149,7 +152,7 @@ class ShallowWaterBaseSolver(object):
                                                                             self.settings["compute_reactions"].GetBool(),
                                                                             self.settings["reform_dofs_at_each_step"].GetBool(),
                                                                             self.settings["move_mesh_flag"].GetBool())
-        
+
         self.model_part.ProcessInfo.SetValue(KratosMultiphysics.DYNAMIC_TAU, self.settings["dynamic_tau"].GetDouble())
 
         (self.solver).SetEchoLevel(self.settings["solver_echo_level"].GetInt())
@@ -189,7 +192,7 @@ class ShallowWaterBaseSolver(object):
 
         rem_nodes = False
         add_nodes = True
-        (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.model_part, node_erase_process, rem_nodes, add_nodes, alpha_shape, h_factor)
+        (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.computing_model_part, node_erase_process, rem_nodes, add_nodes, alpha_shape, h_factor)
 
         (self.fluid_neigh_finder).Execute()
         (self.elem_neigh_finder).Execute()
