@@ -92,7 +92,6 @@ namespace Kratos
 			
 			this->IterationPlus();
 		}
-
 	}
 
 	void FemDem3DElement::ComputeEdgeNeighbours(ProcessInfo& rCurrentProcessInfo)
@@ -202,7 +201,6 @@ namespace Kratos
 	void FemDem3DElement::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 	{
 		double CurrentfSigma = 0.0, damage_element = 0.0;
-		
 
 		//Loop over edges
 		for (int cont = 0; cont < 6; cont++)
@@ -211,6 +209,7 @@ namespace Kratos
 			this->SetConverged_f_sigmas(this->Get_NonConvergedf_sigma(cont), cont);
 			CurrentfSigma = this->GetConverged_f_sigmas(cont);
 			if (CurrentfSigma > this->Get_threshold(cont)) { this->Set_threshold(CurrentfSigma, cont); }
+
 		} // End Loop over edges
 
 		damage_element = this->Get_NonConvergeddamage();
@@ -254,8 +253,6 @@ namespace Kratos
 		// 	}
 		// }
 	}
-
-	
 
 	void FemDem3DElement::InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo)
 	{
@@ -316,7 +313,6 @@ namespace Kratos
 			noalias(J[0]) = ZeroMatrix(dimension, dimension);
 			J = GetGeometry().Jacobian(J, mThisIntegrationMethod, DeltaPosition);
 
-
 			// Loop Over Integration Points
 			for (unsigned int PointNumber = 0; PointNumber < integration_points.size(); PointNumber++)
 			{
@@ -325,22 +321,19 @@ namespace Kratos
 				double detJ = 0;
 				MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
 
-
 				if (detJ < 0)
 				{
 					this->Set(ACTIVE, false); // element alone inside a crack
 					detJ = fabs(detJ);
 				}
 
-
-				if (detJ<0) KRATOS_THROW_ERROR(std::invalid_argument, " SMALL DISPLACEMENT ELEMENT INVERTED: |J|<0 ) detJ = ", detJ)
+				if (detJ < 0) KRATOS_THROW_ERROR(std::invalid_argument, " SMALL DISPLACEMENT ELEMENT INVERTED: |J|<0 ) detJ = ", detJ)
 
 				//compute cartesian derivatives for this integration point  [dN/dx_n]
 				noalias(DN_DX) = prod(DN_De[PointNumber], InvJ);
 
 				//set shape functions for this integration point
 				Vector N = row(Ncontainer, PointNumber);
-
 
 				//b.-compute infinitessimal strain
 				this->CalculateInfinitesimalStrain(StrainVector, DN_DX);
@@ -416,16 +409,8 @@ namespace Kratos
 			MathUtils<double>::InvertMatrix(J[PointNumber], InvJ, detJ);
 
 			double IntegrationWeight = integration_points[PointNumber].Weight() * detJ;
-
 			const Matrix& B = this->GetBMatrix();
-
 			Vector IntegratedStressVector = ZeroVector(voigt_size);
-
-			// Find Neighbour Elements
-			//WeakPointerVector< Element >& elem_neigb = this->GetValue(NEIGHBOUR_ELEMENTS);
-			//if (elem_neigb.size() == 0) { KRATOS_THROW_ERROR(std::invalid_argument, " Neighbour Elements not calculated --> size = ", elem_neigb.size()) }
-
-			
 			Vector DamagesOnEdges = ZeroVector(6);
 			
 			// Loop over edges of the element
@@ -514,6 +499,7 @@ namespace Kratos
 		const double &rPoissonCoefficient)
 	{
 		rConstitutiveMatrix.clear();
+
 		// 3D linear elastic constitutive matrix
 		rConstitutiveMatrix ( 0 , 0 ) = (rYoungModulus*(1.0-rPoissonCoefficient)/((1.0+rPoissonCoefficient)*(1.0-2.0*rPoissonCoefficient)));
 		rConstitutiveMatrix ( 1 , 1 ) = rConstitutiveMatrix ( 0 , 0 );
@@ -548,7 +534,7 @@ namespace Kratos
 		//calculate delta position (here coincides with the current displacement)
 		Matrix DeltaPosition = ZeroMatrix(number_of_nodes, dimension);
 		DeltaPosition = this->CalculateDeltaPosition(DeltaPosition);
-		//KRATOS_WATCH(DeltaPosition)
+
 		//calculating the reference jacobian from cartesian coordinates to parent coordinates for all integration points [dx_n/d�]
 		GeometryType::JacobiansType J;
 		J.resize(1, false);
@@ -577,7 +563,6 @@ namespace Kratos
 
 		Matrix H = zero_matrix<double>(dimension); //[dU/dx_n]
 		
-
 		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
 

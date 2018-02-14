@@ -319,7 +319,7 @@ class FEMDEM_Solution:
 					if localId == 0:
 
 						R1 = self.GetMinimumValue(dist01-RadiusOfDem, dist12*0.5)
-						R2 = self.GetMinimumValue(dist02-RadiusOfDem, dist12*0.5)
+						R2 = self.GetMinimumValue(dist02-RadiusOfDem, dist12-R1)
 
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
 						Id1 = Element.GetNodes()[1].Id
@@ -338,7 +338,7 @@ class FEMDEM_Solution:
 					elif localId == 1:
 
 						R0 = self.GetMinimumValue(dist01-RadiusOfDem, dist02*0.5)
-						R2 = self.GetMinimumValue(dist12-RadiusOfDem, dist02*0.5)
+						R2 = self.GetMinimumValue(dist12-RadiusOfDem, dist02-R0)
 
 						Coordinates0 = self.GetNodeCoordinates(Element.GetNodes()[0])
 						Id0 = Element.GetNodes()[0].Id
@@ -356,7 +356,7 @@ class FEMDEM_Solution:
 					elif localId == 2:
 
 						R0 = self.GetMinimumValue(dist02-RadiusOfDem, dist01*0.5)
-						R1 = self.GetMinimumValue(dist12-RadiusOfDem, dist01*0.5)
+						R1 = self.GetMinimumValue(dist12-RadiusOfDem, dist01-R0)
 
 						Coordinates0 = self.GetNodeCoordinates(Element.GetNodes()[0])
 						Id0 = Element.GetNodes()[0].Id
