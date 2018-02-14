@@ -91,6 +91,7 @@ class ShallowWaterBaseSolver(object):
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_BOUNDARY)     # deprecated_variables.h
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_FLUID)        # deprecated_variables.h
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_H)         # variables.h
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_AREA)      # variables.h
 
     def AddDofs(self):
         raise Exception("Calling the base class instead of the derived one")
