@@ -8,7 +8,7 @@ KratosMultiphysics.CheckForPreviousImport()
 def Factory(settings, Model):
     if(type(settings) != KratosMultiphysics.Parameters):
         raise Exception("expected input shall be a Parameters object, encapsulating a json string")
-    return MultiGridProcess(Model, settings["Parameters"])
+    return TriGenRemeshingProcess(Model, settings["Parameters"])
 
 class TriGenRemeshingProcess(KratosMultiphysics.Process):
     def __init__(self, Model, settings ):
@@ -59,7 +59,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
 
         # Calculate NODAL_H
         self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.model_part)
-        self.find_nodal_h.Execute()
+        #~ self.find_nodal_h.Execute()
 
         # Calculate the parameters of automatic remeshing
 
@@ -102,6 +102,9 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         # Recalculate NODAL_H
         #~ self.find_nodal_h.Execute()
 
+        for node in self.model_part.Nodes:
+            node.SetsolutionStepValue(KratosMultiphysics.NODAL_H, 0, 0.1)
+
         h_factor = 0.1;
         alpha_shape = 1.2;
         node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part);
@@ -120,5 +123,5 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
             raise Exception("{0} Error: Variable list is unreadable".format(self.__class__.__name__))
 
         # Retrieve submodelparts name from input (a string) and request the corresponding C++ object to the kernel
-return [self.model_part.GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
+        return [self.model_part.GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
 

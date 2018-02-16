@@ -77,6 +77,14 @@ class ShallowWaterBaseSolver(object):
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_STRUCTURE)
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_VELOCITY)
+        # Variables required by the remesher
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_H)
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_AREA)
+        self.model_part.AddNodalSolutionStepVariable(KratosShallow.FREE_SURFACE_GRADIENT)
+        # Variables required by TriGenPFEM
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_FREE_SURFACE) # deprecated_variables.h
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_BOUNDARY)     # deprecated_variables.h
+        self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_FLUID)        # deprecated_variables.h
 
     def AddDofs(self):
         raise Exception("Calling the base class instead of the derived one")
