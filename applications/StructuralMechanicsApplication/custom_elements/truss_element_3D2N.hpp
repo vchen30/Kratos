@@ -156,6 +156,7 @@ namespace Kratos
 
 
 		double CalculateGreenLagrangeStrain();
+		double CalculateEngineeringStrain();
 		double CalculateReferenceLength();
 		double CalculateCurrentLength();
 
@@ -175,6 +176,9 @@ namespace Kratos
 	private:
 		bool mIsCompressed;
 		bool mIsLinearElement = false;
+		double mPlasticStrain = 0.00; // only used for plasticity
+		double mElasticStrain = 0.00; // only used for plasticity
+		double mAlphaPlasticity = 0.00; // only used for plasticity
 		TrussElement3D2N() {};
 
 		friend class Serializer;

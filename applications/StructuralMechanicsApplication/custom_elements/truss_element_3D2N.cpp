@@ -386,6 +386,9 @@ namespace Kratos
 				rOutput[0] = this->GetProperties()[TRUSS_PRESTRESS_PK2];
 			}
 		}
+
+
+
 		KRATOS_CATCH("")
 	}
 
@@ -407,6 +410,44 @@ namespace Kratos
 			Strain[2] = 0.00;
 			rOutput[0] = Strain;
 		}
+
+
+
+		if(rVariable == PLASTICITY_RESULTS){
+
+			Vector plasticity_results = ZeroVector(msDimension);
+			const double E = this->GetProperties()[YOUNG_MODULUS];
+			const double sigma_y = E*0.02;
+			const double K = E/30.00;
+
+			double current_element_strain = this->CalculateEngineeringStrain();
+			double increment_strain = current_element_strain-(this->mPlasticStrain+this->mElasticStrain);
+
+			double alpha_n_1_trial = this->mAlphaPlasticity;
+			double sigma_n_1_trial = E * (current_element_strain-this->mPlasticStrain);
+
+			double f_n_1_trial = std::abs(sigma_n_1_trial) - (sigma_y+alpha_n_1_trial*K);
+
+			if (f_n_1_trial<= 0.0000000001){
+				 this->mElasticStrain += increment_strain;
+				 plasticity_results[0] = sigma_n_1_trial;
+			}
+			else
+			{				
+				double increment_gamma  = f_n_1_trial/(E+K);
+				this->mPlasticStrain += increment_gamma*(sigma_n_1_trial/std::abs(sigma_n_1_trial));
+				this->mAlphaPlasticity += increment_gamma;
+				plasticity_results[0] = sigma_n_1_trial*(1.00-(increment_gamma*E/std::abs(sigma_n_1_trial)));
+			}
+			plasticity_results[1] =  (this->mPlasticStrain+this->mElasticStrain);
+			plasticity_results[2] =  0.00;
+			rOutput[0] = plasticity_results;
+
+
+		}
+
+
+
 		KRATOS_CATCH("")
 	}
 
@@ -586,6 +627,16 @@ namespace Kratos
 		const double l = this->CalculateCurrentLength();
 		const double L = this->CalculateReferenceLength();
 		const double e = ((l * l - L * L) / (2.00 * L * L));
+		return e;
+		KRATOS_CATCH("")
+	}
+
+	double TrussElement3D2N::CalculateEngineeringStrain(){
+
+		KRATOS_TRY
+		const double l = this->CalculateCurrentLength();
+		const double L = this->CalculateReferenceLength();
+		const double e = (l-L) /L;
 		return e;
 		KRATOS_CATCH("")
 	}
