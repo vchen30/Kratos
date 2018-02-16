@@ -144,7 +144,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 				dist13  = self.CalculateDistanceBetweenNodes(Element.GetNodes()[1], Element.GetNodes()[3])
 				dist23  = self.CalculateDistanceBetweenNodes(Element.GetNodes()[2], Element.GetNodes()[3])
 
-				print("Elemento: ",Element.Id ," tiene ", NumberOfDEM, " DEMs")
+				#print("Elemento: ",Element.Id ," tiene ", NumberOfDEM, " DEMs")
 
 				# --------------------- 1ST SCENARIO -----------------------------
 				if NumberOfDEM == 0: # we must create 4 DEM
@@ -704,77 +704,6 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Element.SetValue(KratosFemDem.DEM_GENERATED, True)
 
 
-
-
-
-
-
-
-				'''
-				# Check the 6 edges of the element
-				if R0 + R1 > dist01:
-					R0 = self.GetMinimumValue(R0, dist01*0.5)
-					R1 = dist01 - R0
-
-					# assign the new radius to the DEM nodes
-					self.DEM_Solution.spheres_model_part.GetNode(Id0).SetSolutionStepValue(KratosMultiphysics.RADIUS, R0)
-					self.DEM_Solution.spheres_model_part.GetNode(Id1).SetSolutionStepValue(KratosMultiphysics.RADIUS, R1)
-					Element.GetNodes()[0].SetValue(KratosMultiphysics.RADIUS, R0)
-					Element.GetNodes()[1].SetValue(KratosMultiphysics.RADIUS, R1)
-
-				if R0 + R2 > dist02:
-					R0 = self.GetMinimumValue(R0, 0.5*dist02)
-					R2 = dist02 - R0
-
-					# assign the new radius to the DEM nodes 
-					self.DEM_Solution.spheres_model_part.GetNode(Id0).SetSolutionStepValue(KratosMultiphysics.RADIUS, R0)
-					self.DEM_Solution.spheres_model_part.GetNode(Id2).SetSolutionStepValue(KratosMultiphysics.RADIUS, R2)
-					Element.GetNodes()[0].SetValue(KratosMultiphysics.RADIUS, R0)
-					Element.GetNodes()[2].SetValue(KratosMultiphysics.RADIUS, R2)
-
-				if R0 + R3 > dist03:
-					R0 = self.GetMinimumValue(R0, 0.5*dist03)
-					R3 = dist03 - R0
-
-					# assign the new radius to the DEM nodes 
-					self.DEM_Solution.spheres_model_part.GetNode(Id0).SetSolutionStepValue(KratosMultiphysics.RADIUS, R0)
-					self.DEM_Solution.spheres_model_part.GetNode(Id3).SetSolutionStepValue(KratosMultiphysics.RADIUS, R3)
-					Element.GetNodes()[0].SetValue(KratosMultiphysics.RADIUS, R0)
-					Element.GetNodes()[3].SetValue(KratosMultiphysics.RADIUS, R3)
-
-				if R1 + R2 > dist12:
-					R1 = self.GetMinimumValue(R1, 0.5*dist12)
-					R2 = dist12 - R1
-
-					# assign the new radius to the DEM nodes
-					self.DEM_Solution.spheres_model_part.GetNode(Id1).SetSolutionStepValue(KratosMultiphysics.RADIUS, R1)
-					self.DEM_Solution.spheres_model_part.GetNode(Id2).SetSolutionStepValue(KratosMultiphysics.RADIUS, R2)
-					Element.GetNodes()[2].SetValue(KratosMultiphysics.RADIUS, R2)
-					Element.GetNodes()[1].SetValue(KratosMultiphysics.RADIUS, R1)
-
-				if R1 + R3 > dist13:
-					R1 = self.GetMinimumValue(R1, 0.5*dist13)
-					R3 = dist13 - R1
-
-					# assign the new radius to the DEM nodes
-					self.DEM_Solution.spheres_model_part.GetNode(Id1).SetSolutionStepValue(KratosMultiphysics.RADIUS, R1)
-					self.DEM_Solution.spheres_model_part.GetNode(Id3).SetSolutionStepValue(KratosMultiphysics.RADIUS, R3)
-					Element.GetNodes()[1].SetValue(KratosMultiphysics.RADIUS, R1)
-					Element.GetNodes()[3].SetValue(KratosMultiphysics.RADIUS, R3)
-
-				if R2 + R3 > dist23:
-					R2 = self.GetMinimumValue(R2, 0.5*dist23)
-					R3 = dist23 - R2
-
-					# assign the new radius to the DEM nodes
-					self.DEM_Solution.spheres_model_part.GetNode(Id2).SetSolutionStepValue(KratosMultiphysics.RADIUS, R2)
-					self.DEM_Solution.spheres_model_part.GetNode(Id3).SetSolutionStepValue(KratosMultiphysics.RADIUS, R3)
-					Element.GetNodes()[2].SetValue(KratosMultiphysics.RADIUS, R2)
-					Element.GetNodes()[3].SetValue(KratosMultiphysics.RADIUS, R3)
-
-				# DEM generated for this Element
-				Element.SetValue(KratosFemDem.DEM_GENERATED, True)'''
-
 #============================================================================================================================
 	def CheckInactiveNodes(self):
 
@@ -852,3 +781,182 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 				DEM_Node.SetSolutionStepValue(KratosMultiphysics.VELOCITY_X, Velocity_x)
 				DEM_Node.SetSolutionStepValue(KratosMultiphysics.VELOCITY_Y, Velocity_y)
 				DEM_Node.SetSolutionStepValue(KratosMultiphysics.VELOCITY_Z, Velocity_z)
+
+#============================================================================================================================
+	def TransferNodalForcesToFEM(self):
+
+		DEM_Nodes = self.SpheresModelPart.Nodes
+
+		for DEM_node in DEM_Nodes:
+
+			# Get the contact forces from the DEM
+			Id = DEM_node.Id
+			Force_X = DEM_node.GetSolutionStepValue(KratosMultiphysics.TOTAL_FORCES_X)
+			Force_Y = DEM_node.GetSolutionStepValue(KratosMultiphysics.TOTAL_FORCES_Y)
+			Force_Z = DEM_node.GetSolutionStepValue(KratosMultiphysics.TOTAL_FORCES_Z)
+
+			# Tranfer the Force information to the FEM nodes
+			self.FEM_Solution.main_model_part.GetNode(Id).SetValue(KratosFemDem.NODAL_FORCE_X, Force_X)
+			self.FEM_Solution.main_model_part.GetNode(Id).SetValue(KratosFemDem.NODAL_FORCE_Y, Force_Y)
+			self.FEM_Solution.main_model_part.GetNode(Id).SetValue(KratosFemDem.NODAL_FORCE_Z, Force_Z)
+
+#============================================================================================================================
+	def PrintPlotsFiles(self):
+
+		# Print the general file 
+		time = self.FEM_Solution.time
+		TotalReaction_x     = 0.0
+		TotalDisplacement_x = 0.0
+		TotalReaction_y     = 0.0
+		TotalDisplacement_y = 0.0
+		TotalReaction_z     = 0.0
+		TotalDisplacement_z = 0.0
+		interval = self.FEM_Solution.ProjectParameters["interval_of_watching"].GetDouble()
+
+
+		if self.FEM_Solution.time - self.TimePreviousPlotting >= interval:
+
+			for index in range(0, self.FEM_Solution.ProjectParameters["list_of_nodes_displacement"].size()):
+
+				IdNode = self.FEM_Solution.ProjectParameters["list_of_nodes_displacement"][index].GetInt()
+				node = self.FEM_Solution.main_model_part.GetNode(IdNode)
+				TotalDisplacement_x += node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_X)
+				TotalDisplacement_y += node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y)
+				TotalDisplacement_z += node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Z)
+
+			for index in range(0, self.FEM_Solution.ProjectParameters["list_of_nodes_reaction"].size()):
+
+				IdNode = self.FEM_Solution.ProjectParameters["list_of_nodes_reaction"][index].GetInt()
+				node = self.FEM_Solution.main_model_part.GetNode(IdNode)
+				TotalReaction_x += node.GetSolutionStepValue(KratosMultiphysics.REACTION_X)
+				TotalReaction_y += node.GetSolutionStepValue(KratosMultiphysics.REACTION_Y)
+				TotalReaction_z += node.GetSolutionStepValue(KratosMultiphysics.REACTION_Z)
+
+			self.PlotFile = open("PlotFile.txt","a")
+			self.PlotFile.write("    " + "{0:.4e}".format(time).rjust(11) + "    " + "{0:.4e}".format(TotalDisplacement_x).rjust(11) + 
+				"    " + "{0:.4e}".format(TotalDisplacement_y).rjust(11) + "    " + "{0:.4e}".format(TotalDisplacement_z).rjust(11)+ "    " + "{0:.4e}".format(TotalReaction_x).rjust(11) +
+				"    " + "{0:.4e}".format(TotalReaction_y).rjust(11) + "    " + "{0:.4e}".format(TotalReaction_z).rjust(11) + "\n")
+
+			self.PlotFile.close()
+
+			# Print the selected nodes files
+			if self.FEM_Solution.ProjectParameters["watch_nodes_list"].size() != 0:
+
+				NumNodes = self.FEM_Solution.ProjectParameters["watch_nodes_list"].size()
+
+				for inode in range(0, NumNodes):
+
+					IdNode = self.PlotFilesNodesIdList[inode]
+					node = self.FEM_Solution.main_model_part.GetNode(IdNode)
+
+					self.PlotFilesNodesList[inode] = open("PlotNode_" + str(IdNode) + ".txt", "a")
+
+					dx = node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_X)
+					dy = node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y)
+					dz = node.GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Z)
+					Rx = node.GetSolutionStepValue(KratosMultiphysics.REACTION_X)
+					Ry = node.GetSolutionStepValue(KratosMultiphysics.REACTION_Y)
+					Rz = node.GetSolutionStepValue(KratosMultiphysics.REACTION_Z)
+					vx = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)
+					vy = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)
+					vz = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Z)
+					ax = node.GetSolutionStepValue(KratosMultiphysics.ACCELERATION_X)
+					ay = node.GetSolutionStepValue(KratosMultiphysics.ACCELERATION_Y)
+					az = node.GetSolutionStepValue(KratosMultiphysics.ACCELERATION_Z)
+
+					self.PlotFilesNodesList[inode].write("    " + "{0:.4e}".format(time).rjust(11) + "    " +
+					 "{0:.4e}".format(dx).rjust(11) + "    " + "{0:.4e}".format(dy).rjust(11) + "    " + "{0:.4e}".format(dz).rjust(11) + "    " + 
+					 "{0:.4e}".format(vx).rjust(11) + "    " + "{0:.4e}".format(vy).rjust(11) + "    " + "{0:.4e}".format(vz).rjust(11) + "    " + 
+					 "{0:.4e}".format(ax).rjust(11) + "    " + "{0:.4e}".format(ay).rjust(11) + "    " + "{0:.4e}".format(az).rjust(11) + "    " + 
+					 "{0:.4e}".format(Rx).rjust(11) + "    " + "{0:.4e}".format(Ry).rjust(11) + "    " + "{0:.4e}".format(Rz).rjust(11) + "\n")
+
+					self.PlotFilesNodesList[inode].close()
+
+			# print the selected element files
+			if self.FEM_Solution.ProjectParameters["watch_elements_list"].size() != 0:
+
+				NumElem = self.FEM_Solution.ProjectParameters["watch_elements_list"].size()
+
+				for iElem in range(0, NumElem):
+
+					Idelem = self.PlotFilesElementsIdList[iElem]
+					Elem = self.FEM_Solution.main_model_part.GetElement(Idelem)
+
+					self.PlotFilesElementsList[iElem] = open("PlotElement_" + str(Idelem) + ".txt","a")
+
+					Sxx = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][0]
+					Syy = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][1]
+					Szz = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][2]
+					Sxy = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][3]
+					Syz = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][4]
+					Sxz = Elem.GetValuesOnIntegrationPoints(KratosFemDem.STRESS_VECTOR_INTEGRATED, self.FEM_Solution.main_model_part.ProcessInfo)[0][5]
+
+					Exx = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[0]
+					Eyy = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[1]
+					Ezz = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[2]
+					Exy = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[3]
+					Eyz = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[4]
+					Exz = Elem.GetValue(KratosFemDem.STRAIN_VECTOR)[5]
+
+					damage = Elem.GetValue(KratosFemDem.DAMAGE_ELEMENT)
+
+					self.PlotFilesElementsList[iElem].write("    " + "{0:.4e}".format(time).rjust(11) + "    " +
+					 "{0:.4e}".format(Sxx).rjust(11) + "    " + "{0:.4e}".format(Syy).rjust(11) + "    " + 
+					 "{0:.4e}".format(Szz).rjust(11) + "    " + "{0:.4e}".format(Sxy).rjust(11) + "    " +
+					 "{0:.4e}".format(Syz).rjust(11) + "    " + "{0:.4e}".format(Sxz).rjust(11) + "    " +
+					 "{0:.4e}".format(Exx).rjust(11) + 
+					 "    " + "{0:.4e}".format(Eyy).rjust(11) + "    " + "{0:.4e}".format(Ezz).rjust(11) + 
+					 "    " + "{0:.4e}".format(Exy).rjust(11) + "    " + "{0:.4e}".format(Eyz).rjust(11) + 
+					 "    " + "{0:.4e}".format(Exz).rjust(11) +
+					 "   "  + "{0:.4e}".format(damage).rjust(11) + "\n")
+
+					self.PlotFilesElementsList[iElem].close()
+					
+			self.TimePreviousPlotting = time
+
+#============================================================================================================================
+	def InitializePlotsFiles(self):
+
+		# open general Displ/Reaction File
+		self.PlotFile = open("PlotFile.txt","w")
+		self.PlotFile.write("This File Plots the SUM of the displacement and reactions of the nodes selected in the lists!\n\n")
+		self.PlotFile.write("       time          displ_x        displ_y        displ_z       Reaction_x     Reaction_y     Reaction_z    \n")
+		self.PlotFile.close()
+		self.TimePreviousPlotting = 0.0
+
+		self.PlotFilesNodesList    = []
+		self.PlotFilesElementsList = []
+
+		self.PlotFilesNodesIdList    = []
+		self.PlotFilesElementsIdList = []
+
+		# open plots for nodes selected
+		if self.FEM_Solution.ProjectParameters["watch_nodes_list"].size() != 0:
+
+			NumNodes = self.FEM_Solution.ProjectParameters["watch_nodes_list"].size()
+
+			for node in range(0, NumNodes):
+
+				Id = self.FEM_Solution.ProjectParameters["watch_nodes_list"][node].GetInt()
+				iPlotFileNode = open("PlotNode_" + str(Id) + ".txt","w")
+				iPlotFileNode.write("\n")
+				iPlotFileNode.write("       time          displ_x        displ_y        displ_z         vel_x           vel_y         vel_z           acc_x          acc_y          acc_z       Reaction_x     Reaction_y     Reaction_Z    \n")
+				iPlotFileNode.close()
+				self.PlotFilesNodesList.append(iPlotFileNode)
+				self.PlotFilesNodesIdList.append(Id)
+
+		# open plots for elements selected
+		if self.FEM_Solution.ProjectParameters["watch_elements_list"].size() != 0:
+
+			NumNElements = self.FEM_Solution.ProjectParameters["watch_elements_list"].size()
+
+			for elem in range(0, NumNElements):
+
+				Id = self.FEM_Solution.ProjectParameters["watch_elements_list"][elem].GetInt()
+				iPlotFileElem = open("PlotElement_" + str(Id) + ".txt","w")
+				iPlotFileElem.write("\n")
+				iPlotFileElem.write("       time             Sxx           Syy             Szz           Sxy            Syz            Sxz            Exx            Eyy            Ezz             Exy           Eyz            Exz          Damage  \n")
+				iPlotFileElem.close()
+				self.PlotFilesElementsList.append(iPlotFileElem)
+				self.PlotFilesElementsIdList.append(Id)
+

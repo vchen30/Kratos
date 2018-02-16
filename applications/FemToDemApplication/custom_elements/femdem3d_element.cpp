@@ -463,11 +463,44 @@ namespace Kratos
 			//compute and add internal forces (RHS = rRightHandSideVector = Fext - Fint)
 			noalias(rRightHandSideVector) -= IntegrationWeight * prod(trans(B), IntegratedStressVector);
 
-			// todo: Add nodal DEM forces
+			// Add nodal DEM forces
+			Vector NodalRHS = ZeroVector(system_size);
+			this->AddDEMContactForces(NodalRHS);
+		
+			// Add nodal contact forces from the DEM
+			noalias(rRightHandSideVector) += NodalRHS;
 
 		}
 		KRATOS_CATCH("")
 		//*****************************
+	}
+
+	void FemDem3DElement::AddDEMContactForces(Vector& rNodalRHS)
+	{
+		#pragma omp critical
+		{
+			Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
+
+			// Loop Over nodes to apply the DEM contact forces to the FEM
+			for (int i = 0; i < 4; i++)
+			{
+				bool IsDEM = NodesElement[i].GetValue(IS_DEM);
+				bool NodalForceApplied = NodesElement[i].GetValue(NODAL_FORCE_APPLIED);
+
+				if (IsDEM == true && NodalForceApplied == false)
+				{
+					double ForceX = NodesElement[i].GetValue(NODAL_FORCE_X);
+					double ForceY = NodesElement[i].GetValue(NODAL_FORCE_Y);
+					double ForceZ = NodesElement[i].GetValue(NODAL_FORCE_Z);
+
+					rNodalRHS[3 * i]     += ForceX;
+					rNodalRHS[3 * i + 1] += ForceY;
+					rNodalRHS[3 * i + 2] += ForceZ;
+
+					NodesElement[i].SetValue(NODAL_FORCE_APPLIED, true);
+				}
+			}
+		}
 	}
 
 	void FemDem3DElement::CalculateDeformationMatrix(Matrix& rB, const Matrix& rDN_DX)
@@ -661,26 +694,48 @@ namespace Kratos
 	{
 		Vector CurrentElementStress = this->GetValue(STRESS_VECTOR);
 		rAverageVector = CurrentElementStress;
+		int counter = 0;
 
 		for (int elem = 0; elem < VectorOfElems.size(); elem++)
 		{
-			rAverageVector += VectorOfElems[elem]->GetValue(STRESS_VECTOR);
+			// Only take into account the active elements
+			bool is_active = true;
+			if (VectorOfElems[elem]->IsDefined(ACTIVE))
+			{
+				is_active = VectorOfElems[elem]->Is(ACTIVE);
+			}
+
+			if (is_active == true)
+			{
+				rAverageVector += VectorOfElems[elem]->GetValue(STRESS_VECTOR);
+				counter++;
+			}
 		}
-		
-		rAverageVector /= (VectorOfElems.size() + 1);
+		rAverageVector /= (counter + 1);
 	}
 
 	void FemDem3DElement::CalculateAverageStrainOnEdge(Vector& rAverageVector, const std::vector<Element*> VectorOfElems)
 	{
 		Vector CurrentElementStress = this->GetValue(STRAIN_VECTOR);
 		rAverageVector = CurrentElementStress;
+		int counter = 0;
 
 		for (int elem = 0; elem < VectorOfElems.size(); elem++)
 		{
-			rAverageVector += VectorOfElems[elem]->GetValue(STRAIN_VECTOR);
+			// Only take into account the active elements
+			bool is_active = true;
+			if (VectorOfElems[elem]->IsDefined(ACTIVE))
+			{
+				is_active = VectorOfElems[elem]->Is(ACTIVE);
+			}
+
+			if (is_active == true)
+			{
+				rAverageVector += VectorOfElems[elem]->GetValue(STRAIN_VECTOR);
+				counter++;
+			}
 		}
-		
-		rAverageVector /= (VectorOfElems.size() + 1);
+		rAverageVector /= (counter + 1);
 	}
 
 	// Double values

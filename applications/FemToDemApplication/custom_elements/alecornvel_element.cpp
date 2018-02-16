@@ -529,19 +529,7 @@ namespace Kratos
 						NodalRHS[2 * i]     += ForceX;
 						NodalRHS[2 * i + 1] += ForceY;
 
-						// Avoid double assignation of the nodal force and colision of threads
-						//#pragma omp critical
-						//{
 						NodesElement[i].SetValue(NODAL_FORCE_APPLIED, true);
-
-
-						// if (NodesElement[i].Id() == 65)
-						// {
-						// 	KRATOS_WATCH(ForceX)
-						// 	KRATOS_WATCH(ForceY)
-						// 	KRATOS_WATCH(NodalRHS)
-						// }
-						//}
 					}
 				}
 			}
