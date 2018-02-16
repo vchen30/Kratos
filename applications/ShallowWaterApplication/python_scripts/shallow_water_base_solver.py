@@ -135,6 +135,7 @@ class ShallowWaterBaseSolver(object):
         self.model_part.ProcessInfo.SetValue(KratosMultiphysics.DYNAMIC_TAU, self.settings["dynamic_tau"].GetDouble())
 
         (self.solver).SetEchoLevel(self.settings["solver_echo_level"].GetInt())
+
         (self.solver).Check()
 
         (self.solver).Initialize()
