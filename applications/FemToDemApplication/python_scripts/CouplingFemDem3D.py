@@ -52,26 +52,6 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 		self.CheckInactiveNodes()
 		self.UpdateDEMVariables()     # We update coordinates, displ and velocities of the DEM according to FEM
 
-
-		# TESTING
-		#num = 3
-		#for i in range(2,num+1):
-		#	print(i)
-		#print(list(range(2,num))
-		#M = [[1,2],[3,4]]
-		#print(M[0][0])
-		#Wait()
-		#M = KratosMultiphysics.Matrix()
-		#M.resize(2,2)
-		#self.FEM_Solution.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
-		#KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part).Execute()
-
-		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
-		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
-		# print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
-		#Wait()
-		# TESTING
-
 		self.DEM_Solution.InitializeTimeStep()
 
 		self.DEM_Solution.time = self.FEM_Solution.time
@@ -144,7 +124,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 				dist13  = self.CalculateDistanceBetweenNodes(Element.GetNodes()[1], Element.GetNodes()[3])
 				dist23  = self.CalculateDistanceBetweenNodes(Element.GetNodes()[2], Element.GetNodes()[3])
 
-				#print("Elemento: ",Element.Id ," tiene ", NumberOfDEM, " DEMs")
+				print("Elemento: ",Element.Id ," tiene ", NumberOfDEM, " DEMs")
+				#Wait()
 
 				# --------------------- 1ST SCENARIO -----------------------------
 				if NumberOfDEM == 0: # we must create 4 DEM
@@ -158,7 +139,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 					Element.GetNodes()[0].SetValue(KratosMultiphysics.RADIUS, Radius1)
 
 					# Look to the Node 2 ---------------------------------------------
-					Radius2 = self.GetMinimumValue(dist01-Radius1, dist12*0.5, dist13*0.5) 
+					#Radius2 = self.GetMinimumValue(dist01-Radius1, dist12*0.5, dist13*0.5) 
+					Radius2 = dist01-Radius1
 					Coordinates2 = self.GetNodeCoordinates(Element.GetNodes()[1])
 					Id2 = Element.GetNodes()[1].Id
 					self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates2, Radius2, Id2)
@@ -166,7 +148,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 					Element.GetNodes()[1].SetValue(KratosMultiphysics.RADIUS, Radius2)
 
 					# look to the node 3 ---------------------------------------------
-					Radius3 = self.GetMinimumValue(dist02-Radius1, dist12-Radius2, dist23*0.5)
+					Radius3 = self.GetMinimumValue(dist02-Radius1, dist12-Radius2, 100000000)
 					Coordinates3 = self.GetNodeCoordinates(Element.GetNodes()[2])
 					Id3 = Element.GetNodes()[2].Id
 					self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates3, Radius3, Id3)
@@ -239,7 +221,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 				elif NumberOfDEM == 1: # we must create 3 DEM
 
 					localId = 0 # Local Id of the node with DEM
-					for index in range(0,4):
+					for index in range(0, 4):
 						if Element.GetNodes()[index].GetValue(KratosFemDem.IS_DEM) == True:
 							localId = index
 							break
@@ -303,7 +285,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
 						Coordinates3 = self.GetNodeCoordinates(Element.GetNodes()[3])
 						Id0 = Element.GetNodes()[0].Id
-						Id1 = Element.GetNodes()[2].Id
+						Id1 = Element.GetNodes()[1].Id
 						Id3 = Element.GetNodes()[3].Id
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates0, R0, Id0)
@@ -327,7 +309,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
 						Coordinates2 = self.GetNodeCoordinates(Element.GetNodes()[2])
 						Id0 = Element.GetNodes()[0].Id
-						Id1 = Element.GetNodes()[2].Id
+						Id1 = Element.GetNodes()[1].Id
 						Id2 = Element.GetNodes()[2].Id
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates0, R0, Id0)
@@ -734,6 +716,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 			if NumberOfActiveElements == 0 and node.GetValue(KratosFemDem.INACTIVE_NODE) == False:
 
 				Id = node.Id
+				print("nodo inactivo: ", Id)
 				DEMnode = self.SpheresModelPart.GetNode(Id)
 				node.SetValue(KratosFemDem.INACTIVE_NODE, True)
 				DEMnode.SetValue(KratosFemDem.INACTIVE_NODE, True)

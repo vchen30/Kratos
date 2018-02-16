@@ -228,30 +228,18 @@ namespace Kratos
 		}
 
 		this->ResetNonConvergedVars();
-		//this->SetToZeroIteration();
-
-		// computation of the equivalent damage threshold and damage of the element for AMR mapping
-		//Vector thresholds = this->GetThresholds();
-		
-		//Vector TwoMinValues;
-		//this->Get2MaxValues(TwoMinValues, thresholds[0], thresholds[1], thresholds[2]);  // todo ojo con la funcion modificada
-		//double EqThreshold = 0.5*(TwoMinValues[0] + TwoMinValues[1]);  // El menor o mayor?? TODO
-
-
-		//this->SetValue(STRESS_THRESHOLD, EqThreshold); // AMR
-		//this->Set_threshold(EqThreshold);
 		this->SetValue(DAMAGE_ELEMENT, damage_element);
 
 
 		// Reset the nodal force flag for the next time step
-		// Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
-		// for (int i = 0; i < 3; i++)
-		// {
-		// 	#pragma omp critical
-		// 	{
-		// 		NodesElement[i].SetValue(NODAL_FORCE_APPLIED, false);
-		// 	}
-		// }
+		Geometry< Node < 3 > >& NodesElement = this->GetGeometry();
+		for (int i = 0; i < 3; i++)
+		{
+			#pragma omp critical
+			{
+				NodesElement[i].SetValue(NODAL_FORCE_APPLIED, false);
+			}
+		}
 	}
 
 	void FemDem3DElement::InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo)
