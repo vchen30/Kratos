@@ -103,18 +103,18 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         #~ self.find_nodal_h.Execute()
 
         for node in self.model_part.Nodes:
-            node.SetsolutionStepValue(KratosMultiphysics.NODAL_H, 0, 0.1)
+            node.SetSolutionStepValue(KratosMultiphysics.NODAL_H, 0, 0.1)
 
-        h_factor = 0.1;
-        alpha_shape = 1.2;
-        node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part);
+        h_factor = 0.1
+        alpha_shape = 1.2
+        node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part)
         rem_nodes = False
         add_nodes = True
         (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.model_part, node_erase_process, rem_nodes, add_nodes, alpha_shape, h_factor)
 
-        (self.fluid_neigh_finder).Execute()
-        (self.elem_neigh_finder).Execute()
-        (self.cond_neigh_finder).Execute()
+        (self.node_neigh_search).Execute()
+        (self.elem_neigh_search).Execute()
+        (self.cond_neigh_search).Execute()
 
     def __generate_submodelparts_list_from_input(self,param):
         '''Parse a list of variables from input.'''

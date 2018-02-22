@@ -73,7 +73,7 @@ class ShallowWaterBaseSolver(object):
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.GRAVITY);
         self.model_part.AddNodalSolutionStepVariable(KratosShallow.BATHYMETRY);
         self.model_part.AddNodalSolutionStepVariable(KratosShallow.RAIN);
-        # Auxiliar variables
+        # Auxiliary variables
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.IS_STRUCTURE)
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_VELOCITY)
