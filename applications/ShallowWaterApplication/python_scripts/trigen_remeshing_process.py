@@ -80,7 +80,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
             for node in submodelpart.Nodes:
                 node.Set(KratosMultiphysics.BLOCKED, True)
 
-        # self._CreateGradientProcess()
+        self._CreateGradientProcess()
 
 
     def ExecuteBeforeSolutionLoop(self):
@@ -115,7 +115,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         h_factor = 0.1
         alpha_shape = 1.2
         node_erase_process = KratosMultiphysics.NodeEraseProcess(self.model_part)
-        rem_nodes = False
+        rem_nodes = True
         add_nodes = True
         (self.Mesher).ReGenerateMesh(self.element_name, self.condition_name, self.model_part, node_erase_process, rem_nodes, add_nodes, alpha_shape, h_factor)
 
@@ -128,7 +128,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         gradient_norm = 0.0
         gradient_eta_values = []
         for node in self.model_part.Nodes:
-            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(KratosShallow.FREE_SURFACE_GRADIENT))
+            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(self.gradient_variable))
             gradient_eta_values.append(gradient_norm)
 
         # Computing the percentage
@@ -136,7 +136,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         stdev = stat.stdev(gradient_eta_values)
     
         for node in self.model_part.Nodes:
-            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(KratosShallow.FREE_SURFACE_GRADIENT))
+            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(self.gradient_variable))
             prob = _normpdf(gradient_norm, mean, stdev)
             new_nodal_h = self.maximum_nodal_h / (np.ceil(prob*self.maximum_sub_grids))
             node.SetSolutionStepValue(KratosMultiphysics.NODAL_H, new_nodal_h)
