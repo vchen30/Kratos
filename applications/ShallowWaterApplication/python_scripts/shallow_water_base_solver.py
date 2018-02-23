@@ -62,7 +62,7 @@ class ShallowWaterBaseSolver(object):
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
         # Initialize shallow water variables utility
-        self.ShallowVariableUtils = KratosShallow.ShallowWaterVariablesUtility(self.model_part)
+        self.ShallowVariablesUtils = KratosShallow.ShallowWaterVariablesUtility(self.model_part)
 
     def AddVariables(self):
         # Basic variables
@@ -133,6 +133,8 @@ class ShallowWaterBaseSolver(object):
                                                                             self.settings["move_mesh_flag"].GetBool())
         
         self.model_part.ProcessInfo.SetValue(KratosMultiphysics.DYNAMIC_TAU, self.settings["dynamic_tau"].GetDouble())
+
+        self.ShallowVariablesUtils.ComputeFreeSurfaceElevation()
 
         (self.solver).SetEchoLevel(self.settings["solver_echo_level"].GetInt())
 

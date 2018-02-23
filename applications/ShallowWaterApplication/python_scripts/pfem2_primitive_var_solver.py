@@ -31,12 +31,12 @@ class Pfem2PrimitiveVarSolver(pure_convection_solver.PureConvectionSolver,shallo
         # Move particles
         super(Pfem2PrimitiveVarSolver,self)._ExecuteParticlesUtilityBeforeSolve()
         # If a node and it's neighbours is dry, set ACTIVE flag to false
-        (self.ShallowVariableUtils).SetDryWetState()
+        (self.ShallowVariablesUtils).SetDryWetState()
         # Solve equations on mesh
         (self.solver).Solve()
         # Compute free surface
-        (self.ShallowVariableUtils).ComputeFreeSurfaceElevation()
+        (self.ShallowVariablesUtils).ComputeFreeSurfaceElevation()
         # If water height is negative or close to zero, reset values
-        (self.ShallowVariableUtils).CheckDryPrimitiveVariables()
+        (self.ShallowVariablesUtils).CheckDryPrimitiveVariables()
         # Update particles
         super(Pfem2PrimitiveVarSolver,self)._ExecuteParticlesUtilityAfterSolve()

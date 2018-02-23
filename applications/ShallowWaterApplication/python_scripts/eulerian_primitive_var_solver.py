@@ -20,4 +20,4 @@ class EulerianPrimitiveVarSolver(shallow_water_base_solver.ShallowWaterBaseSolve
         # Solve equations
         (self.solver).Solve()
         # Compute free surface
-        (self.ShallowVariableUtils).ComputeFreeSurfaceElevation()
+        (self.ShallowVariablesUtils).ComputeFreeSurfaceElevation()

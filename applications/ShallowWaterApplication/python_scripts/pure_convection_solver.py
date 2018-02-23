@@ -53,7 +53,7 @@ class PureConvectionSolver(shallow_water_base_solver.ShallowWaterBaseSolver):
         (self.VariableUtils).CopyScalarVar(KratosShallow.PROJECTED_SCALAR1,KratosShallow.HEIGHT,self.model_part.Nodes)
         (self.VariableUtils).CopyVectorVar(KratosShallow.PROJECTED_VECTOR1,KratosMultiphysics.VELOCITY,self.model_part.Nodes)
         # Compute free surface
-        (self.ShallowVariableUtils).ComputeFreeSurfaceElevation()
+        (self.ShallowVariablesUtils).ComputeFreeSurfaceElevation()
         # Update particles
         self._ExecuteParticlesUtilityAfterSolve()
 

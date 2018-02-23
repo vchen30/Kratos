@@ -22,12 +22,12 @@ class EulerianConservedVarSolver(shallow_water_base_solver.ShallowWaterBaseSolve
 
     def Solve(self):
         # If a node and it's neighbours are dry, set ACTIVE flag to false
-        (self.ShallowVariableUtils).SetDryWetState()
+        (self.ShallowVariablesUtils).SetDryWetState()
         # Solve equations
         (self.solver).Solve()
         # Compute free surface
-        (self.ShallowVariableUtils).ComputeFreeSurfaceElevation()
+        (self.ShallowVariablesUtils).ComputeFreeSurfaceElevation()
         # Compute velocity
-        (self.ShallowVariableUtils).ComputeVelocity()
+        (self.ShallowVariablesUtils).ComputeVelocity()
         # If water height is negative or close to zero, reset values
-        (self.ShallowVariableUtils).CheckDryConservedVariables()
+        (self.ShallowVariablesUtils).CheckDryConservedVariables()
