@@ -2,8 +2,13 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the Kratos Library
 import KratosMultiphysics
 import KratosMultiphysics.MeshingApplication as KratosMeshing
+import KratosMultiphysics.ShallowWaterApplication as KratosShallow
 
 KratosMultiphysics.CheckForPreviousImport()
+
+from json_utilities import *
+import numpy as np
+import os
 
 def Factory(settings, Model):
     if(type(settings) != KratosMultiphysics.Parameters):
@@ -18,14 +23,16 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         default_parameters = KratosMultiphysics.Parameters("""
         {
             "model_part_name"          : "MainModelPart",
-            "maximum_sub_grids"        : 1,
+            "maximum_sub_grids"        : 4,
             "level_set_parameters"     : {
                 "scalar_variable"          : "FREE_SURFACE_ELEVATION",
                 "gradient_variable"        : "FREE_SURFACE_GRADIENT"
             },
             "fix_contour_model_parts"  : [],
             "element_name"             : "ElementName",
-            "condition_name"           : "ConditionName"
+            "condition_name"           : "ConditionName",
+            "maximum_nodal_h"          : 0.1,
+            "maximum_sub_grids"        : 4
         }
         """)
 
@@ -44,6 +51,9 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         self.element_name = self.settings["element_name"].GetString()
         self.condition_name = self.settings["condition_name"].GetString()
 
+        self.maximum_nodal_h = self.settings["maximum_nodal_h"].GetDouble()
+        self.maximum_sub_grids = self.settings["maximum_sub_grids"].GetInt()
+
         self.Mesher = KratosMeshing.TriGenPFEMModeler()
 
     def ExecuteInitialize(self):
@@ -52,14 +62,14 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         number_of_avg_nodes = 10
 
         self.node_neigh_search = KratosMultiphysics.FindNodalNeighboursProcess(self.model_part,9,18)
-        self.elem_neigh_search  = KratosMultiphysics.FindElementalNeighboursProcess(self.model_part, 2, 10)
-        self.cond_neigh_search  = KratosMultiphysics.FindConditionsNeighboursProcess(self.model_part,2, 10)
+        self.elem_neigh_search = KratosMultiphysics.FindElementalNeighboursProcess(self.model_part, 2, 10)
+        self.cond_neigh_search = KratosMultiphysics.FindConditionsNeighboursProcess(self.model_part,2, 10)
 
         (self.node_neigh_search).Execute()
 
         # Calculate NODAL_H
         self.find_nodal_h = KratosMultiphysics.FindNodalHProcess(self.model_part)
-        #~ self.find_nodal_h.Execute()
+        self.find_nodal_h.Execute()
 
         # Calculate the parameters of automatic remeshing
 
@@ -70,7 +80,7 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
             for node in submodelpart.Nodes:
                 node.Set(KratosMultiphysics.BLOCKED, True)
 
-        self._CreateGradientProcess()
+        # self._CreateGradientProcess()
 
 
     def ExecuteBeforeSolutionLoop(self):
@@ -98,12 +108,9 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
 
     def _ExecuteRefinement(self):
         # Calculate the gradient
-        #~ self.local_gradient.Execute()
+        self.local_gradient.Execute()
         # Recalculate NODAL_H
-        #~ self.find_nodal_h.Execute()
-
-        for node in self.model_part.Nodes:
-            node.SetSolutionStepValue(KratosMultiphysics.NODAL_H, 0, 0.1)
+        self._CalculateNodalH()
 
         h_factor = 0.1
         alpha_shape = 1.2
@@ -116,6 +123,24 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
         (self.elem_neigh_search).Execute()
         (self.cond_neigh_search).Execute()
 
+    def _CalculateNodalH(self):
+        import statistics as stat
+        gradient_norm = 0.0
+        gradient_eta_values = []
+        for node in self.model_part.Nodes:
+            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(KratosShallow.FREE_SURFACE_GRADIENT))
+            gradient_eta_values.append(gradient_norm)
+
+        # Computing the percentage
+        mean = stat.mean(gradient_eta_values)
+        stdev = stat.stdev(gradient_eta_values)
+    
+        for node in self.model_part.Nodes:
+            gradient_norm = np.linalg.norm(node.GetSolutionStepValue(KratosShallow.FREE_SURFACE_GRADIENT))
+            prob = _normpdf(gradient_norm, mean, stdev)
+            new_nodal_h = self.maximum_nodal_h / (np.ceil(prob*self.maximum_sub_grids))
+            node.SetSolutionStepValue(KratosMultiphysics.NODAL_H, new_nodal_h)
+
     def __generate_submodelparts_list_from_input(self,param):
         '''Parse a list of variables from input.'''
         # At least verify that the input is a string
@@ -124,4 +149,36 @@ class TriGenRemeshingProcess(KratosMultiphysics.Process):
 
         # Retrieve submodelparts name from input (a string) and request the corresponding C++ object to the kernel
         return [self.model_part.GetSubModelPart(param[i].GetString()) for i in range(0, param.size())]
+
+def _linear_interpolation(x, x_list, y_list):
+    tb = KratosMultiphysics.PiecewiseLinearTable()
+    for i in range(len(x_list)):
+        tb.AddRow(x_list[i], y_list[i])
+        
+    return tb.GetNearestValue(x)
+
+def _normpdf(x, mean, sd):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    data = read_external_json(dir_path+"/normal_distribution.json")
+    z = (x-mean)/sd
+    z_list = data["Z"]
+    prob_list = data["Prob"]
+    if (z > 0):
+        prob = _linear_interpolation(z, z_list, prob_list)
+    else:
+        prob = 1.0 - _linear_interpolation(-z, z_list, prob_list)
+    return prob
+
+
+def _normvalf(prob, mean, sd):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    data = read_external_json(dir_path+"/normal_distribution.json")
+    z_list = data["Z"]
+    prob_list = data["Prob"]
+    if (prob >= 0.5):
+        z = _linear_interpolation(prob, prob_list, z_list)
+    else:
+        z = - _linear_interpolation(1.0 - prob, prob_list, z_list)
+    x = z * sd + mean
+    return x
 
