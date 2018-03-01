@@ -363,6 +363,12 @@ namespace Kratos
 	void FemDem3DElement::CalculateLocalSystem (MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 	{
 		KRATOS_TRY
+		//int n = 8;
+		//std::vector<Vector> V;
+		//V.resize(n);
+		//V[0] = ZeroVector(3);
+
+		//KRATOS_WATCH(V[0])
 
 		const unsigned int number_of_nodes = GetGeometry().size();
 		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();

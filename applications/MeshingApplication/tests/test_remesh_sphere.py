@@ -97,12 +97,12 @@ class TestRemeshMMG(KratosUnittest.TestCase):
                                         """)
                                     )
 
-        #gid_output.ExecuteInitialize()
-        #gid_output.ExecuteBeforeSolutionLoop()
-        #gid_output.ExecuteInitializeSolutionStep()
-        #gid_output.PrintOutput()
-        #gid_output.ExecuteFinalizeSolutionStep()
-        #gid_output.ExecuteFinalize()  
+        gid_output.ExecuteInitialize()
+        gid_output.ExecuteBeforeSolutionLoop()
+        gid_output.ExecuteInitializeSolutionStep()
+        gid_output.PrintOutput()
+        gid_output.ExecuteFinalizeSolutionStep()
+        gid_output.ExecuteFinalize()  
         
         from compare_two_files_check_process import CompareTwoFilesCheckProcess
         check_files = CompareTwoFilesCheckProcess(main_model_part, KratosMultiphysics.Parameters("""

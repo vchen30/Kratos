@@ -233,6 +233,10 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						R2 = self.GetMinimumValue(dist02-RadiusOfDem, dist12-R1,dist23*0.5)
 						R3 = self.GetMinimumValue(dist03-RadiusOfDem, dist13-R1, dist23-R2)
 
+						'''R1 = self.GetMinimumValue(dist01-RadiusOfDem, 1000000, 1000000)
+						R2 = self.GetMinimumValue(dist02-RadiusOfDem, dist12-R1, 1000000)
+						R3 = self.GetMinimumValue(dist03-RadiusOfDem, dist13-R1, dist23-R2)'''
+
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
 						Coordinates2 = self.GetNodeCoordinates(Element.GetNodes()[2])
 						Coordinates3 = self.GetNodeCoordinates(Element.GetNodes()[3])
@@ -256,6 +260,10 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						R0 = self.GetMinimumValue(dist01-RadiusOfDem, dist02*0.5, dist03*0.5)
 						R2 = self.GetMinimumValue(dist12-RadiusOfDem, dist02-R0, dist23*0.5)
 						R3 = self.GetMinimumValue(dist13-RadiusOfDem, dist03-R0, dist23-R2)
+
+						'''R0 = self.GetMinimumValue(dist01-RadiusOfDem, 1000000, 1000000)
+						R2 = self.GetMinimumValue(dist12-RadiusOfDem, dist02-R0, 1000000)
+						R3 = self.GetMinimumValue(dist13-RadiusOfDem, dist03-R0, dist23-R2)'''
 
 						Coordinates0 = self.GetNodeCoordinates(Element.GetNodes()[0])
 						Coordinates2 = self.GetNodeCoordinates(Element.GetNodes()[2])
@@ -281,6 +289,10 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						R1 = self.GetMinimumValue(dist12-RadiusOfDem, dist01-R0, dist13*0.5)
 						R3 = self.GetMinimumValue(dist23-RadiusOfDem, dist03-R0, dist13-R1)
 
+						'''R0 = self.GetMinimumValue(dist02-RadiusOfDem, 1000000, 1000000)
+						R1 = self.GetMinimumValue(dist12-RadiusOfDem, dist01-R0, 1000000)
+						R3 = self.GetMinimumValue(dist23-RadiusOfDem, dist03-R0, dist13-R1)'''
+
 						Coordinates0 = self.GetNodeCoordinates(Element.GetNodes()[0])
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
 						Coordinates3 = self.GetNodeCoordinates(Element.GetNodes()[3])
@@ -304,6 +316,10 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						R0 = self.GetMinimumValue(dist03-RadiusOfDem, dist01*0.5, dist02*0.5)
 						R1 = self.GetMinimumValue(dist13-RadiusOfDem, dist01-R0, dist12*0.5)
 						R2 = self.GetMinimumValue(dist23-RadiusOfDem, dist02-R0, dist12-R1)
+
+						'''R0 = self.GetMinimumValue(dist03-RadiusOfDem, 1000000, 1000000)
+						R1 = self.GetMinimumValue(dist13-RadiusOfDem, dist01-R0, 1000000)
+						R2 = self.GetMinimumValue(dist23-RadiusOfDem, dist02-R0, dist12-R1)'''
 
 						Coordinates0 = self.GetNodeCoordinates(Element.GetNodes()[0])
 						Coordinates1 = self.GetNodeCoordinates(Element.GetNodes()[1])
@@ -348,7 +364,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id2 = Element.GetNodes()[2].Id
 						Id3 = Element.GetNodes()[3].Id
 
-						R2 = self.GetMinimumValue(dist02-R2, dist01-R1, dist23*0.5)
+						#R2 = self.GetMinimumValue(dist02-R2, dist01-R1, dist23*0.5)
+						R2 = self.GetMinimumValue(dist02-R0, dist01-R1, 1000000)
 						R3 = self.GetMinimumValue(dist03-R0, dist13-R1, dist23-R2)
 							
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates2, R2, Id2)
@@ -371,7 +388,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id1 = Element.GetNodes()[1].Id
 						Id3 = Element.GetNodes()[3].Id
 
-						R1 = self.GetMinimumValue(dist01-R0, dist12-R2, dist13*0.5)
+						#R1 = self.GetMinimumValue(dist01-R0, dist12-R2, dist13*0.5)
+						R1 = self.GetMinimumValue(dist01-R0, dist12-R2, 100000)
 						R3 = self.GetMinimumValue(dist03-R0, dist23-R2, dist13-R1)
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates1, R1, Id1)
@@ -394,7 +412,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id1 = Element.GetNodes()[1].Id
 						Id2 = Element.GetNodes()[2].Id
 
-						R1 = self.GetMinimumValue(dist01-R0, dist13-R3, dist12*0.5)
+						#R1 = self.GetMinimumValue(dist01-R0, dist13-R3, dist12*0.5)
+						R1 = self.GetMinimumValue(dist01-R0, dist13-R3, 100000)
 						R2 = self.GetMinimumValue(dist02-R0, dist23-R3, dist12-R1)
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates1, R1, Id1)
@@ -417,7 +436,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id0 = Element.GetNodes()[0].Id
 						Id2 = Element.GetNodes()[2].Id
 
-						R0 = self.GetMinimumValue(dist01-R1, dist03-R3, dist02*0.5)
+						#R0 = self.GetMinimumValue(dist01-R1, dist03-R3, dist02*0.5)
+						R0 = self.GetMinimumValue(dist01-R1, dist03-R3, 100000)
 						R2 = self.GetMinimumValue(dist12-R1, dist23-R3, dist02-R0)
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates0, R0, Id0)
@@ -439,7 +459,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id0 = Element.GetNodes()[0].Id
 						Id1 = Element.GetNodes()[1].Id
 
-						R0 = self.GetMinimumValue(dist02-R2, dist03-R3, dist01*0.5)
+						#R0 = self.GetMinimumValue(dist02-R2, dist03-R3, dist01*0.5)
+						R0 = self.GetMinimumValue(dist02-R2, dist03-R3, 100000)
 						R1 = self.GetMinimumValue(dist12-R2, dist13-R3, dist01-R0)
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates0, R0, Id0)
@@ -461,7 +482,8 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 						Id0 = Element.GetNodes()[0].Id
 						Id3 = Element.GetNodes()[3].Id	
 
-						R0 = self.GetMinimumValue(dist01-R1, dist02-R2, dist03*0.5)
+						#R0 = self.GetMinimumValue(dist01-R1, dist02-R2, dist03*0.5)
+						R0 = self.GetMinimumValue(dist01-R1, dist02-R2, 100000)
 						R3 = self.GetMinimumValue(dist13-R1, dist23-R2, dist03-R0)			
 
 						self.ParticleCreatorDestructor.FEMDEM_CreateSphericParticle(Coordinates0, R0, Id0)

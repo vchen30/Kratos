@@ -150,8 +150,8 @@ class FEMDEM_Solution:
 		# processes to be executed after witting the output
 		self.FEM_Solution.model_processes.ExecuteAfterOutputStep()
 
-		"""
-		if(self.FEM_Solution.activate_AMR):
+		
+		'''if(self.FEM_Solution.activate_AMR):
 			self.FEM_Solution.refine, self.FEM_Solution.last_mesh = self.FEM_Solution.AMR_util.CheckAMR(self.FEM_Solution.time)
 			
 			if(self.FEM_Solution.refine):
@@ -189,7 +189,7 @@ class FEMDEM_Solution:
 				self.DEM_Solution.spheres_model_part.Elements.clear()
 				self.DEM_Solution.spheres_model_part.Nodes.clear()
 				self.ParticleCreatorDestructor.ClearElementsAndNodes()
-		"""
+		'''
 
 #============================================================================================================================
 	def Finalize(self):
