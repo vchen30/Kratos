@@ -27,6 +27,25 @@ namespace Kratos
     class StressToNodesProcess : public Process
     {
 
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    public:
+        
+        typedef ModelPart::ElementsContainerType ElementsArrayType;
+
+        // Constructor
+        StressToNodesProcess(ModelPart& r_model_part, int Dimension) : mr_model_part(r_model_part)
+        {
+            mNNodes = mr_model_part.NumberOfNodes();
+            mNElements = mr_model_part.NumberOfElements();
+            mDimension = Dimension;
+        }
+
+        // Destructor
+        virtual ~StressToNodesProcess(){}
+
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     protected:
@@ -38,27 +57,13 @@ namespace Kratos
             
             NodeStresses()
             {
-                EffectiveStressVector = ZeroVector(3); // 2D: sigma=[Sxx,Syy,Sxy]
+                EffectiveStressVector = ZeroVector(6); // 6 components to allow 3D case
+                // 2D: sigma = [Sxx,Syy, 0, Sxy, 0, 0]
+                // 3D: sigma = [Sxx,Syy,Szz,Sxy,Syz,Sxz]
+                
                 NElems = 0;
             }
         };
-
-//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    public:
-        
-        typedef ModelPart::ElementsContainerType ElementsArrayType;
-
-        // Constructor
-        StressToNodesProcess(ModelPart& r_model_part) : mr_model_part(r_model_part)
-        {
-            mNNodes = mr_model_part.NumberOfNodes();
-            mNElements = mr_model_part.NumberOfElements();
-        }
-
-        // Destructor
-        virtual ~StressToNodesProcess(){}
-
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         void Execute()
@@ -77,7 +82,7 @@ namespace Kratos
         void StressExtrapolationAndSmoothing(NodeStresses* pNodeStressesVector)
         {
 
-            Vector GaussPointsStresses = ZeroVector(3);
+            Vector GaussPointsStresses;
 
             // Loop over elements to extrapolate the stress to the nodes
             for(ElementsArrayType::ptr_iterator it = mr_model_part.Elements().ptr_begin(); it != mr_model_part.Elements().ptr_end(); ++it)
@@ -91,16 +96,31 @@ namespace Kratos
     
                 if (condition_is_active)
                 {
-                   GaussPointsStresses = (*it)->GetValue(STRESS_VECTOR);
-    
-                    //Triangles2D3N
-                    if((*it)->GetGeometry().PointsNumber() == 3)
+                   
+                    if((*it)->GetGeometry().PointsNumber() == 3) //Triangles2D3N -> 2D case
                     {
+                        GaussPointsStresses = (*it)->GetValue(STRESS_VECTOR);
+
                         for(int i = 0; i < 3; i++)
-                        {   
+                        {
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[0] += GaussPointsStresses[0];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[1] += GaussPointsStresses[1];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[3] += GaussPointsStresses[2];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].NElems += 1;
+                        }
+                    }
+                    else  // Tetrahedron3D4N -> 3D case
+                    {
+                        GaussPointsStresses = (*it)->GetValue(STRESS_VECTOR);
+
+                        for (int i = 0; i < 4; i++)
+                        {
                             pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[0] += GaussPointsStresses[0];
                             pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[1] += GaussPointsStresses[1];
                             pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[2] += GaussPointsStresses[2];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[3] += GaussPointsStresses[3];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[4] += GaussPointsStresses[4];
+                            pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].EffectiveStressVector[5] += GaussPointsStresses[5];
                             pNodeStressesVector[(*it)->GetGeometry().GetPoint(i).Id()-1].NElems += 1;
                         }
                     }
@@ -119,15 +139,32 @@ namespace Kratos
             for (ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
             {
                 int Id = (*it).Id();
-                //(*it).SetValue(NODAL_STRESS_VECTOR, pNodeStressesVector[Id-1].EffectiveStressVector);
 				Vector& nodal_stress = it->GetSolutionStepValue(NODAL_STRESS_VECTOR);
 				nodal_stress = pNodeStressesVector[Id - 1].EffectiveStressVector;
 
-                // Compute the norm of the vector
+                // Compute the norm of the vector -> Put VonMises stress
                 double& norm = it->GetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
-                norm = pow(nodal_stress[0]*nodal_stress[0] + nodal_stress[1]*nodal_stress[1] + nodal_stress[2]*nodal_stress[2] ,0.5);
-
+                norm = this->CalculateStressInvariant(nodal_stress);
             }
+        }
+
+        // --------------------------------------------------------------------
+        double CalculateStressInvariant(const Vector& StressVector)  // Returns Von Mises stress
+        {
+            double I1 = StressVector[0] + StressVector[1] + StressVector[2];
+
+            Vector Deviator = ZeroVector(6);
+            Deviator = StressVector;
+            double Pmean = I1 / 3;
+
+            Deviator[0] -= Pmean;
+            Deviator[1] -= Pmean;
+            Deviator[2] -= Pmean;
+
+            double J2 = 0.5*(Deviator[0]*Deviator[0] + Deviator[1]*Deviator[1] + Deviator[2]*Deviator[2]) +
+			(Deviator[3]*Deviator[3] + Deviator[4]*Deviator[4] + Deviator[5]*Deviator[5]);
+
+            return sqrt(3.0*J2);
         }
 
         // --------------------------------------------------------------------
@@ -203,7 +240,7 @@ namespace Kratos
         
         // Member Variables
         ModelPart& mr_model_part;
-        unsigned int mNNodes,mNElements;
+        unsigned int mNNodes, mNElements, mDimension;
 
     }; // Class
 

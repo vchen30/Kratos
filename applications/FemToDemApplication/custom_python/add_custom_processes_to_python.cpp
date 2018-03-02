@@ -54,7 +54,7 @@ namespace Kratos
 			// Stress extrapolation to Nodes
 			class_<StressToNodesProcessType, bases< ProcessBaseType >, boost::noncopyable >
 				("StressToNodesProcess",
-			     init < ModelPart& >());
+			     init < ModelPart&, unsigned int >());
 
 
 		}

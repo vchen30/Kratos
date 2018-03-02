@@ -80,11 +80,11 @@ class FEMDEM_Solution:
 
 		# TESTING
 		#self.FEM_Solution.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
-		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part).Execute()
+		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
 
-		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
-		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
-		# print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
+		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
+		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
+		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
 		#Wait()
 		# TESTING
 
