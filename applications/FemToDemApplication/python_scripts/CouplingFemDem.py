@@ -6,6 +6,7 @@ import FEMDEMParticleCreatorDestructor as PCD
 import KratosMultiphysics
 import KratosMultiphysics.DEMApplication as DEMApplication
 import KratosMultiphysics.FemToDemApplication   as KratosFemDem
+import KratosMultiphysics.MeshingApplication as MeshingApplication
 import math
 import os
 
@@ -78,15 +79,86 @@ class FEMDEM_Solution:
 		self.UpdateDEMVariables()     # We update coordinates, displ and velocities of the DEM according to FEM
 
 
-		# TESTING
-		#self.FEM_Solution.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
+		# ******************************************** TESTING for MMR
+		# We fill the variable EQUIVALENT_NODAL_STRESS with the VonMises stress
 		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
+		
+		if self.FEM_Solution.step > 1:
 
-		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
-		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
-		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
-		#Wait()
-		# TESTING
+			# We fill the variable EQUIVALENT_NODAL_STRESS with the VonMises stress
+			KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
+		
+			# We calculate the gradient of the desired variable
+			local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.FEM_Solution.main_model_part,
+																				KratosFemDem.EQUIVALENT_NODAL_STRESS,
+																				KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT,
+																				KratosMultiphysics.NODAL_AREA)
+			local_gradient.Execute()
+
+			# We set to zero the metric
+			ZeroVector = KratosMultiphysics.Vector(6) 
+			ZeroVector[0] = 0.0
+			ZeroVector[1] = 0.0
+			ZeroVector[2] = 0.0
+			ZeroVector[3] = 0.0
+			ZeroVector[4] = 0.0
+			ZeroVector[5] = 0.0
+			ZeroVector3 = KratosMultiphysics.Vector(3) 
+			ZeroVector3[0] = 0.0
+			ZeroVector3[1] = 0.0
+			ZeroVector3[2] = 0.0
+			for node in self.FEM_Solution.main_model_part.Nodes:
+				node.SetValue(MeshingApplication.MMG_METRIC, ZeroVector)
+				node.SetValue(MeshingApplication.AUXILIAR_GRADIENT, ZeroVector3)
+
+			#print(mmr_parameters["model_part_name"])
+			#print(self.FEM_Solution.main_model_part.GetNode(25).GetValue(MeshingApplication.MMG_METRIC))
+			# Calculate nodal_h
+			nodal_h_process = KratosMultiphysics.FindNodalHProcess(self.FEM_Solution.main_model_part)
+			nodal_h_process.Execute()
+
+
+			hessian_parameters = KratosMultiphysics.Parameters("""
+				{
+			        "minimal_size"                        : 0.1,
+			        "maximal_size"                        : 10.0, 
+			        "enforce_current"                     : true, 
+			        "hessian_strategy_parameters": 
+			        {   
+			            "estimate_interpolation_error"         : false,
+			            "interpolation_error"                  : 1.0e-6,  
+			            "mesh_dependent_constant"              : 0.28125 
+			        }, 
+			        "anisotropy_remeshing"                : true, 
+			        "anisotropy_parameters":
+			        {
+			            "hmin_over_hmax_anisotropic_ratio"     : 1.0, 
+			            "boundary_layer_max_distance"          : 1.0, 
+			            "interpolation"                        : "Linear"
+			        }
+			    }""")
+
+			# compute metrics
+			metric_process = MeshingApplication.ComputeHessianSolMetricProcess2D(self.FEM_Solution.main_model_part,
+																				KratosFemDem.EQUIVALENT_NODAL_STRESS,
+																				hessian_parameters)
+			metric_process.Execute()
+
+			# remeshing process
+			mmr_parameter_file = open("MMRParameters.json",'r')
+			mmr_parameters = KratosMultiphysics.Parameters(mmr_parameter_file.read())
+			MmgProcess = MeshingApplication.MmgProcess2D(self.FEM_Solution.main_model_part, mmr_parameters)
+			MmgProcess.Execute()
+
+			self.FEM_Solution.GraphicalOutputPrintOutput()
+			#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(MeshingApplication.MMG_METRIC))
+			print(self.FEM_Solution.main_model_part.GetNode(25).GetValue(MeshingApplication.MMG_METRIC))
+			print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
+			print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT))
+			#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
+			Wait()
+
+		# ******************************************** TESTING for MMR
 
 		self.DEM_Solution.InitializeTimeStep()
 
