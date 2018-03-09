@@ -36,6 +36,9 @@ class NonConformingTriangleRefinementUtility:
             # Third edge
             mid_nodes[2] = self.CreateMiddleNode(element.GetNode(2), element.GetNode(0), last_id)
 
+            # And now, create the new elements
+            # destination_model_part.CreateNewElement("Element2D3N", ID, [node1, node2, node3], origin_model_part.GetProperties()[0])
+
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
         # print('Do I need to create a new node?')
