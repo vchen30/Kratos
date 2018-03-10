@@ -45,6 +45,30 @@ class NonConformingTriangleRefinementUtility:
                 last_elem_id,
                 [element.GetNode(0).Id, mid_nodes[0], mid_nodes[2]],
                 self.model_part.GetProperties()[0] )
+            
+            ## Second sub element
+            last_elem_id += 1
+            self.model_part.CreateNewElement("Element2D3N", 
+                last_elem_id,
+                [element.GetNode(1).Id, mid_nodes[1], mid_nodes[0]],
+                self.model_part.GetProperties()[0] )
+            
+            ## Third sub element
+            last_elem_id += 1
+            self.model_part.CreateNewElement("Element2D3N", 
+                last_elem_id,
+                [element.GetNode(2).Id, mid_nodes[2], mid_nodes[1]],
+                self.model_part.GetProperties()[0] )
+            
+            ## Fourth sub element
+            last_elem_id += 1
+            self.model_part.CreateNewElement("Element2D3N", 
+                last_elem_id,
+                [mid_nodes[0], mid_nodes[1], mid_nodes[2]],
+                self.model_part.GetProperties()[0] )
+            
+            # Now we can delete the element
+            self.model_part.RemoveElement(this_id)
 
 
     def MarkInputElementsAndGetId(self):
