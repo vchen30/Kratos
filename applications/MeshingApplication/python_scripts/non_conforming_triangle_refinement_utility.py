@@ -22,7 +22,9 @@ class NonConformingTriangleRefinementUtility:
         # Initialize the hash to ensure that each node is created once
         self.nodes_hash = {}
         # Find the last node Id
-        last_id = [6]
+        last_node_id = [6]
+        # Find the last element Id
+        last_elem_id = [0]
 
         # Loop the elements to add nodes and create the new nodes
         for element in self.origin_model_part.Elements:
@@ -30,14 +32,24 @@ class NonConformingTriangleRefinementUtility:
             mid_nodes = [0, 1, 2]
 
             # First edge
-            mid_nodes[0] = self.CreateMiddleNode(element.GetNode(0), element.GetNode(1), last_id)
+            mid_nodes[0] = self.CreateMiddleNode(element.GetNode(0), element.GetNode(1), last_node_id)
             # Second edge
-            mid_nodes[1] = self.CreateMiddleNode(element.GetNode(1), element.GetNode(2), last_id)
+            mid_nodes[1] = self.CreateMiddleNode(element.GetNode(1), element.GetNode(2), last_node_id)
             # Third edge
-            mid_nodes[2] = self.CreateMiddleNode(element.GetNode(2), element.GetNode(0), last_id)
+            mid_nodes[2] = self.CreateMiddleNode(element.GetNode(2), element.GetNode(0), last_node_id)
 
             # And now, create the new elements
-            # destination_model_part.CreateNewElement("Element2D3N", ID, [node1, node2, node3], origin_model_part.GetProperties()[0])
+            last_elem_id[0] += 1
+            print('About to create a new element')
+            print('New element Id : ', last_elem_id[0])
+            print('Node 0         : ', element.GetNode(0).Id)
+            print('Node 1         : ', mid_nodes[0])
+            print('Node 2         : ', mid_nodes[2])
+            print('Properties     : ', self.origin_model_part.GetProperties()[0] )
+            self.destination_model_part.CreateNewElement("Element2D3N", 
+                last_elem_id[0],
+                [element.GetNode(0).Id, mid_nodes[0], mid_nodes[2]],
+                self.origin_model_part.GetProperties()[0] )
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
