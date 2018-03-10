@@ -8,27 +8,27 @@ KratosMultiphysics.CheckForPreviousImport()
 import pdb
 
 class NonConformingTriangleRefinementUtility:
-    def __init__(self, origin_model_part, destination_model_part):
-        self.origin_model_part = origin_model_part
-        self.destination_model_part = destination_model_part
+    def __init__(self, model_part):
+        self.model_part = model_part
 
     def Initialize(self):
         pass
 
     def Execute(self):
         # pdb.set_trace()
-        # Copy the nodes to the new model_part
-        self.destination_model_part.Nodes = self.origin_model_part.Nodes
         # Initialize the hash to ensure that each node is created once
         self.nodes_hash = {}
         # Find the last node Id
-        last_node_id = [6]
+        last_node_id = [self.GetMaxNodeId()]
         # Find the last element Id
-        last_elem_id = [0]
+        elem_id_list, last_elem_id = self.MarkInputElementsAndGetId()
 
-        # Loop the elements to add nodes and create the new nodes
-        for element in self.origin_model_part.Elements:
-            # Initialize the list of middle nodes id
+        # Loop the origin elements to add nodes and create the new elements
+        for this_id in elem_id_list:
+            # Get the element
+            element = self.model_part.GetElement(this_id)
+
+            # Initialize the id list of the middle nodes
             mid_nodes = [0, 1, 2]
 
             # First edge
@@ -38,33 +38,31 @@ class NonConformingTriangleRefinementUtility:
             # Third edge
             mid_nodes[2] = self.CreateMiddleNode(element.GetNode(2), element.GetNode(0), last_node_id)
 
-            # And now, create the new elements
-            last_elem_id[0] += 1
-            print('About to create a new element')
-            print('New element Id : ', last_elem_id[0])
-            print('Node 0         : ', element.GetNode(0).Id)
-            print('Node 1         : ', mid_nodes[0])
-            print('Node 2         : ', mid_nodes[2])
-            print('Properties     : ', self.origin_model_part.GetProperties()[0] )
-            self.destination_model_part.CreateNewElement("Element2D3N", 
-                last_elem_id[0],
+            # And now, create the new sub elements
+            ## First sub element
+            last_elem_id += 1
+            self.model_part.CreateNewElement("Element2D3N", 
+                last_elem_id,
                 [element.GetNode(0).Id, mid_nodes[0], mid_nodes[2]],
-                self.origin_model_part.GetProperties()[0] )
+                self.model_part.GetProperties()[0] )
+
 
     def MarkInputElementsAndGetId(self):
-        last_id = 1
+        id_list = []
+        max_id = 0
         for element in self.model_part.Elements:
-            element.Set(TO_ERASE) = True
-            if element.Id > last_id:
-                last_id = element_id
-        return last_id
+            element.Set(KratosMultiphysics.TO_ERASE, True)
+            id_list.append(element.Id)
+            if element.Id > max_id:
+                max_id = element.Id
+        return id_list, max_id
 
-    def GetLastNodeId(self):
-        last_id = 1
+    def GetMaxNodeId(self):
+        max_id = 0
         for node in self.model_part.Nodes:
-            if node.Id > last_id:
-                last_id = node.Id
-        return last_id
+            if node.Id > max_id:
+                max_id = node.Id
+        return max_id
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
@@ -78,7 +76,7 @@ class NonConformingTriangleRefinementUtility:
             new_x = 0.5 * ( node_a.X + node_b.X )
             new_y = 0.5 * ( node_a.Y + node_b.Y )
             new_id = last_id[0] + 1
-            self.destination_model_part.CreateNewNode(new_id, new_x, new_y, 0)  # Añadir el nodo en el punto medio
+            self.model_part.CreateNewNode(new_id, new_x, new_y, 0)  # Añadir el nodo en el punto medio
             self.nodes_hash[new_node_hash] = new_id       # Tiene que ser el Id del nuevo nodo
             last_id[0] = new_id
             # print('The new node Id is : ', new_id[0])
