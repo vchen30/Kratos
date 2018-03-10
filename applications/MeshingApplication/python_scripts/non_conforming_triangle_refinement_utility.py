@@ -11,10 +11,10 @@ class NonConformingTriangleRefinementUtility:
     def __init__(self, origin_model_part, destination_model_part):
         self.origin_model_part = origin_model_part
         self.destination_model_part = destination_model_part
-    
+
     def Initialize(self):
         pass
-    
+
     def Execute(self):
         # pdb.set_trace()
         # Copy the nodes to the new model_part
@@ -50,6 +50,21 @@ class NonConformingTriangleRefinementUtility:
                 last_elem_id[0],
                 [element.GetNode(0).Id, mid_nodes[0], mid_nodes[2]],
                 self.origin_model_part.GetProperties()[0] )
+
+    def MarkInputElementsAndGetId(self):
+        last_id = 1
+        for element in self.model_part.Elements:
+            element.Set(TO_ERASE) = True
+            if element.Id > last_id:
+                last_id = element_id
+        return last_id
+
+    def GetLastNodeId(self):
+        last_id = 1
+        for node in self.model_part.Nodes:
+            if node.Id > last_id:
+                last_id = node.Id
+        return last_id
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
