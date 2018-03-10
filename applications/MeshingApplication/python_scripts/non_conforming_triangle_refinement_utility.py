@@ -5,8 +5,6 @@ import KratosMultiphysics.MeshingApplication as MeshingApplication
 
 KratosMultiphysics.CheckForPreviousImport()
 
-import pdb
-
 class NonConformingTriangleRefinementUtility:
     def __init__(self, model_part):
         self.model_part = model_part
@@ -15,7 +13,6 @@ class NonConformingTriangleRefinementUtility:
         pass
 
     def Execute(self):
-        # pdb.set_trace()
         # Initialize the hash to ensure that each node is created once
         self.nodes_hash = {}
         # Find the last node Id
@@ -90,21 +87,13 @@ class NonConformingTriangleRefinementUtility:
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
-        # print('Do I need to create a new node?')
-        # print('This is the nodes hash:')
-        # print(self.nodes_hash)
-        # print('And this would be the new node hash:')
-        # print(new_node_hash)
         if not new_node_hash in self.nodes_hash:
-            # print('The new node is not in the hash, so create a new node')
             new_x = 0.5 * ( node_a.X + node_b.X )
             new_y = 0.5 * ( node_a.Y + node_b.Y )
             new_id = last_id[0] + 1
             self.model_part.CreateNewNode(new_id, new_x, new_y, 0)  # Añadir el nodo en el punto medio
             self.nodes_hash[new_node_hash] = new_id       # Tiene que ser el Id del nuevo nodo
             last_id[0] = new_id
-            # print('The new node Id is : ', new_id[0])
-            # print('')
         else:
             new_id = self.nodes_hash[new_node_hash]
 
