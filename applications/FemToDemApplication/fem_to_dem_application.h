@@ -32,6 +32,7 @@
 #include "custom_constitutive/zarate_law.hpp"
 #include "custom_elements/alecornvel_element.hpp"
 #include "custom_elements/femdem3d_element.hpp"
+#include "custom_elements/romfemdem3d_element.hpp"
 
 #include "fem_to_dem_application_variables.h"
 
@@ -104,6 +105,7 @@ private:
 	//const ZaratipitoElement mZaratipitoElement;
 	const AleCornVelElement mAleCornVelElement;
 	const FemDem3DElement   mFemDem3DElement;
+	const RomFemDem3DElement mRomFemDem3DElement;
 
 
 	//elastic laws

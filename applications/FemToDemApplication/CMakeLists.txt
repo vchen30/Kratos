@@ -20,6 +20,7 @@ set( KRATOS_FEM_TO_DEM_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/zarate_law.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/alecornvel_element.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/femdem3d_element.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/romfemdem3d_element.cpp
 )
 
 # define library Kratos which defines the basic python interface

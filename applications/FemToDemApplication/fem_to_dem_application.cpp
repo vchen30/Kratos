@@ -58,7 +58,8 @@ namespace Kratos {
 KratosFemToDemApplication::KratosFemToDemApplication(): KratosApplication("FemToDemApplication"),
 //mZaratipitoElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
 mAleCornVelElement(0, Element::GeometryType::Pointer(new Triangle2D3 <Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-mFemDem3DElement(0, Element::GeometryType::Pointer(new Tetrahedra3D4 <Node<3> >(Element::GeometryType::PointsArrayType(4))))
+mFemDem3DElement(0, Element::GeometryType::Pointer(new Tetrahedra3D4 <Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+mRomFemDem3DElement(0, Element::GeometryType::Pointer(new Tetrahedra3D4 <Node<3> >(Element::GeometryType::PointsArrayType(4))))
 {}
 
 
@@ -115,10 +116,15 @@ void KratosFemToDemApplication::Register()
 	KRATOS_REGISTER_VARIABLE(STRESS_TENSOR);
 	KRATOS_REGISTER_VARIABLE(STRESS_TENSOR_INTEGRATED);
 	
+	// Composite
+	KRATOS_REGISTER_VARIABLE(CONCRETE_STRESS_TENSOR);
+	KRATOS_REGISTER_VARIABLE(STEEL_STRESS_TENSOR);
+	
 	//Register element
 	//KRATOS_REGISTER_ELEMENT("ZaratipitoElement", mZaratipitoElement)
 	KRATOS_REGISTER_ELEMENT("AleCornVelElement", mAleCornVelElement)
 	KRATOS_REGISTER_ELEMENT("FemDem3DElement", mFemDem3DElement)
+	KRATOS_REGISTER_ELEMENT("RomFemDem3DElement", mRomFemDem3DElement)
 			
 	//Register Constitutive Laws
 	Serializer::Register("ZarateLaw", mZarateLaw);

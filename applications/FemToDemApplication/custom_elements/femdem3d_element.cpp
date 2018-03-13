@@ -363,12 +363,6 @@ namespace Kratos
 	void FemDem3DElement::CalculateLocalSystem (MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 	{
 		KRATOS_TRY
-		//int n = 8;
-		//std::vector<Vector> V;
-		//V.resize(n);
-		//V[0] = ZeroVector(3);
-
-		//KRATOS_WATCH(V[0])
 
 		const unsigned int number_of_nodes = GetGeometry().size();
 		const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
@@ -1174,6 +1168,7 @@ namespace Kratos
 		Rmorh = pow(tan((3.14159265359 / 4) + friction_angle / 2), 2);
 		alpha_r = R / Rmorh;
 		c_max = abs(sigma_c);
+		double sinphi = sin(friction_angle);
 
 		double I1, J2, J3;
 		I1 = this->Calculate_I1_Invariant(StressVector);
@@ -1181,15 +1176,12 @@ namespace Kratos
 		this->CalculateDeviatorVector(Deviator, StressVector, I1);
 		J2 = this->Calculate_J2_Invariant(Deviator);
 		J3 = this->Calculate_J3_Invariant(Deviator);
-		K1 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r)*sin(friction_angle);
-		K2 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r) / sin(friction_angle);
-		K3 = 0.5*(1 + alpha_r)*sin(friction_angle) - 0.5*(1 - alpha_r);
+		K1 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r)*sinphi;
+		K2 = 0.5*(1 + alpha_r) - 0.5*(1 - alpha_r) / sinphi;
+		K3 = 0.5*(1 + alpha_r)*sinphi - 0.5*(1 - alpha_r);
 
 		double n = sigma_c / sigma_t;
-		double ElementArea = this->GetGeometry().Area();
-		//double l_char = sqrt(4 * ElementArea / sqrt(3));
-
-		double A = 1.00 / (n*n*Gt*E / (l_char *pow(sigma_c, 2)) - 0.5);
+		double A = 1.00 / (n*n*Gt*E / (l_char * pow(sigma_c, 2)) - 0.5);
 		if (A < 0) { KRATOS_THROW_ERROR(std::invalid_argument, " 'A' damage parameter lower than zero --> Increase FRAC_ENERGY_T", A) }
 
 		double f = 0.0, F = 0.0; /// F = f-c = 0 classical definition of yield surface
@@ -1199,7 +1191,7 @@ namespace Kratos
 		else
 		{
 			theta = Calculate_Theta_Angle(J2, J3);
-			f = (2.00*tan(3.14159265359*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sin(friction_angle) / sqrt(3)));
+			f = (2.00*tan(3.14159265359*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sinphi / sqrt(3)));
 		}
 
 		if (this->Get_threshold(cont) == 0) { this->Set_threshold(c_max, cont); }   // 1st iteration sets threshold as c_max

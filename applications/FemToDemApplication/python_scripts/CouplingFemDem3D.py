@@ -9,6 +9,8 @@ import KratosMultiphysics.FemToDemApplication   as KratosFemDem
 import CouplingFemDem
 import math
 import os
+import KratosMultiphysics.MeshingApplication as MeshingApplication
+import mmg_process as MMG
 
 def Wait():
 	input("Press Something")
@@ -53,19 +55,19 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 		self.UpdateDEMVariables()     # We update coordinates, displ and velocities of the DEM according to FEM
 
 
-		# TESTING
+		# TESTING***********************************************************
 
 		
 		#self.FEM_Solution.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
 		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 3).Execute()
 
-		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
-		print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
+		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
+		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
 		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
 		#Wait()
 
 
-		# TESTING
+		# TESTING ***********************************************************
 
 
 		self.DEM_Solution.InitializeTimeStep()

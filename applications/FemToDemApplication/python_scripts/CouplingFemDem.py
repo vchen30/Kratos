@@ -10,6 +10,8 @@ import KratosMultiphysics.MeshingApplication as MeshingApplication
 import math
 import os
 
+import mmg_process as MMG
+
 def Wait():
 	input("Press Something")
 
@@ -18,8 +20,20 @@ def Wait():
 class FEMDEM_Solution:
 #============================================================================================================================
 	def __init__(self):
+
+		# Initialize solutions
 		self.FEM_Solution = FEM.FEM_for_coupling_Solution()
 		self.DEM_Solution = DEM.DEM_for_coupling_Solution()
+
+		# Initialize Remeshing files
+		
+		self.DoRemeshing = False
+		if self.DoRemeshing:
+			mmg_parameter_file = open("MMRParameters.json",'r')
+			self.mmg_parameters = KratosMultiphysics.Parameters(mmg_parameter_file.read())
+			Model = {self.mmg_parameters["model_part_name"].GetString(): self.FEM_Solution.main_model_part}
+			self.RemeshingProcessMMG = MMG.MmgProcess(Model, self.mmg_parameters)
+
 		self.InitializePlotsFiles()
 
 #============================================================================================================================
@@ -44,6 +58,10 @@ class FEMDEM_Solution:
                                                                              self.DEMProperties,
                                                                              self.DEMParameters)
 
+		if self.DoRemeshing:
+			self.InitializeMMGvariables()
+			self.RemeshingProcessMMG.ExecuteInitialize()
+
 #============================================================================================================================
 	def RunMainTemporalLoop(self):
 
@@ -51,6 +69,9 @@ class FEMDEM_Solution:
 		self.DEM_Solution.step           = 0
 		self.DEM_Solution.time           = 0.0
 		self.DEM_Solution.time_old_print = 0.0
+
+		if self.DoRemeshing:
+			self.RemeshingProcessMMG.ExecuteBeforeSolutionLoop()
 
 		while(self.FEM_Solution.time < self.FEM_Solution.end_time):
 			
@@ -61,6 +82,13 @@ class FEMDEM_Solution:
 #============================================================================================================================
 	def InitializeSolutionStep(self):
 		self.FEM_Solution.InitializeSolutionStep()
+
+		if self.DoRemeshing:
+			self.RemeshingProcessMMG.ExecuteInitializeSolutionStep()
+
+		# just for testing ->Remove
+		#self.FEM_Solution.GraphicalOutputPrintOutput()
+		# ***********************
 
 #============================================================================================================================
 	def SolveSolutionStep(self):
@@ -78,58 +106,55 @@ class FEMDEM_Solution:
 		self.CheckInactiveNodes()
 		self.UpdateDEMVariables()     # We update coordinates, displ and velocities of the DEM according to FEM
 
+		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
+
 
 		# ******************************************** TESTING for MMR
+		# ********************************************
 		# We fill the variable EQUIVALENT_NODAL_STRESS with the VonMises stress
-		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
-		
-		if self.FEM_Solution.step > 1:
+		#KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
 
-			# We fill the variable EQUIVALENT_NODAL_STRESS with the VonMises stress
-			KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 2).Execute()
-		
-			# We calculate the gradient of the desired variable
-			local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.FEM_Solution.main_model_part,
-																				KratosFemDem.EQUIVALENT_NODAL_STRESS,
-																				KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT,
-																				KratosMultiphysics.NODAL_AREA)
-			local_gradient.Execute()
+		'''
+		# We calculate the gradient of the desired variable
+		local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.FEM_Solution.main_model_part,
+																			KratosFemDem.EQUIVALENT_NODAL_STRESS,
+																			KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT,
+																			KratosMultiphysics.NODAL_AREA)
+		local_gradient.Execute()
 
-			# We set to zero the metric
-			ZeroVector = KratosMultiphysics.Vector(6) 
-			ZeroVector[0] = 0.0
-			ZeroVector[1] = 0.0
-			ZeroVector[2] = 0.0
-			ZeroVector[3] = 0.0
-			ZeroVector[4] = 0.0
-			ZeroVector[5] = 0.0
-			ZeroVector3 = KratosMultiphysics.Vector(3) 
-			ZeroVector3[0] = 0.0
-			ZeroVector3[1] = 0.0
-			ZeroVector3[2] = 0.0
-			for node in self.FEM_Solution.main_model_part.Nodes:
-				node.SetValue(MeshingApplication.MMG_METRIC, ZeroVector)
-				node.SetValue(MeshingApplication.AUXILIAR_GRADIENT, ZeroVector3)
+
+		
+		#if self.FEM_Solution.step > 1:
+
+			#put damage
+			#for elem in self.FEM_Solution.main_model_part.Elements:
+				#if elem.Id == 121:
+					#pass
+					#elem.SetValue(KratosFemDem.DAMAGE_ELEMENT,0.5)
+
+
+			#self.FEM_Solution.GraphicalOutputPrintOutput()
 
 			#print(mmr_parameters["model_part_name"])
 			#print(self.FEM_Solution.main_model_part.GetNode(25).GetValue(MeshingApplication.MMG_METRIC))
+
+			
 			# Calculate nodal_h
 			nodal_h_process = KratosMultiphysics.FindNodalHProcess(self.FEM_Solution.main_model_part)
 			nodal_h_process.Execute()
 
-
 			hessian_parameters = KratosMultiphysics.Parameters("""
 				{
-			        "minimal_size"                        : 0.1,
-			        "maximal_size"                        : 10.0, 
-			        "enforce_current"                     : true, 
+			        "minimal_size"                        : 0.01,
+			        "maximal_size"                        : 0.1, 
+			        "enforce_current"                     : false, 
 			        "hessian_strategy_parameters": 
 			        {   
 			            "estimate_interpolation_error"         : false,
-			            "interpolation_error"                  : 1.0e-6,  
-			            "mesh_dependent_constant"              : 0.28125 
+			            "interpolation_error"                  : 1.0e-3,  
+			            "mesh_dependent_constant"              : 0.28125
 			        }, 
-			        "anisotropy_remeshing"                : true, 
+			        "anisotropy_remeshing"                : false, 
 			        "anisotropy_parameters":
 			        {
 			            "hmin_over_hmax_anisotropic_ratio"     : 1.0, 
@@ -138,13 +163,16 @@ class FEMDEM_Solution:
 			        }
 			    }""")
 
-			# compute metrics
+			# Compute metrics
 			metric_process = MeshingApplication.ComputeHessianSolMetricProcess2D(self.FEM_Solution.main_model_part,
 																				KratosFemDem.EQUIVALENT_NODAL_STRESS,
 																				hessian_parameters)
 			metric_process.Execute()
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetValue(MeshingApplication.MMG_METRIC))  KratosFemDem.EQUIVALENT_NODAL_STRESS,
 
-			# remeshing process
+
+
+			# remeshing process // despues de aqui se borra la metrica
 			mmr_parameter_file = open("MMRParameters.json",'r')
 			mmr_parameters = KratosMultiphysics.Parameters(mmr_parameter_file.read())
 			MmgProcess = MeshingApplication.MmgProcess2D(self.FEM_Solution.main_model_part, mmr_parameters)
@@ -152,11 +180,32 @@ class FEMDEM_Solution:
 
 			self.FEM_Solution.GraphicalOutputPrintOutput()
 			#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(MeshingApplication.MMG_METRIC))
-			print(self.FEM_Solution.main_model_part.GetNode(25).GetValue(MeshingApplication.MMG_METRIC))
-			print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
-			print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT))
-			#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
-			Wait()
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetValue(MeshingApplication.MMG_METRIC))
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS_GRADIENT))
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetSolutionStepValue(KratosMultiphysics.NODAL_AREA))
+			#print(self.FEM_Solution.main_model_part.GetNode(2).GetValue(MeshingApplication.AUXILIAR_HESSIAN))
+			
+			
+			mmg_parameter_file = open("MMRParameters.json",'r')
+			mmg_parameters = KratosMultiphysics.Parameters(mmg_parameter_file.read())
+			Model = {mmg_parameters["model_part_name"].GetString(): self.FEM_Solution.main_model_part}
+			self.RemeshingProcessMMG = MMG.MmgProcess(Model, mmg_parameters)
+
+			
+			self.RemeshingProcessMMG.ExecuteInitialize()
+			#self.RemeshingProcessMMG.ExecuteInitializeSolutionStep()
+			self.RemeshingProcessMMG.ExecuteBeforeSolutionLoop()
+			self.RemeshingProcessMMG.ExecuteInitializeSolutionStep()
+			self.RemeshingProcessMMG.ExecuteFinalizeSolutionStep()
+			self.RemeshingProcessMMG.ExecuteBeforeOutputStep()
+			self.RemeshingProcessMMG.ExecuteAfterOutputStep()
+			self.RemeshingProcessMMG.ExecuteFinalize()
+			
+
+
+
+			#Wait()'''
 
 		# ******************************************** TESTING for MMR
 
@@ -222,46 +271,11 @@ class FEMDEM_Solution:
 		# processes to be executed after witting the output
 		self.FEM_Solution.model_processes.ExecuteAfterOutputStep()
 
+		self.ParticleCreatorDestructor.ClearElementsAndNodes()
+
+		if self.DoRemeshing:
+			self.RemeshingProcessMMG.ExecuteFinalizeSolutionStep()
 		
-		'''if(self.FEM_Solution.activate_AMR):
-			self.FEM_Solution.refine, self.FEM_Solution.last_mesh = self.FEM_Solution.AMR_util.CheckAMR(self.FEM_Solution.time)
-			
-			if(self.FEM_Solution.refine):
-				self.FEM_Solution.main_model_part, self.FEM_Solution.solver = self.FEM_Solution.AMR_util.Execute(self.FEM_Solution.main_model_part,
-					                                                                                             self.FEM_Solution.solver,
-					                                                                                             self.FEM_Solution.gid_output_util,
-					                                                                                             self.FEM_Solution.time,
-					                                                                                             self.FEM_Solution.current_id)
-
-				# Reset the spheres to be generated afterwards 
-				self.DEM_Solution.spheres_model_part.Elements.clear()
-				self.DEM_Solution.spheres_model_part.Nodes.clear()
-				self.ParticleCreatorDestructor.ClearElementsAndNodes()
-
-				# save print parameters
-				printed_step_count = self.FEM_Solution.graphical_output.printed_step_count
-				step_count = self.FEM_Solution.graphical_output.step_count
-
-				#construct the new solver (main setting methods are located in the solver_module)
-				#self.ProjectParameters["solver_settings"].RemoveValue("damp_factor_m")
-				#self.ProjectParameters["solver_settings"].RemoveValue("dynamic_factor")
-
-				#solver_module = __import__(self.ProjectParameters["solver_settings"]["solver_type"].GetString())
-				#self.solver   = solver_module.CreateSolver(self.main_model_part, self.ProjectParameters["solver_settings"])
-				self.FEM_Solution.InitializeAfterAMR()
-
-				# assign print parameters
-				self.FEM_Solution.graphical_output.printed_step_count = printed_step_count
-				self.FEM_Solution.graphical_output.step_count = step_count
-	
-			elif(self.FEM_Solution.last_mesh):
-				self.FEM_Solution.AMR_util.Finalize(self.FEM_Solution.main_model_part, self.FEM_Solution.current_id)
-
-				# Reset the spheres to be generated afterwards 
-				self.DEM_Solution.spheres_model_part.Elements.clear()
-				self.DEM_Solution.spheres_model_part.Nodes.clear()
-				self.ParticleCreatorDestructor.ClearElementsAndNodes()
-		'''
 
 #============================================================================================================================
 	def Finalize(self):
@@ -269,6 +283,8 @@ class FEMDEM_Solution:
 		self.FEM_Solution.Finalize()
 		self.DEM_Solution.Finalize()
 		self.DEM_Solution.CleanUpOperations()
+		if self.DoRemeshing:
+			self.RemeshingProcessMMG.ExecuteFinalize()
 
 #============================================================================================================================
 	def GenerateDEM(self):
@@ -680,22 +696,7 @@ class FEMDEM_Solution:
 
 #============================================================================================================================
 	def CreateInitialSkinDEM(self):
-
-		"""
-		NumberOfInitialDEM = self.FEM_Solution.ProjectParameters["initial_DEM_skin_list"].size()
-
-		for iNode in range(0, NumberOfInitialDEM):
-
-			Id = self.FEM_Solution.ProjectParameters["initial_DEM_skin_list"][iNode].GetInt()
-			FEMNode = self.FEM_Solution.main_model_part.GetNode(Id)
-			Coordinates = self.GetNodeCoordinates(FEMNode)
-		"""
 		pass
-
-
-
-
-
 
 #============================================================================================================================
 	def WritePostListFile(self):
@@ -852,3 +853,15 @@ class FEMDEM_Solution:
 				self.PlotFilesElementsList.append(iPlotFileElem)
 				self.PlotFilesElementsIdList.append(Id)
 
+#============================================================================================================================
+
+	def InitializeMMGvariables(self):
+
+		ZeroVector3 = KratosMultiphysics.Vector(3)
+		ZeroVector3[0] = 0.0
+		ZeroVector3[1] = 0.0
+		ZeroVector3[2] = 0.0
+
+		for node in self.FEM_Solution.main_model_part.Nodes:
+			node.SetValue(MeshingApplication.MMG_METRIC, ZeroVector3)
+			node.SetValue(MeshingApplication.AUXILIAR_GRADIENT, ZeroVector3)

@@ -135,6 +135,7 @@ namespace Kratos
                 pNodeStressesVector[i].EffectiveStressVector = pNodeStressesVector[i].EffectiveStressVector / pNodeStressesVector[i].NElems;
             }
 
+            // Loop to compute the max eq. stress in order to normalize
             // Loop over nodes to assign the value of NODAL_STRESS_VECTOR
             for (ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
             {
@@ -146,6 +147,22 @@ namespace Kratos
                 double& norm = it->GetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
                 norm = this->CalculateStressInvariant(nodal_stress);
             }
+
+            // Loop to compute the max eq. stress and normalize
+            double MaxEqStress = 0.0;
+            for (ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
+            {
+                double& norm = it->GetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
+                if (norm > MaxEqStress) MaxEqStress = norm;
+            }
+            
+            for (ModelPart::NodeIterator it = mr_model_part.NodesBegin(); it != mr_model_part.NodesEnd(); ++it)
+            {
+                double& norm = it->GetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
+                norm /= MaxEqStress;
+            }
+
+
         }
 
         // --------------------------------------------------------------------
