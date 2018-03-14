@@ -413,7 +413,7 @@ namespace Kratos
 			rOutput[0] =  MathUtils<double>::StrainVectorToTensor(this->GetValue(STRAIN_VECTOR));
 		}
 
-		if (rVariable == STRESS_TENSOR_INTEGRATED)
+		if (rVariable == CONCRETE_STRESS_TENSOR_INTEGRATED)
 		{
 			rOutput[0] =  MathUtils<double>::StressVectorToTensor(this->GetIntegratedStressVector());
 		}
@@ -439,7 +439,7 @@ namespace Kratos
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
 
-		if (rVariable == STRESS_TENSOR_INTEGRATED)
+		if (rVariable == CONCRETE_STRESS_TENSOR_INTEGRATED)
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}

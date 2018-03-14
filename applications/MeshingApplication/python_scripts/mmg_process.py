@@ -90,6 +90,8 @@ class MmgProcess(KratosMultiphysics.Process):
         self.settings = settings
         self.settings.RecursivelyValidateAndAssignDefaults(default_parameters)
 
+        print(self.settings["model_part_name"].GetString())
+
         self.model_part= Model[self.settings["model_part_name"].GetString()]
         self.dim = self.model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
 
