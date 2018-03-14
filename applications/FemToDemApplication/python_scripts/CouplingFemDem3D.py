@@ -59,7 +59,7 @@ class FEMDEM3D_Solution(CouplingFemDem.FEMDEM_Solution):
 
 		
 		#self.FEM_Solution.main_model_part.AddNodalSolutionStepVariable(KratosFemDem.NODAL_STRESS_VECTOR)
-		KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 3).Execute()
+		#KratosFemDem.StressToNodesProcess(self.FEM_Solution.main_model_part, 3).Execute()
 
 		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.NODAL_STRESS_VECTOR))
 		#print(self.FEM_Solution.main_model_part.GetNode(25).GetSolutionStepValue(KratosFemDem.EQUIVALENT_NODAL_STRESS))

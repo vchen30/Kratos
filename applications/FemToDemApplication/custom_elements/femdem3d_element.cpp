@@ -1192,6 +1192,12 @@ namespace Kratos
 		{
 			theta = Calculate_Theta_Angle(J2, J3);
 			f = (2.00*tan(3.14159265359*0.25 + friction_angle*0.5) / cos(friction_angle))*((I1*K3 / 3) + sqrt(J2)*(K1*cos(theta) - K2*sin(theta)*sinphi / sqrt(3)));
+			if (this->Id() == 1)
+			{
+				KRATOS_WATCH(f)
+				KRATOS_WATCH(StressVector)
+				std::cout << "" << std::endl;
+			}
 		}
 
 		if (this->Get_threshold(cont) == 0) { this->Set_threshold(c_max, cont); }   // 1st iteration sets threshold as c_max
