@@ -30,10 +30,6 @@
 #include "custom_utilities/mapping/mapper_vertex_morphing_matrix_free.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing_improved_integration.h"
 
-#if defined(EMPIRE_NURBS_VERTEX_MORPHING)
-    #include "custom_utilities/mapping/mapper_empire_nurbs.h"
-#endif
-
 #include "custom_utilities/damping/damping_utilities.h"
 #include "custom_utilities/mesh_controller_utilities.h"
 #include "custom_utilities/response_functions/strain_energy_response_function.h"
@@ -63,13 +59,6 @@ void  AddCustomUtilitiesToPython()
         .def("MapToGeometrySpace", &MapperVertexMorphing::MapToGeometrySpace)
         ;
  
-    #if defined(EMPIRE_NURBS_VERTEX_MORPHING)
-        class_<MapperEmpireNURBS, bases<Process> >("MapperEmpireNURBS", init<ModelPart&, Parameters&>())
-            .def("MapToDesignSpace", &MapperEmpireNURBS::MapToDesignSpace)
-            .def("MapToGeometrySpace", &MapperEmpireNURBS::MapToGeometrySpace)
-            ;
-    #endif
-
     class_<MapperVertexMorphingMatrixFree, bases<Process> >("MapperVertexMorphingMatrixFree", init<ModelPart&, Parameters>())
         .def("MapToDesignSpace", &MapperVertexMorphingMatrixFree::MapToDesignSpace)
         .def("MapToGeometrySpace", &MapperVertexMorphingMatrixFree::MapToGeometrySpace)
@@ -108,7 +97,7 @@ void  AddCustomUtilitiesToPython()
         // General optimization operations
         // ----------------------------------------------------------------
         .def("ComputeControlPointUpdate", &OptimizationUtilities::ComputeControlPointUpdate)
-        .def("UpdateControlPointChangeByInputVariable", &OptimizationUtilities::UpdateControlPointChangeByInputVariable)        
+        .def("AddFirstVariableToSecondVariable", &OptimizationUtilities::AddFirstVariableToSecondVariable)
         // ----------------------------------------------------------------
         // Adjoint extract design surface shape sensitivities
         // ----------------------------------------------------------------
