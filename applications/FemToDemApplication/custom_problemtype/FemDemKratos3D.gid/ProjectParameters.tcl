@@ -197,11 +197,18 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     # gauss_point_results
     set PutStrings \[
     set iGroup 0
-    AppendOutputVariables PutStrings iGroup Write_Strain STRAIN_TENSOR
-    #AppendOutputVariables PutStrings iGroup Write_Predictive_Stress CAUCHY_STRESS_TENSOR
-    AppendOutputVariables PutStrings iGroup Write_Predictive_Stress STRESS_TENSOR
-    AppendOutputVariables PutStrings iGroup Write_Integrated_Stress STRESS_TENSOR_INTEGRATED
-    AppendOutputVariables PutStrings iGroup Write_Damage DAMAGE_ELEMENT
+    set MatGroups [GiD_Info conditions Body_Part groups]
+	
+    if {[lindex [lindex $MatGroups 0] 13] eq "true"} {
+        AppendOutputVariables PutStrings iGroup Write_Predictive_Stress CONCRETE_STRESS_TENSOR_INTEGRATED
+        AppendOutputVariables PutStrings iGroup Write_Integrated_Stress CONCRETE_STRESS_TENSOR
+		AppendOutputVariables PutStrings iGroup Write_Integrated_Stress STEEL_STRESS_TENSOR
+    } else {
+		AppendOutputVariables PutStrings iGroup Write_Predictive_Stress STRESS_TENSOR
+		AppendOutputVariables PutStrings iGroup Write_Integrated_Stress STRESS_TENSOR_INTEGRATED
+	}
+	AppendOutputVariables PutStrings iGroup Write_Strain STRAIN_TENSOR
+	AppendOutputVariables PutStrings iGroup Write_Damage DAMAGE_ELEMENT
     AppendOutputVariables PutStrings iGroup Write_Is_Damaged IS_DAMAGED
     AppendOutputVariables PutStrings iGroup Stress_Threshold STRESS_THRESHOLD
 

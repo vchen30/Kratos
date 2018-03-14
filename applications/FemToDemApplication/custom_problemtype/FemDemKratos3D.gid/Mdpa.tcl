@@ -46,7 +46,7 @@ proc WriteMdpa { basename dir problemtypedir } {
         puts $FileVar "    YOUNG_MODULUS            [lindex [lindex $Groups $i] 4]"
         puts $FileVar "    DENSITY                  [lindex [lindex $Groups $i] 5]"
         puts $FileVar "    POISSON_RATIO            [lindex [lindex $Groups $i] 6]"
-        #puts $FileVar "    THICKNESS                [lindex [lindex $Groups $i] 8]"
+		
 		if {[lindex [lindex $Groups $i] 13] eq "true"} {
 			puts $FileVar "    YOUNG_MODULUS_STEEL      [lindex [lindex $Groups $i] 14]"
 			puts $FileVar "    DENSITY_STEEL            [lindex [lindex $Groups $i] 15]"
@@ -60,7 +60,6 @@ proc WriteMdpa { basename dir problemtypedir } {
         puts $FileVar "    YIELD_STRESS_T           [lindex [lindex $Groups $i] 8]"
         puts $FileVar "    FRAC_ENERGY_T            [lindex [lindex $Groups $i] 9]"
         puts $FileVar "    INTERNAL_FRICTION_ANGLE  [lindex [lindex $Groups $i] 10]"
-		#puts $FileVar "    CHARACTERISTIC_LENGTH    [lindex [lindex $Groups $i] 15]"
         puts $FileVar ""
         puts $FileVar "// DYNAMIC PARAMETERS  D = alpha*M + beta*K"
         puts $FileVar "    RAYLEIGH_BETA            [lindex [lindex $Groups $i] 11]"
