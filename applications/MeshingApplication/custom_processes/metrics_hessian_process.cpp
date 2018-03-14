@@ -112,6 +112,7 @@ void ComputeHessianSolMetricProcess<TDim, TVarType>::Execute()
 #endif       
     
         Vector& metric = it_node->GetValue(MMG_METRIC);
+		//KRATOS_WATCH(metric)
         
 #ifdef KRATOS_DEBUG 
         KRATOS_ERROR_IF(metric.size() != TDim * 3 - 3) << "Wrong size of vector MMG_METRIC found for node " << it_node->Id() << " size is " << metric.size() << " expected size was " << TDim * 3 - 3;
@@ -126,6 +127,13 @@ void ComputeHessianSolMetricProcess<TDim, TVarType>::Execute()
         } else {
             metric = ComputeHessianMetricTensor(hessian, ratio, element_min_size, element_max_size);    
         }
+
+		
+		//if (it_node->Id() == 43) metric[0] == 300;
+		//KRATOS_WATCH(it_node->GetValue(MMG_METRIC))
+		//KRATOS_WATCH(it_node->Id())
+		//KRATOS_WATCH(hessian)  //distintos
+		//KRATOS_WATCH(it_node->GetValue(MMG_METRIC)) //iguales
     }
 }
 
@@ -142,6 +150,8 @@ Vector ComputeHessianSolMetricProcess<TDim, TVarType>::ComputeHessianMetricTenso
 {        
     // We first transform the Hessian into a matrix
     const bounded_matrix<double, TDim, TDim> hessian_matrix = MetricsMathUtils<TDim>::VectorToTensor(Hessian);
+
+	//KRATOS_WATCH(hessian_matrix) //distintos valores
     
     // Calculating Metric parameters
     double interpolation_error = mInterpError;
@@ -159,10 +169,22 @@ Vector ComputeHessianSolMetricProcess<TDim, TVarType>::ComputeHessianMetricTenso
     bounded_matrix<double, TDim, TDim> eigen_vector_matrix, eigen_values_matrix;
     
     MathUtils<double>::EigenSystem<TDim>(hessian_matrix, eigen_vector_matrix, eigen_values_matrix, 1e-18, 20);
+
+	//KRATOS_WATCH(eigen_values_matrix)
     
     // Recalculate the Metric eigen values
     for (unsigned int i = 0; i < TDim; ++i)
         eigen_values_matrix(i, i) = MathUtils<double>::Min(MathUtils<double>::Max(c_epslilon * std::abs(eigen_values_matrix(i, i)), max_ratio), min_ratio);
+
+	// Recalculate the Metric eigen values --> borrar
+	//for (unsigned int i = 0; i < TDim; ++i)
+	//	eigen_values_matrix(i, i) = c_epslilon * std::abs(eigen_values_matrix(i, i));
+
+	//KRATOS_WATCH(eigen_values_matrix)
+	//KRATOS_WATCH(max_ratio)
+	//KRATOS_WATCH(min_ratio)
+	//KRATOS_WATCH(c_epslilon)
+	//KRATOS_WATCH(hessian_matrix)
     
     // Considering anisotropic
     if (AnisotropicRatio < 1.0) {
@@ -189,6 +211,8 @@ Vector ComputeHessianSolMetricProcess<TDim, TVarType>::ComputeHessianMetricTenso
         
     // We compute the product
     const bounded_matrix<double, TDim, TDim>& matric_matrix =  prod(trans(eigen_vector_matrix), prod<temp_type>(eigen_values_matrix, eigen_vector_matrix));
+
+	KRATOS_WATCH(matric_matrix) // ya son iguales aqui
     
     // Finally we transform to a vector
     const Vector& metric = MetricsMathUtils<TDim>::TensorToVector(matric_matrix);

@@ -201,7 +201,14 @@ namespace Kratos
         this->CalculateConstitutiveMatrix(ConstitutiveMatrixSteel, Es, nus);
 
         Vector StressVectorConcrete = prod(ConstitutiveMatrixConcrete, StrainVector);
-        Vector StressVectorSteel    = prod(ConstitutiveMatrixSteel, StrainVector);
+
+        Vector StressVectorSteel;
+        if (this->GetProperties()[STEEL_VOLUMETRIC_PART] > 0.0)
+        {
+            StressVectorSteel    = prod(ConstitutiveMatrixSteel, StrainVector);
+        }
+        else StressVectorSteel = ZeroVector(voigt_size);
+        
 
         // Predictive Stresses
         this->SetValue(CONCRETE_STRESS_VECTOR, StressVectorConcrete);
@@ -285,13 +292,7 @@ namespace Kratos
 				this->CalculateAverageStressOnEdge(AverageStressVectorConcrete, EdgeNeighbours);
 				this->CalculateAverageStrainOnEdge(AverageStrainVectorConcrete, EdgeNeighbours);
 
-                if(this->Id() == 1)
-				{
-					KRATOS_WATCH(AverageStressVectorConcrete)
-						std::cout << "" << std::endl;
-                }
-
-				double DamageEdge = 0.0; 
+				double DamageEdge = 0.0;
 				double Lchar = this->Get_l_char(edge);
 
                 // Integrate the stress on edge
@@ -300,11 +301,6 @@ namespace Kratos
 				
 				this->Set_NonConvergeddamages(DamageEdge, edge);
 				DamagesOnEdges[edge] = DamageEdge;
-
-                //if (DamageEdge > 0.0) 
-                //{
-                //    KRATOS_WATCH(DamageEdge);
-                //}
 
 			} // End loop over edges
 
