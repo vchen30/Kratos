@@ -17,16 +17,15 @@ class NonConformingTriangleRefinementUtility:
         self.nodes_hash = {}
         # Find the last node Id
         last_node_id = [self.GetMaxNodeId()]
-        # Find the last condition Id
-        last_cond_id = self.GetMaxConditionId()
         # Find the last element Id
         elem_id_list, last_elem_id = self.MarkInputElementsAndGetId()
+        # Find the last condition Id
+        cond_id_list, last_cond_id = self.MarkInputConditionsAndGetId()
 
         # Loop the origin elements to add nodes and create the new elements
         for this_id in elem_id_list:
             # Get the element
             element = self.model_part.GetElement(this_id)
-
             # Initialize the id list of the middle nodes
             mid_nodes = [0, 1, 2]
 
@@ -69,7 +68,11 @@ class NonConformingTriangleRefinementUtility:
             # Now we can delete the element
             self.model_part.RemoveElement(this_id)
 
-        for condition in self.model_part.Conditions:
+        # Loop the origin conditions to add nodes and the new conditions
+        for this_id in cond_id_list:
+            # Get the condition
+            condition = self.model_part.GetCondition(this_id)
+
             # Create nodes inside the condition
             mid_node = self.CreateMiddleNode(condition.GetNode(0), condition.GetNode(1), last_node_id)
 
@@ -89,7 +92,15 @@ class NonConformingTriangleRefinementUtility:
                 self.model_part.GetProperties()[0] )
             
             # Now we can delete the condition
-            self.model_part.RemoveCondition(condition.Id)
+            self.model_part.RemoveCondition(this_id)
+
+
+    def GetMaxNodeId(self):
+        max_id = 0
+        for node in self.model_part.Nodes:
+            if node.Id > max_id:
+                max_id = node.Id
+        return max_id
 
 
     def MarkInputElementsAndGetId(self):
@@ -102,19 +113,17 @@ class NonConformingTriangleRefinementUtility:
                 max_id = element.Id
         return id_list, max_id
 
-    def GetMaxNodeId(self):
-        max_id = 0
-        for node in self.model_part.Nodes:
-            if node.Id > max_id:
-                max_id = node.Id
-        return max_id
-    
-    def GetMaxConditionId(self):
+
+    def MarkInputConditionsAndGetId(self):
+        id_list = []
         max_id = 0
         for condition in self.model_part.Conditions:
+            condition.Set(KratosMultiphysics.TO_ERASE, True)
+            id_list.append(condition.Id)
             if condition.Id > max_id:
                 max_id = condition.Id
-        return max_id
+        return id_list, max_id
+
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
         new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
