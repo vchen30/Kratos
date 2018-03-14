@@ -17,6 +17,8 @@ class NonConformingTriangleRefinementUtility:
         self.nodes_hash = {}
         # Find the last node Id
         last_node_id = [self.GetMaxNodeId()]
+        # Find the last condition Id
+        last_cond_id = self.GetMaxConditionId()
         # Find the last element Id
         elem_id_list, last_elem_id = self.MarkInputElementsAndGetId()
 
@@ -67,6 +69,28 @@ class NonConformingTriangleRefinementUtility:
             # Now we can delete the element
             self.model_part.RemoveElement(this_id)
 
+        for condition in self.model_part.Conditions:
+            # Create nodes inside the condition
+            mid_node = self.CreateMiddleNode(condition.GetNode(0), condition.GetNode(1), last_node_id)
+
+            # And now, create the sub conditions
+            ## First sub condition
+            last_cond_id += 1
+            self.model_part.CreateNewCondition("Condition2D2N",
+                last_cond_id,
+                [condition.GetNode(0).Id, mid_node],
+                self.model_part.GetProperties()[0] )
+
+            ## Second sub condition
+            last_cond_id += 1
+            self.model_part.CreateNewCondition("Condition2D2N",
+                last_cond_id,
+                [mid_node, condition.GetNode(1).Id],
+                self.model_part.GetProperties()[0] )
+            
+            # Now we can delete the condition
+            self.model_part.RemoveCondition(condition.Id)
+
 
     def MarkInputElementsAndGetId(self):
         id_list = []
@@ -83,6 +107,13 @@ class NonConformingTriangleRefinementUtility:
         for node in self.model_part.Nodes:
             if node.Id > max_id:
                 max_id = node.Id
+        return max_id
+    
+    def GetMaxConditionId(self):
+        max_id = 0
+        for condition in self.model_part.Conditions:
+            if condition.Id > max_id:
+                max_id = condition.Id
         return max_id
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
