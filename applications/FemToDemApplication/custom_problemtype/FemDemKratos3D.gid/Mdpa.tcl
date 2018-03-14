@@ -47,6 +47,12 @@ proc WriteMdpa { basename dir problemtypedir } {
         puts $FileVar "    DENSITY                  [lindex [lindex $Groups $i] 5]"
         puts $FileVar "    POISSON_RATIO            [lindex [lindex $Groups $i] 6]"
         #puts $FileVar "    THICKNESS                [lindex [lindex $Groups $i] 8]"
+		if {[lindex [lindex $Groups $i] 13] eq "true"} {
+			puts $FileVar "    YOUNG_MODULUS_STEEL      [lindex [lindex $Groups $i] 14]"
+			puts $FileVar "    DENSITY_STEEL            [lindex [lindex $Groups $i] 15]"
+			puts $FileVar "    POISSON_RATIO_STEEL      [lindex [lindex $Groups $i] 16]"
+			puts $FileVar "    STEEL_VOLUMETRIC_PART    [lindex [lindex $Groups $i] 17]"
+		}
         puts $FileVar ""
         puts $FileVar "// DAMAGE PARAMETERS"
         puts $FileVar "    YIELD_SURFACE            [lindex [lindex $Groups $i] 3]"
@@ -80,8 +86,14 @@ proc WriteMdpa { basename dir problemtypedir } {
     for {set i 0} {$i < [llength $Groups]} {incr i} {
          # Elements Property
         set BodyElemsProp [dict get $PropertyDict [lindex [lindex $Groups $i] 1]]
-        WriteElements FileVar [lindex $Groups $i] tetrahedra FemDem3DElement $BodyElemsProp Tetrahedron3D4Connectivities
-    }
+		
+		set MatGroups [GiD_Info conditions Body_Part groups]
+		if {[lindex [lindex $MatGroups 0] 13] eq "true"} {
+			WriteElements FileVar [lindex $Groups $i] tetrahedra RomFemDem3DElement $BodyElemsProp Tetrahedron3D4Connectivities
+		} else {
+			WriteElements FileVar [lindex $Groups $i] tetrahedra FemDem3DElement $BodyElemsProp Tetrahedron3D4Connectivities
+		}
+	}
     puts $FileVar ""
 
     ## Conditions

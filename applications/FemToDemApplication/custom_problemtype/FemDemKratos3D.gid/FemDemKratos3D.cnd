@@ -31,9 +31,17 @@ HELP: D = R_alpha*M + r_beta*K
 QUESTION: Rayleigh_Alpha
 VALUE: 0.00
 HELP: D = R_alpha*M + r_beta*K
-QUESTION: Characteristic_length
-VALUE: 0.02
-HELP: Units in IS: m // Radius of the averaged mapping circle
+QUESTION: Composite_Calculation#CB#(true,false)
+VALUE: false
+HELP: True if passive reinforcement is applied
+QUESTION: Young_Modulus_Fiber
+VALUE: 210.0e9
+QUESTION: Density_Fiber
+VALUE: 7850
+QUESTION: Poisson_Ratio_Fiber
+VALUE: 0.3
+QUESTION: Fiber_Volumetric_Participation
+VALUE: 0.1
 END CONDITION
 
 CONDITION: Initial_DEM_Part
