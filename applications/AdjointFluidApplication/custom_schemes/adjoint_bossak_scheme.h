@@ -618,6 +618,23 @@ public:
         );
 
         noalias(rLHS_Contribution) -= mAdjointMassMatrix[thread_id];
+        pCurrentElement->Calculate(VELOCITY_GRADIENT_TENSOR, mAdjointMassMatrix[thread_id], rCurrentProcessInfo);
+
+        int TDim = rCurrentProcessInfo[Kratos::DOMAIN_SIZE];
+        double currentTime = rCurrentProcessInfo[Kratos::TIME];
+
+        std::ofstream debug_output;
+
+        debug_output.open("matrix_output/" + std::to_string(currentTime) + "_" + std::to_string(thread_id) + ".dat", std::ios_base::app);
+
+        debug_output<<std::to_string(pCurrentElement->Id())<<",[";
+        for (int i=0; i<TDim;i++)
+            for (int j=0;j<TDim;j++)
+                debug_output<<mAdjointMassMatrix[thread_id](i,j)<<",";
+
+        debug_output<<"]"<<std::endl;
+        debug_output.close();
+        
 
         pCurrentElement->EquationIdVector(rEquationId, rCurrentProcessInfo);
 
