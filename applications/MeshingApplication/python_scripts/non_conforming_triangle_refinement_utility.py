@@ -27,7 +27,7 @@ class NonConformingTriangleRefinementUtility:
             # Get the element
             element = self.model_part.GetElement(this_id)
             # Initialize the id list of the middle nodes
-            mid_nodes = [0, 1, 2]
+            mid_nodes = [None] * 3
 
             # First edge
             mid_nodes[0] = self.CreateMiddleNode(element.GetNode(0), element.GetNode(1), last_node_id)
@@ -126,15 +126,15 @@ class NonConformingTriangleRefinementUtility:
 
 
     def CreateMiddleNode(self, node_a, node_b, last_id):
-        new_node_hash = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
-        if not new_node_hash in self.nodes_hash:
+        new_node_key = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
+        if not new_node_key in self.nodes_hash:
             new_x = 0.5 * ( node_a.X + node_b.X )
             new_y = 0.5 * ( node_a.Y + node_b.Y )
             new_id = last_id[0] + 1
             self.model_part.CreateNewNode(new_id, new_x, new_y, 0)  # Añadir el nodo en el punto medio
-            self.nodes_hash[new_node_hash] = new_id       # Tiene que ser el Id del nuevo nodo
+            self.nodes_hash[new_node_key] = new_id       # Tiene que ser el Id del nuevo nodo
             last_id[0] = new_id
         else:
-            new_id = self.nodes_hash[new_node_hash]
+            new_id = self.nodes_hash[new_node_key]
 
         return new_id
