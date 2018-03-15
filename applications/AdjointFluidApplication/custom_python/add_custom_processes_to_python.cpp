@@ -22,6 +22,7 @@
 #include "custom_processes/output_primal_solution_process.h"
 #include "custom_processes/input_primal_solution_process.h"
 #include "includes/model_part.h"
+#include "custom_utilities/vtk_output.hpp"
 
 namespace Kratos
 {
@@ -40,6 +41,10 @@ void AddCustomProcessesToPython()
     class_< InputPrimalSolutionProcess, bases<Process> >
     ("InputPrimalSolutionProcess", init<ModelPart&, Parameters&>())
     ;
+
+    class_<VtkOutput, boost::noncopyable>("VtkOutput", init< ModelPart&, std::string, Parameters >())
+      .def("PrintOutput", &VtkOutput::PrintOutput)
+      .def("PrintOutput", &VtkOutput::PrintOutputSubModelPart);    
 }
 
 } /* namespace Python */
