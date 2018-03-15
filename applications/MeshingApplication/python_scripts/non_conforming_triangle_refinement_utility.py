@@ -138,3 +138,25 @@ class NonConformingTriangleRefinementUtility:
             new_id = self.nodes_hash[new_node_key]
 
         return new_id
+    
+    def CreateNodesBetween(self, node_a, node_b, last_id, num_nodes):
+        new_nodes_key = (min(node_a.Id, node_b.Id), max(node_a.Id, node_b.Id))
+        # Check if we need to create/get nodes
+        if num_nodes > 1:
+            if new_nodes_key in self.nodes_hash:
+                # Get the existing nodes Id
+                new_id = self.nodes_hash[new_nodes_key]
+            else:
+                # Initialize the new nodes hash
+                self.nodes_hash[new_nodes_key] = [None] * num_nodes
+                # Create the new nodes
+                factor = 1/(num_nodes + 1)
+                for i in range(0, num_nodes-1):
+                    new_x = (num_nodes - i) * factor * node_a.X + (1 + i) * factor * node_b.X
+                    new_y = (num_nodes - i) * factor * node_a.Y + (1 + i) * factor * node_b.Y
+                    new_id = last_id[0] + 1
+                    self.model_part.CreateNewNode(new_id, new_x, new_y, 0) 
+                    self.nodes_hash[new_nodes_key][i] = new_id
+                    last_id[0] = new_id
+
+        return new_id
