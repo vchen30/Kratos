@@ -91,6 +91,8 @@ proc WriteProjectParameters { basename dir problemtypedir TableDict} {
     AppendGroupNames PutStrings Surf_Load
     # Pressure_Load
     AppendGroupNames PutStrings Pressure_Load
+    # Body_Acceleration
+    AppendGroupNames PutStrings Body_Acceleration
 
     set PutStrings [string trimright $PutStrings ,]
     append PutStrings \]

@@ -205,7 +205,7 @@ namespace Kratos
         Vector StressVectorSteel;
         if (this->GetProperties()[STEEL_VOLUMETRIC_PART] > 0.0)
         {
-            StressVectorSteel    = prod(ConstitutiveMatrixSteel, StrainVector);
+            StressVectorSteel = prod(ConstitutiveMatrixSteel, StrainVector);
         }
         else StressVectorSteel = ZeroVector(voigt_size);
         
@@ -405,7 +405,15 @@ namespace Kratos
 
 		if (rVariable == STEEL_STRESS_TENSOR)
 		{
-			rOutput[0] = MathUtils<double>::StressVectorToTensor(this->GetValue(STEEL_STRESS_VECTOR));
+			if (this->GetProperties()[STEEL_VOLUMETRIC_PART] > 0.0)
+			{
+				rOutput[0] = MathUtils<double>::StressVectorToTensor(this->GetValue(STEEL_STRESS_VECTOR));			
+			}
+			else
+			{
+				Matrix dummy;
+				rOutput[0] = dummy;
+			}
 		}
 
 		if (rVariable == STRAIN_TENSOR)
@@ -429,16 +437,15 @@ namespace Kratos
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
-
 		if (rVariable == STEEL_STRESS_TENSOR)
 		{
+
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
 		if (rVariable == CONCRETE_STRESS_TENSOR)
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 		}
-
 		if (rVariable == CONCRETE_STRESS_TENSOR_INTEGRATED)
 		{
 			CalculateOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
