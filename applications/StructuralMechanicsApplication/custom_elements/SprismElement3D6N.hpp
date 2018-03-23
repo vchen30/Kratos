@@ -111,7 +111,7 @@ public:
     /**
      * @brief To differtiate between center, lower part and upper part
      */
-    enum class GeometricLevel {CENTER = 0, LOWER = 1, UPPER = 2};
+    enum class GeometricLevel {LOWER = 0, CENTER = 5, UPPER = 9};
 
     ///@}
     ///@name Life Cycle
@@ -1001,26 +1001,24 @@ protected:
 
     /**
      * @brief Calculate the Cartesian derivatives in the Gauss points, for the plane
-     * @param Index The index that indicates upper or lower face
-     * @param NodesCoord The matrix with the coordinates of the nodes of the element
+     * @param Part The enum that indicates upper or lower face
      * @param CartesianDerivativesCenter The cartesian derivatives in the plane
      */
     void CalculateCartesianDerOnCenterPlane(
-        const IndexType Index,
-        const bounded_matrix<double, 12, 3 >& NodesCoord,
+        const GeometricLevel Part,
         bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter
         );
 
     /**
      * @brief Calculate the Cartesian derivatives in the Gauss points, for the plane
      * @param NodeGauss Number of Gauss node calculated
-     * @param index The index that indicates upper or lower face
+     * @param Index The index that indicates upper or lower face
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
      * @param InPlaneCartesianDerivativesGauss The cartesian derivatives in the plane
      */
     void CalculateCartesianDerOnGaussPlane(
         const IndexType NodeGauss,
-        const IndexType index,
+        const GeometricLevel Part,
         const bounded_matrix<double, 12, 3 >& NodesCoord,
         bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss
         );
@@ -1055,14 +1053,14 @@ protected:
      * @param InPlaneCartesianDerivativesGauss The cartesian derivatives of a Gauss node in the plane
      * @param NodesCoord The coordinates of the nodes of the element
      * @param NodeGauss Number of Gauss node calculated
-     * @param Index The index that indicates upper or lower face
+     * @param Part The enum that indicates upper or lower face
      */
     void CalculateInPlaneGradientFGauss(
         bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
         const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
         const bounded_matrix<double, 12, 3 >& NodesCoord,
         const IndexType NodeGauss,
-        const IndexType Index
+        const GeometricLevel Part
         );
 
     /**
@@ -1081,12 +1079,12 @@ protected:
      * @brief Calculate the transversal components of the deformation gradient, in each one of the faces:
      * @param rTransverseGradientIsoParametric Auxilar components of the deformation gradient
      * @param NodesCoord The coordinates of the nodes of the element
-     * @param Index The index that indicates if calculate upper or lower components
+     * @param Part The enum that indicates if calculate upper or lower components
      */
     void CalculateTransverseGradientFinP(
         TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
         const bounded_matrix<double, 12, 3 >& NodesCoord,
-        const IndexType Index
+        const GeometricLevel Part
         );
 
     /**
@@ -1109,13 +1107,13 @@ protected:
      * @brief Construction of the in-plane geometric stiffness matrix:
      * @param Kgeometricmembrane Membrane component of the stiffness matrix
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
-     * @param Index The index that indicates upper or lower face
+     * @param Part The enum that indicates upper or lower face
      */
     void CalculateAndAddMembraneKgeometric(
         bounded_matrix<double, 36, 36 >& Kgeometricmembrane,
         const CartesianDerivatives& rCartesianDerivatives,
         const array_1d<double, 3 >& SMembrane,
-        const IndexType Index
+        const GeometricLevel Part
         );
 
     /**
@@ -1125,7 +1123,7 @@ protected:
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
      * @param rTransverseGradient Local deformation gradient components for each Gauss point
      * @param rTransverseGradientIsoParametric Local deformation gradient components in the isogeometric space
-     * @param Index The index that indicates upper or lower face
+     * @param Part The enum that indicates upper or lower face
      */
     void CalculateAndAddBShear(
         bounded_matrix<double, 2, 18 >& BShear,
@@ -1133,21 +1131,21 @@ protected:
         const CartesianDerivatives& rCartesianDerivatives,
         const TransverseGradient& rTransverseGradient,
         const TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
-        const IndexType Index
+        const GeometricLevel Part
         );
 
     /**
      * @brief Construction of the shear geometric contribution to the stiffness matrix:
      * @param Kgeometricshear The shear geometric contribution to the stiffness matrix
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
-     * @param S_shear The shear components of the PK2 tensor
-     * @param Index The index that indicates upper or lower face
+     * @param SShear The shear components of the PK2 tensor
+     * @param Part The enum that indicates upper or lower face
      */
     void CalculateAndAddShearKgeometric(
         bounded_matrix<double, 18, 18 >& Kgeometricshear,
         const CartesianDerivatives& rCartesianDerivatives,
-        const array_1d<double, 2 >& S_shear,
-        const IndexType Index
+        const array_1d<double, 2 >& SShear,
+        const GeometricLevel Part
         );
 
     /**
