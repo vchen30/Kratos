@@ -2651,7 +2651,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
         noalias(transverse_cartesian_derivatives_gauss_aux) = prod(local_derivatives_patch, Jinv);
 
         for (IndexType i = 0; i < 6 ; i++)
-            rCartesianDerivatives.TransversalCartesianDerivativesCenter(i, 0) = inner_prod(mvze, column(transverse_cartesian_derivatives_gauss_aux, i));
+            rCartesianDerivatives.TransversalCartesianDerivativesCenter(i, 0) = inner_prod(mvze, row(transverse_cartesian_derivatives_gauss_aux, i));
 
      } else {
         /* Calculate the Jacobian and his inverse */
