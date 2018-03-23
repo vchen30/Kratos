@@ -662,6 +662,15 @@ protected:
      */
     struct TransverseGradient
     {
+        array_1d<double, 3 > F0, F1, F2;
+    };
+
+    /**
+     * @class TransverseGradientIsoParametric
+     * @brief TransverseGradientIsoParametric
+     */
+    struct TransverseGradientIsoParametric
+    {
         array_1d<double, 3 > Ft, Fxi, Feta;
     };
 
@@ -927,26 +936,22 @@ protected:
     /**
      * @brief Calculate the local derivatives of the element for a given coordinates
      * @param LocalDerivativePatch The local derivatives of the element
-     * @param xi The first local coordinates
-     * @param eta The second local coordinates
-     * @param zeta The third local coordinates
+     * @param rLocalCoordinates The local coordinates
      */
     void ComputeLocalDerivatives(
-            bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
-            const double xi,
-            const double eta,
-            const double zeta
-            );
+        bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
+        const array_1d<double, 3>& rLocalCoordinates
+        );
 
     /**
      * @brief Calculate the local quadratic derivatives of the element for a given gauss node
-     * @param LocalDerivativePatch The local derivatives of the element
+     * @param rLocalDerivativePatch The local derivatives of the element
      * @param NodeGauss The Gauss node index
      */
     void ComputeLocalDerivativesQuadratic(
-            bounded_matrix<double, 4, 2 > & LocalDerivativePatch,
-            const IndexType NodeGauss
-            );
+        bounded_matrix<double, 4, 2 >& rLocalDerivativePatch,
+        const IndexType NodeGauss
+        );
 
     /**
      * @brief Calculate the Jacobian and his inverse
@@ -957,12 +962,12 @@ protected:
      * @param ZetaGauss The transversal local coordinates
      */
     void CalculateJacobianCenterGauss(
-            GeometryType::JacobiansType& J,
-            std::vector< Matrix >& Jinv,
-            Vector& detJ,
-            const int rPointNumber,
-            const double ZetaGauss
-            );
+        GeometryType::JacobiansType& J,
+        std::vector< Matrix >& Jinv,
+        Vector& detJ,
+        const IndexType rPointNumber,
+        const double ZetaGauss
+        );
 
     /**
      * @brief Calculate the Jacobian
@@ -970,19 +975,15 @@ protected:
      * @param J The Jacobian of the element
      * @param LocalDerivativePatch The local derivatives of the element
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
-     * @param xi The first local coordinates
-     * @param eta The second local coordinates
-     * @param zeta The third local coordinates
+     * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobian(
-            double & detJ,
-            bounded_matrix<double, 3, 3 > & J,
-            bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
-            const bounded_matrix<double, 12, 3 > & NodesCoord,
-            const double xi,
-            const double eta,
-            const double zeta
-            );
+        double& detJ,
+        bounded_matrix<double, 3, 3 > & J,
+        bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
+        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const array_1d<double, 3>& rLocalCoordinates
+        );
 
     /**
      * @brief Calculate the Jacobian and its inverse
@@ -990,18 +991,14 @@ protected:
      * @param Jinv The inverse of the Jacobian
      * @param LocalDerivativePatch The local derivatives of the element
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
-     * @param xi The first local coordinates
-     * @param eta The second local coordinates
-     * @param zeta The third local coordinates
+     * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
             bounded_matrix<double, 3, 3 > & J,
             bounded_matrix<double, 3, 3 > & Jinv,
             bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
             const bounded_matrix<double, 3, 6 > & NodesCoord,
-            const double xi,
-            const double eta,
-            const double zeta
+            const array_1d<double, 3>& rLocalCoordinates
             );
 
     /**
@@ -1009,17 +1006,13 @@ protected:
      * @param J The Jacobian of the element
      * @param Jinv The inverse of the Jacobian
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
-     * @param xi The first local coordinates
-     * @param eta The second local coordinates
-     * @param zeta The third local coordinates
+     * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
             bounded_matrix<double, 3, 3 > & J,
             bounded_matrix<double, 3, 3 > & Jinv,
             const bounded_matrix<double, 3, 6 > & NodesCoord,
-            const double xi,
-            const double eta,
-            const double zeta
+            const array_1d<double, 3>& rLocalCoordinates
             );
 
     /**
@@ -1057,23 +1050,20 @@ protected:
     void CalculateCartesianDerOnGaussTrans(
         const bounded_matrix<double, 12, 3 > & NodesCoord,
         bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
-//         const array_1d<double, 3>& rLocalCoordinates
-        const double xi,
-        const double eta,
-        const double zeta
+        const array_1d<double, 3>& rLocalCoordinates
         );
 
     /**
      * @brief Calculate the Cartesian derivatives in the center, for the transversal direction
      * @param rCartesianDerivatives The class containing the cartesian derivatives
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
-     * @param part 0 for center node of the element, 1 for upper part and 2 for lower part
+     * @param Part 0 for center node of the element, 1 for upper part and 2 for lower part
      */
     void CalculateCartesianDerOnCenterTrans(
-            CartesianDerivatives& rCartesianDerivatives,
-            const bounded_matrix<double, 12, 3 > & NodesCoord,
-            const IndexType Part
-            );
+        CartesianDerivatives& rCartesianDerivatives,
+        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const IndexType Part
+        );
 
     /**
      * Calculate the components of the deformation gradient in the plane, for the Gauss nodes:
@@ -1084,12 +1074,12 @@ protected:
      * @param Index The index that indicates upper or lower face
      */
     void CalculateInPlaneGradientFGauss(
-            bounded_matrix<double, 3, 2 > & InPlaneGradientFGauss,
-            const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
-            const bounded_matrix<double, 12, 3 > & NodesCoord,
-            const IndexType NodeGauss,
-            const IndexType Index
-            );
+        bounded_matrix<double, 3, 2 > & InPlaneGradientFGauss,
+        const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const IndexType NodeGauss,
+        const IndexType Index
+        );
 
     /**
      * Calculate the transversal components of the deformation gradient, in the Gauss points:
@@ -1098,10 +1088,10 @@ protected:
      * @param NodesCoord The coordinates of the nodes of the element
      */
     void CalculateTransverseGradientF(
-            array_1d<double, 3 > & TransverseGradientF,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
-            const bounded_matrix<double, 12, 3 > & NodesCoord
-            );
+        array_1d<double, 3 > & TransverseGradientF,
+        const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 > & NodesCoord
+        );
 
     /**
      * @brief Calculate the transversal components of the deformation gradient, in each one of the faces:
@@ -1110,7 +1100,7 @@ protected:
      * @param Index The index that indicates if calculate upper or lower components
      */
     void CalculateTransverseGradientFinP(
-        TransverseGradient& rTransverseGradient,
+        TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
         const bounded_matrix<double, 12, 3 > & NodesCoord,
         const IndexType Index
         );
@@ -1152,7 +1142,7 @@ protected:
      * @param CShear Shear components of the Cauchy tensor
      * @param InPlaneCartesianDerivativesGaussi_trans Cartesian derivatives in the transversal direction
      * @param f3i The deformation gradient components in the transversal direction, in each one of the Gauss points
-     * @param rTransverseGradient The first local deformation gradient components for each Gauss point
+     * @param rTransverseGradientIsoParametric The first local deformation gradient components for each Gauss point
      * @param JInvPlane The in-plane inverse of the Jacobian in the central node
      * @param index The index that indicates upper or lower face
      */
@@ -1162,10 +1152,8 @@ protected:
             const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss1,
             const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss2,
             const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss3,
-            const array_1d<double, 3 > & TransverseGradientFGauss1,
-            const array_1d<double, 3 > & TransverseGradientFGauss2,
-            const array_1d<double, 3 > & TransverseGradientFGauss3,
             const TransverseGradient& rTransverseGradient,
+            const TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
             const bounded_matrix<double, 2, 2 > & JInvPlane,
             const IndexType index
             );
