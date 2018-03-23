@@ -544,23 +544,13 @@ protected:
     {
         /* Declare cartesian derivatives (reference configuration) */
         /* In-plane components */
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss1;
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss2;
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss3;
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss4;
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss5;
-        bounded_matrix<double, 2, 4 > InPlaneCartesianDerivativesGauss6;
+        array_1d<bounded_matrix<double, 2, 4 >, 6> InPlaneCartesianDerivativesGauss;
 
         /* Transversal components */
         // Central node
         bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesCenter;
         // Gauss nodes
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss1;
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss2;
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss3;
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss4;
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss5;
-        bounded_matrix<double, 6, 1 > TransversalCartesianDerivativesGauss6;
+        array_1d<bounded_matrix<double, 6, 1 >, 6> TransversalCartesianDerivativesGauss;
 
         /* Inverse of the Jaconians */
         bounded_matrix<double, 2, 2 > JInvPlaneLower;
@@ -571,20 +561,12 @@ protected:
         */
         void clear()
         {
-            noalias(InPlaneCartesianDerivativesGauss1) = ZeroMatrix(2, 4);
-            noalias(InPlaneCartesianDerivativesGauss2) = ZeroMatrix(2, 4);
-            noalias(InPlaneCartesianDerivativesGauss3) = ZeroMatrix(2, 4);
-            noalias(InPlaneCartesianDerivativesGauss4) = ZeroMatrix(2, 4);
-            noalias(InPlaneCartesianDerivativesGauss5) = ZeroMatrix(2, 4);
-            noalias(InPlaneCartesianDerivativesGauss6) = ZeroMatrix(2, 4);
+            for (IndexType i = 0; i < 6; i++) {
+                noalias(InPlaneCartesianDerivativesGauss[i]) = ZeroMatrix(2, 4);
+                noalias(TransversalCartesianDerivativesGauss[i]) = ZeroMatrix(6, 1);
+            }
 
             noalias(TransversalCartesianDerivativesCenter) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss1) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss2) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss3) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss4) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss5) = ZeroMatrix(6, 1);
-            noalias(TransversalCartesianDerivativesGauss6) = ZeroMatrix(6, 1);
 
             noalias(JInvPlaneLower) = ZeroMatrix(2, 2);
             noalias(JInvPlaneUpper) = ZeroMatrix(2, 2);
@@ -1121,14 +1103,12 @@ protected:
     /**
      * Construction of the in-plane geometric stiffness matrix:
      * @param Kgeometricmembrane Membrane component of the stiffness matrix
-     * @param InPlaneCartesianDerivativesGaussi The in-plane cartesian derivatives of the Gauss points
+     * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
      * @param Index The index that indicates upper or lower face
      */
     void CalculateAndAddMembraneKgeometric(
             bounded_matrix<double, 36, 36 >& Kgeometricmembrane,
-            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss1,
-            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss2,
-            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss3,
+            const CartesianDerivatives& rCartesianDerivatives,
             const array_1d<double, 3 >& SMembrane,
             const IndexType Index
             );
@@ -1137,38 +1117,30 @@ protected:
      * Construction of the shear deformation tangent matrix:
      * @param BShear Shear component of the deformation tangent matrix
      * @param CShear Shear components of the Cauchy tensor
-     * @param InPlaneCartesianDerivativesGaussi_trans Cartesian derivatives in the transversal direction
-     * @param f3i The deformation gradient components in the transversal direction, in each one of the Gauss points
-     * @param rTransverseGradientIsoParametric The first local deformation gradient components for each Gauss point
-     * @param JInvPlane The in-plane inverse of the Jacobian in the central node
-     * @param index The index that indicates upper or lower face
+     * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
+     * @param rTransverseGradient Local deformation gradient components for each Gauss point
+     * @param rTransverseGradientIsoParametric Local deformation gradient components in the isogeometric space
+     * @param Index The index that indicates upper or lower face
      */
     void CalculateAndAddBShear(
-            bounded_matrix<double, 2, 18 >& BShear,
-            bounded_matrix<double, 2, 1 >& CShear,
-            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss1,
-            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss2,
-            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss3,
-            const TransverseGradient& rTransverseGradient,
-            const TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
-            const bounded_matrix<double, 2, 2 >& JInvPlane,
-            const IndexType index
-            );
+        bounded_matrix<double, 2, 18 >& BShear,
+        bounded_matrix<double, 2, 1 >& CShear,
+        const CartesianDerivatives& rCartesianDerivatives,
+        const TransverseGradient& rTransverseGradient,
+        const TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
+        const IndexType Index
+        );
 
     /**
      * Construction of the shear geometric contribution to the stiffness matrix:
      * @param Kgeometricshear The shear geometric contribution to the stiffness matrix
-     * @param TransversalCartesianDerivativesGaussi Cartesian derivatives in the transversal direction
-     * @param JInvPlane The in-plane inverse of the Jacobian in the central node
+     * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
      * @param S_shear The shear components of the PK2 tensor
-     * @param index The index that indicates upper or lower face
+     * @param Index The index that indicates upper or lower face
      */
     void CalculateAndAddShearKgeometric(
         bounded_matrix<double, 18, 18 >& Kgeometricshear,
-        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss1,
-        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss2,
-        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss3,
-        const bounded_matrix<double, 2, 2 >& JInvPlane,
+        const CartesianDerivatives& rCartesianDerivatives,
         const array_1d<double, 2 >& S_shear,
         const IndexType Index
         );
@@ -1381,9 +1353,9 @@ protected:
      * @param rPointNumber The integration points of the prism
      */
     void CbartoFbar(
-            GeneralVariables& rVariables,
-            const int rPointNumber
-            );
+        GeneralVariables& rVariables,
+        const int rPointNumber
+        );
 
     /**
      * Calculation of the Deformation Matrix  BL
@@ -1410,9 +1382,10 @@ protected:
      * @param rPointNumber The integration points of the prism
      */
     void FinalizeStepVariables(
-            GeneralVariables & rVariables,
-            const IndexType rPointNumber
-            );
+        GeneralVariables & rVariables,
+        const IndexType rPointNumber
+        );
+
     /**
      * Get the Historical Deformation Gradient to calculate aTransverseGradientFter finalize the step
      * @param rVariables The internal variables in the element
@@ -1429,9 +1402,9 @@ protected:
      * @param rStrainVector The Green-Lagrange strain tensor
      */
     void CalculateGreenLagrangeStrain(
-            const Vector& rC,
-            Vector& rStrainVector
-            );
+        const Vector& rC,
+        Vector& rStrainVector
+        );
 
     /**
      * Calculation of the Green-Lagrange strain tensor:
@@ -1439,9 +1412,9 @@ protected:
      * @param rStrainVector The Green-Lagrange strain tensor
      */
     void CalculateGreenLagrangeStrain(
-            const Matrix& rF,
-            Vector& rStrainVector
-            );
+        const Matrix& rF,
+        Vector& rStrainVector
+        );
 
     /**
      * Calculation of the Hencky strain tensor:
@@ -1449,9 +1422,9 @@ protected:
      * @param rStrainVector The Hencky strain tensor
      */
     void CalculateHenckyStrain(
-            const Vector& rC,
-            Vector& rStrainVector
-            );
+        const Vector& rC,
+        Vector& rStrainVector
+        );
 
     /**
      * Calculation of the Almansi strain tensor:
@@ -1459,9 +1432,9 @@ protected:
      * @param rStrainVector The Almansi strain tensor
      */
     void CalculateAlmansiStrain(
-            const Matrix& rF,
-            Vector& rStrainVector
-            );
+        const Matrix& rF,
+        Vector& rStrainVector
+        );
 
     /**
      * This function calculates the variation of the element volume
@@ -1469,9 +1442,10 @@ protected:
      * @param rVariables The internal variables in the element
      */
     void CalculateVolumeChange(
-            double& rVolumeChange,
-            GeneralVariables& rVariables
-            );
+        double& rVolumeChange,
+        GeneralVariables& rVariables
+        );
+
     /**
      * Calculation of the Volume Force of the Element
      * @param rVolumeForce The volume forces of the element
