@@ -193,9 +193,9 @@ public:
      * @param rValues The displacements vector
      */
      void GetValuesVector(
-             Vector& rValues,
-             int Step = 0
-             ) override;
+        Vector& rValues,
+        int Step = 0
+        ) override;
 
     /**
      * @brief Sets on rValues the nodal velocities
@@ -203,9 +203,9 @@ public:
      * @param rValues The velocities vector
      */
     void GetFirstDerivativesVector(
-            Vector& rValues,
-            int Step = 0
-            ) override;
+        Vector& rValues,
+        int Step = 0
+        ) override;
 
     /**
      * @brief Sets on rValues the nodal accelerations
@@ -213,9 +213,9 @@ public:
      * @param rValues The accelerations vector
      */
     void GetSecondDerivativesVector(
-            Vector& rValues,
-            int Step = 0
-            ) override;
+        Vector& rValues,
+        int Step = 0
+        ) override;
 
      /**
        * @brief This is called during the assembling process in order
@@ -224,9 +224,9 @@ public:
        * @param rCurrentProcessInfo the current process info instance
        */
      void CalculateRightHandSide(
-             VectorType& rRightHandSideVector,
-             ProcessInfo& rCurrentProcessInfo
-             ) override;
+        VectorType& rRightHandSideVector,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
      /**
       * @brief This function provides a more general interface to the element.
@@ -236,10 +236,10 @@ public:
       * @param rRHSVariables parameter describing the expected RHSs
       */
      void CalculateRightHandSide(
-             std::vector< VectorType >& rRightHandSideVectors,
-             const std::vector< Variable< VectorType > >& rRHSVariables,
-             ProcessInfo& rCurrentProcessInfo
-             ) override;
+        std::vector< VectorType >& rRightHandSideVectors,
+        const std::vector< Variable< VectorType > >& rRHSVariables,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
      /**
       * @brief This is called during the assembling process in order
@@ -248,9 +248,9 @@ public:
       * @param rCurrentProcessInfo the current process info instance
       */
      void CalculateLeftHandSide(
-             MatrixType& rLeftHandSideMatrix,
-             ProcessInfo& rCurrentProcessInfo
-             ) override;
+        MatrixType& rLeftHandSideMatrix,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief This is called during the assembling process in order
@@ -261,10 +261,10 @@ public:
      * @param rCurrentProcessInfo the current process info instance
      */
     void CalculateLocalSystem(
-            MatrixType& rLeftHandSideMatrix,
-            VectorType& rRightHandSideVector,
-            ProcessInfo& rCurrentProcessInfo
-            ) override;
+        MatrixType& rLeftHandSideMatrix,
+        VectorType& rRightHandSideVector,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
      /**
       * @brief This function provides a more general interface to the element.
@@ -276,12 +276,12 @@ public:
       */
 
      void CalculateLocalSystem(
-             std::vector< MatrixType >& rLeftHandSideMatrices,
-             const std::vector< Variable< MatrixType > >& rLHSVariables,
-             std::vector< VectorType >& rRightHandSideVectors,
-             const std::vector< Variable< VectorType > >& rRHSVariables,
-             ProcessInfo& rCurrentProcessInfo
-             ) override;
+        std::vector< MatrixType >& rLeftHandSideMatrices,
+        const std::vector< Variable< MatrixType > >& rLHSVariables,
+        std::vector< VectorType >& rRightHandSideVectors,
+        const std::vector< Variable< VectorType > >& rRHSVariables,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
       * @brief This is called during the assembling process in order
@@ -290,9 +290,9 @@ public:
       * @param rCurrentProcessInfo the current process info instance
       */
     void CalculateMassMatrix(
-            MatrixType& rMassMatrix,
-            ProcessInfo& rCurrentProcessInfo
-            ) override;
+        MatrixType& rMassMatrix,
+        ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
       * @brief This is called during the assembling process in order
@@ -328,10 +328,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void CalculateOnIntegrationPoints(
-            const Variable<double>& rVariable,
-            std::vector<double>& rOutput,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<double>& rVariable,
+        std::vector<double>& rOutput,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Calculate a Vector Variable on the Element Constitutive Law
@@ -340,10 +340,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void CalculateOnIntegrationPoints(
-            const Variable<Vector>& rVariable,
-            std::vector<Vector>& rOutput,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Vector>& rVariable,
+        std::vector<Vector>& rOutput,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Calculate a Matrix Variable on the Element Constitutive Law
@@ -352,10 +352,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void CalculateOnIntegrationPoints(
-            const Variable<Matrix >& rVariable,
-            std::vector< Matrix >& rOutput,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Matrix >& rVariable,
+        std::vector< Matrix >& rOutput,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
 
     //************* ON INTEGRATION POINTS *************//
@@ -377,10 +377,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void SetValueOnIntegrationPoints(
-            const Variable<double>& rVariable,
-            std::vector<double>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<double>& rVariable,
+        std::vector<double>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Set a Vector Value on the Element Constitutive Law
@@ -389,10 +389,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void SetValueOnIntegrationPoints(
-            const Variable<Vector>& rVariable,
-            std::vector<Vector>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Vector>& rVariable,
+        std::vector<Vector>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Set a Matrix Value on the Element Constitutive Law
@@ -401,10 +401,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void SetValueOnIntegrationPoints(
-            const Variable<Matrix>& rVariable,
-            std::vector<Matrix>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Matrix>& rVariable,
+        std::vector<Matrix>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
     * @brief Set a Constitutive Law Value
@@ -413,10 +413,10 @@ public:
     * @param rCurrentProcessInfo The current process info instance
     */
     void SetValueOnIntegrationPoints(
-            const Variable<ConstitutiveLaw::Pointer>& rVariable,
-            std::vector<ConstitutiveLaw::Pointer>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<ConstitutiveLaw::Pointer>& rVariable,
+        std::vector<ConstitutiveLaw::Pointer>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Get on rVariable a double Value from the Element Constitutive Law
@@ -425,10 +425,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void GetValueOnIntegrationPoints(
-            const Variable<double>& rVariable,
-            std::vector<double>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<double>& rVariable,
+        std::vector<double>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Get on rVariable a Vector Value from the Element Constitutive Law
@@ -437,10 +437,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void GetValueOnIntegrationPoints(
-            const Variable<Vector>& rVariable,
-            std::vector<Vector>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Vector>& rVariable,
+        std::vector<Vector>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Get on rVariable a Matrix Value from the Element Constitutive Law
@@ -449,10 +449,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void GetValueOnIntegrationPoints(
-            const Variable<Matrix>& rVariable,
-            std::vector<Matrix>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<Matrix>& rVariable,
+        std::vector<Matrix>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief Get a Constitutive Law Value
@@ -461,10 +461,10 @@ public:
      * @param rCurrentProcessInfo The current process info instance
      */
     void GetValueOnIntegrationPoints(
-            const Variable<ConstitutiveLaw::Pointer>& rVariable,
-            std::vector<ConstitutiveLaw::Pointer>& rValues,
-            const ProcessInfo& rCurrentProcessInfo
-            ) override;
+        const Variable<ConstitutiveLaw::Pointer>& rVariable,
+        std::vector<ConstitutiveLaw::Pointer>& rValues,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     //****************** CHECK VALUES *****************//
     /**
@@ -897,7 +897,7 @@ protected:
      * @brief  It gets the nodal coordinates, according to the configutaion
      */
     void GetNodalCoordinates(
-            bounded_matrix<double, 12, 3 > & NodesCoord,
+            bounded_matrix<double, 12, 3 >& NodesCoord,
             WeakPointerVector< NodeType >& pNeighbourNodes,
             const Configuration ThisConfiguration
             );
@@ -936,7 +936,7 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void ComputeLocalDerivatives(
-        bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
+        bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
         const array_1d<double, 3>& rLocalCoordinates
         );
 
@@ -976,9 +976,9 @@ protected:
      */
     void CalculateJacobian(
         double& detJ,
-        bounded_matrix<double, 3, 3 > & J,
-        bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        bounded_matrix<double, 3, 3 >& J,
+        bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
         const array_1d<double, 3>& rLocalCoordinates
         );
 
@@ -991,10 +991,10 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
-            bounded_matrix<double, 3, 3 > & J,
-            bounded_matrix<double, 3, 3 > & Jinv,
-            bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
-            const bounded_matrix<double, 3, 6 > & NodesCoord,
+            bounded_matrix<double, 3, 3 >& J,
+            bounded_matrix<double, 3, 3 >& Jinv,
+            bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
+            const bounded_matrix<double, 3, 6 >& NodesCoord,
             const array_1d<double, 3>& rLocalCoordinates
             );
 
@@ -1006,9 +1006,9 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
-            bounded_matrix<double, 3, 3 > & J,
-            bounded_matrix<double, 3, 3 > & Jinv,
-            const bounded_matrix<double, 3, 6 > & NodesCoord,
+            bounded_matrix<double, 3, 3 >& J,
+            bounded_matrix<double, 3, 3 >& Jinv,
+            const bounded_matrix<double, 3, 6 >& NodesCoord,
             const array_1d<double, 3>& rLocalCoordinates
             );
 
@@ -1020,8 +1020,8 @@ protected:
      */
     void CalculateCartesianDerOnCenterPlane(
         const IndexType Index,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
-        bounded_matrix<double, 2, 4 > & CartesianDerivativesCenter
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
+        bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter
         );
 
     /**
@@ -1034,8 +1034,8 @@ protected:
     void CalculateCartesianDerOnGaussPlane(
         const IndexType NodeGauss,
         const IndexType index,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
-        bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
+        bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss
         );
 
     /**
@@ -1045,8 +1045,8 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateCartesianDerOnGaussTrans(
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
-        bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
+        bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss,
         const array_1d<double, 3>& rLocalCoordinates
         );
 
@@ -1058,7 +1058,7 @@ protected:
      */
     void CalculateCartesianDerOnCenterTrans(
         CartesianDerivatives& rCartesianDerivatives,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
         const IndexType Part
         );
 
@@ -1071,9 +1071,9 @@ protected:
      * @param Index The index that indicates upper or lower face
      */
     void CalculateInPlaneGradientFGauss(
-        bounded_matrix<double, 3, 2 > & InPlaneGradientFGauss,
-        const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
+        const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
         const IndexType NodeGauss,
         const IndexType Index
         );
@@ -1085,9 +1085,9 @@ protected:
      * @param NodesCoord The coordinates of the nodes of the element
      */
     void CalculateTransverseGradientF(
-        array_1d<double, 3 > & TransverseGradientF,
-        const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
-        const bounded_matrix<double, 12, 3 > & NodesCoord
+        array_1d<double, 3 >& TransverseGradientF,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 >& NodesCoord
         );
 
     /**
@@ -1098,7 +1098,7 @@ protected:
      */
     void CalculateTransverseGradientFinP(
         TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const bounded_matrix<double, 12, 3 >& NodesCoord,
         const IndexType Index
         );
 
@@ -1111,10 +1111,10 @@ protected:
      * @param NodeGauss Number of Gauss node calculated
      */
     void CalculateAndAddBMembrane(
-            bounded_matrix<double, 3, 18 > & BMembrane,
-            bounded_matrix<double, 3, 1 > & CMembrane,
-            const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
-            const bounded_matrix<double, 3, 2 > & InPlaneGradientFGauss,
+            bounded_matrix<double, 3, 18 >& BMembrane,
+            bounded_matrix<double, 3, 1 >& CMembrane,
+            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
+            const bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
             const IndexType NodeGauss
             );
 
@@ -1125,11 +1125,11 @@ protected:
      * @param Index The index that indicates upper or lower face
      */
     void CalculateAndAddMembraneKgeometric(
-            bounded_matrix<double, 36, 36 > & Kgeometricmembrane,
-            const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss1,
-            const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss2,
-            const bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss3,
-            const array_1d<double, 3 > & SMembrane,
+            bounded_matrix<double, 36, 36 >& Kgeometricmembrane,
+            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss1,
+            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss2,
+            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss3,
+            const array_1d<double, 3 >& SMembrane,
             const IndexType Index
             );
 
@@ -1144,14 +1144,14 @@ protected:
      * @param index The index that indicates upper or lower face
      */
     void CalculateAndAddBShear(
-            bounded_matrix<double, 2, 18 > & BShear,
-            bounded_matrix<double, 2, 1 > & CShear,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss1,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss2,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss3,
+            bounded_matrix<double, 2, 18 >& BShear,
+            bounded_matrix<double, 2, 1 >& CShear,
+            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss1,
+            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss2,
+            const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss3,
             const TransverseGradient& rTransverseGradient,
             const TransverseGradientIsoParametric& rTransverseGradientIsoParametric,
-            const bounded_matrix<double, 2, 2 > & JInvPlane,
+            const bounded_matrix<double, 2, 2 >& JInvPlane,
             const IndexType index
             );
 
@@ -1164,14 +1164,14 @@ protected:
      * @param index The index that indicates upper or lower face
      */
     void CalculateAndAddShearKgeometric(
-            bounded_matrix<double, 18, 18 > & Kgeometricshear,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss1,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss2,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss3,
-            const bounded_matrix<double, 2, 2 > & JInvPlane,
-            const array_1d<double, 2 > & S_shear,
-            const IndexType Index
-            );
+        bounded_matrix<double, 18, 18 >& Kgeometricshear,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss1,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss2,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss3,
+        const bounded_matrix<double, 2, 2 >& JInvPlane,
+        const array_1d<double, 2 >& S_shear,
+        const IndexType Index
+        );
 
     /**
      * Construction of the transversal deformation tangent matrix:
@@ -1180,11 +1180,11 @@ protected:
      * @param TransversalDeformationGradientF Transversal components of the deformation gradient in the central point of the element
      */
     void CalculateAndAddBNormal(
-            bounded_matrix<double, 1, 18 > & BNormal,
-            double & CNormal,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGaussCenter,
-            const array_1d<double, 3 > & TransversalDeformationGradientF
-            );
+        bounded_matrix<double, 1, 18 >& BNormal,
+        double& CNormal,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGaussCenter,
+        const array_1d<double, 3 >& TransversalDeformationGradientF
+        );
 
     /**
      * Construction of the transversal geometric contribution to the stiffness matrix:
@@ -1193,10 +1193,10 @@ protected:
      * @param SNormal Enhanced transversal component of the PK2 tensor
      */
     void CalculateAndAddNormalKgeometric(
-            bounded_matrix<double, 18, 18 > & Kgeometricnormal,
-            const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGaussCenter,
-            const double SNormal
-            );
+        bounded_matrix<double, 18, 18 >& Kgeometricnormal,
+        const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGaussCenter,
+        const double SNormal
+        );
 
     /**
      * Calculates the vector of current position
@@ -1218,12 +1218,12 @@ protected:
      * @param IntegrationWeight Contribution in the numerical integration
      */
     void IntegrateInZeta(
-            GeneralVariables& rVariables,
-            StressIntegratedComponents& rIntegratedStress,
-            const double AlphaEAS,
-            const double ZetaGauss,
-            const double IntegrationWeight
-            );
+        GeneralVariables& rVariables,
+        StressIntegratedComponents& rIntegratedStress,
+        const double AlphaEAS,
+        const double ZetaGauss,
+        const double IntegrationWeight
+        );
 
     /**
      * @brief Calculation and addition of the matrix of the LHS
@@ -1233,14 +1233,14 @@ protected:
      * @param AlphaEAS The internal variable for the EAS
      */
     void CalculateAndAddLHS(
-            LocalSystemComponents& rLocalSystem,
-            GeneralVariables& rVariables,
-            ConstitutiveLaw::Parameters& rValues,
-            const StressIntegratedComponents& rIntegratedStress,
-            const CommonComponents& rCommonComponents,
-            const CartesianDerivatives& rCartesianDerivatives,
-            double& AlphaEAS
-            );
+        LocalSystemComponents& rLocalSystem,
+        GeneralVariables& rVariables,
+        ConstitutiveLaw::Parameters& rValues,
+        const StressIntegratedComponents& rIntegratedStress,
+        const CommonComponents& rCommonComponents,
+        const CartesianDerivatives& rCartesianDerivatives,
+        double& AlphaEAS
+        );
 
     /**
      * @brief Calculation and addition of the vectors of the RHS
@@ -1250,13 +1250,13 @@ protected:
      * @param AlphaEAS The internal variable for the EAS
      */
     void CalculateAndAddRHS(
-            LocalSystemComponents& rLocalSystem,
-            GeneralVariables& rVariables,
-            Vector& rVolumeForce,
-            const StressIntegratedComponents& rIntegratedStress,
-            const CommonComponents& rCommonComponents,
-            double& AlphaEAS
-            );
+        LocalSystemComponents& rLocalSystem,
+        GeneralVariables& rVariables,
+        Vector& rVolumeForce,
+        const StressIntegratedComponents& rIntegratedStress,
+        const CommonComponents& rCommonComponents,
+        double& AlphaEAS
+        );
 
     /**
      * Calculation of the Material Stiffness Matrix. Kuum = BT * C * B
@@ -1265,20 +1265,20 @@ protected:
      * @param IntegrationWeight Contribution in the numerical integration
      */
     void CalculateAndAddKuum(
-            MatrixType& rLeftHandSideMatrix,
-            GeneralVariables& rVariables,
-            const double IntegrationWeight
-            );
+        MatrixType& rLeftHandSideMatrix,
+        GeneralVariables& rVariables,
+        const double IntegrationWeight
+        );
 
     /**
      * Calculation of the Geometric Stiffness Matrix. Kuug = BT * S
      * @param rLeftHandSideMatrix LHS of the system
      */
     void CalculateAndAddKuug(
-            MatrixType& rLeftHandSideMatrix,
-            const StressIntegratedComponents& rIntegratedStress,
-            const CartesianDerivatives& rCartesianDerivatives
-            );
+        MatrixType& rLeftHandSideMatrix,
+        const StressIntegratedComponents& rIntegratedStress,
+        const CartesianDerivatives& rCartesianDerivatives
+        );
 
     /**
      * Update the LHS of the system with the EAS
@@ -1292,9 +1292,9 @@ protected:
      * @param AlphaEAS The internal variable for the EAS
      */
     void ApplyEASRHS(
-            bounded_matrix<double, 36, 1 >& rRHSFull,
-            double& AlphaEAS
-            );
+        bounded_matrix<double, 36, 1 >& rRHSFull,
+        double& AlphaEAS
+        );
 
     /**
      * @brief Calculation of the External Forces Vector. Fe = N * t + N * b
@@ -1303,21 +1303,21 @@ protected:
      * @param rVolumeForce The force due to the acceleration of the body
      */
     void CalculateAndAddExternalForces(
-            VectorType& rRightHandSideVector,
-            GeneralVariables& rVariables,
-            Vector& rVolumeForce
-            );
+        VectorType& rRightHandSideVector,
+        GeneralVariables& rVariables,
+        Vector& rVolumeForce
+        );
 
     /**
       * Calculation of the Internal Forces Vector. Fi = B * sigma
       * @param rRightHandSideVector RHS of the system
       */
     void CalculateAndAddInternalForces(
-            VectorType& rRightHandSideVector,
-            const StressIntegratedComponents& rIntegratedStress,
-            const CommonComponents& rCommonComponents,
-            double& AlphaEAS
-            );
+        VectorType& rRightHandSideVector,
+        const StressIntegratedComponents& rIntegratedStress,
+        const CommonComponents& rCommonComponents,
+        double& AlphaEAS
+        );
 
     /**
      * Set Variables of the Element to the Parameters of the Constitutive Law
@@ -1326,10 +1326,10 @@ protected:
      * @param rPointNumber The integration points of the prism
      */
     void SetGeneralVariables(
-            GeneralVariables& rVariables,
-            ConstitutiveLaw::Parameters& rValues,
-            const IndexType rPointNumber
-            );
+        GeneralVariables& rVariables,
+        ConstitutiveLaw::Parameters& rValues,
+        const IndexType rPointNumber
+        );
 
     /**
      * @brief Initialize System Matrices
@@ -1338,10 +1338,10 @@ protected:
      * @param rCalculationFlags Calculation flags
      */
     void InitializeSystemMatrices(
-            MatrixType& rLeftHandSideMatrix,
-            VectorType& rRightHandSideVector,
-            Flags& rCalculationFlags
-            );
+        MatrixType& rLeftHandSideMatrix,
+        VectorType& rRightHandSideVector,
+        Flags& rCalculationFlags
+        );
 
     /**
      * @brief Initialize Material Properties on the Constitutive Law
