@@ -3428,10 +3428,10 @@ void SprismElement3D6N::CalculateAndAddKuum(
 
     for (IndexType i = 0; i < 36; i++) {
         index_i = i < 18 ? i : id_vector[i - 18];
-        if (id_vector[i] < 36)
+        if (index_i < 36)
             for (IndexType j = 0; j < 36; j++) {
                 index_j = j < 18 ? j : id_vector[j - 18];
-                if (id_vector[j] < 36)
+                if (index_j < 36)
                     rLeftHandSideMatrix(index_i, index_j) += K(i, j);
             }
     }
@@ -3489,10 +3489,10 @@ void SprismElement3D6N::CalculateAndAddKuug(
 
     for (IndexType i = 0; i < 36; i++) {
         index_i = i < 18 ? i : id_vector[i - 18];
-        if (id_vector[i] < 36)
+        if (index_i < 36)
             for (IndexType j = 0; j < 36; j++) {
                 index_j = j < 18 ? j : id_vector[j - 18];
-                if (id_vector[j] < 36)
+                if (index_j < 36)
                     rLeftHandSideMatrix(index_i, index_j) += K(i, j);
             }
     }
@@ -3518,10 +3518,10 @@ void SprismElement3D6N::ApplyEASLHS(MatrixType& rLeftHandSideMatrix)
 
     for (IndexType i = 0; i < 36; i++) {
         index_i = i < 18 ? i : id_vector[i - 18];
-        if (id_vector[i] < 36)
+        if (index_i < 36)
             for (IndexType j = 0; j < 36; j++) {
                 index_j = j < 18 ? j : id_vector[j - 18];
-                if (id_vector[j] < 36)
+                if (index_j < 36)
                     rLeftHandSideMatrix(index_i, index_j) += lhs_aux(i, j);
             }
     }
@@ -3624,7 +3624,7 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
 
     for (IndexType i = 0; i < 36; i++) {
         index_i = i < 18 ? i : id_vector[i - 18];
-        if (id_vector[i] < 36)
+        if (index_i < 36)
             rRightHandSideVector[index_i] -= rhs_full(i, 0);
     }
 
