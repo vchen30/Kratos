@@ -108,6 +108,11 @@ public:
      */
     enum class Configuration {INITIAL = 0, CURRENT = 1};
 
+    /**
+     * @brief To differtiate between center, lower part and upper part
+     */
+    enum class GeometricLevel {CENTER = 0, LOWER = 1, UPPER = 2};
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -503,32 +508,32 @@ public:
     //*********** STARTING - ENDING  METHODS **********//
 
     /**
-     * Called at the beginning of each solution step
+     * @brief Called at the beginning of each solution step
      * @param rCurrentProcessInfo The current process info instance
      */
     void InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-     * Called at the end of each solution step
+     * @brief Called at the end of each solution step
      * @param rCurrentProcessInfo The current process info instance
      */
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-     * This is called for non-linear analysis at the beginning of the iteration process
+     * @brief This is called for non-linear analysis at the beginning of the iteration process
      * @param rCurrentProcessInfo The current process info instance
      */
     void InitializeNonLinearIteration(ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-     * This is called for non-linear analysis at the beginning of the iteration process
+     * @brief This is called for non-linear analysis at the beginning of the iteration process
      * @param rCurrentProcessInfo The current process info instance
      */
     void FinalizeNonLinearIteration(ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-      * Called to initialize the element.
-      * Must be called before any calculation is done
+      * @brief Called to initialize the element.
+      * @details Must be called before any calculation is done
       */
     void Initialize() override;
 
@@ -879,10 +884,10 @@ protected:
      * @brief  It gets the nodal coordinates, according to the configutaion
      */
     void GetNodalCoordinates(
-            bounded_matrix<double, 12, 3 >& NodesCoord,
-            WeakPointerVector< NodeType >& pNeighbourNodes,
-            const Configuration ThisConfiguration
-            );
+        bounded_matrix<double, 12, 3 >& NodesCoord,
+        WeakPointerVector< NodeType >& pNeighbourNodes,
+        const Configuration ThisConfiguration
+        );
 
     /**
      * @brief Calculate the cartesian derivatives
@@ -890,7 +895,7 @@ protected:
     void CalculateCartesianDerivatives(CartesianDerivatives& rCartesianDerivatives);
     
     /**
-     * Calculate the necessary components for the Kinematic calculus
+     * @brief Calculate the necessary components for the Kinematic calculus
      */
     void CalculateCommonComponents(
         CommonComponents& rCommonComponents,
@@ -898,7 +903,7 @@ protected:
         );
 
     /**
-     * Calculates the Local Coordinates System
+     * @brief Calculates the Local Coordinates System
      * @param choose The chosen approximation
      * @param ang Angle of rotation of the element
      */
@@ -973,12 +978,12 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
-            bounded_matrix<double, 3, 3 >& J,
-            bounded_matrix<double, 3, 3 >& Jinv,
-            bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
-            const bounded_matrix<double, 3, 6 >& NodesCoord,
-            const array_1d<double, 3>& rLocalCoordinates
-            );
+        bounded_matrix<double, 3, 3 >& J,
+        bounded_matrix<double, 3, 3 >& Jinv,
+        bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
+        const bounded_matrix<double, 3, 6 >& NodesCoord,
+        const array_1d<double, 3>& rLocalCoordinates
+        );
 
     /**
      * @brief Calculate the Jacobian and his inverse
@@ -988,15 +993,15 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateJacobianAndInv(
-            bounded_matrix<double, 3, 3 >& J,
-            bounded_matrix<double, 3, 3 >& Jinv,
-            const bounded_matrix<double, 3, 6 >& NodesCoord,
-            const array_1d<double, 3>& rLocalCoordinates
-            );
+        bounded_matrix<double, 3, 3 >& J,
+        bounded_matrix<double, 3, 3 >& Jinv,
+        const bounded_matrix<double, 3, 6 >& NodesCoord,
+        const array_1d<double, 3>& rLocalCoordinates
+        );
 
     /**
      * @brief Calculate the Cartesian derivatives in the Gauss points, for the plane
-     * @param index The index that indicates upper or lower face
+     * @param Index The index that indicates upper or lower face
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
      * @param CartesianDerivativesCenter The cartesian derivatives in the plane
      */
@@ -1041,7 +1046,7 @@ protected:
     void CalculateCartesianDerOnCenterTrans(
         CartesianDerivatives& rCartesianDerivatives,
         const bounded_matrix<double, 12, 3 >& NodesCoord,
-        const IndexType Part
+        const GeometricLevel Part
         );
 
     /**
@@ -1074,7 +1079,7 @@ protected:
 
     /**
      * @brief Calculate the transversal components of the deformation gradient, in each one of the faces:
-     * @param rTransverseGradient Auxilar components of the deformation gradient
+     * @param rTransverseGradientIsoParametric Auxilar components of the deformation gradient
      * @param NodesCoord The coordinates of the nodes of the element
      * @param Index The index that indicates if calculate upper or lower components
      */
@@ -1093,28 +1098,28 @@ protected:
      * @param NodeGauss Number of Gauss node calculated
      */
     void CalculateAndAddBMembrane(
-            bounded_matrix<double, 3, 18 >& BMembrane,
-            bounded_matrix<double, 3, 1 >& CMembrane,
-            const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
-            const bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
-            const IndexType NodeGauss
-            );
+        bounded_matrix<double, 3, 18 >& BMembrane,
+        bounded_matrix<double, 3, 1 >& CMembrane,
+        const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
+        const bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
+        const IndexType NodeGauss
+        );
 
     /**
-     * Construction of the in-plane geometric stiffness matrix:
+     * @brief Construction of the in-plane geometric stiffness matrix:
      * @param Kgeometricmembrane Membrane component of the stiffness matrix
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
      * @param Index The index that indicates upper or lower face
      */
     void CalculateAndAddMembraneKgeometric(
-            bounded_matrix<double, 36, 36 >& Kgeometricmembrane,
-            const CartesianDerivatives& rCartesianDerivatives,
-            const array_1d<double, 3 >& SMembrane,
-            const IndexType Index
-            );
+        bounded_matrix<double, 36, 36 >& Kgeometricmembrane,
+        const CartesianDerivatives& rCartesianDerivatives,
+        const array_1d<double, 3 >& SMembrane,
+        const IndexType Index
+        );
 
     /**
-     * Construction of the shear deformation tangent matrix:
+     * @brief Construction of the shear deformation tangent matrix:
      * @param BShear Shear component of the deformation tangent matrix
      * @param CShear Shear components of the Cauchy tensor
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
@@ -1132,7 +1137,7 @@ protected:
         );
 
     /**
-     * Construction of the shear geometric contribution to the stiffness matrix:
+     * @brief Construction of the shear geometric contribution to the stiffness matrix:
      * @param Kgeometricshear The shear geometric contribution to the stiffness matrix
      * @param rCartesianDerivatives Cartesian derivatives auxiliar struct
      * @param S_shear The shear components of the PK2 tensor
@@ -1146,7 +1151,7 @@ protected:
         );
 
     /**
-     * Construction of the transversal deformation tangent matrix:
+     * @brief Construction of the transversal deformation tangent matrix:
      * @param BNormal Transversal deformation tangent matrix
      * @param TransversalCartesianDerivativesGaussCenter Transversal cartesian derivatives in the central point of the element
      * @param TransversalDeformationGradientF Transversal components of the deformation gradient in the central point of the element
@@ -1159,7 +1164,7 @@ protected:
         );
 
     /**
-     * Construction of the transversal geometric contribution to the stiffness matrix:
+     * @brief Construction of the transversal geometric contribution to the stiffness matrix:
      * @param Kgeometricnormal The transversal geometric contribution to the stiffness matrix
      * @param TransversalCartesianDerivativesGaussCenter Transversal cartesian derivatives in the central point of the element
      * @param SNormal Enhanced transversal component of the PK2 tensor
@@ -1171,7 +1176,7 @@ protected:
         );
 
     /**
-     * Calculates the vector of current position
+     * @brief Calculates the vector of current position
      * @return VectorCurrentPosition: Vector of current position
      */
     bounded_matrix<double, 36, 1 > GetVectorCurrentPosition();
@@ -1231,7 +1236,7 @@ protected:
         );
 
     /**
-     * Calculation of the Material Stiffness Matrix. Kuum = BT * C * B
+     * @brief Calculation of the Material Stiffness Matrix. Kuum = BT * C * B
      * @param rLeftHandSideMatrix LHS of the system
      * @param rVariables The internal variables in the element
      * @param IntegrationWeight Contribution in the numerical integration
@@ -1243,7 +1248,7 @@ protected:
         );
 
     /**
-     * Calculation of the Geometric Stiffness Matrix. Kuug = BT * S
+     * @brief Calculation of the Geometric Stiffness Matrix. Kuug = BT * S
      * @param rLeftHandSideMatrix LHS of the system
      */
     void CalculateAndAddKuug(
@@ -1253,7 +1258,7 @@ protected:
         );
 
     /**
-     * Update the LHS of the system with the EAS
+     * @brief Update the LHS of the system with the EAS
      * @param rLeftHandSideMatrix LHS of the system
      */
     void ApplyEASLHS(MatrixType& rLeftHandSideMatrix);
@@ -1281,7 +1286,7 @@ protected:
         );
 
     /**
-      * Calculation of the Internal Forces Vector. Fi = B * sigma
+      * @brief Calculation of the Internal Forces Vector. Fi = B * sigma
       * @param rRightHandSideVector RHS of the system
       */
     void CalculateAndAddInternalForces(
@@ -1292,7 +1297,7 @@ protected:
         );
 
     /**
-     * Set Variables of the Element to the Parameters of the Constitutive Law
+     * @brief Set Variables of the Element to the Parameters of the Constitutive Law
      * @param rVariables The internal variables in the element
      * @param rValues Values of the ContstitutiveLaw
      * @param rPointNumber The integration points of the prism
@@ -1332,7 +1337,7 @@ protected:
     void CalculateDeltaPosition(Matrix & rDeltaPosition);
 
     /**
-     * Calculate Element Kinematics
+     * @brief Calculate Element Kinematics
      * @param rVariables The internal variables in the element
      * @param rPointNumber The integration points of the prism
      * @param AlphaEAS The internal variable for the EAS
@@ -1347,8 +1352,8 @@ protected:
         );
 
     /**
-     * Calculate Fbar from Cbar, assuming that the rotation matrix of the polar decomposition
-     * of the F_bar is the same of the polar decomposition of F
+     * @brief Calculate Fbar from Cbar
+     * @details Assuming that the rotation matrix of the polar decomposition of the F_bar is the same of the polar decomposition of F
      * @param rVariables The internal variables in the element
      * @param rPointNumber The integration points of the prism
      */
@@ -1358,7 +1363,7 @@ protected:
         );
 
     /**
-     * Calculation of the Deformation Matrix  BL
+     * @brief Calculation of the Deformation Matrix  BL
      * @param rB Deformation matrix
      * @param ZetaGauss The zeta coordinate for the Gauss Quadrature
      * @param AlphaEAS The internal variable for the EAS
@@ -1371,13 +1376,13 @@ protected:
         );
 
     /**
-     * Initialize Element General Variables
+     * @brief Initialize Element General Variables
      * @param rVariables The internal variables in the element
      */
     void InitializeGeneralVariables(GeneralVariables & rVariables);
 
     /**
-     * Finalize Element Internal Variables
+     * @brief Finalize Element Internal Variables
      * @param rVariables The internal variables in the element
      * @param rPointNumber The integration points of the prism
      */
@@ -1387,17 +1392,17 @@ protected:
         );
 
     /**
-     * Get the Historical Deformation Gradient to calculate aTransverseGradientFter finalize the step
+     * @brief Get the Historical Deformation Gradient to calculate aTransverseGradientFter finalize the step
      * @param rVariables The internal variables in the element
      * @param rPointNumber The integration points of the prism
      */
     void GetHistoricalVariables(
-            GeneralVariables& rVariables,
-            const IndexType rPointNumber
-            );
+        GeneralVariables& rVariables,
+        const IndexType rPointNumber
+        );
     
     /**
-     * Calculation of the Green-Lagrange strain tensor:
+     * @brief Calculation of the Green-Lagrange strain tensor:
      * @param rC The right Cauchy tensor
      * @param rStrainVector The Green-Lagrange strain tensor
      */
@@ -1407,7 +1412,7 @@ protected:
         );
 
     /**
-     * Calculation of the Green-Lagrange strain tensor:
+     * @brief Calculation of the Green-Lagrange strain tensor:
      * @param rF The deformation gradient
      * @param rStrainVector The Green-Lagrange strain tensor
      */
@@ -1417,7 +1422,7 @@ protected:
         );
 
     /**
-     * Calculation of the Hencky strain tensor:
+     * @brief Calculation of the Hencky strain tensor:
      * @param rC The right Cauchy tensor
      * @param rStrainVector The Hencky strain tensor
      */
@@ -1427,7 +1432,7 @@ protected:
         );
 
     /**
-     * Calculation of the Almansi strain tensor:
+     * @brief Calculation of the Almansi strain tensor:
      * @param rF The deformation gradient
      * @param rStrainVector The Almansi strain tensor
      */
@@ -1437,7 +1442,7 @@ protected:
         );
 
     /**
-     * This function calculates the variation of the element volume
+     * @brief This function calculates the variation of the element volume
      * @param rVolumeChange Volume variation of the element
      * @param rVariables The internal variables in the element
      */
@@ -1447,7 +1452,7 @@ protected:
         );
 
     /**
-     * Calculation of the Volume Force of the Element
+     * @brief Calculation of the Volume Force of the Element
      * @param rVolumeForce The volume forces of the element
      * @param rVariables The internal variables in the element
      * @param IntegrationWeight Contribution in the numerical integration

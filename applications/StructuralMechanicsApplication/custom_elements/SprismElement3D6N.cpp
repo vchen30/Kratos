@@ -1980,9 +1980,9 @@ void SprismElement3D6N::CalculateCartesianDerivatives(CartesianDerivatives& this
     CalculateCartesianDerOnCenterPlane(3, nodes_coord, cartesian_derivatives_center_upper );
 
     /* Transversal derivative */
-    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, 0); // Center
-    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, 1); // Lower part
-    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, 2); // Upper part
+    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, GeometricLevel::CENTER); // Center
+    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, GeometricLevel::LOWER); // Lower part
+    CalculateCartesianDerOnCenterTrans(this_cartesian_derivatives, nodes_coord, GeometricLevel::UPPER); // Upper part
 
     //******************************** GAUSS POINTS *******************************
 
@@ -2427,7 +2427,7 @@ void SprismElement3D6N::CalculateJacobian(
     )
 {
     /* Auxiliar coordinates of the nodes */
-    bounded_matrix<double, 3, 6 > nodes_coord_aux; // TODO: use just trans
+    bounded_matrix<double, 3, 6 > nodes_coord_aux;
 
     for (IndexType i = 0; i < 6; i++)
         for (IndexType j = 0; j < 3; j++)
@@ -2637,23 +2637,21 @@ void SprismElement3D6N::CalculateCartesianDerOnGaussTrans(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
-        CartesianDerivatives& this_cartesian_derivatives,
-        const bounded_matrix<double, 12, 3 > & NodesCoord,
-        const IndexType Part // TODO: Replace enum
-        )
+    CartesianDerivatives& rCartesianDerivatives,
+    const bounded_matrix<double, 12, 3 >& NodesCoord,
+    const GeometricLevel Part
+    )
 {
     array_1d<double, 3> local_coordinates;
     local_coordinates[0] = 1.0/3.0;
     local_coordinates[1] = 1.0/3.0;
 
-    if (Part == 0)
+    if (Part == GeometricLevel::CENTER)
         local_coordinates[2] =   0.0;
-    else if (Part == 1)
+    else if (Part == GeometricLevel::LOWER)
         local_coordinates[2] = - 1.0;
-    else if (Part == 2)
+    else if (Part == GeometricLevel::UPPER)
         local_coordinates[2] =   1.0;
-    else
-        KRATOS_ERROR << " This part id is not possible, just 0, 1 or 2  " << Part << std::endl;
 
     /* Auxiliar coordinates of the nodes */
     bounded_matrix<double, 3, 6 > nodes_coord_aux;
@@ -2664,7 +2662,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
     /* Auxiliar components to calculate the Jacobian and his inverse */
     bounded_matrix<double, 3, 3 > J, Jinv;
 
-    if (Part == 0) {
+    if (Part == GeometricLevel::CENTER) {
         /* Calculate the Jacobian and his inverse */
         bounded_matrix<double, 6, 3 > local_derivatives_patch;
         CalculateJacobianAndInv(J, Jinv, local_derivatives_patch, nodes_coord_aux, local_coordinates);
@@ -2675,7 +2673,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
         noalias(transverse_cartesian_derivatives_gauss_aux) = prod(local_derivatives_patch, Jinv);
 
         for (IndexType i = 0; i < 6 ; i++) {
-            this_cartesian_derivatives.TransversalCartesianDerivativesCenter(i, 0) =
+            rCartesianDerivatives.TransversalCartesianDerivativesCenter(i, 0) =
                      mvze[0] * transverse_cartesian_derivatives_gauss_aux(i, 0) +
                      mvze[1] * transverse_cartesian_derivatives_gauss_aux(i, 1) +
                      mvze[2] * transverse_cartesian_derivatives_gauss_aux(i, 2);
@@ -2694,16 +2692,16 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
          Xdeta[2]  = Jinv(1, 2);
 
          /* Compute inverse of the Jaccobian (just in plane components)*/
-         if (Part == 1) {
-             this_cartesian_derivatives.JInvPlaneLower(0, 0) = inner_prod(Xdxi,  mvxe);
-             this_cartesian_derivatives.JInvPlaneLower(0, 1) = inner_prod(Xdeta, mvxe);
-             this_cartesian_derivatives.JInvPlaneLower(1, 0) = inner_prod(Xdxi,  mvye);
-             this_cartesian_derivatives.JInvPlaneLower(1, 1) = inner_prod(Xdeta, mvye);
-         } else if (Part == 2) {
-             this_cartesian_derivatives.JInvPlaneUpper(0, 0) = inner_prod(Xdxi,  mvxe);
-             this_cartesian_derivatives.JInvPlaneUpper(0, 1) = inner_prod(Xdeta, mvxe);
-             this_cartesian_derivatives.JInvPlaneUpper(1, 0) = inner_prod(Xdxi,  mvye);
-             this_cartesian_derivatives.JInvPlaneUpper(1, 1) = inner_prod(Xdeta, mvye);
+         if (Part == GeometricLevel::LOWER) {
+             rCartesianDerivatives.JInvPlaneLower(0, 0) = inner_prod(Xdxi,  mvxe);
+             rCartesianDerivatives.JInvPlaneLower(0, 1) = inner_prod(Xdeta, mvxe);
+             rCartesianDerivatives.JInvPlaneLower(1, 0) = inner_prod(Xdxi,  mvye);
+             rCartesianDerivatives.JInvPlaneLower(1, 1) = inner_prod(Xdeta, mvye);
+         } else if (Part == GeometricLevel::UPPER) {
+             rCartesianDerivatives.JInvPlaneUpper(0, 0) = inner_prod(Xdxi,  mvxe);
+             rCartesianDerivatives.JInvPlaneUpper(0, 1) = inner_prod(Xdeta, mvxe);
+             rCartesianDerivatives.JInvPlaneUpper(1, 0) = inner_prod(Xdxi,  mvye);
+             rCartesianDerivatives.JInvPlaneUpper(1, 1) = inner_prod(Xdeta, mvye);
          }
      }
 }
