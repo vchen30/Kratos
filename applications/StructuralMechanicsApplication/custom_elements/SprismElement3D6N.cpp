@@ -1490,15 +1490,15 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
     this->GetProperties().GetValue(CONSTITUTIVE_LAW)->GetLawFeatures(law_features);
 
     // Check strain measure
-    for(IndexType i = 0; i < law_features.mStrainMeasures.size(); i++) {
-        KRATOS_ERROR_IF_NOT(law_features.mStrainMeasures[i] == ConstitutiveLaw::StrainMeasure_Deformation_Gradient) << "Constitutive law is not compatible with the element type SprismElement3D6N" << std::endl;
-    }
+    bool correct_strain_measure = false;
+    for(IndexType i = 0; i < law_features.mStrainMeasures.size(); i++)
+        if (law_features.mStrainMeasures[i] == ConstitutiveLaw::StrainMeasure_Deformation_Gradient)
+            correct_strain_measure = true;
+
+    KRATOS_ERROR_IF_NOT(correct_strain_measure) << "Constitutive law is not compatible with the element type SprismElement3D6N" << std::endl;
 
     // Check constitutive law
-    for (IndexType i = 0; i < mConstitutiveLawVector.size(); i++)
-        check = mConstitutiveLawVector[i]->Check( GetProperties(), GetGeometry(), rCurrentProcessInfo);
-
-    return check;
+    return mConstitutiveLawVector[0]->Check( GetProperties(), GetGeometry(), rCurrentProcessInfo);
 
     KRATOS_CATCH( "" );
 }
@@ -3791,8 +3791,6 @@ void SprismElement3D6N::CalculateDeltaPosition(Matrix & rDeltaPosition)
 {
     KRATOS_TRY;
 
-    rDeltaPosition = ZeroMatrix( 6 , 3);
-
     for ( IndexType i = 0; i < 6; i++ ) {
         const array_1d<double, 3 > & current_displacement  = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT);
         const array_1d<double, 3 > & previous_displacement = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT, 1);
@@ -3939,19 +3937,19 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
     rVariables.detJ  = 1.0;
 
     // Vectors
-    noalias(rVariables.StrainVector) = ZeroVector(6);
-    noalias(rVariables.StressVector) = ZeroVector(6);
-    noalias(rVariables.C) = ZeroVector(6);
-    noalias(rVariables.N) = ZeroVector(6);
+    rVariables.StrainVector = ZeroVector(6);
+    rVariables.StressVector = ZeroVector(6);
+    rVariables.C = ZeroVector(6);
+    rVariables.N = ZeroVector(6);
 
     // Matrices
-    noalias(rVariables.F)  = IdentityMatrix(3);
-    noalias(rVariables.F0) = IdentityMatrix(3);
-    noalias(rVariables.FT) = IdentityMatrix(3);
-    noalias(rVariables.B)  = ZeroMatrix(6, 36);
+    rVariables.F  = IdentityMatrix(3);
+    rVariables.F0 = IdentityMatrix(3);
+    rVariables.FT = IdentityMatrix(3);
+    rVariables.B  = ZeroMatrix(6, 36);
 
-    noalias(rVariables.DN_DX) = ZeroMatrix(6, 3);
-    noalias(rVariables.ConstitutiveMatrix) = ZeroMatrix(6, 6);
+    rVariables.DN_DX = ZeroMatrix(6, 3);
+    rVariables.ConstitutiveMatrix = ZeroMatrix(6, 6);
 
     // Reading shape functions
     rVariables.SetShapeFunctions(GetGeometry().ShapeFunctionsValues( mThisIntegrationMethod ));
@@ -3967,7 +3965,7 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
 
     if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
         //Calculate Delta Position
-        Matrix delta_position;
+        Matrix delta_position( 6 , 3);
         this->CalculateDeltaPosition(delta_position);
         rVariables.J = GetGeometry().Jacobian( rVariables.J, mThisIntegrationMethod, delta_position);
     }
