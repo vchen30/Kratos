@@ -92,7 +92,6 @@ SprismElement3D6N::SprismElement3D6N( SprismElement3D6N const& rOther)
     ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
     ,mConstitutiveLawVector(rOther.mConstitutiveLawVector)
     ,mFinalizedStep(rOther.mFinalizedStep)
-    ,mIdVector(rOther.mIdVector)
     ,mTotalDomainInitialSize(rOther.mTotalDomainInitialSize)
     ,mAuxMatCont(rOther.mAuxMatCont)
     ,mAuxCont(rOther.mAuxCont)
@@ -128,8 +127,6 @@ SprismElement3D6N&  SprismElement3D6N::operator=(SprismElement3D6N const& rOther
 
     mTotalDomainInitialSize = rOther.mTotalDomainInitialSize;
     mAuxCont = rOther.mAuxCont;
-
-    mIdVector = rOther.mIdVector;
 
     return *this;
 }
@@ -176,8 +173,6 @@ Element::Pointer SprismElement3D6N::Clone(
 
     new_element.mTotalDomainInitialSize = mTotalDomainInitialSize;
     new_element.mAuxCont = mAuxCont;
-
-    new_element.mIdVector = mIdVector;
 
     return Kratos::make_shared<SprismElement3D6N>(new_element);
 }
@@ -1669,9 +1664,6 @@ void SprismElement3D6N::Initialize()
     /* Material initialisation */
     InitializeMaterial();
 
-    /* Calculate ID vector*/
-    this->CalculateIdVect();
-
     KRATOS_CATCH("");
 }
 
@@ -2287,25 +2279,22 @@ void SprismElement3D6N::CalculateLocalCoordinateSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateIdVect()
+void SprismElement3D6N::CalculateIdVector(array_1d<IndexType, 18 >& rIdVector)
 {
     KRATOS_TRY;
 
-    WeakPointerVector< NodeType >& NeighbourNodes = this->GetValue(NEIGHBOUR_NODES);
+    WeakPointerVector< NodeType >& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
 
-    /* Compute mIdVector */ // TODO: Optimze this
-    for (IndexType i = 0; i < 18; i++)
-        mIdVector[i] = i;
-
+    /* Compute ID vector */ // TODO: Optimze this
     IndexType index = 18;
     for (IndexType i = 0; i < 6; i++) {
-        if (HasNeighbour(i, NeighbourNodes[i])) {
+        if (HasNeighbour(i, p_neighbour_nodes[i])) {
             for (IndexType j = 0; j < 3; j++)
-                mIdVector[18 + i * 3 + j] = index + j;
+                rIdVector[i * 3 + j] = index + j;
             index += 3;
         } else {
             for (IndexType j = 0; j < 3; j++)
-                mIdVector[18 + i * 3 + j] = 1000;
+                rIdVector[i * 3 + j] = 36;
         }
     }
 
@@ -3462,11 +3451,21 @@ void SprismElement3D6N::CalculateAndAddKuum(
     typedef bounded_matrix<double,  6, 36 > temp_type;
     const bounded_matrix<double, 36, 36 > K = IntegrationWeight * prod(trans(rVariables.B), prod<temp_type>(rVariables.ConstitutiveMatrix, rVariables.B));
 
-    for (IndexType i = 0; i < 36; i++)
-        if (mIdVector[i] < 1000)
-            for (IndexType j = 0; j < 36; j++)
-                if (mIdVector[j] < 1000)
-                    rLeftHandSideMatrix(mIdVector[i], mIdVector[j]) += K(i, j);
+    // Compute vector of IDs
+    array_1d<IndexType, 18> id_vector;
+    CalculateIdVector(id_vector);
+
+    IndexType index_i, index_j;
+
+    for (IndexType i = 0; i < 36; i++) {
+        index_i = i < 18 ? i : id_vector[i - 18];
+        if (id_vector[i] < 36)
+            for (IndexType j = 0; j < 36; j++) {
+                index_j = j < 18 ? j : id_vector[j - 18];
+                if (id_vector[j] < 36)
+                    rLeftHandSideMatrix(index_i, index_j) += K(i, j);
+            }
+    }
 
     KRATOS_CATCH( "" );
 }
@@ -3519,11 +3518,21 @@ void SprismElement3D6N::CalculateAndAddKuug(
         for (IndexType j = 0; j < 18; j++)
             K(i, j) += aux_K(i, j);
 
-    for (IndexType i = 0; i < 36; i++)
-        if (mIdVector[i] < 1000)
-            for (IndexType j = 0; j < 36; j++)
-                if (mIdVector[j] < 1000)
-                    rLeftHandSideMatrix(mIdVector[i], mIdVector[j]) += K(i, j);
+    // Compute vector of IDs
+    array_1d<IndexType, 18> id_vector;
+    CalculateIdVector(id_vector);
+
+    IndexType index_i, index_j;
+
+    for (IndexType i = 0; i < 36; i++) {
+        index_i = i < 18 ? i : id_vector[i - 18];
+        if (id_vector[i] < 36)
+            for (IndexType j = 0; j < 36; j++) {
+                index_j = j < 18 ? j : id_vector[j - 18];
+                if (id_vector[j] < 36)
+                    rLeftHandSideMatrix(index_i, index_j) += K(i, j);
+            }
+    }
 
     KRATOS_CATCH( "" );
 }
@@ -3537,12 +3546,22 @@ void SprismElement3D6N::ApplyEASLHS(MatrixType& rLeftHandSideMatrix)
 
     const bounded_matrix<double, 36, 36 > lhs_aux = - prod(trans(mEAS.mHEAS), mEAS.mHEAS) / mEAS.mStiffAlpha;
 
+    // Compute vector of IDs
+    array_1d<IndexType, 18> id_vector;
+    CalculateIdVector(id_vector);
+
     // Note: IntegrationWeight already considered in the integration
-    for (IndexType i = 0; i < 36; i++)
-        if (mIdVector[i] < 1000)
-            for (IndexType j = 0; j < 36; j++)
-                if (mIdVector[j] < 1000)
-                    rLeftHandSideMatrix(mIdVector[i], mIdVector[j]) += lhs_aux(i, j);
+    IndexType index_i, index_j;
+
+    for (IndexType i = 0; i < 36; i++) {
+        index_i = i < 18 ? i : id_vector[i - 18];
+        if (id_vector[i] < 36)
+            for (IndexType j = 0; j < 36; j++) {
+                index_j = j < 18 ? j : id_vector[j - 18];
+                if (id_vector[j] < 36)
+                    rLeftHandSideMatrix(index_i, index_j) += lhs_aux(i, j);
+            }
+    }
 
     KRATOS_CATCH( "" );
 }
@@ -3634,9 +3653,17 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
     /* Apply EAS stabilization */
     ApplyEASRHS(rhs_full, AlphaEAS);
 
-    for (IndexType i = 0; i < 36; i++)
-        if (mIdVector[i] < 1000)
-            rRightHandSideVector[mIdVector[i]] -= rhs_full(i, 0);
+    // Compute vector of IDs
+    array_1d<IndexType, 18> id_vector;
+    CalculateIdVector(id_vector);
+
+    IndexType index_i;
+
+    for (IndexType i = 0; i < 36; i++) {
+        index_i = i < 18 ? i : id_vector[i - 18];
+        if (id_vector[i] < 36)
+            rRightHandSideVector[index_i] -= rhs_full(i, 0);
+    }
 
     KRATOS_CATCH( "" );
 }
@@ -4209,7 +4236,6 @@ void SprismElement3D6N::save( Serializer& rSerializer ) const
     rSerializer.save("IntegrationMethod",IntMethod);
     rSerializer.save("ConstitutiveLawVector",mConstitutiveLawVector);
     rSerializer.save("FinalizedStep",mFinalizedStep);
-    rSerializer.save("IdVector",mIdVector);
     rSerializer.save("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.save("AuxMatCont",mAuxMatCont);
     rSerializer.save("AuxCont",mAuxCont);
@@ -4226,7 +4252,6 @@ void SprismElement3D6N::load( Serializer& rSerializer )
     mThisIntegrationMethod = IntegrationMethod(IntMethod);
     rSerializer.load("ConstitutiveLawVector",mConstitutiveLawVector);
     rSerializer.load("FinalizedStep",mFinalizedStep);
-    rSerializer.load("IdVector",mIdVector);
     rSerializer.load("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.load("AuxMatCont",mAuxMatCont);
     rSerializer.load("AuxCont",mAuxCont);

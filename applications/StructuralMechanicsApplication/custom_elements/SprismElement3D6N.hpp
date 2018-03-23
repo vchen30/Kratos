@@ -831,9 +831,6 @@ protected:
     array_1d<double,3> mvye;
     array_1d<double,3> mvze;
 
-    /* ID vector for assembling */ // TODO: Compute directly
-    array_1d<unsigned int, 36 > mIdVector;
-
     /* Total element volume */ // TODO: Check this!!!
     double mTotalDomainInitialSize;
 
@@ -931,7 +928,7 @@ protected:
     /**
      * @brief Calculate the vector of the element Ids
      */
-    void CalculateIdVect();
+    void CalculateIdVector(array_1d<IndexType, 18 >& rIdVector);
 
     /**
      * @brief Calculate the local derivatives of the element for a given coordinates
