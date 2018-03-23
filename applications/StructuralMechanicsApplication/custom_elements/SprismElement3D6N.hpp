@@ -90,6 +90,9 @@ public:
     /// This is the definition of the node.
     typedef Node<3> NodeType;
 
+    /// The base element type
+    typedef Element BaseType;
+
     /// The definition of the index type
     typedef std::size_t IndexType;
 

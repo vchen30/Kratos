@@ -1437,6 +1437,8 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
+    int check = BaseType::Check(rCurrentProcessInfo);
+
     /* Check the neighbours have been calculated */
     // Neighbour elements
     WeakPointerVector< Element >& p_neighbour_elements = this->GetValue(NEIGHBOUR_ELEMENTS);
@@ -1494,9 +1496,9 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 
     // Check constitutive law
     for (IndexType i = 0; i < mConstitutiveLawVector.size(); i++)
-        return mConstitutiveLawVector[i]->Check( GetProperties(), GetGeometry(), rCurrentProcessInfo);
+        check = mConstitutiveLawVector[i]->Check( GetProperties(), GetGeometry(), rCurrentProcessInfo);
 
-    return 0;
+    return check;
 
     KRATOS_CATCH( "" );
 }
