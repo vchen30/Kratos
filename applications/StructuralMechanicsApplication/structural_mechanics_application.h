@@ -52,7 +52,7 @@
 #include "custom_elements/spring_damper_element_3D2N.hpp"
 
 /* Adding the SPRISM element */
-#include "custom_elements/SprismElement3D6N.hpp"
+#include "custom_elements/solid_shell_element_sprism_3D6N.h"
 
 /* Adding solid elements */
 #include "custom_elements/small_displacement.h"

@@ -15,7 +15,7 @@
 
 // Project includes
 #include "includes/checks.h"
-#include "custom_elements/SprismElement3D6N.hpp"
+#include "custom_elements/solid_shell_element_sprism_3D6N.h"
 
 namespace Kratos
 {
