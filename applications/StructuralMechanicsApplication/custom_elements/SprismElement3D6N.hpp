@@ -1138,7 +1138,7 @@ protected:
      * @param Part The enum that indicates upper or lower face
      */
     void CalculateAndAddShearKgeometric(
-        bounded_matrix<double, 18, 18 >& Kgeometricshear,
+        bounded_matrix<double, 36, 36 >& Kgeometricshear,
         const CartesianDerivatives& rCartesianDerivatives,
         const array_1d<double, 2 >& SShear,
         const GeometricLevel Part
@@ -1164,7 +1164,7 @@ protected:
      * @param SNormal Enhanced transversal component of the PK2 tensor
      */
     void CalculateAndAddNormalKgeometric(
-        bounded_matrix<double, 18, 18 >& Kgeometricnormal,
+        bounded_matrix<double, 36, 36 >& Kgeometricnormal,
         const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGaussCenter,
         const double SNormal
         );

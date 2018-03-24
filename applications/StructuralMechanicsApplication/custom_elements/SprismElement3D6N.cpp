@@ -2956,7 +2956,7 @@ void SprismElement3D6N::CalculateAndAddBShear(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddShearKgeometric(
-    bounded_matrix<double, 18, 18 > & Kgeometricshear,
+    bounded_matrix<double, 36, 36 > & Kgeometricshear,
     const CartesianDerivatives& rCartesianDerivatives,
     const array_1d<double, 2 > & SShear,
     const GeometricLevel Part
@@ -3083,7 +3083,7 @@ void SprismElement3D6N::CalculateAndAddBNormal(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddNormalKgeometric(
-    bounded_matrix<double, 18, 18 >& Kgeometricnormal,
+    bounded_matrix<double, 36, 36 >& Kgeometricnormal,
     const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesCenter,
     const double SNormal
     )
@@ -3480,8 +3480,7 @@ void SprismElement3D6N::CalculateAndAddKuug(
     /* The stress is already integrated, we just calculate it once */
 
     /* Auxiliar stiffness matrix */
-    bounded_matrix<double, 18, 18 > aux_K = ZeroMatrix(18, 18); // Auxiliar stiffness matrix
-    bounded_matrix<double, 36, 36 >     K = ZeroMatrix(36, 36); // Stiffness matrix
+    bounded_matrix<double, 36, 36 > K = ZeroMatrix(36, 36); // Stiffness matrix
 
     /* COMPUTATION OF GEOMETRIC STIFFNESS MATRIX */
 
@@ -3495,18 +3494,13 @@ void SprismElement3D6N::CalculateAndAddKuug(
 //    /* SHEAR CONTRIBUTION */
 //    /* Adding the geometric shear stiffness */
 //    // Lower face
-//    CalculateAndAddShearKgeometric(aux_K, rCartesianDerivatives, rIntegratedStress.SShearLower, 0);
+//    CalculateAndAddShearKgeometric(K, rCartesianDerivatives, rIntegratedStress.SShearLower, GeometricLevel::LOWER);
 //    // Upper face
-//    CalculateAndAddShearKgeometric(aux_K, rCartesianDerivatives, rIntegratedStress.SShearUpper, 9);
+//    CalculateAndAddShearKgeometric(K, rCartesianDerivatives, rIntegratedStress.SShearUpper, GeometricLevel::UPPER);
 
     /* NORMAL TRANSVERSE */
     /* Adding the geometric normal stiffness */
-    CalculateAndAddNormalKgeometric(aux_K, rCartesianDerivatives.TransversalCartesianDerivativesCenter, rIntegratedStress.SNormal);
-
-    // Transfering to the complete stiffness matrix
-    for (IndexType i = 0; i < 18; i++)
-        for (IndexType j = 0; j < 18; j++)
-            K(i, j) += aux_K(i, j);
+    CalculateAndAddNormalKgeometric(K, rCartesianDerivatives.TransversalCartesianDerivativesCenter, rIntegratedStress.SNormal);
 
     // Compute vector of IDs
     array_1d<IndexType, 18> id_vector;
@@ -3583,10 +3577,10 @@ void SprismElement3D6N::ApplyEASRHS(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddExternalForces(
-        VectorType& rRightHandSideVector,
-        GeneralVariables& rVariables,
-        Vector& rVolumeForce
-        )
+    VectorType& rRightHandSideVector,
+    GeneralVariables& rVariables,
+    Vector& rVolumeForce
+    )
 {
     KRATOS_TRY;
 
