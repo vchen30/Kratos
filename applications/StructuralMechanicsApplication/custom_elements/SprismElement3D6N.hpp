@@ -831,8 +831,6 @@ protected:
     /* Auxiliar vector container used for different pourposes in TL and UL */ // TODO: Check this!!!
     Vector mAuxCont; // Container for the total Jacobian determinants for Total Lagrangian
                      // Container for the total deformation gradient determinants for Updated Lagrangian
-    
-    EASComponents mEAS; // TODO: Check this!!!
 
     /* Elemental flags */
     Flags  mELementalFlags;
@@ -1222,6 +1220,7 @@ protected:
      * @param rLocalSystem The local system of equations
      * @param rVariables The internal variables in the element
      * @param rValues Values of the ContstitutiveLaw
+     * @param rEAS The components of the EAS stabilization
      * @param AlphaEAS The internal variable for the EAS
      */
     void CalculateAndAddLHS(
@@ -1231,6 +1230,7 @@ protected:
         const StressIntegratedComponents& rIntegratedStress,
         const CommonComponents& rCommonComponents,
         const CartesianDerivatives& rCartesianDerivatives,
+        const EASComponents& rEAS,
         double& AlphaEAS
         );
 
@@ -1239,6 +1239,7 @@ protected:
      * @param rLocalSystem The local system of equations
      * @param rVariables The internal variables in the element
      * @param rVolumeForce The force due to the acceleration of the body
+     * @param rEAS The components of the EAS stabilization
      * @param AlphaEAS The internal variable for the EAS
      */
     void CalculateAndAddRHS(
@@ -1247,6 +1248,7 @@ protected:
         Vector& rVolumeForce,
         const StressIntegratedComponents& rIntegratedStress,
         const CommonComponents& rCommonComponents,
+        const EASComponents& rEAS,
         double& AlphaEAS
         );
 
@@ -1279,7 +1281,7 @@ protected:
      */
     void ApplyEASLHS(
         MatrixType& rLeftHandSideMatrix,
-        EASComponents& rEAS
+        const EASComponents& rEAS
         );
 
     /**
@@ -1290,7 +1292,7 @@ protected:
      */
     void ApplyEASRHS(
         bounded_matrix<double, 36, 1 >& rRHSFull,
-        EASComponents& rEAS,
+        const EASComponents& rEAS,
         double& AlphaEAS
         );
 
@@ -1309,11 +1311,13 @@ protected:
     /**
       * @brief Calculation of the Internal Forces Vector. Fi = B * sigma
       * @param rRightHandSideVector RHS of the system
+      * @param rEAS The components of the EAS stabilization
       */
     void CalculateAndAddInternalForces(
         VectorType& rRightHandSideVector,
         const StressIntegratedComponents& rIntegratedStress,
         const CommonComponents& rCommonComponents,
+        const EASComponents& rEAS,
         double& AlphaEAS
         );
 

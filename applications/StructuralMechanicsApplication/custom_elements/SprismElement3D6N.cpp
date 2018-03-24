@@ -1595,8 +1595,62 @@ void SprismElement3D6N::InitializeNonLinearIteration( ProcessInfo& rCurrentProce
 
 void SprismElement3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
 {
+    /* Create and initialize element variables: */
+    GeneralVariables general_variables;
+    this->InitializeGeneralVariables(general_variables);
+
+    /* Create constitutive law parameters: */
+    ConstitutiveLaw::Parameters values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
+
+    /* Set constitutive law flags: */
+    Flags &ConstitutiveLawOptions=values.GetOptions();
+
+    ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false);
+    ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
+    ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, true);
+
+    /* Reading integration points */
+    const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints( mThisIntegrationMethod );
+
     /* Getting the alpha parameter of the EAS improvement */
     double& alpha_eas = this->GetValue(ALPHA_EAS);
+
+    /* Calculate the cartesian derivatives */
+    CartesianDerivatives this_cartesian_derivatives;
+    this->CalculateCartesianDerivatives(this_cartesian_derivatives);
+
+    /* Calculate common components (B, C) */
+    CommonComponents common_components;
+    common_components.clear();
+    this->CalculateCommonComponents(common_components, this_cartesian_derivatives);
+
+    /* Reset the EAS integrated components */
+    EASComponents EAS;
+    EAS.clear();
+
+    // Reading integration points
+    for ( IndexType point_number = 0; point_number < integration_points.size(); point_number++ ) {
+        const double zeta_gauss = 2.0 * integration_points[point_number].Z() - 1.0;
+
+        /* Assemble B */
+        this->CalculateDeformationMatrix(general_variables.B, common_components, zeta_gauss, alpha_eas);
+
+        // Compute element kinematics C, F ...
+        this->CalculateKinematics(general_variables, common_components, point_number, alpha_eas, zeta_gauss);
+
+        // Set general variables to constitutivelaw parameters
+        this->SetGeneralVariables(general_variables, values, point_number);
+
+        // Compute stresses and constitutive parameters
+        mConstitutiveLawVector[point_number]->CalculateMaterialResponse(values, general_variables.StressMeasure);
+
+        // Calculating weights for integration on the "reference configuration"
+        const double integration_weight = integration_points[point_number].Weight() * general_variables.detJ;
+
+        /* Integrate in Zeta */
+        // EAS components
+        IntegrateEASInZeta(general_variables, EAS, zeta_gauss, integration_weight);
+    }
 
     /* Getting the increase of displacements */
     bounded_matrix<double, 36, 1 > delta_disp;
@@ -1604,8 +1658,8 @@ void SprismElement3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcess
     delta_disp = GetVectorCurrentPosition() - GetVectorPreviousPosition(); // Calculates the increase of displacements
 
     /* Update alpha EAS */
-    if (mEAS.mStiffAlpha > std::numeric_limits<double>::epsilon()) // Avoid division by zero
-        alpha_eas -= prod(mEAS.mHEAS, delta_disp)(0, 0) / mEAS.mStiffAlpha;
+    if (EAS.mStiffAlpha > std::numeric_limits<double>::epsilon()) // Avoid division by zero
+        alpha_eas -= prod(EAS.mHEAS, delta_disp)(0, 0) / EAS.mStiffAlpha;
 }
 
 /***********************************************************************************/
@@ -1672,9 +1726,6 @@ void SprismElement3D6N::Initialize()
     /* Initialize AlphaEAS */
     this->SetValue(ALPHA_EAS, 0.0);
 
-    /* Initialize EAS parameters*/
-    mEAS.clear();
-
     /* Material initialisation */
     InitializeMaterial();
 
@@ -1700,10 +1751,10 @@ void SprismElement3D6N::CalculateElementalSystem(
     this->InitializeGeneralVariables(general_variables);
 
     /* Create constitutive law parameters: */
-    ConstitutiveLaw::Parameters Values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
+    ConstitutiveLaw::Parameters values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
 
     /* Set constitutive law flags: */
-    Flags &ConstitutiveLawOptions=Values.GetOptions();
+    Flags &ConstitutiveLawOptions=values.GetOptions();
 
     ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false);
     ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
@@ -1729,7 +1780,8 @@ void SprismElement3D6N::CalculateElementalSystem(
     rIntegratedStress.clear();
 
     /* Reset the EAS integrated components */
-    mEAS.clear();
+    EASComponents EAS;
+    EAS.clear();
 
     /* Auxiliary terms: Allocating the VolumeForce*/
     Vector volume_force = ZeroVector(3);
@@ -1745,10 +1797,10 @@ void SprismElement3D6N::CalculateElementalSystem(
         this->CalculateKinematics(general_variables, common_components, point_number, alpha_eas, zeta_gauss);
 
         // Set general variables to constitutivelaw parameters
-        this->SetGeneralVariables(general_variables, Values, point_number);
+        this->SetGeneralVariables(general_variables, values, point_number);
 
         // Compute stresses and constitutive parameters
-        mConstitutiveLawVector[point_number]->CalculateMaterialResponse(Values, general_variables.StressMeasure);
+        mConstitutiveLawVector[point_number]->CalculateMaterialResponse(values, general_variables.StressMeasure);
 
         // Calculating weights for integration on the "reference configuration"
         const double integration_weight = integration_points[point_number].Weight() * general_variables.detJ;
@@ -1757,7 +1809,7 @@ void SprismElement3D6N::CalculateElementalSystem(
         // Stresses
         IntegrateStressesInZeta(general_variables, rIntegratedStress, alpha_eas, zeta_gauss, integration_weight);
         // EAS components
-        IntegrateEASInZeta(general_variables, mEAS, zeta_gauss, integration_weight);
+        IntegrateEASInZeta(general_variables, EAS, zeta_gauss, integration_weight);
 
         if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
             /* Volume forces */
@@ -1768,12 +1820,12 @@ void SprismElement3D6N::CalculateElementalSystem(
     /* Calculate the RHS */
     if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
         /* Contribution to external and internal forces */
-        this->CalculateAndAddRHS ( rLocalSystem, general_variables, volume_force, rIntegratedStress, common_components, alpha_eas );
+        this->CalculateAndAddRHS ( rLocalSystem, general_variables, volume_force, rIntegratedStress, common_components, EAS, alpha_eas );
     }
 
     if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_LHS_MATRIX) ) { // Calculation of the matrix is required
         /* Contribution to the tangent stiffness matrix */
-        this->CalculateAndAddLHS( rLocalSystem, general_variables, Values, rIntegratedStress, common_components, this_cartesian_derivatives, alpha_eas );
+        this->CalculateAndAddLHS( rLocalSystem, general_variables, values, rIntegratedStress, common_components, this_cartesian_derivatives, EAS, alpha_eas );
     }
 
     KRATOS_CATCH("");
@@ -3285,6 +3337,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
     const StressIntegratedComponents& rIntegratedStress,
     const CommonComponents& rCommonComponents,
     const CartesianDerivatives& rCartesianDerivatives,
+    const EASComponents& rEAS,
     double& AlphaEAS
     )
 {
@@ -3334,7 +3387,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
             /* Implicit or explicit EAS update*/
             if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
                 /* Apply EAS stabilization */
-                ApplyEASLHS(rLeftHandSideMatrices[i], mEAS);
+                ApplyEASLHS(rLeftHandSideMatrices[i], rEAS);
             }
 
             KRATOS_ERROR_IF_NOT(calculated) << " ELEMENT can not supply the required local system variable: " << rLeftHandSideVariables[i] << std::endl;
@@ -3375,7 +3428,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
         /* Implicit or explicit EAS update*/
         if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
             /* Apply EAS stabilization */
-            ApplyEASLHS(LeftHandSideMatrix, mEAS);
+            ApplyEASLHS(LeftHandSideMatrix, rEAS);
         }
     }
 }
@@ -3389,6 +3442,7 @@ void SprismElement3D6N::CalculateAndAddRHS(
     Vector& rVolumeForce,
     const StressIntegratedComponents& rIntegratedStress,
     const CommonComponents& rCommonComponents,
+    const EASComponents& rEAS,
     double& AlphaEAS
     )
 {
@@ -3406,7 +3460,7 @@ void SprismElement3D6N::CalculateAndAddRHS(
 
             if( rRightHandSideVariables[i] == INTERNAL_FORCES_VECTOR ) {
                 /* Operation performed: RightHandSideVector -= IntForce */
-                this->CalculateAndAddInternalForces( RightHandSideVectors[i], rIntegratedStress, rCommonComponents, AlphaEAS );
+                this->CalculateAndAddInternalForces( RightHandSideVectors[i], rIntegratedStress, rCommonComponents, rEAS, AlphaEAS );
                 calculated = true;
             }
 
@@ -3419,7 +3473,7 @@ void SprismElement3D6N::CalculateAndAddRHS(
         this->CalculateAndAddExternalForces( RightHandSideVector, rVariables, rVolumeForce );
 
         /* Operation performed: RightHandSideVector -= IntForce */
-        this->CalculateAndAddInternalForces( RightHandSideVector, rIntegratedStress, rCommonComponents, AlphaEAS );
+        this->CalculateAndAddInternalForces( RightHandSideVector, rIntegratedStress, rCommonComponents, rEAS, AlphaEAS );
     }
 }
 
@@ -3523,7 +3577,7 @@ void SprismElement3D6N::CalculateAndAddKuug(
 
 void SprismElement3D6N::ApplyEASLHS(
     MatrixType& rLeftHandSideMatrix,
-    EASComponents& rEAS
+    const EASComponents& rEAS
     )
 {
     KRATOS_TRY;
@@ -3555,7 +3609,7 @@ void SprismElement3D6N::ApplyEASLHS(
 
 void SprismElement3D6N::ApplyEASRHS(
     bounded_matrix<double, 36, 1 >& rRHSFull,
-    EASComponents& rEAS,
+    const EASComponents& rEAS,
     double& AlphaEAS
     )
 {
@@ -3600,6 +3654,7 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
     VectorType& rRightHandSideVector,
     const StressIntegratedComponents& rIntegratedStress,
     const CommonComponents& rCommonComponents,
+    const EASComponents& rEAS,
     double& AlphaEAS
     )
 {
@@ -3636,7 +3691,7 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
     }
 
     /* Apply EAS stabilization */
-    ApplyEASRHS(rhs_full, mEAS, AlphaEAS);
+    ApplyEASRHS(rhs_full, rEAS, AlphaEAS);
 
     // Compute vector of IDs
     array_1d<IndexType, 18> id_vector;
