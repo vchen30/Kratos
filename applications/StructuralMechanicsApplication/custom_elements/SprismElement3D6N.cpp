@@ -939,7 +939,7 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
             // Set general variables to constitutivelaw parameters
             this->SetGeneralVariables(general_variables,Values,point_number);
 
-            double StrainEnergy = 0.0;
+            double strain_energy = 0.0;
 
             // Compute stresses and constitutive parameters
             if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN))
@@ -947,9 +947,9 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
             else
                 mConstitutiveLawVector[point_number]->CalculateMaterialResponsePK2(Values);
 
-            mConstitutiveLawVector[point_number]->GetValue(STRAIN_ENERGY, StrainEnergy);
+            mConstitutiveLawVector[point_number]->GetValue(STRAIN_ENERGY, strain_energy);
 
-            rOutput[point_number] = general_variables.detJ * IntegrationPoints[point_number].Weight() * StrainEnergy;  // 1/2 * sigma * epsilon
+            rOutput[point_number] = general_variables.detJ * IntegrationPoints[point_number].Weight() * strain_energy;  // 1/2 * sigma * epsilon
         }
     } else {
         for ( IndexType ii = 0; ii < integration_point_number; ii++ )
@@ -1049,6 +1049,18 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
         GeneralVariables general_variables;
         this->InitializeGeneralVariables(general_variables);
 
+        /* Create constitutive law parameters: */
+        ConstitutiveLaw::Parameters values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
+
+        /* Set constitutive law flags: */
+        Flags &ConstitutiveLawOptions=values.GetOptions();
+
+        ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false);
+        ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, false);
+        ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, false);
+
+        values.SetStrainVector(general_variables.StrainVector);
+
         /* Reading integration points */
         const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints( mThisIntegrationMethod );
 
@@ -1074,17 +1086,15 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
             if( mFinalizedStep )
                 this->GetHistoricalVariables(general_variables,point_number);
 
+            // Set general variables to constitutivelaw parameters
+            this->SetGeneralVariables(general_variables, values, point_number);
+
             // Compute Green-Lagrange Strain
-            if( rVariable == GREEN_LAGRANGE_STRAIN_VECTOR ) // TODO: Replace CL
-            {
-                this->CalculateGreenLagrangeStrain( general_variables.C, general_variables.StrainVector );
-            }
-            else if( rVariable == ALMANSI_STRAIN_VECTOR ) // TODO: Replace CL
-            {
-                this->CalculateAlmansiStrain( general_variables.F, general_variables.StrainVector );
-            }
-            else if( rVariable == HENCKY_STRAIN_VECTOR )
-            {
+            if( rVariable == GREEN_LAGRANGE_STRAIN_VECTOR ) {
+                mConstitutiveLawVector[point_number]->CalculateMaterialResponse(values, ConstitutiveLaw::StressMeasure_PK2);
+            } else if( rVariable == ALMANSI_STRAIN_VECTOR ) {
+                mConstitutiveLawVector[point_number]->CalculateMaterialResponse(values, ConstitutiveLaw::StressMeasure_Cauchy);
+            } else if( rVariable == HENCKY_STRAIN_VECTOR ) {
                 this->CalculateHenckyStrain( general_variables.C, general_variables.StrainVector );
             }
 
@@ -4016,59 +4026,6 @@ void SprismElement3D6N::GetHistoricalVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateGreenLagrangeStrain(
-    const Vector& rC,
-    Vector& rStrainVector
-    )
-{
-    KRATOS_TRY;
-
-    //Green Lagrange Strain Calculation
-    if (rStrainVector.size() != 6)
-        rStrainVector.resize(6, false);
-
-    rStrainVector[0] = 0.5 * (rC[0] - 1.00); // xx
-    rStrainVector[1] = 0.5 * (rC[1] - 1.00); // yy
-    rStrainVector[2] = 0.5 * (rC[2] - 1.00); // zz
-    rStrainVector[3] = rC[3]; // xy
-    rStrainVector[4] = rC[4]; // yz
-    rStrainVector[5] = rC[5]; // xz
-
-    KRATOS_CATCH( "" );
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void SprismElement3D6N::CalculateGreenLagrangeStrain(
-    const Matrix& rF,
-    Vector& rStrainVector
-    )
-{
-    KRATOS_TRY;
-
-    // Right Cauchy-Green Calculation
-    Matrix C ( 3, 3 );
-
-    noalias( C ) = prod( trans( rF ), rF );
-
-    // Green Lagrange Strain Calculation
-    if ( rStrainVector.size() != 6 )
-        rStrainVector.resize( 6, false );
-
-    rStrainVector[0] = 0.5 * (C(0, 0) - 1.0); // xx
-    rStrainVector[1] = 0.5 * (C(1, 1) - 1.0); // yy
-    rStrainVector[2] = 0.5 * (C(2, 2) - 1.0); // zz
-    rStrainVector[3] = C(0, 1); // xy
-    rStrainVector[4] = C(1, 2); // yz
-    rStrainVector[5] = C(0, 2); // xz
-
-    KRATOS_CATCH( "" );
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
 void SprismElement3D6N::CalculateHenckyStrain(
     const Vector& rC,
     Vector& rStrainVector
@@ -4105,38 +4062,6 @@ void SprismElement3D6N::CalculateHenckyStrain(
     rStrainVector[3] = 2.0 * E_matrix(0, 1); // xy
     rStrainVector[4] = 2.0 * E_matrix(1, 2); // yz
     rStrainVector[5] = 2.0 * E_matrix(0, 2); // xz
-
-    KRATOS_CATCH( "" );
-}
-
-//************************************************************************************
-//************************************************************************************
-
-void SprismElement3D6N::CalculateAlmansiStrain(
-    const Matrix& rF,
-    Vector& rStrainVector
-    )
-{
-    KRATOS_TRY;
-
-    // Tensor Cauchy-Green Calculation
-    Matrix tensor_cauchy_green = prod(rF, trans(rF));
-
-    // Calculating the inverse of the jacobian
-    Matrix inverse_tensor_cauchy_green (3, 3);
-    double det_b = 0.0;
-    MathUtils<double>::InvertMatrix(tensor_cauchy_green, inverse_tensor_cauchy_green, det_b);
-
-    // Almansi Strain Calculation
-    if ( rStrainVector.size() != 6)
-        rStrainVector.resize(6, false);
-
-    rStrainVector[0] = 0.5 * (1.00 - inverse_tensor_cauchy_green(0, 0));
-    rStrainVector[1] = 0.5 * (1.00 - inverse_tensor_cauchy_green(1, 1));
-    rStrainVector[2] = 0.5 * (1.00 - inverse_tensor_cauchy_green(2, 2));
-    rStrainVector[3] = - inverse_tensor_cauchy_green(0, 1); // xy
-    rStrainVector[4] = - inverse_tensor_cauchy_green(1, 2); // yz
-    rStrainVector[5] = - inverse_tensor_cauchy_green(0, 2); // xz
 
     KRATOS_CATCH( "" );
 }

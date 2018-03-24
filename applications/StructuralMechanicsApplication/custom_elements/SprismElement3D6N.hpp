@@ -1423,42 +1423,12 @@ protected:
         );
     
     /**
-     * @brief Calculation of the Green-Lagrange strain tensor:
-     * @param rC The right Cauchy tensor
-     * @param rStrainVector The Green-Lagrange strain tensor
-     */
-    void CalculateGreenLagrangeStrain(
-        const Vector& rC,
-        Vector& rStrainVector
-        );
-
-    /**
-     * @brief Calculation of the Green-Lagrange strain tensor:
-     * @param rF The deformation gradient
-     * @param rStrainVector The Green-Lagrange strain tensor
-     */
-    void CalculateGreenLagrangeStrain(
-        const Matrix& rF,
-        Vector& rStrainVector
-        );
-
-    /**
      * @brief Calculation of the Hencky strain tensor:
      * @param rC The right Cauchy tensor
      * @param rStrainVector The Hencky strain tensor
      */
     void CalculateHenckyStrain(
         const Vector& rC,
-        Vector& rStrainVector
-        );
-
-    /**
-     * @brief Calculation of the Almansi strain tensor:
-     * @param rF The deformation gradient
-     * @param rStrainVector The Almansi strain tensor
-     */
-    void CalculateAlmansiStrain(
-        const Matrix& rF,
         Vector& rStrainVector
         );
 
