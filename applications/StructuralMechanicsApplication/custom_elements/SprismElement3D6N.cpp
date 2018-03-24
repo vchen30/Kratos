@@ -1437,8 +1437,6 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
-    int check = BaseType::Check(rCurrentProcessInfo);
-
     /* Check the neighbours have been calculated */
     // Neighbour elements
     WeakPointerVector< Element >& p_neighbour_elements = this->GetValue(NEIGHBOUR_ELEMENTS);
