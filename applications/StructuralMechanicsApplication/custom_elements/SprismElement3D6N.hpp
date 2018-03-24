@@ -15,11 +15,9 @@
 // System includes
 
 // External includes
-#include <vector>
 
 // Project includes
-#include "includes/define.h"
-#include "includes/element.h"
+#include "custom_elements/base_solid_element.h"
 #include "structural_mechanics_application_variables.h"
 #include "custom_utilities/structural_mechanics_math_utilities.hpp"
 
@@ -57,7 +55,7 @@ namespace Kratos
  * @author Vicente Mataix Ferrandiz
  */
 class SprismElement3D6N
-    : public Element
+    : public BaseSolidElement
 {
 public:
 
@@ -91,7 +89,7 @@ public:
     typedef Node<3> NodeType;
 
     /// The base element type
-    typedef Element BaseType;
+    typedef BaseSolidElement BaseType;
 
     /// The definition of the index type
     typedef std::size_t IndexType;
@@ -810,9 +808,6 @@ protected:
     /* Currently selected integration methods */
     IntegrationMethod mThisIntegrationMethod;
 
-    /* Container for constitutive law instances on each integration point */
-    std::vector<ConstitutiveLaw::Pointer> mConstitutiveLawVector;
-
     /* Finalize and Initialize label*/
     bool mFinalizedStep; // TODO: Change for a  flag
 
@@ -1344,16 +1339,6 @@ protected:
         VectorType& rRightHandSideVector,
         Flags& rCalculationFlags
         );
-
-    /**
-     * @brief Initialize Material Properties on the Constitutive Law
-     */
-    void InitializeMaterial ();
-
-    /**
-     * @brief Reset the Constitutive Law Parameters
-     */
-    void ResetConstitutiveLaw() override;
 
     /**
      * @brief This method computes the delta position matrix necessary for UL formulation

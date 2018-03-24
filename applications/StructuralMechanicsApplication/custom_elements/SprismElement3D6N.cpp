@@ -38,7 +38,7 @@ KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, QUADRATIC_ELEMENT,                 
 /***********************************************************************************/
 
 SprismElement3D6N::SprismElement3D6N( )
-        : Element( )
+    : BaseType( )
 {
     //DO NOT CALL IT: only needed for Register and Serialization!!!
 }
@@ -47,7 +47,7 @@ SprismElement3D6N::SprismElement3D6N( )
 /***********************************************************************************/
 
 SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry)
-    : Element(NewId, pGeometry)
+    : BaseType(NewId, pGeometry)
 {
     //DO NOT ADD DOFS HERE!!!
 }
@@ -56,7 +56,7 @@ SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeo
 /***********************************************************************************/
 
 SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : Element(NewId, pGeometry, pProperties)
+    : BaseType(NewId, pGeometry, pProperties)
 {
     mFinalizedStep = true; // the creation is out of the time step, it must be true
 
@@ -88,9 +88,8 @@ SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeo
 /***********************************************************************************/
 
 SprismElement3D6N::SprismElement3D6N( SprismElement3D6N const& rOther)
-    :Element(rOther)
+    :BaseType(rOther)
     ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
-    ,mConstitutiveLawVector(rOther.mConstitutiveLawVector)
     ,mFinalizedStep(rOther.mFinalizedStep)
     ,mTotalDomainInitialSize(rOther.mTotalDomainInitialSize)
     ,mAuxMatCont(rOther.mAuxMatCont)
@@ -110,12 +109,9 @@ SprismElement3D6N::~SprismElement3D6N()
 
 SprismElement3D6N&  SprismElement3D6N::operator=(SprismElement3D6N const& rOther)
 {
-    Element::operator=(rOther);
+    BaseType::operator=(rOther);
 
     mThisIntegrationMethod = rOther.mThisIntegrationMethod;
-
-    mConstitutiveLawVector.clear();
-    mConstitutiveLawVector.resize( rOther.mConstitutiveLawVector.size() );
 
     mAuxMatCont.clear();
     mAuxMatCont.resize( rOther.mAuxMatCont.size());
@@ -146,8 +142,8 @@ Element::Pointer SprismElement3D6N::Create(
 /************************************************************************************/
 
 Element::Pointer SprismElement3D6N::Clone(
-        IndexType NewId,
-        NodesArrayType const& rThisNodes) const
+    IndexType NewId,
+    NodesArrayType const& rThisNodes) const
 {
     SprismElement3D6N new_element( NewId, GetGeometry().Create( rThisNodes ), pGetProperties() );
 
@@ -188,16 +184,16 @@ SprismElement3D6N::IntegrationMethod SprismElement3D6N::GetIntegrationMethod() c
 /***********************************************************************************/
 
 void SprismElement3D6N::EquationIdVector(
-        EquationIdVectorType& rResult,
-        ProcessInfo& rCurrentProcessInfo
-        )
+    EquationIdVectorType& rResult,
+    ProcessInfo& rCurrentProcessInfo
+    )
 {
     KRATOS_TRY;
 
-    WeakPointerVector< NodeType >& NeighbourNodes = this->GetValue(NEIGHBOUR_NODES);
+    WeakPointerVector< NodeType >& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
 
-    const IndexType NumberOfNodes = GetGeometry().size() + NumberOfActiveNeighbours(NeighbourNodes);
-    const IndexType dim = NumberOfNodes * 3;
+    const IndexType number_of_nodes = GetGeometry().size() + NumberOfActiveNeighbours(p_neighbour_nodes);
+    const IndexType dim = number_of_nodes * 3;
 
     if (rResult.size() != dim)
         rResult.resize(dim, false);
@@ -213,10 +209,10 @@ void SprismElement3D6N::EquationIdVector(
 
     // Adding the ids of the neighbouring nodes
     for (IndexType i = 0; i < 6; i++) {
-        if (HasNeighbour(i, NeighbourNodes[i])) {
-            rResult[index]     = NeighbourNodes[i].GetDof(DISPLACEMENT_X).EquationId();
-            rResult[index + 1] = NeighbourNodes[i].GetDof(DISPLACEMENT_Y).EquationId();
-            rResult[index + 2] = NeighbourNodes[i].GetDof(DISPLACEMENT_Z).EquationId();
+        if (HasNeighbour(i, p_neighbour_nodes[i])) {
+            rResult[index]     = p_neighbour_nodes[i].GetDof(DISPLACEMENT_X).EquationId();
+            rResult[index + 1] = p_neighbour_nodes[i].GetDof(DISPLACEMENT_Y).EquationId();
+            rResult[index + 2] = p_neighbour_nodes[i].GetDof(DISPLACEMENT_Z).EquationId();
             index += 3;
         }
     }
@@ -228,13 +224,13 @@ void SprismElement3D6N::EquationIdVector(
 /***********************************************************************************/
 
 void SprismElement3D6N::GetDofList(
-        DofsVectorType& rElementalDofList,
-        ProcessInfo& CurrentProcessInfo
-        )
+    DofsVectorType& rElementalDofList,
+    ProcessInfo& rCurrentProcessInfo
+    )
 {
     KRATOS_TRY;
 
-    WeakPointerVector< NodeType >& NeighbourNodes = this->GetValue(NEIGHBOUR_NODES);
+    WeakPointerVector< NodeType >& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
     rElementalDofList.resize(0);
 
     // Nodes of the central element
@@ -246,10 +242,10 @@ void SprismElement3D6N::GetDofList(
 
     // Adding the dofs of the neighbouring nodes
     for (IndexType i = 0; i < 6; i++) {
-        if (HasNeighbour(i, NeighbourNodes[i])) {
-            rElementalDofList.push_back(NeighbourNodes[i].pGetDof(DISPLACEMENT_X));
-            rElementalDofList.push_back(NeighbourNodes[i].pGetDof(DISPLACEMENT_Y));
-            rElementalDofList.push_back(NeighbourNodes[i].pGetDof(DISPLACEMENT_Z));
+        if (HasNeighbour(i, p_neighbour_nodes[i])) {
+            rElementalDofList.push_back(p_neighbour_nodes[i].pGetDof(DISPLACEMENT_X));
+            rElementalDofList.push_back(p_neighbour_nodes[i].pGetDof(DISPLACEMENT_Y));
+            rElementalDofList.push_back(p_neighbour_nodes[i].pGetDof(DISPLACEMENT_Z));
         }
     }
 
@@ -718,11 +714,11 @@ void SprismElement3D6N::CalculateDampingMatrix(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateDampingMatrix(
-        MatrixType& rDampingMatrix,
-        const MatrixType& rStiffnessMatrix,
-        const MatrixType& rMassMatrix,
-        ProcessInfo& rCurrentProcessInfo
-        )
+    MatrixType& rDampingMatrix,
+    const MatrixType& rStiffnessMatrix,
+    const MatrixType& rMassMatrix,
+    ProcessInfo& rCurrentProcessInfo
+    )
 {
     KRATOS_TRY;
 
@@ -1303,9 +1299,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); point_number++ ) {
-        mConstitutiveLawVector[point_number]->SetValue( rVariable, rValues[point_number], rCurrentProcessInfo );
-    }
+    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** SET MATRIX VALUE *********************************/
@@ -1317,9 +1311,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); point_number++ ) {
-        mConstitutiveLawVector[point_number]->SetValue( rVariable, rValues[point_number], rCurrentProcessInfo );
-    }
+    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /****************************** SET CONSTITUTIVE VALUE *****************************/
@@ -1331,15 +1323,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    if(rVariable == CONSTITUTIVE_LAW) {
-        if ( mConstitutiveLawVector.size() != rValues.size() ) {
-            mConstitutiveLawVector.resize(rValues.size());
-
-            KRATOS_ERROR_IF(mConstitutiveLawVector.size() != GetGeometry().IntegrationPointsNumber( mThisIntegrationMethod )) << "Constitutive law not has the correct size " << mConstitutiveLawVector.size() << std::endl;
-        }
-        for(IndexType i = 0; i < rValues.size(); i++)
-            mConstitutiveLawVector[i] = rValues[i];
-    }
+    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** GET DOUBLE VALUE *********************************/
@@ -1426,12 +1410,7 @@ void SprismElement3D6N::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    if(rVariable == CONSTITUTIVE_LAW) {
-        if ( rValues.size() != mConstitutiveLawVector.size() )
-            rValues.resize(mConstitutiveLawVector.size());
-        for(IndexType i = 0; i < rValues.size(); i++)
-            rValues[i] = mConstitutiveLawVector[i];
-    }
+    BaseType::GetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 //********************************* CHECK VALUES **********************************//
@@ -1451,12 +1430,9 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
     WeakPointerVector< NodeType >& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
     KRATOS_ERROR_IF(p_neighbour_nodes.size() == 0) << "The neighbour nodes are not calculated" << std::endl;
 
+    const int check = BaseType::Check(rCurrentProcessInfo);
+
     // Verify that nodal variables are correctly initialized
-    KRATOS_CHECK_VARIABLE_KEY(DISPLACEMENT)
-    KRATOS_CHECK_VARIABLE_KEY(VELOCITY)
-    KRATOS_CHECK_VARIABLE_KEY(ACCELERATION)
-    KRATOS_CHECK_VARIABLE_KEY(DENSITY)
-    KRATOS_CHECK_VARIABLE_KEY(VOLUME_ACCELERATION)
     KRATOS_CHECK_VARIABLE_KEY(VON_MISES_STRESS)
     KRATOS_CHECK_VARIABLE_KEY(NORM_ISOCHORIC_STRESS)
     KRATOS_CHECK_VARIABLE_KEY(CAUCHY_STRESS_TENSOR)
@@ -1472,22 +1448,6 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
     KRATOS_CHECK_VARIABLE_KEY(CONSTITUTIVE_MATRIX)
     KRATOS_CHECK_VARIABLE_KEY(DEFORMATION_GRADIENT)
 
-    // Check that the element's nodes contain all required SolutionStepData and Degrees of freedom
-    for ( IndexType i = 0; i < this->GetGeometry().size(); i++ ) {
-        Node<3> &rnode = this->GetGeometry()[i];
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISPLACEMENT,rnode)
-//         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY,rnode)
-//         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ACCELERATION,rnode)
-
-        KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_X, rnode)
-        KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Y, rnode)
-        KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Z, rnode)
-    }
-
-    // Verify that the constitutive law exists
-    KRATOS_ERROR_IF_NOT(this->GetProperties().Has( CONSTITUTIVE_LAW )) << "Constitutive law not provided for property " << this->GetProperties().Id() << std::endl;
-    KRATOS_ERROR_IF_NOT(this->GetProperties().GetValue( CONSTITUTIVE_LAW )->GetStrainSize() == 6) << "Constitutive law not provided for property " << this->GetProperties().Id() << std::endl;
-
     /* Verify compatibility with the constitutive law */
     ConstitutiveLaw::Features law_features;
     this->GetProperties().GetValue(CONSTITUTIVE_LAW)->GetLawFeatures(law_features);
@@ -1500,8 +1460,7 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 
     KRATOS_ERROR_IF_NOT(correct_strain_measure) << "Constitutive law is not compatible with the element type SprismElement3D6N" << std::endl;
 
-    // Check constitutive law
-    return mConstitutiveLawVector[0]->Check( GetProperties(), GetGeometry(), rCurrentProcessInfo);
+    return check;
 
     KRATOS_CATCH( "" );
 }
@@ -1512,11 +1471,7 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 
 void SprismElement3D6N::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 {
-    for ( IndexType i = 0; i < mConstitutiveLawVector.size(); i++ )
-        mConstitutiveLawVector[i]->InitializeSolutionStep( GetProperties(),
-                GetGeometry(),
-                row( GetGeometry().ShapeFunctionsValues( mThisIntegrationMethod ), i ),
-                rCurrentProcessInfo );
+    BaseType::InitializeSolutionStep(rCurrentProcessInfo);
 
     mFinalizedStep = false;
 }
@@ -3764,42 +3719,6 @@ void SprismElement3D6N::InitializeSystemMatrices(
     }
 }
 
-/***********************************************************************************/
-/***********************************************************************************/
-
-void SprismElement3D6N::InitializeMaterial()
-{
-    KRATOS_TRY;
-
-    if ( GetProperties()[CONSTITUTIVE_LAW] != NULL ) {
-        for ( IndexType i = 0; i < mConstitutiveLawVector.size(); i++ ) {
-            mConstitutiveLawVector[i] = GetProperties()[CONSTITUTIVE_LAW]->Clone();
-            mConstitutiveLawVector[i]->InitializeMaterial( GetProperties(), GetGeometry(),
-                    row( GetGeometry().ShapeFunctionsValues( mThisIntegrationMethod ), i ) );
-        }
-    } else {
-        KRATOS_ERROR << "A constitutive law needs to be specified for the element with ID " << this->Id() << std::endl;
-    }
-
-    KRATOS_CATCH( "" );
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void SprismElement3D6N::ResetConstitutiveLaw()
-{
-    KRATOS_TRY;
-
-    if ( GetProperties()[CONSTITUTIVE_LAW] != NULL ) {
-        for ( IndexType i = 0; i < mConstitutiveLawVector.size(); i++ ) {
-            mConstitutiveLawVector[i]->ResetMaterial( GetProperties(), GetGeometry(), row( GetGeometry().ShapeFunctionsValues( mThisIntegrationMethod ), i ) );
-        }
-    }
-
-    KRATOS_CATCH( "" );
-}
-
 /******************************* COMPUTE KINEMATICS ********************************/
 /***********************************************************************************/
 
@@ -4169,10 +4088,9 @@ void SprismElement3D6N::CalculateVolumeForce(
 
 void SprismElement3D6N::save( Serializer& rSerializer ) const
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseSolidElement);
     int IntMethod = int(mThisIntegrationMethod);
     rSerializer.save("IntegrationMethod",IntMethod);
-    rSerializer.save("ConstitutiveLawVector",mConstitutiveLawVector);
     rSerializer.save("FinalizedStep",mFinalizedStep);
     rSerializer.save("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.save("AuxMatCont",mAuxMatCont);
@@ -4184,11 +4102,10 @@ void SprismElement3D6N::save( Serializer& rSerializer ) const
 
 void SprismElement3D6N::load( Serializer& rSerializer )
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, BaseSolidElement);
     int IntMethod;
     rSerializer.load("IntegrationMethod",IntMethod);
     mThisIntegrationMethod = IntegrationMethod(IntMethod);
-    rSerializer.load("ConstitutiveLawVector",mConstitutiveLawVector);
     rSerializer.load("FinalizedStep",mFinalizedStep);
     rSerializer.load("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.load("AuxMatCont",mAuxMatCont);
