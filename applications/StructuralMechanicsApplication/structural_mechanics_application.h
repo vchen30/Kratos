@@ -280,7 +280,7 @@ private:
     const PrestressMembraneElement mPreStressMembraneElement3D4N;
     
     // Adding the SPRISM element 
-    const SprismElement3D6N mSprismElement3D6N;
+    const SolidShellElementSprism3D6N mSolidShellElementSprism3D6N;
     
     // Adding the nodal concentrated element 
     const NodalConcentratedElement mNodalConcentratedElement2D1N;

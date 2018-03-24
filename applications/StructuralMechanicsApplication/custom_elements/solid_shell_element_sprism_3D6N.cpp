@@ -22,13 +22,13 @@ namespace Kratos
 /**
  * Flags related to the element computation
  */
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, COMPUTE_RHS_VECTOR,                 0 );
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, COMPUTE_LHS_MATRIX,                 1 );
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, COMPUTE_RHS_VECTOR_WITH_COMPONENTS, 2 );
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, COMPUTE_LHS_MATRIX_WITH_COMPONENTS, 3 );
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, EAS_IMPLICIT_EXPLICIT,              4 ); // True means implicit // TODO: change this using templates!!!
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, TOTAL_UPDATED_LAGRANGIAN,           5 ); // True means total lagrangian // TODO: change this using templates!!!
-KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, QUADRATIC_ELEMENT,                  6 ); // True means quadratic in-plane behaviour // TODO: Idem
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, COMPUTE_RHS_VECTOR,                 0 );
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, COMPUTE_LHS_MATRIX,                 1 );
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, COMPUTE_RHS_VECTOR_WITH_COMPONENTS, 2 );
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, COMPUTE_LHS_MATRIX_WITH_COMPONENTS, 3 );
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, EAS_IMPLICIT_EXPLICIT,              4 ); // True means implicit // TODO: change this using templates!!!
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, TOTAL_UPDATED_LAGRANGIAN,           5 ); // True means total lagrangian // TODO: change this using templates!!!
+KRATOS_CREATE_LOCAL_FLAG( SolidShellElementSprism3D6N, QUADRATIC_ELEMENT,                  6 ); // True means quadratic in-plane behaviour // TODO: Idem
 
 // ------------------------------------------------------------------------- //
 // ------------------------------ PUBLIC ----------------------------------- //
@@ -37,7 +37,7 @@ KRATOS_CREATE_LOCAL_FLAG( SprismElement3D6N, QUADRATIC_ELEMENT,                 
 /************************************* CONSTRUCTOR *********************************/
 /***********************************************************************************/
 
-SprismElement3D6N::SprismElement3D6N( )
+SolidShellElementSprism3D6N::SolidShellElementSprism3D6N( )
     : BaseType( )
 {
     //DO NOT CALL IT: only needed for Register and Serialization!!!
@@ -46,7 +46,7 @@ SprismElement3D6N::SprismElement3D6N( )
 /************************************* CONSTRUCTOR *********************************/
 /***********************************************************************************/
 
-SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry)
+SolidShellElementSprism3D6N::SolidShellElementSprism3D6N(IndexType NewId, GeometryType::Pointer pGeometry)
     : BaseType(NewId, pGeometry)
 {
     //DO NOT ADD DOFS HERE!!!
@@ -55,7 +55,7 @@ SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeo
 /************************************* CONSTRUCTOR *********************************/
 /***********************************************************************************/
 
-SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
+SolidShellElementSprism3D6N::SolidShellElementSprism3D6N(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
     : BaseType(NewId, pGeometry, pProperties)
 {
     mFinalizedStep = true; // the creation is out of the time step, it must be true
@@ -87,7 +87,7 @@ SprismElement3D6N::SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeo
 /*********************************** COPY CONSTRUCTOR ******************************/
 /***********************************************************************************/
 
-SprismElement3D6N::SprismElement3D6N( SprismElement3D6N const& rOther)
+SolidShellElementSprism3D6N::SolidShellElementSprism3D6N( SolidShellElementSprism3D6N const& rOther)
     :BaseType(rOther)
     ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
     ,mFinalizedStep(rOther.mFinalizedStep)
@@ -100,14 +100,14 @@ SprismElement3D6N::SprismElement3D6N( SprismElement3D6N const& rOther)
 /************************************* DESTRUCTOR **********************************/
 /***********************************************************************************/
 
-SprismElement3D6N::~SprismElement3D6N()
+SolidShellElementSprism3D6N::~SolidShellElementSprism3D6N()
 {
 }
 
 /********************************** ASSIGMENT OPERATOR *****************************/
 /***********************************************************************************/
 
-SprismElement3D6N&  SprismElement3D6N::operator=(SprismElement3D6N const& rOther)
+SolidShellElementSprism3D6N&  SolidShellElementSprism3D6N::operator=(SolidShellElementSprism3D6N const& rOther)
 {
     BaseType::operator=(rOther);
 
@@ -130,22 +130,22 @@ SprismElement3D6N&  SprismElement3D6N::operator=(SprismElement3D6N const& rOther
 /************************************* OPERATIONS **********************************/
 /***********************************************************************************/
 
-Element::Pointer SprismElement3D6N::Create(
+Element::Pointer SolidShellElementSprism3D6N::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
-    return Kratos::make_shared<SprismElement3D6N>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+    return Kratos::make_shared<SolidShellElementSprism3D6N>(NewId, GetGeometry().Create(ThisNodes), pProperties);
 }
 
 /*********************************** CLONE ******************************************/
 /************************************************************************************/
 
-Element::Pointer SprismElement3D6N::Clone(
+Element::Pointer SolidShellElementSprism3D6N::Clone(
     IndexType NewId,
     NodesArrayType const& rThisNodes) const
 {
-    SprismElement3D6N new_element( NewId, GetGeometry().Create( rThisNodes ), pGetProperties() );
+    SolidShellElementSprism3D6N new_element( NewId, GetGeometry().Create( rThisNodes ), pGetProperties() );
 
     new_element.mThisIntegrationMethod = mThisIntegrationMethod;
 
@@ -168,14 +168,14 @@ Element::Pointer SprismElement3D6N::Clone(
     new_element.mTotalDomainInitialSize = mTotalDomainInitialSize;
     new_element.mAuxCont = mAuxCont;
 
-    return Kratos::make_shared<SprismElement3D6N>(new_element);
+    return Kratos::make_shared<SolidShellElementSprism3D6N>(new_element);
 }
 
 //******************************* GETTING METHODS *********************************//
 /***********************************************************************************/
 /***********************************************************************************/
 
-SprismElement3D6N::IntegrationMethod SprismElement3D6N::GetIntegrationMethod() const
+SolidShellElementSprism3D6N::IntegrationMethod SolidShellElementSprism3D6N::GetIntegrationMethod() const
 {
     return mThisIntegrationMethod;
 }
@@ -183,7 +183,7 @@ SprismElement3D6N::IntegrationMethod SprismElement3D6N::GetIntegrationMethod() c
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::EquationIdVector(
+void SolidShellElementSprism3D6N::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -223,7 +223,7 @@ void SprismElement3D6N::EquationIdVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetDofList(
+void SolidShellElementSprism3D6N::GetDofList(
     DofsVectorType& rElementalDofList,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -255,7 +255,7 @@ void SprismElement3D6N::GetDofList(
 /******************************** DISPLACEMENT **************************************/
 /************************************************************************************/
 
-void SprismElement3D6N::GetValuesVector(
+void SolidShellElementSprism3D6N::GetValuesVector(
     Vector& rValues,
     int Step
     )
@@ -291,7 +291,7 @@ void SprismElement3D6N::GetValuesVector(
 /********************************** VELOCITY ****************************************/
 /************************************************************************************/
 
-void SprismElement3D6N::GetFirstDerivativesVector(
+void SolidShellElementSprism3D6N::GetFirstDerivativesVector(
     Vector& rValues,
     int Step
     )
@@ -327,7 +327,7 @@ void SprismElement3D6N::GetFirstDerivativesVector(
 /******************************** ACCELERATION **************************************/
 /************************************************************************************/
 
-void SprismElement3D6N::GetSecondDerivativesVector(
+void SolidShellElementSprism3D6N::GetSecondDerivativesVector(
     Vector& rValues,
     int Step
     )
@@ -364,7 +364,7 @@ void SprismElement3D6N::GetSecondDerivativesVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateRightHandSide(
+void SolidShellElementSprism3D6N::CalculateRightHandSide(
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -375,7 +375,7 @@ void SprismElement3D6N::CalculateRightHandSide(
     LocalSystemComponents local_system;
 
     /* Calculation flags */
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR);
 
     MatrixType left_hand_side_matrix = Matrix();
 
@@ -395,7 +395,7 @@ void SprismElement3D6N::CalculateRightHandSide(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateRightHandSide(
+void SolidShellElementSprism3D6N::CalculateRightHandSide(
     std::vector< VectorType >& rRightHandSideVectors,
     const std::vector< Variable< VectorType > >& rRHSVariables,
     ProcessInfo& rCurrentProcessInfo
@@ -407,8 +407,8 @@ void SprismElement3D6N::CalculateRightHandSide(
     LocalSystemComponents local_system;
 
     /* Calculation flags */
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR);
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS);
 
     MatrixType left_hand_side_matrix = Matrix();
 
@@ -436,7 +436,7 @@ void SprismElement3D6N::CalculateRightHandSide(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateLeftHandSide(
+void SolidShellElementSprism3D6N::CalculateLeftHandSide(
     MatrixType& rLeftHandSideMatrix,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -447,8 +447,8 @@ void SprismElement3D6N::CalculateLeftHandSide(
     LocalSystemComponents local_system;
 
     /* Calculation flags */
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX, true);
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR, false);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX, true);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR, false);
 
     VectorType right_hand_side_vector = Vector();
 
@@ -468,7 +468,7 @@ void SprismElement3D6N::CalculateLeftHandSide(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateLocalSystem(
+void SolidShellElementSprism3D6N::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo
@@ -480,8 +480,8 @@ void SprismElement3D6N::CalculateLocalSystem(
     LocalSystemComponents local_system;
 
     /* Calculation flags */
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX, true);
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR, true);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX, true);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR, true);
 
     /* Initialize sizes for the system components: */
     this->InitializeSystemMatrices( rLeftHandSideMatrix, rRightHandSideVector, local_system.CalculationFlags );
@@ -499,7 +499,7 @@ void SprismElement3D6N::CalculateLocalSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateLocalSystem(
+void SolidShellElementSprism3D6N::CalculateLocalSystem(
     std::vector< MatrixType >& rLeftHandSideMatrices,
     const std::vector< Variable< MatrixType > >& rLHSVariables,
     std::vector< VectorType >& rRightHandSideVectors,
@@ -513,8 +513,8 @@ void SprismElement3D6N::CalculateLocalSystem(
     LocalSystemComponents local_system;
 
     /* Calculation flags*/
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX_WITH_COMPONENTS);
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX_WITH_COMPONENTS);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS);
 
     /* Initialize sizes for the system components: */
     if( rLHSVariables.size() != rLeftHandSideMatrices.size() ) {
@@ -525,19 +525,19 @@ void SprismElement3D6N::CalculateLocalSystem(
         rRightHandSideVectors.resize(rRHSVariables.size());
     }
 
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX);
     for( IndexType i = 0; i < rLeftHandSideMatrices.size(); i++ ) {
         this->InitializeSystemMatrices( rLeftHandSideMatrices[i], rRightHandSideVectors[0], local_system.CalculationFlags );
     }
 
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_RHS_VECTOR, true);
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX, false);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR, true);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX, false);
 
     for( IndexType i = 0; i < rRightHandSideVectors.size(); i++ ) {
         this->InitializeSystemMatrices( rLeftHandSideMatrices[0], rRightHandSideVectors[i], local_system.CalculationFlags );
     }
 
-    local_system.CalculationFlags.Set(SprismElement3D6N::COMPUTE_LHS_MATRIX, true);
+    local_system.CalculationFlags.Set(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX, true);
 
     /* Set general_variables to Local system components */
     local_system.SetLeftHandSideMatrices(rLeftHandSideMatrices);
@@ -555,7 +555,7 @@ void SprismElement3D6N::CalculateLocalSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateMassMatrix(
+void SolidShellElementSprism3D6N::CalculateMassMatrix(
     MatrixType& rMassMatrix,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -654,7 +654,7 @@ void SprismElement3D6N::CalculateMassMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateDampingMatrix(
+void SolidShellElementSprism3D6N::CalculateDampingMatrix(
     MatrixType& rDampingMatrix,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -713,7 +713,7 @@ void SprismElement3D6N::CalculateDampingMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateDampingMatrix(
+void SolidShellElementSprism3D6N::CalculateDampingMatrix(
     MatrixType& rDampingMatrix,
     const MatrixType& rStiffnessMatrix,
     const MatrixType& rMassMatrix,
@@ -762,7 +762,7 @@ void SprismElement3D6N::CalculateDampingMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateOnIntegrationPoints(
+void SolidShellElementSprism3D6N::CalculateOnIntegrationPoints(
     const Variable<double>& rVariable,
     std::vector<double>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -938,7 +938,7 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
             double strain_energy = 0.0;
 
             // Compute stresses and constitutive parameters
-            if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN))
+            if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN))
                 mConstitutiveLawVector[point_number]->CalculateMaterialResponseKirchhoff(Values);
             else
                 mConstitutiveLawVector[point_number]->CalculateMaterialResponsePK2(Values);
@@ -973,7 +973,7 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateOnIntegrationPoints(
+void SolidShellElementSprism3D6N::CalculateOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     std::vector<Vector>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -1125,7 +1125,7 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateOnIntegrationPoints(
+void SolidShellElementSprism3D6N::CalculateOnIntegrationPoints(
     const Variable<Matrix >& rVariable,
     std::vector< Matrix >& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -1276,7 +1276,7 @@ void SprismElement3D6N::CalculateOnIntegrationPoints(
 /******************************** SET DOUBLE VALUE *********************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
         const Variable<double>& rVariable,
         std::vector<double>& rValues,
         const ProcessInfo& rCurrentProcessInfo
@@ -1293,7 +1293,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
 /******************************** SET VECTOR VALUE *********************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     std::vector<Vector>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1305,7 +1305,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
 /******************************** SET MATRIX VALUE *********************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
     const Variable<Matrix>& rVariable,
     std::vector<Matrix>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1317,7 +1317,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
 /****************************** SET CONSTITUTIVE VALUE *****************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
     const Variable<ConstitutiveLaw::Pointer>& rVariable,
     std::vector<ConstitutiveLaw::Pointer>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1329,7 +1329,7 @@ void SprismElement3D6N::SetValueOnIntegrationPoints(
 /******************************** GET DOUBLE VALUE *********************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::GetValueOnIntegrationPoints(
     const Variable<double>& rVariable,
     std::vector<double>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1353,7 +1353,7 @@ void SprismElement3D6N::GetValueOnIntegrationPoints(
 /********************************** GET VECTOR VALUE *******************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::GetValueOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     std::vector<Vector>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1380,7 +1380,7 @@ void SprismElement3D6N::GetValueOnIntegrationPoints(
 /*********************************** GET MATRIX VALUE ******************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::GetValueOnIntegrationPoints(
     const Variable<Matrix>& rVariable,
     std::vector<Matrix>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1404,7 +1404,7 @@ void SprismElement3D6N::GetValueOnIntegrationPoints(
 /******************************** GET CONSTITUTIVE VALUE ***************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::GetValueOnIntegrationPoints(
     const Variable<ConstitutiveLaw::Pointer>& rVariable,
     std::vector<ConstitutiveLaw::Pointer>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1417,7 +1417,7 @@ void SprismElement3D6N::GetValueOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
+int  SolidShellElementSprism3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
@@ -1458,7 +1458,7 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
         if (law_features.mStrainMeasures[i] == ConstitutiveLaw::StrainMeasure_Deformation_Gradient)
             correct_strain_measure = true;
 
-    KRATOS_ERROR_IF_NOT(correct_strain_measure) << "Constitutive law is not compatible with the element type SprismElement3D6N" << std::endl;
+    KRATOS_ERROR_IF_NOT(correct_strain_measure) << "Constitutive law is not compatible with the element type SolidShellElementSprism3D6N" << std::endl;
 
     return check;
 
@@ -1469,7 +1469,7 @@ int  SprismElement3D6N::Check(const ProcessInfo& rCurrentProcessInfo)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
+void SolidShellElementSprism3D6N::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 {
     BaseType::InitializeSolutionStep(rCurrentProcessInfo);
 
@@ -1479,7 +1479,7 @@ void SprismElement3D6N::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
+void SolidShellElementSprism3D6N::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
@@ -1540,7 +1540,7 @@ void SprismElement3D6N::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::InitializeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
+void SolidShellElementSprism3D6N::InitializeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
 {
     // TODO: Add something if necessary
 }
@@ -1548,7 +1548,7 @@ void SprismElement3D6N::InitializeNonLinearIteration( ProcessInfo& rCurrentProce
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
+void SolidShellElementSprism3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
 {
     /* Create and initialize element variables: */
     GeneralVariables general_variables;
@@ -1620,7 +1620,7 @@ void SprismElement3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcess
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::Initialize()
+void SolidShellElementSprism3D6N::Initialize()
 {
     KRATOS_TRY;
 
@@ -1632,27 +1632,27 @@ void SprismElement3D6N::Initialize()
 
     /* Implicit or explicit EAS update */
     if( GetProperties().Has(EAS_IMP) )
-        mELementalFlags.Set(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT, GetProperties()[EAS_IMP]);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::EAS_IMPLICIT_EXPLICIT, GetProperties()[EAS_IMP]);
     else
-        mELementalFlags.Set(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT, true);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::EAS_IMPLICIT_EXPLICIT, true);
 
     /* Total or updated lagrangian */
     if( GetProperties().Has(SPRISM_TL_UL) )
-        mELementalFlags.Set(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN, GetProperties()[SPRISM_TL_UL]);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN, GetProperties()[SPRISM_TL_UL]);
     else
-        mELementalFlags.Set(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN, true);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN, true);
 
     /* Quadratic or linear element */
     if( GetProperties().Has(QUAD_ON) )
-        mELementalFlags.Set(SprismElement3D6N::QUADRATIC_ELEMENT, GetProperties()[QUAD_ON]);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::QUADRATIC_ELEMENT, GetProperties()[QUAD_ON]);
     else
-        mELementalFlags.Set(SprismElement3D6N::QUADRATIC_ELEMENT, true);
+        mELementalFlags.Set(SolidShellElementSprism3D6N::QUADRATIC_ELEMENT, true);
 
     // Resizing the containers
     mAuxMatCont.resize( integration_points.size() );
     mAuxCont.resize( integration_points.size(), false );
 
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN)) { // Jacobian inverses
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) { // Jacobian inverses
         // Compute jacobian inverses and set the domain initial size:
         GeometryType::JacobiansType J0;
         J0 = GetGeometry().Jacobian(J0, mThisIntegrationMethod);
@@ -1694,7 +1694,7 @@ void SprismElement3D6N::Initialize()
 // ----------------------------- PROTECTED --------------------------------- //
 // ------------------------------------------------------------------------- //
 
-void SprismElement3D6N::CalculateElementalSystem(
+void SolidShellElementSprism3D6N::CalculateElementalSystem(
     LocalSystemComponents& rLocalSystem,
     ProcessInfo& rCurrentProcessInfo
     )
@@ -1766,19 +1766,19 @@ void SprismElement3D6N::CalculateElementalSystem(
         // EAS components
         IntegrateEASInZeta(general_variables, EAS, zeta_gauss, integration_weight);
 
-        if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
+        if ( rLocalSystem.CalculationFlags.Is(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
             /* Volume forces */
             this->CalculateVolumeForce( volume_force, general_variables, integration_weight );
         }
     }
 
     /* Calculate the RHS */
-    if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
+    if ( rLocalSystem.CalculationFlags.Is(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
         /* Contribution to external and internal forces */
         this->CalculateAndAddRHS ( rLocalSystem, general_variables, volume_force, rIntegratedStress, common_components, EAS, alpha_eas );
     }
 
-    if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_LHS_MATRIX) ) { // Calculation of the matrix is required
+    if ( rLocalSystem.CalculationFlags.Is(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX) ) { // Calculation of the matrix is required
         /* Contribution to the tangent stiffness matrix */
         this->CalculateAndAddLHS( rLocalSystem, general_variables, values, rIntegratedStress, common_components, this_cartesian_derivatives, EAS, alpha_eas );
     }
@@ -1789,7 +1789,7 @@ void SprismElement3D6N::CalculateElementalSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::PrintElementCalculation(
+void SolidShellElementSprism3D6N::PrintElementCalculation(
     LocalSystemComponents& rLocalSystem,
     GeneralVariables& rVariables
     )
@@ -1860,7 +1860,7 @@ void SprismElement3D6N::PrintElementCalculation(
 /***********************************************************************************/
 /***********************************************************************************/
 
-bool SprismElement3D6N::HasNeighbour(
+bool SolidShellElementSprism3D6N::HasNeighbour(
     const IndexType Index,
     const NodeType& NeighbourNode
     )
@@ -1868,7 +1868,7 @@ bool SprismElement3D6N::HasNeighbour(
     if (NeighbourNode.Id() == GetGeometry()[Index].Id()) {
         return false;
     } else {
-        if ( mELementalFlags.Is(SprismElement3D6N::QUADRATIC_ELEMENT) == true )
+        if ( mELementalFlags.Is(SolidShellElementSprism3D6N::QUADRATIC_ELEMENT) == true )
             return true;
         else
             return false;
@@ -1878,7 +1878,7 @@ bool SprismElement3D6N::HasNeighbour(
 /***********************************************************************************/
 /***********************************************************************************/
 
-std::size_t SprismElement3D6N::NumberOfActiveNeighbours(WeakPointerVector< NodeType >& pNeighbourNodes)
+std::size_t SolidShellElementSprism3D6N::NumberOfActiveNeighbours(WeakPointerVector< NodeType >& pNeighbourNodes)
 {
     std::size_t active_neighbours = 0;
     for (IndexType i = 0; i < pNeighbourNodes.size(); i++) {
@@ -1891,7 +1891,7 @@ std::size_t SprismElement3D6N::NumberOfActiveNeighbours(WeakPointerVector< NodeT
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetNodalCoordinates(
+void SolidShellElementSprism3D6N::GetNodalCoordinates(
     bounded_matrix<double, 12, 3 > & NodesCoord,
     WeakPointerVector< NodeType >& NeighbourNodes,
     const Configuration ThisConfiguration
@@ -1963,11 +1963,11 @@ void SprismElement3D6N::GetNodalCoordinates(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCartesianDerivatives(CartesianDerivatives& rCartesianDerivatives)
+void SolidShellElementSprism3D6N::CalculateCartesianDerivatives(CartesianDerivatives& rCartesianDerivatives)
 {
     bounded_matrix<double, 12, 3 > nodes_coord; // Coordinates of the nodes
     WeakPointerVector< NodeType >& neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == true ) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN) == true ) {
         this->GetNodalCoordinates(nodes_coord, neighbour_nodes, Configuration::INITIAL);
     } else {
         this->GetNodalCoordinates(nodes_coord, neighbour_nodes, Configuration::CURRENT);
@@ -2033,7 +2033,7 @@ void SprismElement3D6N::CalculateCartesianDerivatives(CartesianDerivatives& rCar
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCommonComponents(
+void SolidShellElementSprism3D6N::CalculateCommonComponents(
     CommonComponents& rCommonComponents,
     const CartesianDerivatives& rCartesianDerivatives
     )
@@ -2119,7 +2119,7 @@ void SprismElement3D6N::CalculateCommonComponents(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateLocalCoordinateSystem(
+void SolidShellElementSprism3D6N::CalculateLocalCoordinateSystem(
     const int choose,
     const double ang
     )
@@ -2250,7 +2250,7 @@ void SprismElement3D6N::CalculateLocalCoordinateSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateIdVector(array_1d<IndexType, 18 >& rIdVector)
+void SolidShellElementSprism3D6N::CalculateIdVector(array_1d<IndexType, 18 >& rIdVector)
 {
     KRATOS_TRY;
 
@@ -2275,7 +2275,7 @@ void SprismElement3D6N::CalculateIdVector(array_1d<IndexType, 18 >& rIdVector)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::ComputeLocalDerivatives(
+void SolidShellElementSprism3D6N::ComputeLocalDerivatives(
     bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
     const array_1d<double, 3>& rLocalCoordinates
     )
@@ -2314,7 +2314,7 @@ void SprismElement3D6N::ComputeLocalDerivatives(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::ComputeLocalDerivativesQuadratic(
+void SolidShellElementSprism3D6N::ComputeLocalDerivativesQuadratic(
     bounded_matrix<double, 4, 2 >& rLocalDerivativePatch,
     const IndexType NodeGauss
     )
@@ -2358,7 +2358,7 @@ void SprismElement3D6N::ComputeLocalDerivativesQuadratic(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateJacobianCenterGauss(
+void SolidShellElementSprism3D6N::CalculateJacobianCenterGauss(
     GeometryType::JacobiansType& J,
     std::vector< Matrix >& Jinv,
     Vector& detJ,
@@ -2393,7 +2393,7 @@ void SprismElement3D6N::CalculateJacobianCenterGauss(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateJacobian(
+void SolidShellElementSprism3D6N::CalculateJacobian(
     double & detJ,
     bounded_matrix<double, 3, 3 > & J,
     bounded_matrix<double, 6, 3 > & LocalDerivativePatch,
@@ -2421,7 +2421,7 @@ void SprismElement3D6N::CalculateJacobian(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateJacobianAndInv(
+void SolidShellElementSprism3D6N::CalculateJacobianAndInv(
     bounded_matrix<double, 3, 3 >& J,
     bounded_matrix<double, 3, 3 >& Jinv,
     bounded_matrix<double, 6, 3 >& LocalDerivativePatch,
@@ -2443,7 +2443,7 @@ void SprismElement3D6N::CalculateJacobianAndInv(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateJacobianAndInv(
+void SolidShellElementSprism3D6N::CalculateJacobianAndInv(
     bounded_matrix<double, 3, 3 > & J,
     bounded_matrix<double, 3, 3 > & Jinv,
     const bounded_matrix<double, 3, 6 > & NodesCoord,
@@ -2465,7 +2465,7 @@ void SprismElement3D6N::CalculateJacobianAndInv(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCartesianDerOnCenterPlane(
+void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterPlane(
     const GeometricLevel Part,
     bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter
     )
@@ -2474,7 +2474,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterPlane(
 
     double norm0, norm;
     array_1d<double, 3 > vxe, vye;
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
         vxe[0] = GetGeometry()[2 + index].X0() - GetGeometry()[1 + index].X0();
         vxe[1] = GetGeometry()[2 + index].Y0() - GetGeometry()[1 + index].Y0();
         vxe[2] = GetGeometry()[2 + index].Z0() - GetGeometry()[1 + index].Z0();
@@ -2524,7 +2524,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterPlane(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCartesianDerOnGaussPlane(
+void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussPlane(
     const IndexType NodeGauss,
     const GeometricLevel Part,
     const bounded_matrix<double, 12, 3 > & NodesCoord,
@@ -2581,7 +2581,7 @@ void SprismElement3D6N::CalculateCartesianDerOnGaussPlane(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCartesianDerOnGaussTrans(
+void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussTrans(
     const bounded_matrix<double, 12, 3 > & NodesCoord,
     bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
     const array_1d<double, 3>& rLocalCoordinates
@@ -2624,7 +2624,7 @@ void SprismElement3D6N::CalculateCartesianDerOnGaussTrans(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
+void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterTrans(
     CartesianDerivatives& rCartesianDerivatives,
     const bounded_matrix<double, 12, 3 >& NodesCoord,
     const GeometricLevel Part
@@ -2694,7 +2694,7 @@ void SprismElement3D6N::CalculateCartesianDerOnCenterTrans(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateInPlaneGradientFGauss(
+void SolidShellElementSprism3D6N::CalculateInPlaneGradientFGauss(
     bounded_matrix<double, 3, 2 >& InPlaneGradientFGauss,
     const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
     const bounded_matrix<double, 12, 3 >& NodesCoord,
@@ -2729,7 +2729,7 @@ void SprismElement3D6N::CalculateInPlaneGradientFGauss(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateTransverseGradientF(
+void SolidShellElementSprism3D6N::CalculateTransverseGradientF(
     array_1d<double, 3 > & TransverseGradientF,
     const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
     const bounded_matrix<double, 12, 3 > & NodesCoord
@@ -2747,7 +2747,7 @@ void SprismElement3D6N::CalculateTransverseGradientF(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateTransverseGradientFinP(
+void SolidShellElementSprism3D6N::CalculateTransverseGradientFinP(
     TransverseGradientIsoParametric& TransverseGradientIsoParametric,
     const bounded_matrix<double, 12, 3 > & NodesCoord,
     const GeometricLevel Part
@@ -2765,7 +2765,7 @@ void SprismElement3D6N::CalculateTransverseGradientFinP(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddBMembrane(
+void SolidShellElementSprism3D6N::CalculateAndAddBMembrane(
     bounded_matrix<double, 3, 18 >& BMembrane,
     bounded_matrix<double, 3, 1  >& CMembrane,
     const bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss,
@@ -2803,7 +2803,7 @@ void SprismElement3D6N::CalculateAndAddBMembrane(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddMembraneKgeometric(
+void SolidShellElementSprism3D6N::CalculateAndAddMembraneKgeometric(
     bounded_matrix<double, 36, 36 > & Kgeometricmembrane,
     const CartesianDerivatives& rCartesianDerivatives,
     const array_1d<double, 3 > & SMembrane,
@@ -2888,7 +2888,7 @@ void SprismElement3D6N::CalculateAndAddMembraneKgeometric(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddBShear(
+void SolidShellElementSprism3D6N::CalculateAndAddBShear(
     bounded_matrix<double, 2, 18 >& BShear,
     bounded_matrix<double, 2, 1 >& CShear,
     const CartesianDerivatives& rCartesianDerivatives,
@@ -2955,7 +2955,7 @@ void SprismElement3D6N::CalculateAndAddBShear(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddShearKgeometric(
+void SolidShellElementSprism3D6N::CalculateAndAddShearKgeometric(
     bounded_matrix<double, 36, 36 > & Kgeometricshear,
     const CartesianDerivatives& rCartesianDerivatives,
     const array_1d<double, 2 > & SShear,
@@ -3063,7 +3063,7 @@ void SprismElement3D6N::CalculateAndAddShearKgeometric(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddBNormal(
+void SolidShellElementSprism3D6N::CalculateAndAddBNormal(
     bounded_matrix<double, 1, 18 > & BNormal,
     double & CNormal,
     const bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesCenter,
@@ -3082,7 +3082,7 @@ void SprismElement3D6N::CalculateAndAddBNormal(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddNormalKgeometric(
+void SolidShellElementSprism3D6N::CalculateAndAddNormalKgeometric(
     bounded_matrix<double, 36, 36 >& Kgeometricnormal,
     const bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesCenter,
     const double SNormal
@@ -3112,7 +3112,7 @@ void SprismElement3D6N::CalculateAndAddNormalKgeometric(
 /***********************************************************************************/
 /***********************************************************************************/
 
-bounded_matrix<double, 36, 1 > SprismElement3D6N::GetVectorCurrentPosition()
+bounded_matrix<double, 36, 1 > SolidShellElementSprism3D6N::GetVectorCurrentPosition()
 {
     KRATOS_TRY;
 
@@ -3157,7 +3157,7 @@ bounded_matrix<double, 36, 1 > SprismElement3D6N::GetVectorCurrentPosition()
 /***********************************************************************************/
 /***********************************************************************************/
 
-bounded_matrix<double, 36, 1 > SprismElement3D6N::GetVectorPreviousPosition()
+bounded_matrix<double, 36, 1 > SolidShellElementSprism3D6N::GetVectorPreviousPosition()
 {
     KRATOS_TRY;
 
@@ -3206,7 +3206,7 @@ bounded_matrix<double, 36, 1 > SprismElement3D6N::GetVectorPreviousPosition()
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::IntegrateStressesInZeta(
+void SolidShellElementSprism3D6N::IntegrateStressesInZeta(
     GeneralVariables& rVariables,
     StressIntegratedComponents& rIntegratedStress,
     const double AlphaEAS,
@@ -3250,7 +3250,7 @@ void SprismElement3D6N::IntegrateStressesInZeta(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::IntegrateEASInZeta(
+void SolidShellElementSprism3D6N::IntegrateEASInZeta(
     GeneralVariables& rVariables,
     EASComponents& rEAS,
     const double ZetaGauss,
@@ -3285,7 +3285,7 @@ void SprismElement3D6N::IntegrateEASInZeta(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddLHS(
+void SolidShellElementSprism3D6N::CalculateAndAddLHS(
     LocalSystemComponents& rLocalSystem,
     GeneralVariables& rVariables,
     ConstitutiveLaw::Parameters& rValues,
@@ -3297,7 +3297,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
     )
 {
     /* Contributions of the stiffness matrix calculated on the reference configuration */
-    if( rLocalSystem.CalculationFlags.Is( SprismElement3D6N::COMPUTE_LHS_MATRIX_WITH_COMPONENTS ) ) {
+    if( rLocalSystem.CalculationFlags.Is( SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX_WITH_COMPONENTS ) ) {
         std::vector<MatrixType>& rLeftHandSideMatrices = rLocalSystem.GetLeftHandSideMatrices();
         const std::vector< Variable< MatrixType > >& rLeftHandSideVariables = rLocalSystem.GetLeftHandSideVariables();
 
@@ -3340,7 +3340,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
             }
 
             /* Implicit or explicit EAS update*/
-            if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
+            if ( mELementalFlags.Is(SolidShellElementSprism3D6N::EAS_IMPLICIT_EXPLICIT)) {
                 /* Apply EAS stabilization */
                 ApplyEASLHS(rLeftHandSideMatrices[i], rEAS);
             }
@@ -3381,7 +3381,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
         this->CalculateAndAddKuug( LeftHandSideMatrix, rIntegratedStress, rCartesianDerivatives );
 
         /* Implicit or explicit EAS update*/
-        if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
+        if ( mELementalFlags.Is(SolidShellElementSprism3D6N::EAS_IMPLICIT_EXPLICIT)) {
             /* Apply EAS stabilization */
             ApplyEASLHS(LeftHandSideMatrix, rEAS);
         }
@@ -3391,7 +3391,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddRHS(
+void SolidShellElementSprism3D6N::CalculateAndAddRHS(
     LocalSystemComponents& rLocalSystem,
     GeneralVariables& rVariables,
     Vector& rVolumeForce,
@@ -3402,7 +3402,7 @@ void SprismElement3D6N::CalculateAndAddRHS(
     )
 {
     /* Contribution of the internal and external forces */
-    if( rLocalSystem.CalculationFlags.Is( SprismElement3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS ) ) {
+    if( rLocalSystem.CalculationFlags.Is( SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS ) ) {
         std::vector<VectorType>& RightHandSideVectors = rLocalSystem.GetRightHandSideVectors();
         const std::vector< Variable< VectorType > >& rRightHandSideVariables = rLocalSystem.GetRightHandSideVariables();
         for( IndexType i = 0; i < rRightHandSideVariables.size(); i++ ) {
@@ -3435,7 +3435,7 @@ void SprismElement3D6N::CalculateAndAddRHS(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddKuum(
+void SolidShellElementSprism3D6N::CalculateAndAddKuum(
     MatrixType& rLeftHandSideMatrix,
     GeneralVariables& rVariables,
     const double IntegrationWeight
@@ -3469,7 +3469,7 @@ void SprismElement3D6N::CalculateAndAddKuum(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddKuug(
+void SolidShellElementSprism3D6N::CalculateAndAddKuug(
     MatrixType& rLeftHandSideMatrix,
     const StressIntegratedComponents& rIntegratedStress,
     const CartesianDerivatives& rCartesianDerivatives
@@ -3524,7 +3524,7 @@ void SprismElement3D6N::CalculateAndAddKuug(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::ApplyEASLHS(
+void SolidShellElementSprism3D6N::ApplyEASLHS(
     MatrixType& rLeftHandSideMatrix,
     const EASComponents& rEAS
     )
@@ -3556,7 +3556,7 @@ void SprismElement3D6N::ApplyEASLHS(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::ApplyEASRHS(
+void SolidShellElementSprism3D6N::ApplyEASRHS(
     bounded_matrix<double, 36, 1 >& rRHSFull,
     const EASComponents& rEAS,
     double& AlphaEAS
@@ -3576,7 +3576,7 @@ void SprismElement3D6N::ApplyEASRHS(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddExternalForces(
+void SolidShellElementSprism3D6N::CalculateAndAddExternalForces(
     VectorType& rRightHandSideVector,
     GeneralVariables& rVariables,
     Vector& rVolumeForce
@@ -3599,7 +3599,7 @@ void SprismElement3D6N::CalculateAndAddExternalForces(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateAndAddInternalForces(
+void SolidShellElementSprism3D6N::CalculateAndAddInternalForces(
     VectorType& rRightHandSideVector,
     const StressIntegratedComponents& rIntegratedStress,
     const CommonComponents& rCommonComponents,
@@ -3660,7 +3660,7 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::SetGeneralVariables(
+void SolidShellElementSprism3D6N::SetGeneralVariables(
     GeneralVariables& rVariables,
     ConstitutiveLaw::Parameters& rValues,
     const IndexType rPointNumber
@@ -3686,7 +3686,7 @@ void SprismElement3D6N::SetGeneralVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::InitializeSystemMatrices(
+void SolidShellElementSprism3D6N::InitializeSystemMatrices(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     Flags& rCalculationFlags
@@ -3697,7 +3697,7 @@ void SprismElement3D6N::InitializeSystemMatrices(
     const IndexType number_of_nodes = GetGeometry().size() + NumberOfActiveNeighbours(p_neighbour_nodes);
     const IndexType mat_size = number_of_nodes * 3;
 
-    if ( rCalculationFlags.Is(SprismElement3D6N::COMPUTE_LHS_MATRIX) ) {// Calculation of the matrix is required
+    if ( rCalculationFlags.Is(SolidShellElementSprism3D6N::COMPUTE_LHS_MATRIX) ) {// Calculation of the matrix is required
         if ( rLeftHandSideMatrix.size1() != mat_size )
             rLeftHandSideMatrix.resize( mat_size, mat_size, false );
 
@@ -3705,7 +3705,7 @@ void SprismElement3D6N::InitializeSystemMatrices(
     }
 
     // Resizing as needed the RHS
-    if ( rCalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the matrix is required
+    if ( rCalculationFlags.Is(SolidShellElementSprism3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the matrix is required
         if ( rRightHandSideVector.size() != mat_size )
             rRightHandSideVector.resize( mat_size, false );
 
@@ -3716,7 +3716,7 @@ void SprismElement3D6N::InitializeSystemMatrices(
 /******************************* COMPUTE KINEMATICS ********************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateKinematics(
+void SolidShellElementSprism3D6N::CalculateKinematics(
     GeneralVariables& rVariables,
     const CommonComponents& rCommonComponents,
     const IndexType rPointNumber,
@@ -3748,7 +3748,7 @@ void SprismElement3D6N::CalculateKinematics(
 
     rVariables.detF = std::sqrt(rVariables.detF);
 
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
         // PK2 stress measure
         rVariables.StressMeasure = ConstitutiveLaw::StressMeasure_PK2;
 
@@ -3777,7 +3777,7 @@ void SprismElement3D6N::CalculateKinematics(
 /***************************** COMPUTE DELTA POSITION ******************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateDeltaPosition(Matrix & rDeltaPosition)
+void SolidShellElementSprism3D6N::CalculateDeltaPosition(Matrix & rDeltaPosition)
 {
     KRATOS_TRY;
 
@@ -3796,7 +3796,7 @@ void SprismElement3D6N::CalculateDeltaPosition(Matrix & rDeltaPosition)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CbartoFbar(
+void SolidShellElementSprism3D6N::CbartoFbar(
     GeneralVariables& rVariables,
     const int rPointNumber
     )
@@ -3821,7 +3821,7 @@ void SprismElement3D6N::CbartoFbar(
 
     /* Decompose F */
     Matrix F = ZeroMatrix(3, 3);
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
         // Deformation Gradient F [dx_n+1/dx_n]
         noalias(F) = prod( rVariables.j[rPointNumber], mAuxMatCont[rPointNumber] );
     } else {
@@ -3857,7 +3857,7 @@ void SprismElement3D6N::CbartoFbar(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateDeformationMatrix(
+void SolidShellElementSprism3D6N::CalculateDeformationMatrix(
     Matrix& rB,
     const CommonComponents& rCommonComponents,
     const double ZetaGauss,
@@ -3907,7 +3907,7 @@ void SprismElement3D6N::CalculateDeformationMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
+void SolidShellElementSprism3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
 {
     // StressMeasure_PK1             //stress related to reference configuration non-symmetric
     // StressMeasure_PK2             //stress related to reference configuration
@@ -3915,7 +3915,7 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
     // StressMeasure_Cauchy          //stress related to current   configuration
 
     // StressMeasure
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN))
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN))
         rVariables.StressMeasure = ConstitutiveLaw::StressMeasure_PK2;
     else
         rVariables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
@@ -3953,7 +3953,7 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
     // Calculating the current jacobian from cartesian coordinates to parent coordinates for all integration points [dx_n+1/d£]
     rVariables.j = GetGeometry().Jacobian( rVariables.j, mThisIntegrationMethod );
 
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
         //Calculate Delta Position
         Matrix delta_position( 6 , 3);
         this->CalculateDeltaPosition(delta_position);
@@ -3964,12 +3964,12 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::FinalizeStepVariables(
+void SolidShellElementSprism3D6N::FinalizeStepVariables(
     GeneralVariables & rVariables,
     const IndexType rPointNumber
     )
 {
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
         // Update internal (historical) variables
         mAuxCont[rPointNumber] = rVariables.detF * rVariables.detF0;
         mAuxMatCont[rPointNumber] = prod(rVariables.F, rVariables.F0);
@@ -3979,7 +3979,7 @@ void SprismElement3D6N::FinalizeStepVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::GetHistoricalVariables(
+void SolidShellElementSprism3D6N::GetHistoricalVariables(
     GeneralVariables& rVariables,
     const IndexType rPointNumber
     )
@@ -3994,7 +3994,7 @@ void SprismElement3D6N::GetHistoricalVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateHenckyStrain(
+void SolidShellElementSprism3D6N::CalculateHenckyStrain(
     const Vector& rC,
     Vector& rStrainVector
     )
@@ -4037,11 +4037,11 @@ void SprismElement3D6N::CalculateHenckyStrain(
 /**************************** CALCULATE VOLUME CHANGE ******************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateVolumeChange( double& rVolumeChange, GeneralVariables& rVariables )
+void SolidShellElementSprism3D6N::CalculateVolumeChange( double& rVolumeChange, GeneralVariables& rVariables )
 {
     KRATOS_TRY;
 
-    if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == true )
+    if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN) == true )
         rVolumeChange = 1.0;
     else
         rVolumeChange = 1.0 / (rVariables.detF * rVariables.detF0);
@@ -4052,7 +4052,7 @@ void SprismElement3D6N::CalculateVolumeChange( double& rVolumeChange, GeneralVar
 /************************* CALCULATE VOLUME ACCELERATION ***************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::CalculateVolumeForce(
+void SolidShellElementSprism3D6N::CalculateVolumeForce(
     Vector& rVolumeForce,
     GeneralVariables& rVariables,
     const double IntegrationWeight
@@ -4080,7 +4080,7 @@ void SprismElement3D6N::CalculateVolumeForce(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::save( Serializer& rSerializer ) const
+void SolidShellElementSprism3D6N::save( Serializer& rSerializer ) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseSolidElement);
     int IntMethod = int(mThisIntegrationMethod);
@@ -4094,7 +4094,7 @@ void SprismElement3D6N::save( Serializer& rSerializer ) const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::load( Serializer& rSerializer )
+void SolidShellElementSprism3D6N::load( Serializer& rSerializer )
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, BaseSolidElement);
     int IntMethod;

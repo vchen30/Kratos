@@ -9,8 +9,8 @@
 //  Main authors:    Vicente Mataix Ferrandiz
 //
 
-#if !defined(KRATOS_SPRISM_ELEMENT_3D6N_H_INCLUDED )
-#define  KRATOS_SPRISM_ELEMENT_3D6N_H_INCLUDED
+#if !defined(KRATOS_SOLID_SHELL_ELEMENT_SPRISM_3D6N_H_INCLUDED )
+#define  KRATOS_SOLID_SHELL_ELEMENT_SPRISM_3D6N_H_INCLUDED
 
 // System includes
 
@@ -43,7 +43,7 @@ namespace Kratos
 ///@{
 
 /**
- * @class SprismElement3D6N
+ * @class SolidShellElementSprism3D6N
  * @ingroup StructuralMechanicsApplication
  * @brief This is a triangular prism solid element for the analysis of thin/thick shells undergoing large elastic–plastic strains.
  * @details The element is based on a total Lagrangian formulation and uses as strain measure the logarithm of the right stretch tensor (U)
@@ -54,7 +54,7 @@ namespace Kratos
  * behavior of the in-plane triangle and to handle quasi-incompressible materials or materials with isochoric plastic flow.
  * @author Vicente Mataix Ferrandiz
  */
-class SprismElement3D6N
+class SolidShellElementSprism3D6N
     : public BaseSolidElement
 {
 public:
@@ -97,8 +97,8 @@ public:
     /// The definition of the sizetype
     typedef std::size_t SizeType;
 
-    /// Counted pointer of SprismElement3D6N
-    KRATOS_CLASS_POINTER_DEFINITION(SprismElement3D6N);
+    /// Counted pointer of SolidShellElementSprism3D6N
+    KRATOS_CLASS_POINTER_DEFINITION(SolidShellElementSprism3D6N);
 
     ///@}
     ///@name Enums
@@ -119,26 +119,26 @@ public:
     ///@{
 
     /* A private default constructor necessary for serialization */
-    SprismElement3D6N();
+    SolidShellElementSprism3D6N();
 
     /* Constructor using an array of nodes */
-    SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry);
+    SolidShellElementSprism3D6N(IndexType NewId, GeometryType::Pointer pGeometry);
 
     /* Constructor using an array of nodes with properties */
-    SprismElement3D6N(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
+    SolidShellElementSprism3D6N(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
 
     /* Copy constructor */
-    SprismElement3D6N(SprismElement3D6N const& rOther);
+    SolidShellElementSprism3D6N(SolidShellElementSprism3D6N const& rOther);
 
     /* Destructor */
-    ~SprismElement3D6N() override;
+    ~SolidShellElementSprism3D6N() override;
 
     ///@}
     ///@name Operators
     ///@{
     ///
     /* Assignment operator */
-    SprismElement3D6N& operator=(SprismElement3D6N const& rOther);
+    SolidShellElementSprism3D6N& operator=(SolidShellElementSprism3D6N const& rOther);
 
     ///@}
     ///@name Operations
@@ -1485,7 +1485,7 @@ private:
 
     // Constructor
 
-}; // class SprismElement3D6N.
+}; // class SolidShellElementSprism3D6N.
 
 ///@}
 ///@name Type Definitions
@@ -1497,4 +1497,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // KRATOS_SPRISM_ELEMENT_3D6N_H_INCLUDED  defined
+#endif // KRATOS_SOLID_SHELL_ELEMENT_SPRISM_3D6N_H_INCLUDED  defined

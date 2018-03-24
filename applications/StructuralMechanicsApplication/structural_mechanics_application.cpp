@@ -74,7 +74,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mPreStressMembraneElement3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
       mPreStressMembraneElement3D4N(0, Element::GeometryType::Pointer(new Quadrilateral3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
       // Adding the SPRISM element
-      mSprismElement3D6N(0, Element::GeometryType::Pointer(new Prism3D6<Node<3> >(Element::GeometryType::PointsArrayType(6)))),
+      mSolidShellElementSprism3D6N(0, Element::GeometryType::Pointer(new Prism3D6<Node<3> >(Element::GeometryType::PointsArrayType(6)))),
       // Adding the nodal concentrated element
       mNodalConcentratedElement2D1N(0, Element::GeometryType::Pointer(new Point2D<Node<3> >(Element::GeometryType::PointsArrayType(1))), true),
       mNodalConcentratedDampedElement2D1N(0, Element::GeometryType::Pointer(new Point2D<Node<3> >(Element::GeometryType::PointsArrayType(1))), false),
@@ -337,7 +337,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("PreStressMembraneElement3D4N", mPreStressMembraneElement3D4N)
 
     // Register the SPRISM element
-    KRATOS_REGISTER_ELEMENT("SprismElement3D6N", mSprismElement3D6N);
+    KRATOS_REGISTER_ELEMENT("SolidShellElementSprism3D6N", mSolidShellElementSprism3D6N);
 
     // Register the nodal concentrated element
     KRATOS_REGISTER_ELEMENT("NodalConcentratedElement2D1N", mNodalConcentratedElement2D1N);
