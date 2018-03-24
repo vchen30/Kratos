@@ -1189,16 +1189,30 @@ protected:
     bounded_matrix<double, 36, 1 > GetVectorPreviousPosition();
 
     /**
-     * @brief Integrates in zeta using the Gauss Quadrature
+     * @brief Integrates stresses in zeta using the Gauss Quadrature
      * @param rVariables The internal variables in the element
      * @param AlphaEAS The internal variable for the EAS
      * @param ZetaGauss The zeta coordinate for the Gauss Quadrature
      * @param IntegrationWeight Contribution in the numerical integration
      */
-    void IntegrateInZeta(
+    void IntegrateStressesInZeta(
         GeneralVariables& rVariables,
         StressIntegratedComponents& rIntegratedStress,
         const double AlphaEAS,
+        const double ZetaGauss,
+        const double IntegrationWeight
+        );
+
+    /**
+     * @brief Integrates the EAS components in zeta using the Gauss Quadrature
+     * @param rVariables The internal variables in the element
+     * @param rEAS The components of the EAS stabilization
+     * @param ZetaGauss The zeta coordinate for the Gauss Quadrature
+     * @param IntegrationWeight Contribution in the numerical integration
+     */
+    void IntegrateEASInZeta(
+        GeneralVariables& rVariables,
+        EASComponents& rEAS,
         const double ZetaGauss,
         const double IntegrationWeight
         );
@@ -1261,16 +1275,22 @@ protected:
     /**
      * @brief Update the LHS of the system with the EAS
      * @param rLeftHandSideMatrix LHS of the system
+     * @param rEAS The components of the EAS stabilization
      */
-    void ApplyEASLHS(MatrixType& rLeftHandSideMatrix);
+    void ApplyEASLHS(
+        MatrixType& rLeftHandSideMatrix,
+        EASComponents& rEAS
+        );
 
     /**
      * @brief Update the RHS of the system with the EAS and the internal variable alpha
      * @param rRHSFull The full internal forces vector
+     * @param rEAS The components of the EAS stabilization
      * @param AlphaEAS The internal variable for the EAS
      */
     void ApplyEASRHS(
         bounded_matrix<double, 36, 1 >& rRHSFull,
+        EASComponents& rEAS,
         double& AlphaEAS
         );
 

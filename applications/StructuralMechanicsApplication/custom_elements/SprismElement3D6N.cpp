@@ -1744,7 +1744,10 @@ void SprismElement3D6N::CalculateElementalSystem(
         const double integration_weight = integration_points[point_number].Weight() * general_variables.detJ;
 
         /* Integrate in Zeta */
-        IntegrateInZeta(general_variables, rIntegratedStress, alpha_eas, zeta_gauss, integration_weight);
+        // Stresses
+        IntegrateStressesInZeta(general_variables, rIntegratedStress, alpha_eas, zeta_gauss, integration_weight);
+        // EAS components
+        IntegrateEASInZeta(general_variables, mEAS, zeta_gauss, integration_weight);
 
         if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR) ) { // Calculation of the vector is required
             /* Volume forces */
@@ -3186,7 +3189,7 @@ bounded_matrix<double, 36, 1 > SprismElement3D6N::GetVectorPreviousPosition()
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::IntegrateInZeta(
+void SprismElement3D6N::IntegrateStressesInZeta(
     GeneralVariables& rVariables,
     StressIntegratedComponents& rIntegratedStress,
     const double AlphaEAS,
@@ -3195,7 +3198,7 @@ void SprismElement3D6N::IntegrateInZeta(
     )
 {
     KRATOS_TRY;
-    
+
     const double L1 = 0.5 * (1.0 - ZetaGauss);
     const double L2 = 0.5 * (1.0 + ZetaGauss);
 
@@ -3224,12 +3227,27 @@ void SprismElement3D6N::IntegrateInZeta(
     /* Normal stress */
     rIntegratedStress.SNormal           +=  factor_eas * IntegrationWeight * rVariables.StressVector[2]; // zz
 
+    KRATOS_CATCH( "" );
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void SprismElement3D6N::IntegrateEASInZeta(
+    GeneralVariables& rVariables,
+    EASComponents& rEAS,
+    const double ZetaGauss,
+    const double IntegrationWeight
+    )
+{
+    KRATOS_TRY;
+
     /* INTEGRATE EAS IN ZETA */
     // Calculate EAS residual
-    mEAS.mRHSAlpha += IntegrationWeight * ZetaGauss * rVariables.StressVector[2] * rVariables.C[2];
+    rEAS.mRHSAlpha += IntegrationWeight * ZetaGauss * rVariables.StressVector[2] * rVariables.C[2];
 
     // Calculate EAS stiffness
-    mEAS.mStiffAlpha += IntegrationWeight * ZetaGauss * ZetaGauss * rVariables.C[2]
+    rEAS.mStiffAlpha += IntegrationWeight * ZetaGauss * ZetaGauss * rVariables.C[2]
             * (rVariables.ConstitutiveMatrix(2, 2) * rVariables.C[2] + 2.0 * rVariables.StressVector[2]);
 
     bounded_matrix<double, 1, 36 > B3;
@@ -3241,7 +3259,7 @@ void SprismElement3D6N::IntegrateInZeta(
         B3(0, i) = rVariables.B(2, i);
 
     // Calculate H operator
-    noalias(mEAS.mHEAS) += IntegrationWeight * ZetaGauss
+    noalias(rEAS.mHEAS) += IntegrationWeight * ZetaGauss
             * (rVariables.C[2] * prod(D3, rVariables.B) + 2.0 * rVariables.StressVector[2] * B3);
 
     KRATOS_CATCH( "" );
@@ -3251,14 +3269,14 @@ void SprismElement3D6N::IntegrateInZeta(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddLHS(
-        LocalSystemComponents& rLocalSystem,
-        GeneralVariables& rVariables,
-        ConstitutiveLaw::Parameters& rValues,
-        const StressIntegratedComponents& rIntegratedStress,
-        const CommonComponents& rCommonComponents,
-        const CartesianDerivatives& rCartesianDerivatives,
-        double& AlphaEAS
-        )
+    LocalSystemComponents& rLocalSystem,
+    GeneralVariables& rVariables,
+    ConstitutiveLaw::Parameters& rValues,
+    const StressIntegratedComponents& rIntegratedStress,
+    const CommonComponents& rCommonComponents,
+    const CartesianDerivatives& rCartesianDerivatives,
+    double& AlphaEAS
+    )
 {
     /* Contributions of the stiffness matrix calculated on the reference configuration */
     if( rLocalSystem.CalculationFlags.Is( SprismElement3D6N::COMPUTE_LHS_MATRIX_WITH_COMPONENTS ) ) {
@@ -3306,7 +3324,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
             /* Implicit or explicit EAS update*/
             if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
                 /* Apply EAS stabilization */
-                ApplyEASLHS(rLeftHandSideMatrices[i]);
+                ApplyEASLHS(rLeftHandSideMatrices[i], mEAS);
             }
 
             KRATOS_ERROR_IF_NOT(calculated) << " ELEMENT can not supply the required local system variable: " << rLeftHandSideVariables[i] << std::endl;
@@ -3347,7 +3365,7 @@ void SprismElement3D6N::CalculateAndAddLHS(
         /* Implicit or explicit EAS update*/
         if ( mELementalFlags.Is(SprismElement3D6N::EAS_IMPLICIT_EXPLICIT)) {
             /* Apply EAS stabilization */
-            ApplyEASLHS(LeftHandSideMatrix);
+            ApplyEASLHS(LeftHandSideMatrix, mEAS);
         }
     }
 }
@@ -3356,13 +3374,13 @@ void SprismElement3D6N::CalculateAndAddLHS(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddRHS(
-        LocalSystemComponents& rLocalSystem,
-        GeneralVariables& rVariables,
-        Vector& rVolumeForce,
-        const StressIntegratedComponents& rIntegratedStress,
-        const CommonComponents& rCommonComponents,
-        double& AlphaEAS
-        )
+    LocalSystemComponents& rLocalSystem,
+    GeneralVariables& rVariables,
+    Vector& rVolumeForce,
+    const StressIntegratedComponents& rIntegratedStress,
+    const CommonComponents& rCommonComponents,
+    double& AlphaEAS
+    )
 {
     /* Contribution of the internal and external forces */
     if( rLocalSystem.CalculationFlags.Is( SprismElement3D6N::COMPUTE_RHS_VECTOR_WITH_COMPONENTS ) ) {
@@ -3433,10 +3451,10 @@ void SprismElement3D6N::CalculateAndAddKuum(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddKuug(
-        MatrixType& rLeftHandSideMatrix,
-        const StressIntegratedComponents& rIntegratedStress,
-        const CartesianDerivatives& rCartesianDerivatives
-        )
+    MatrixType& rLeftHandSideMatrix,
+    const StressIntegratedComponents& rIntegratedStress,
+    const CartesianDerivatives& rCartesianDerivatives
+    )
 {
     KRATOS_TRY;
 
@@ -3493,11 +3511,14 @@ void SprismElement3D6N::CalculateAndAddKuug(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SprismElement3D6N::ApplyEASLHS(MatrixType& rLeftHandSideMatrix)
+void SprismElement3D6N::ApplyEASLHS(
+    MatrixType& rLeftHandSideMatrix,
+    EASComponents& rEAS
+    )
 {
     KRATOS_TRY;
 
-    const bounded_matrix<double, 36, 36 > lhs_aux = - prod(trans(mEAS.mHEAS), mEAS.mHEAS) / mEAS.mStiffAlpha;
+    const bounded_matrix<double, 36, 36 > lhs_aux = - prod(trans(rEAS.mHEAS), rEAS.mHEAS) / rEAS.mStiffAlpha;
 
     // Compute vector of IDs
     array_1d<IndexType, 18> id_vector;
@@ -3523,17 +3544,18 @@ void SprismElement3D6N::ApplyEASLHS(MatrixType& rLeftHandSideMatrix)
 /***********************************************************************************/
 
 void SprismElement3D6N::ApplyEASRHS(
-        bounded_matrix<double, 36, 1 >& rRHSFull,
-        double& AlphaEAS
-        )
+    bounded_matrix<double, 36, 1 >& rRHSFull,
+    EASComponents& rEAS,
+    double& AlphaEAS
+    )
 {
     KRATOS_TRY;
 
     /* Calculate the RHS */
-    noalias(rRHSFull) -= trans(mEAS.mHEAS) * mEAS.mRHSAlpha / mEAS.mStiffAlpha;
+    noalias(rRHSFull) -= trans(rEAS.mHEAS) * rEAS.mRHSAlpha / rEAS.mStiffAlpha;
 
     /* Update ALPHA_EAS */
-    AlphaEAS -= mEAS.mRHSAlpha / mEAS.mStiffAlpha;
+    AlphaEAS -= rEAS.mRHSAlpha / rEAS.mStiffAlpha;
 
     KRATOS_CATCH( "" );
 }
@@ -3565,11 +3587,11 @@ void SprismElement3D6N::CalculateAndAddExternalForces(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateAndAddInternalForces(
-        VectorType& rRightHandSideVector,
-        const StressIntegratedComponents& rIntegratedStress,
-        const CommonComponents& rCommonComponents,
-        double& AlphaEAS
-        )
+    VectorType& rRightHandSideVector,
+    const StressIntegratedComponents& rIntegratedStress,
+    const CommonComponents& rCommonComponents,
+    double& AlphaEAS
+    )
 {
     KRATOS_TRY;
 
@@ -3604,7 +3626,7 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
     }
 
     /* Apply EAS stabilization */
-    ApplyEASRHS(rhs_full, AlphaEAS);
+    ApplyEASRHS(rhs_full, mEAS, AlphaEAS);
 
     // Compute vector of IDs
     array_1d<IndexType, 18> id_vector;
@@ -3625,10 +3647,10 @@ void SprismElement3D6N::CalculateAndAddInternalForces(
 /***********************************************************************************/
 
 void SprismElement3D6N::SetGeneralVariables(
-        GeneralVariables& rVariables,
-        ConstitutiveLaw::Parameters& rValues,
-        const IndexType rPointNumber
-        )
+    GeneralVariables& rVariables,
+    ConstitutiveLaw::Parameters& rValues,
+    const IndexType rPointNumber
+    )
 {
     KRATOS_ERROR_IF(rVariables.detF < 0) << "SPRISM ELEMENT: " << this->Id() << "INVERTED: |F| < 0  detF = " << rVariables.detF << std::endl;
 
@@ -3651,10 +3673,10 @@ void SprismElement3D6N::SetGeneralVariables(
 /***********************************************************************************/
 
 void SprismElement3D6N::InitializeSystemMatrices(
-        MatrixType& rLeftHandSideMatrix,
-        VectorType& rRightHandSideVector,
-        Flags& rCalculationFlags
-        )
+    MatrixType& rLeftHandSideMatrix,
+    VectorType& rRightHandSideVector,
+    Flags& rCalculationFlags
+    )
 {
     // Resizing as needed the LHS
     WeakPointerVector< NodeType >& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
@@ -3797,9 +3819,9 @@ void SprismElement3D6N::CalculateDeltaPosition(Matrix & rDeltaPosition)
 /***********************************************************************************/
 
 void SprismElement3D6N::CbartoFbar(
-        GeneralVariables& rVariables,
-        const int rPointNumber
-        )
+    GeneralVariables& rVariables,
+    const int rPointNumber
+    )
 {
     KRATOS_TRY;
 
@@ -3858,11 +3880,11 @@ void SprismElement3D6N::CbartoFbar(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateDeformationMatrix(
-        Matrix& rB,
-        const CommonComponents& rCommonComponents,
-        const double ZetaGauss,
-        const double AlphaEAS
-        )
+    Matrix& rB,
+    const CommonComponents& rCommonComponents,
+    const double ZetaGauss,
+    const double AlphaEAS
+    )
 {
     KRATOS_TRY;
 
@@ -3965,9 +3987,9 @@ void SprismElement3D6N::InitializeGeneralVariables(GeneralVariables& rVariables)
 /***********************************************************************************/
 
 void SprismElement3D6N::FinalizeStepVariables(
-        GeneralVariables & rVariables,
-        const IndexType rPointNumber
-        )
+    GeneralVariables & rVariables,
+    const IndexType rPointNumber
+    )
 {
     if ( mELementalFlags.Is(SprismElement3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
         // Update internal (historical) variables
@@ -4019,9 +4041,9 @@ void SprismElement3D6N::CalculateGreenLagrangeStrain(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateGreenLagrangeStrain(
-        const Matrix& rF,
-        Vector& rStrainVector
-        )
+    const Matrix& rF,
+    Vector& rStrainVector
+    )
 {
     KRATOS_TRY;
 
@@ -4048,9 +4070,9 @@ void SprismElement3D6N::CalculateGreenLagrangeStrain(
 /***********************************************************************************/
 
 void SprismElement3D6N::CalculateHenckyStrain(
-        const Vector& rC,
-        Vector& rStrainVector
-        )
+    const Vector& rC,
+    Vector& rStrainVector
+    )
 {
     KRATOS_TRY;
 
@@ -4091,9 +4113,9 @@ void SprismElement3D6N::CalculateHenckyStrain(
 //************************************************************************************
 
 void SprismElement3D6N::CalculateAlmansiStrain(
-        const Matrix& rF,
-        Vector& rStrainVector
-        )
+    const Matrix& rF,
+    Vector& rStrainVector
+    )
 {
     KRATOS_TRY;
 
