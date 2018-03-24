@@ -1591,7 +1591,17 @@ void SprismElement3D6N::InitializeNonLinearIteration( ProcessInfo& rCurrentProce
 
 void SprismElement3D6N::FinalizeNonLinearIteration( ProcessInfo& rCurrentProcessInfo )
 {
-    // TODO: Add something if necessary
+    /* Getting the alpha parameter of the EAS improvement */
+    double& alpha_eas = this->GetValue(ALPHA_EAS);
+
+    /* Getting the increase of displacements */
+    bounded_matrix<double, 36, 1 > delta_disp;
+
+    delta_disp = GetVectorCurrentPosition() - GetVectorPreviousPosition(); // Calculates the increase of displacements
+
+    /* Update alpha EAS */
+    if (mEAS.mStiffAlpha > std::numeric_limits<double>::epsilon()) // Avoid division by zero
+        alpha_eas -= prod(mEAS.mHEAS, delta_disp)(0, 0) / mEAS.mStiffAlpha;
 }
 
 /***********************************************************************************/
@@ -1700,18 +1710,6 @@ void SprismElement3D6N::CalculateElementalSystem(
 
     /* Getting the alpha parameter of the EAS improvement */
     double& alpha_eas = this->GetValue(ALPHA_EAS);
-
-    /* Calculate the RHS */
-    if ( rLocalSystem.CalculationFlags.Is(SprismElement3D6N::COMPUTE_RHS_VECTOR)) { // Update just if RHS is calculated
-        /* Getting the increase of displacements */
-        bounded_matrix<double, 36, 1 > delta_disp;
-
-        delta_disp = GetVectorCurrentPosition() - GetVectorPreviousPosition(); // Calculates the increase of displacements
-
-        /* Update alpha EAS */
-        if (mEAS.mStiffAlpha > std::numeric_limits<double>::epsilon()) // Avoid division by zero
-            alpha_eas -= prod(mEAS.mHEAS, delta_disp)(0, 0) / mEAS.mStiffAlpha;
-    }
 
     /* Calculate the cartesian derivatives */
     CartesianDerivatives this_cartesian_derivatives;
