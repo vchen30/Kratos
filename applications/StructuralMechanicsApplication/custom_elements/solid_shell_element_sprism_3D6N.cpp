@@ -1948,26 +1948,23 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerivatives(CartesianDerivat
     }
 
     /* Calculate local system of coordinates of the element */
-    // 0- If X is the prefered normal vector
-    // 1- If Y is the prefered normal vector
-    // 2- If Z is the prefered normal vector
-
     const double ang_rot = GetProperties().Has(ANG_ROT) ? GetProperties()[ANG_ROT] : 0.0; // TODO: Change to consider multiple plies
-    this->CalculateLocalCoordinateSystem(2, ang_rot);
+    OrthogonalBase this_orthogonal_base;
+    this->CalculateLocalCoordinateSystem(this_orthogonal_base, OrthogonalBaseApproach::Z, ang_rot);
 
     //******************************** CENTRAL POINT ******************************
     // Calculate cartesian derivatives
     bounded_matrix<double, 2, 4 > cartesian_derivatives_center_lower,  cartesian_derivatives_center_upper;
 
     // Lower face
-    CalculateCartesianDerOnCenterPlane(GeometricLevel::LOWER, cartesian_derivatives_center_lower);
+    CalculateCartesianDerOnCenterPlane(cartesian_derivatives_center_lower, this_orthogonal_base, GeometricLevel::LOWER);
     // Upperr face
-    CalculateCartesianDerOnCenterPlane(GeometricLevel::UPPER, cartesian_derivatives_center_upper );
+    CalculateCartesianDerOnCenterPlane(cartesian_derivatives_center_upper, this_orthogonal_base, GeometricLevel::UPPER );
 
     /* Transversal derivative */
-    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, GeometricLevel::CENTER); // Center
-    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, GeometricLevel::LOWER); // Lower part
-    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, GeometricLevel::UPPER); // Upper part
+    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, this_orthogonal_base, GeometricLevel::CENTER); // Center
+    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, this_orthogonal_base, GeometricLevel::LOWER); // Lower part
+    CalculateCartesianDerOnCenterTrans(rCartesianDerivatives, nodes_coord, this_orthogonal_base, GeometricLevel::UPPER); // Upper part
 
     //******************************** GAUSS POINTS *******************************
 
@@ -1977,26 +1974,26 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerivatives(CartesianDerivat
     local_coordinates[2] = -1.0;
 
     /* Transversal derivatives */
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[0], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[0], nodes_coord, this_orthogonal_base, local_coordinates);
     local_coordinates[2] = 1.0;
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[3], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[3], nodes_coord, this_orthogonal_base, local_coordinates);
     local_coordinates[0] = 0.0;
     local_coordinates[2] = -1.0;
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[1], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[1], nodes_coord, this_orthogonal_base, local_coordinates);
     local_coordinates[2] = 1.0;
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[4], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[4], nodes_coord, this_orthogonal_base, local_coordinates);
     local_coordinates[0] = 0.5;
     local_coordinates[1] = 0.0;
     local_coordinates[2] = -1.0;
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[2], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[2], nodes_coord, this_orthogonal_base, local_coordinates);
     local_coordinates[2] = 1.0;
-    CalculateCartesianDerOnGaussTrans(nodes_coord, rCartesianDerivatives.TransversalCartesianDerivativesGauss[5], local_coordinates);
+    CalculateCartesianDerOnGaussTrans(rCartesianDerivatives.TransversalCartesianDerivativesGauss[5], nodes_coord, this_orthogonal_base, local_coordinates);
 
     /* In-plane derivative */
     for (IndexType i = 0; i < 3 ;i++) {
         if (HasNeighbour(i, neighbour_nodes[i])) { // Assuming that if the upper element has neighbours the lower has too
-            CalculateCartesianDerOnGaussPlane(i, GeometricLevel::LOWER, nodes_coord, rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i    ]);
-            CalculateCartesianDerOnGaussPlane(i, GeometricLevel::UPPER, nodes_coord, rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i + 3]);
+            CalculateCartesianDerOnGaussPlane(rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i    ], nodes_coord, this_orthogonal_base, i, GeometricLevel::LOWER);
+            CalculateCartesianDerOnGaussPlane(rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i + 3], nodes_coord, this_orthogonal_base, i, GeometricLevel::UPPER);
         } else {
             noalias(rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i    ]) = cartesian_derivatives_center_lower;
             noalias(rCartesianDerivatives.InPlaneCartesianDerivativesGauss[i + 3]) = cartesian_derivatives_center_upper;
@@ -2094,8 +2091,9 @@ void SolidShellElementSprism3D6N::CalculateCommonComponents(
 /***********************************************************************************/
 
 void SolidShellElementSprism3D6N::CalculateLocalCoordinateSystem(
-    const int choose,
-    const double ang
+    OrthogonalBase& ThisOrthogonalBase,
+    const OrthogonalBaseApproach ThisOrthogonalBaseApproach,
+    const double ThisAngle
     )
 {
     KRATOS_TRY;
@@ -2111,111 +2109,111 @@ void SolidShellElementSprism3D6N::CalculateLocalCoordinateSystem(
     vye[1] = 0.5 * ((GetGeometry()[0].Y0() + GetGeometry()[3].Y0()) - (GetGeometry()[2].Y0() + GetGeometry()[5].Y0()));
     vye[2] = 0.5 * ((GetGeometry()[0].Z0() + GetGeometry()[3].Z0()) - (GetGeometry()[2].Z0() + GetGeometry()[5].Z0()));
 
-    MathUtils<double>::CrossProduct(mvze, vxe, vye);
-    norm = norm_2(mvze);
-    mvze /= norm;
+    MathUtils<double>::CrossProduct(ThisOrthogonalBase.Vzeta, vxe, vye);
+    norm = norm_2(ThisOrthogonalBase.Vzeta);
+    ThisOrthogonalBase.Vzeta /= norm;
 
-    double threshold = 1e-5;
-    double OrthoComp;
+    const double threshold = 1e-5;
+    double ortho_comp;
 
     /* Performing the calculation */
     // 0- If X is the prefered normal vector
     // 1- If Y is the prefered normal vector
     // 2- If Z is the prefered normal vector
 
-    if (choose == 0) {
-        OrthoComp = mvze[1] * mvze[1] + mvze[2] * mvze[2]; // Component in th Y-Z plane
-        if (OrthoComp < threshold) { // If mvze is almost orthogonal to  Y-Z plane
-            mvye[0] = - mvze[2]; // Choose mvxe orthogonal to global Y direction
-            mvye[1] = 0.0;
-            mvye[2] = mvze[0];
+    if (ThisOrthogonalBaseApproach == OrthogonalBaseApproach::X) {
+        ortho_comp = ThisOrthogonalBase.Vzeta[1] * ThisOrthogonalBase.Vzeta[1] + ThisOrthogonalBase.Vzeta[2] * ThisOrthogonalBase.Vzeta[2]; // Component in th Y-Z plane
+        if (ortho_comp < threshold) { // If ThisOrthogonalBase.Vzeta is almost orthogonal to  Y-Z plane
+            ThisOrthogonalBase.Veta[0] = - ThisOrthogonalBase.Vzeta[2]; // Choose ThisOrthogonalBase.Vxi orthogonal to global Y direction
+            ThisOrthogonalBase.Veta[1] = 0.0;
+            ThisOrthogonalBase.Veta[2] = ThisOrthogonalBase.Vzeta[0];
 
-            norm = norm_2(mvxe);
-            mvxe /= norm;
-            MathUtils<double>::CrossProduct(mvxe, mvye, mvze);
-        } else { // SELECT local y=mvxe in the global YZ plane
-            mvxe[0] = 0.0;
-            mvxe[1] = mvze[2];
-            mvxe[2] = - mvze[1];
+            norm = norm_2(ThisOrthogonalBase.Vxi);
+            ThisOrthogonalBase.Vxi /= norm;
+            MathUtils<double>::CrossProduct(ThisOrthogonalBase.Vxi, ThisOrthogonalBase.Veta, ThisOrthogonalBase.Vzeta);
+        } else { // SELECT local y=ThisOrthogonalBase.Vxi in the global YZ plane
+            ThisOrthogonalBase.Vxi[0] = 0.0;
+            ThisOrthogonalBase.Vxi[1] = ThisOrthogonalBase.Vzeta[2];
+            ThisOrthogonalBase.Vxi[2] = - ThisOrthogonalBase.Vzeta[1];
 
-            norm = norm_2(mvxe);
-            mvxe /= norm;
+            norm = norm_2(ThisOrthogonalBase.Vxi);
+            ThisOrthogonalBase.Vxi /= norm;
 
-            mvye[0] = OrthoComp; // Choose mvxe orthogonal to global X direction
-            mvye[1] = - mvze[0] * mvze[1];
-            mvye[2] = - mvze[0] * mvze[2];
+            ThisOrthogonalBase.Veta[0] = ortho_comp; // Choose ThisOrthogonalBase.Vxi orthogonal to global X direction
+            ThisOrthogonalBase.Veta[1] = - ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[1];
+            ThisOrthogonalBase.Veta[2] = - ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[2];
 
-            norm = norm_2(mvye);
-            mvye /= norm;
+            norm = norm_2(ThisOrthogonalBase.Veta);
+            ThisOrthogonalBase.Veta /= norm;
         }
-    } else if (choose == 1) {
-        OrthoComp = mvze[0] * mvze[0] + mvze[2] * mvze[2]; // Component in th Z-X plane
-        if (OrthoComp < threshold) { // If vze is almost orthogonal to  Z-X plane
-            mvye[0] =       0.0; // Choose mvxe orthogonal to global X direction
-            mvye[1] =   mvze[2];
-            mvye[2] = - mvze[1];
+    } else if (ThisOrthogonalBaseApproach == OrthogonalBaseApproach::Y) {
+        ortho_comp = ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[0] + ThisOrthogonalBase.Vzeta[2] * ThisOrthogonalBase.Vzeta[2]; // Component in th Z-X plane
+        if (ortho_comp < threshold) { // If vze is almost orthogonal to  Z-X plane
+            ThisOrthogonalBase.Veta[0] =       0.0; // Choose ThisOrthogonalBase.Vxi orthogonal to global X direction
+            ThisOrthogonalBase.Veta[1] =   ThisOrthogonalBase.Vzeta[2];
+            ThisOrthogonalBase.Veta[2] = - ThisOrthogonalBase.Vzeta[1];
 
-            norm = norm_2(mvye);
-            mvye /= norm;
-            MathUtils<double>::CrossProduct(mvxe, mvye, mvze);
-        } else { // SELECT local z=mvxe in the global ZX plane
-            mvxe[0] = - mvze[2]; // Choose mvxe orthogonal to global Y direction
-            mvxe[1] = 0.0;
-            mvxe[2] = - mvze[0];
+            norm = norm_2(ThisOrthogonalBase.Veta);
+            ThisOrthogonalBase.Veta /= norm;
+            MathUtils<double>::CrossProduct(ThisOrthogonalBase.Vxi, ThisOrthogonalBase.Veta, ThisOrthogonalBase.Vzeta);
+        } else { // SELECT local z=ThisOrthogonalBase.Vxi in the global ZX plane
+            ThisOrthogonalBase.Vxi[0] = - ThisOrthogonalBase.Vzeta[2]; // Choose ThisOrthogonalBase.Vxi orthogonal to global Y direction
+            ThisOrthogonalBase.Vxi[1] = 0.0;
+            ThisOrthogonalBase.Vxi[2] = - ThisOrthogonalBase.Vzeta[0];
 
-            norm = norm_2(mvxe);
-            mvxe /= norm;
+            norm = norm_2(ThisOrthogonalBase.Vxi);
+            ThisOrthogonalBase.Vxi /= norm;
 
-            mvye[0] = - mvze[0] * mvze[1];
-            mvye[1] = OrthoComp;
-            mvye[2] = - mvze[2] * mvze[1];
+            ThisOrthogonalBase.Veta[0] = - ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[1];
+            ThisOrthogonalBase.Veta[1] = ortho_comp;
+            ThisOrthogonalBase.Veta[2] = - ThisOrthogonalBase.Vzeta[2] * ThisOrthogonalBase.Vzeta[1];
 
-            norm = norm_2(mvye);
-            mvye /= norm;
+            norm = norm_2(ThisOrthogonalBase.Veta);
+            ThisOrthogonalBase.Veta /= norm;
         }
-    } else if (choose == 2) {
-        OrthoComp = mvze[0] * mvze[0] + mvze[1] * mvze[1]; // Component in th X-Y plane
-        if (OrthoComp < threshold) { // If vze is almost orthogonal to  X-Y plane
-            mvye[0] = 0.0; // Choose mvxe orthogonal to global X direction
-            mvye[1] = mvze[2];
-            mvye[2] = - mvze[1];
+    } else if (ThisOrthogonalBaseApproach == OrthogonalBaseApproach::Z) {
+        ortho_comp = ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[0] + ThisOrthogonalBase.Vzeta[1] * ThisOrthogonalBase.Vzeta[1]; // Component in th X-Y plane
+        if (ortho_comp < threshold) { // If vze is almost orthogonal to  X-Y plane
+            ThisOrthogonalBase.Veta[0] = 0.0; // Choose ThisOrthogonalBase.Vxi orthogonal to global X direction
+            ThisOrthogonalBase.Veta[1] = ThisOrthogonalBase.Vzeta[2];
+            ThisOrthogonalBase.Veta[2] = - ThisOrthogonalBase.Vzeta[1];
 
-            norm = norm_2(mvye);
-            mvye /= norm;
-            MathUtils<double>::CrossProduct(mvxe, mvye, mvze);
-        } else { // SELECT local x=mvxe in the global XY plane
-            mvxe[0] = - mvze[1];
-            mvxe[1] = mvze[0];
-            mvxe[2] = 0.0;
+            norm = norm_2(ThisOrthogonalBase.Veta);
+            ThisOrthogonalBase.Veta /= norm;
+            MathUtils<double>::CrossProduct(ThisOrthogonalBase.Vxi, ThisOrthogonalBase.Veta, ThisOrthogonalBase.Vzeta);
+        } else { // SELECT local x=ThisOrthogonalBase.Vxi in the global XY plane
+            ThisOrthogonalBase.Vxi[0] = - ThisOrthogonalBase.Vzeta[1];
+            ThisOrthogonalBase.Vxi[1] = ThisOrthogonalBase.Vzeta[0];
+            ThisOrthogonalBase.Vxi[2] = 0.0;
 
-            norm = norm_2(mvxe);
-            mvxe /= norm;
+            norm = norm_2(ThisOrthogonalBase.Vxi);
+            ThisOrthogonalBase.Vxi /= norm;
 
-            mvye[0] = - mvze[0] * mvze[2]; // Choose mvxe orthogonal to global Z direction
-            mvye[1] = - mvze[1] * mvze[2];
-            mvye[2] = OrthoComp;
+            ThisOrthogonalBase.Veta[0] = - ThisOrthogonalBase.Vzeta[0] * ThisOrthogonalBase.Vzeta[2]; // Choose ThisOrthogonalBase.Vxi orthogonal to global Z direction
+            ThisOrthogonalBase.Veta[1] = - ThisOrthogonalBase.Vzeta[1] * ThisOrthogonalBase.Vzeta[2];
+            ThisOrthogonalBase.Veta[2] = ortho_comp;
 
-            norm = norm_2(mvye);
-            mvye /= norm;
+            norm = norm_2(ThisOrthogonalBase.Veta);
+            ThisOrthogonalBase.Veta /= norm;
         }
     } else {
-        mvxe[0] = 1.0;
-        mvxe[1] = 0.0;
-        mvxe[2] = 0.0;
+        ThisOrthogonalBase.Vxi[0] = 1.0;
+        ThisOrthogonalBase.Vxi[1] = 0.0;
+        ThisOrthogonalBase.Vxi[2] = 0.0;
 
-        mvye[0] = 0.0;
-        mvye[1] = 1.0;
-        mvye[2] = 0.0;
+        ThisOrthogonalBase.Veta[0] = 0.0;
+        ThisOrthogonalBase.Veta[1] = 1.0;
+        ThisOrthogonalBase.Veta[2] = 0.0;
     }
 
-    if (ang != 0.0) {
-        // Compute angle between local system mvxe-mvye and L1
-        const double cosa = std::cos(ang);
-        const double sina = std::sin(ang);
-        // Rotate local system mvxe-mvye to best fit L1-L2
-        mvze = mvxe; // Reusing as auxiliar value
-        mvxe =   cosa * mvxe + sina * mvye;
-        mvye = - sina * mvze  + cosa * mvye;
+    if (ThisAngle != 0.0) {
+        // Compute angle between local system ThisOrthogonalBase.Vxi-ThisOrthogonalBase.Veta and L1
+        const double cosa = std::cos(ThisAngle);
+        const double sina = std::sin(ThisAngle);
+        // Rotate local system ThisOrthogonalBase.Vxi-ThisOrthogonalBase.Veta to best fit L1-L2
+        ThisOrthogonalBase.Vzeta = ThisOrthogonalBase.Vxi; // Reusing as auxiliar value
+        ThisOrthogonalBase.Vxi =   cosa * ThisOrthogonalBase.Vxi + sina * ThisOrthogonalBase.Veta;
+        ThisOrthogonalBase.Veta = - sina * ThisOrthogonalBase.Vzeta  + cosa * ThisOrthogonalBase.Veta;
     }
 
     KRATOS_CATCH("");
@@ -2440,8 +2438,9 @@ void SolidShellElementSprism3D6N::CalculateJacobianAndInv(
 /***********************************************************************************/
 
 void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterPlane(
-    const GeometricLevel Part,
-    bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter
+    bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter,
+    const OrthogonalBase& ThisOrthogonalBase,
+    const GeometricLevel Part
     )
 {
     const IndexType index = Part == GeometricLevel::UPPER ? 3 : 0;
@@ -2471,7 +2470,7 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterPlane(
     norm0 = norm_2(t3g);
     t3g /= norm0;
 
-    MathUtils<double>::CrossProduct(t2g, t3g, mvxe);
+    MathUtils<double>::CrossProduct(t2g, t3g, ThisOrthogonalBase.Vxi);
     norm = norm_2(t2g);
     t2g /= norm;
 
@@ -2499,10 +2498,11 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterPlane(
 /***********************************************************************************/
 
 void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussPlane(
-    const IndexType NodeGauss,
-    const GeometricLevel Part,
+    bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
     const bounded_matrix<double, 12, 3 > & NodesCoord,
-    bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss
+    const OrthogonalBase& ThisOrthogonalBase,
+    const IndexType NodeGauss,
+    const GeometricLevel Part
     )
 {
     const IndexType index = Part == GeometricLevel::UPPER ? 3 : 0;
@@ -2535,7 +2535,7 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussPlane(
 
     /* Compute orthonormal vectors */
     array_1d<double, 3 > t1g, t2g, t3g;
-    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t1g, t2g, t3g, mvxe, Xdxi, Xdeta);
+    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t1g, t2g, t3g, ThisOrthogonalBase.Vxi, Xdxi, Xdeta);
 
     /* Compute Jacobian */
     bounded_matrix<double, 2, 2 > jac;
@@ -2556,8 +2556,9 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussPlane(
 /***********************************************************************************/
 
 void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussTrans(
-    const bounded_matrix<double, 12, 3 > & NodesCoord,
     bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
+    const bounded_matrix<double, 12, 3 > & NodesCoord,
+    const OrthogonalBase& ThisOrthogonalBase,
     const array_1d<double, 3>& rLocalCoordinates
     )
 {
@@ -2578,7 +2579,7 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussTrans(
 
     /* Compute orthonormal vectors */
     bounded_matrix<double, 3, 3 > t;
-    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t, mvxe, Xdxi, Xdeta);
+    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t, ThisOrthogonalBase.Vxi, Xdxi, Xdeta);
 
     /* Compute Jacobian */
     bounded_matrix<double, 3, 3 > jac;
@@ -2600,6 +2601,7 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussTrans(
 void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterTrans(
     CartesianDerivatives& rCartesianDerivatives,
     const bounded_matrix<double, 12, 3 >& NodesCoord,
+    const OrthogonalBase& ThisOrthogonalBase,
     const GeometricLevel Part
     )
 {
@@ -2634,7 +2636,7 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterTrans(
         noalias(transverse_cartesian_derivatives_gauss_aux) = prod(local_derivatives_patch, Jinv);
 
         for (IndexType i = 0; i < 6 ; i++)
-            rCartesianDerivatives.TransversalCartesianDerivativesCenter(i, 0) = inner_prod(mvze, row(transverse_cartesian_derivatives_gauss_aux, i));
+            rCartesianDerivatives.TransversalCartesianDerivativesCenter(i, 0) = inner_prod(ThisOrthogonalBase.Vzeta, row(transverse_cartesian_derivatives_gauss_aux, i));
 
      } else {
         /* Calculate the Jacobian and his inverse */
@@ -2651,15 +2653,15 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnCenterTrans(
 
          /* Compute inverse of the Jaccobian (just in plane components)*/
          if (Part == GeometricLevel::LOWER) {
-             rCartesianDerivatives.JInvPlaneLower(0, 0) = inner_prod(Xdxi,  mvxe);
-             rCartesianDerivatives.JInvPlaneLower(0, 1) = inner_prod(Xdeta, mvxe);
-             rCartesianDerivatives.JInvPlaneLower(1, 0) = inner_prod(Xdxi,  mvye);
-             rCartesianDerivatives.JInvPlaneLower(1, 1) = inner_prod(Xdeta, mvye);
+             rCartesianDerivatives.JInvPlaneLower(0, 0) = inner_prod(Xdxi,  ThisOrthogonalBase.Vxi);
+             rCartesianDerivatives.JInvPlaneLower(0, 1) = inner_prod(Xdeta, ThisOrthogonalBase.Vxi);
+             rCartesianDerivatives.JInvPlaneLower(1, 0) = inner_prod(Xdxi,  ThisOrthogonalBase.Veta);
+             rCartesianDerivatives.JInvPlaneLower(1, 1) = inner_prod(Xdeta, ThisOrthogonalBase.Veta);
          } else if (Part == GeometricLevel::UPPER) {
-             rCartesianDerivatives.JInvPlaneUpper(0, 0) = inner_prod(Xdxi,  mvxe);
-             rCartesianDerivatives.JInvPlaneUpper(0, 1) = inner_prod(Xdeta, mvxe);
-             rCartesianDerivatives.JInvPlaneUpper(1, 0) = inner_prod(Xdxi,  mvye);
-             rCartesianDerivatives.JInvPlaneUpper(1, 1) = inner_prod(Xdeta, mvye);
+             rCartesianDerivatives.JInvPlaneUpper(0, 0) = inner_prod(Xdxi,  ThisOrthogonalBase.Vxi);
+             rCartesianDerivatives.JInvPlaneUpper(0, 1) = inner_prod(Xdeta, ThisOrthogonalBase.Vxi);
+             rCartesianDerivatives.JInvPlaneUpper(1, 0) = inner_prod(Xdxi,  ThisOrthogonalBase.Veta);
+             rCartesianDerivatives.JInvPlaneUpper(1, 1) = inner_prod(Xdeta, ThisOrthogonalBase.Veta);
          }
      }
 }

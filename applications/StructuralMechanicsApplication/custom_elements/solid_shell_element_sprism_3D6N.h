@@ -114,6 +114,15 @@ public:
      */
     enum class GeometricLevel {LOWER = 0, CENTER = 5, UPPER = 9};
 
+    /**
+     * @brief To differtiate between the different possible orthogonal bases
+     * @details Then:
+     * - 0- If X is the prefered normal vector
+     * - 1- If Y is the prefered normal vector
+     * - 2- If Z is the prefered normal vector
+     */
+    enum class OrthogonalBaseApproach {X = 0, Y = 1, Z = 2};
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -645,6 +654,15 @@ protected:
     };
 
     /**
+     * @class OrthogonalBase
+     * @brief OrthogonalBase
+     */
+    struct OrthogonalBase
+    {
+        array_1d<double, 3 > Vxi, Veta, Vzeta;
+    };
+
+    /**
      * @class TransverseGradient
      * @brief TransverseGradient
      */
@@ -809,10 +827,7 @@ protected:
     IntegrationMethod mThisIntegrationMethod;
 
     /* Finalize and Initialize label*/
-    bool mFinalizedStep; // TODO: Change for a  flag
-
-    /* Vectors base */ // TODO: Compute directly
-    array_1d<double,3> mvxe, mvye, mvze;
+    bool mFinalizedStep;
 
     /* Auxiliar vector of matrices container used for different pourposes in TL and UL */
     std::vector< Matrix > mHistoricalF0; /// Container for historical total Jacobians for Total Lagrangian
@@ -891,12 +906,13 @@ protected:
 
     /**
      * @brief Calculates the Local Coordinates System
-     * @param choose The chosen approximation
-     * @param ang Angle of rotation of the element
+     * @param ThisOrthogonalBaseApproach The chosen approximation
+     * @param ThisAngle Angle of rotation of the element
      */
     void CalculateLocalCoordinateSystem(
-        const int choose,
-        const double ang
+        OrthogonalBase& ThisOrthogonalBase,
+        const OrthogonalBaseApproach ThisOrthogonalBaseApproach,
+        const double ThisAngle
         );
 
     /**
@@ -988,26 +1004,28 @@ protected:
 
     /**
      * @brief Calculate the Cartesian derivatives in the Gauss points, for the plane
-     * @param Part The enum that indicates upper or lower face
      * @param CartesianDerivativesCenter The cartesian derivatives in the plane
+     * @param Part The enum that indicates upper or lower face
      */
     void CalculateCartesianDerOnCenterPlane(
-        const GeometricLevel Part,
-        bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter
+        bounded_matrix<double, 2, 4 >& CartesianDerivativesCenter,
+        const OrthogonalBase& ThisOrthogonalBase,
+        const GeometricLevel Part
         );
 
     /**
      * @brief Calculate the Cartesian derivatives in the Gauss points, for the plane
      * @param NodeGauss Number of Gauss node calculated
-     * @param Index The index that indicates upper or lower face
+     * @param Part The index that indicates upper or lower face
      * @param NodesCoord The matrix with the coordinates of the nodes of the element
      * @param InPlaneCartesianDerivativesGauss The cartesian derivatives in the plane
      */
     void CalculateCartesianDerOnGaussPlane(
+        bounded_matrix<double, 2, 4 > & InPlaneCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const OrthogonalBase& ThisOrthogonalBase,
         const IndexType NodeGauss,
-        const GeometricLevel Part,
-        const bounded_matrix<double, 12, 3 >& NodesCoord,
-        bounded_matrix<double, 2, 4 >& InPlaneCartesianDerivativesGauss
+        const GeometricLevel Part
         );
 
     /**
@@ -1017,8 +1035,9 @@ protected:
      * @param rLocalCoordinates The local coordinates
      */
     void CalculateCartesianDerOnGaussTrans(
-        const bounded_matrix<double, 12, 3 >& NodesCoord,
-        bounded_matrix<double, 6, 1 >& TransversalCartesianDerivativesGauss,
+        bounded_matrix<double, 6, 1 > & TransversalCartesianDerivativesGauss,
+        const bounded_matrix<double, 12, 3 > & NodesCoord,
+        const OrthogonalBase& ThisOrthogonalBase,
         const array_1d<double, 3>& rLocalCoordinates
         );
 
@@ -1031,6 +1050,7 @@ protected:
     void CalculateCartesianDerOnCenterTrans(
         CartesianDerivatives& rCartesianDerivatives,
         const bounded_matrix<double, 12, 3 >& NodesCoord,
+        const OrthogonalBase& ThisOrthogonalBase,
         const GeometricLevel Part
         );
 
