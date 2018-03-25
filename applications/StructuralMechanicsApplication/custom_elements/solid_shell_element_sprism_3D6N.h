@@ -816,9 +816,6 @@ protected:
     array_1d<double,3> mvye;
     array_1d<double,3> mvze;
 
-    /* Total element volume */ // TODO: Check this!!!
-    double mTotalDomainInitialSize;
-
     /* Auxiliar vector of matrices container used for different pourposes in TL and UL */ // TODO: Check this!!!
     std::vector< Matrix > mAuxMatCont; /// Container for historical total Jacobians for Total Lagrangian
                                        /// Container for historical total elastic deformation measure F0 = dx/dX  for Updated Lagrangian

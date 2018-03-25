@@ -91,7 +91,6 @@ SolidShellElementSprism3D6N::SolidShellElementSprism3D6N( SolidShellElementSpris
     :BaseType(rOther)
     ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
     ,mFinalizedStep(rOther.mFinalizedStep)
-    ,mTotalDomainInitialSize(rOther.mTotalDomainInitialSize)
     ,mAuxMatCont(rOther.mAuxMatCont)
     ,mAuxCont(rOther.mAuxCont)
 {
@@ -121,7 +120,6 @@ SolidShellElementSprism3D6N&  SolidShellElementSprism3D6N::operator=(SolidShellE
         mAuxMatCont[i]=rOther.mAuxMatCont[i];
     }
 
-    mTotalDomainInitialSize = rOther.mTotalDomainInitialSize;
     mAuxCont = rOther.mAuxCont;
 
     return *this;
@@ -165,7 +163,6 @@ Element::Pointer SolidShellElementSprism3D6N::Clone(
     for(IndexType i = 0; i < mAuxMatCont.size(); i++)
         new_element.mAuxMatCont[i] = mAuxMatCont[i];
 
-    new_element.mTotalDomainInitialSize = mTotalDomainInitialSize;
     new_element.mAuxCont = mAuxCont;
 
     return Kratos::make_shared<SolidShellElementSprism3D6N>(new_element);
@@ -1656,22 +1653,13 @@ void SolidShellElementSprism3D6N::Initialize()
         // Compute jacobian inverses and set the domain initial size:
         GeometryType::JacobiansType J0;
         J0 = GetGeometry().Jacobian(J0, mThisIntegrationMethod);
-        mTotalDomainInitialSize = 0.0;
 
         /* Calculating the inverse J0 */
         for ( IndexType point_number = 0; point_number < integration_points.size(); point_number++ ) {
             // Calculating and storing inverse of the jacobian and the parameters needed
             MathUtils<double>::InvertMatrix( J0[point_number], mAuxMatCont[point_number], mAuxCont[point_number] );
-
-            // Getting informations for integration
-            const double integration_weight = integration_points[point_number].Weight();
-
-            // Calculating the total volume
-            mTotalDomainInitialSize += mAuxCont[point_number] * integration_weight;
         }
     } else { // Historic deformation gradient
-        mTotalDomainInitialSize = 0.0; // Just initialize, not used in UL
-
         for ( IndexType point_number = 0; point_number < integration_points.size(); point_number++ ) {
             mAuxCont[point_number] = 1.0;
             mAuxMatCont[point_number] = IdentityMatrix(3);
@@ -4086,7 +4074,6 @@ void SolidShellElementSprism3D6N::save( Serializer& rSerializer ) const
     int IntMethod = int(mThisIntegrationMethod);
     rSerializer.save("IntegrationMethod",IntMethod);
     rSerializer.save("FinalizedStep",mFinalizedStep);
-    rSerializer.save("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.save("AuxMatCont",mAuxMatCont);
     rSerializer.save("AuxCont",mAuxCont);
 }
@@ -4101,7 +4088,6 @@ void SolidShellElementSprism3D6N::load( Serializer& rSerializer )
     rSerializer.load("IntegrationMethod",IntMethod);
     mThisIntegrationMethod = IntegrationMethod(IntMethod);
     rSerializer.load("FinalizedStep",mFinalizedStep);
-    rSerializer.load("mTotalDomainInitialSize",mTotalDomainInitialSize);
     rSerializer.load("AuxMatCont",mAuxMatCont);
     rSerializer.load("AuxCont",mAuxCont);
 }
