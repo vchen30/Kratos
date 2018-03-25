@@ -2545,8 +2545,8 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussPlane(
     jac(1, 1) = inner_prod(Xdeta, t2g);
 
     /* Compute the inverse of the Jacobian */
-    double AuxDet;
-    const bounded_matrix<double, 2, 2 > JinvPlane = MathUtils<double>::InvertMatrix<2>(jac, AuxDet);
+    double aux_det;
+    const bounded_matrix<double, 2, 2 > JinvPlane = MathUtils<double>::InvertMatrix<2>(jac, aux_det);
 
     /* Compute the Cartesian derivatives */
     noalias(InPlaneCartesianDerivativesGauss) = prod(JinvPlane, trans(local_derivative_patch));
@@ -2577,9 +2577,8 @@ void SolidShellElementSprism3D6N::CalculateCartesianDerOnGaussTrans(
     Xdeta[2] = Xd(2, 1);
 
     /* Compute orthonormal vectors */
-    array_1d<double, 3 > t1g, t2g, t3g;
-    bounded_matrix<double, 3, 3 > t = ZeroMatrix(3, 3);
-    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t, t1g, t2g, t3g, mvxe, Xdxi, Xdeta);
+    bounded_matrix<double, 3, 3 > t;
+    StructuralMechanicsMathUtilities::Comp_Orthonor_Base(t, mvxe, Xdxi, Xdeta);
 
     /* Compute Jacobian */
     bounded_matrix<double, 3, 3 > jac;
