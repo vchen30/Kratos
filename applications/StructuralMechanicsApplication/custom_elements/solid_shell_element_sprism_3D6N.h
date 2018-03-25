@@ -816,13 +816,9 @@ protected:
     array_1d<double,3> mvye;
     array_1d<double,3> mvze;
 
-    /* Auxiliar vector of matrices container used for different pourposes in TL and UL */ // TODO: Check this!!!
-    std::vector< Matrix > mAuxMatCont; /// Container for historical total Jacobians for Total Lagrangian
+    /* Auxiliar vector of matrices container used for different pourposes in TL and UL */
+    std::vector< Matrix > mHistoricalF0; /// Container for historical total Jacobians for Total Lagrangian
                                        /// Container for historical total elastic deformation measure F0 = dx/dX  for Updated Lagrangian
-
-    /* Auxiliar vector container used for different pourposes in TL and UL */ // TODO: Check this!!!
-    Vector mAuxCont; // Container for the total Jacobian determinants for Total Lagrangian
-                     // Container for the total deformation gradient determinants for Updated Lagrangian
 
     /* Elemental flags */
     Flags  mELementalFlags;

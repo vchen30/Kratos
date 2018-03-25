@@ -91,8 +91,7 @@ SolidShellElementSprism3D6N::SolidShellElementSprism3D6N( SolidShellElementSpris
     :BaseType(rOther)
     ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
     ,mFinalizedStep(rOther.mFinalizedStep)
-    ,mAuxMatCont(rOther.mAuxMatCont)
-    ,mAuxCont(rOther.mAuxCont)
+    ,mHistoricalF0(rOther.mHistoricalF0)
 {
 }
 
@@ -112,15 +111,13 @@ SolidShellElementSprism3D6N&  SolidShellElementSprism3D6N::operator=(SolidShellE
 
     mThisIntegrationMethod = rOther.mThisIntegrationMethod;
 
-    mAuxMatCont.clear();
-    mAuxMatCont.resize( rOther.mAuxMatCont.size());
+    mHistoricalF0.clear();
+    mHistoricalF0.resize( rOther.mHistoricalF0.size());
 
     for(IndexType i = 0; i < mConstitutiveLawVector.size(); i++) {
         mConstitutiveLawVector[i] = rOther.mConstitutiveLawVector[i];
-        mAuxMatCont[i]=rOther.mAuxMatCont[i];
+        mHistoricalF0[i]=rOther.mHistoricalF0[i];
     }
-
-    mAuxCont = rOther.mAuxCont;
 
     return *this;
 }
@@ -157,13 +154,11 @@ Element::Pointer SolidShellElementSprism3D6N::Clone(
     for(IndexType i = 0; i < integration_point_number; i++)
         new_element.mConstitutiveLawVector[i] = mConstitutiveLawVector[i]->Clone();
 
-    if ( new_element.mAuxMatCont.size() != mAuxMatCont.size() )
-        new_element.mAuxMatCont.resize(mAuxMatCont.size());
+    if ( new_element.mHistoricalF0.size() != mHistoricalF0.size() )
+        new_element.mHistoricalF0.resize(mHistoricalF0.size());
 
-    for(IndexType i = 0; i < mAuxMatCont.size(); i++)
-        new_element.mAuxMatCont[i] = mAuxMatCont[i];
-
-    new_element.mAuxCont = mAuxCont;
+    for(IndexType i = 0; i < mHistoricalF0.size(); i++)
+        new_element.mHistoricalF0[i] = mHistoricalF0[i];
 
     return Kratos::make_shared<SolidShellElementSprism3D6N>(new_element);
 }
@@ -1279,12 +1274,7 @@ void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
         const ProcessInfo& rCurrentProcessInfo
         )
 {
-    for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); point_number++ ) {
-        if (rVariable == DETERMINANT_F)
-            mAuxCont[point_number] = rValues[point_number];
-
-        mConstitutiveLawVector[point_number]->SetValue( rVariable, rValues[point_number], rCurrentProcessInfo );
-    }
+    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** SET VECTOR VALUE *********************************/
@@ -1339,10 +1329,7 @@ void SolidShellElementSprism3D6N::GetValueOnIntegrationPoints(
         if ( rValues.size() != integration_points_number )
             rValues.resize( integration_points_number, false );
         for ( IndexType ii = 0; ii < integration_points_number; ii++ ) {
-            if (rVariable == DETERMINANT_F)
-                rValues[ii] = mAuxCont[ii];
-            else
-                rValues[ii] = mConstitutiveLawVector[ii]->GetValue( rVariable, rValues[ii] );
+            rValues[ii] = mConstitutiveLawVector[ii]->GetValue( rVariable, rValues[ii] );
         }
     }
 }
@@ -1646,8 +1633,7 @@ void SolidShellElementSprism3D6N::Initialize()
         mELementalFlags.Set(SolidShellElementSprism3D6N::QUADRATIC_ELEMENT, true);
 
     // Resizing the containers
-    mAuxMatCont.resize( integration_points.size() );
-    mAuxCont.resize( integration_points.size(), false );
+    mHistoricalF0.resize( integration_points.size() );
 
     if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) { // Jacobian inverses
         // Compute jacobian inverses and set the domain initial size:
@@ -1657,12 +1643,12 @@ void SolidShellElementSprism3D6N::Initialize()
         /* Calculating the inverse J0 */
         for ( IndexType point_number = 0; point_number < integration_points.size(); point_number++ ) {
             // Calculating and storing inverse of the jacobian and the parameters needed
-            MathUtils<double>::InvertMatrix( J0[point_number], mAuxMatCont[point_number], mAuxCont[point_number] );
+            double aux_detJ;
+            MathUtils<double>::InvertMatrix( J0[point_number], mHistoricalF0[point_number], aux_detJ );
         }
     } else { // Historic deformation gradient
         for ( IndexType point_number = 0; point_number < integration_points.size(); point_number++ ) {
-            mAuxCont[point_number] = 1.0;
-            mAuxMatCont[point_number] = IdentityMatrix(3);
+            mHistoricalF0[point_number] = IdentityMatrix(3);
         }
     }
 
@@ -3741,14 +3727,14 @@ void SolidShellElementSprism3D6N::CalculateKinematics(
         rVariables.StressMeasure = ConstitutiveLaw::StressMeasure_PK2;
 
         // Jacobian Determinant for the isoparametric and numerical integration
-        rVariables.detJ = mAuxCont[rPointNumber];
+        rVariables.detJ = MathUtils<double>::Det3(mHistoricalF0[rPointNumber]);
     } else {
         // Cauchy stress measure
         rVariables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
 
         //Determinant of the Deformation Gradient F0
-        rVariables.detF0 = mAuxCont[rPointNumber];
-        rVariables.F0    = mAuxMatCont[rPointNumber];
+        rVariables.detF0 = MathUtils<double>::Det3(mHistoricalF0[rPointNumber]);
+        rVariables.F0    = mHistoricalF0[rPointNumber];
     }
 
     this->CbartoFbar(rVariables, rPointNumber);
@@ -3811,7 +3797,7 @@ void SolidShellElementSprism3D6N::CbartoFbar(
     Matrix F = ZeroMatrix(3, 3);
     if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN)) {
         // Deformation Gradient F [dx_n+1/dx_n]
-        noalias(F) = prod( rVariables.j[rPointNumber], mAuxMatCont[rPointNumber] );
+        noalias(F) = prod( rVariables.j[rPointNumber], mHistoricalF0[rPointNumber] );
     } else {
         // Calculating the inverse of the jacobian and the parameters needed [d£/dx_n]
         Matrix InvJ(3, 3);
@@ -3959,8 +3945,7 @@ void SolidShellElementSprism3D6N::FinalizeStepVariables(
 {
     if ( mELementalFlags.Is(SolidShellElementSprism3D6N::TOTAL_UPDATED_LAGRANGIAN) == false ) {
         // Update internal (historical) variables
-        mAuxCont[rPointNumber] = rVariables.detF * rVariables.detF0;
-        mAuxMatCont[rPointNumber] = prod(rVariables.F, rVariables.F0);
+        mHistoricalF0[rPointNumber] = prod(rVariables.F, rVariables.F0);
     }
 }
 
@@ -4074,8 +4059,7 @@ void SolidShellElementSprism3D6N::save( Serializer& rSerializer ) const
     int IntMethod = int(mThisIntegrationMethod);
     rSerializer.save("IntegrationMethod",IntMethod);
     rSerializer.save("FinalizedStep",mFinalizedStep);
-    rSerializer.save("AuxMatCont",mAuxMatCont);
-    rSerializer.save("AuxCont",mAuxCont);
+    rSerializer.save("HistoricalF0",mHistoricalF0);
 }
 
 /***********************************************************************************/
@@ -4088,8 +4072,7 @@ void SolidShellElementSprism3D6N::load( Serializer& rSerializer )
     rSerializer.load("IntegrationMethod",IntMethod);
     mThisIntegrationMethod = IntegrationMethod(IntMethod);
     rSerializer.load("FinalizedStep",mFinalizedStep);
-    rSerializer.load("AuxMatCont",mAuxMatCont);
-    rSerializer.load("AuxCont",mAuxCont);
+    rSerializer.load("HistoricalF0",mHistoricalF0);
 }
 
 } // Namespace Kratos.
