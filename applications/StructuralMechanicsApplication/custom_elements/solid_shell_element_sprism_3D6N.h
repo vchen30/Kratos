@@ -54,7 +54,7 @@ namespace Kratos
  * behavior of the in-plane triangle and to handle quasi-incompressible materials or materials with isochoric plastic flow.
  * @author Vicente Mataix Ferrandiz
  */
-class SolidShellElementSprism3D6N
+class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) SolidShellElementSprism3D6N
     : public BaseSolidElement
 {
 public:
