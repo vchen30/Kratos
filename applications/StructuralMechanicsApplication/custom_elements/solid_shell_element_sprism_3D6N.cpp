@@ -15,6 +15,7 @@
 
 // Project includes
 #include "includes/checks.h"
+#include "input_output/logger.h"
 #include "custom_elements/solid_shell_element_sprism_3D6N.h"
 
 namespace Kratos
@@ -72,9 +73,7 @@ SolidShellElementSprism3D6N::SolidShellElementSprism3D6N(IndexType NewId, Geomet
         } else if (GetProperties()[NINT_TRANS] == 11) {
             mThisIntegrationMethod = GeometryData::GI_EXTENDED_GAUSS_5;
         } else {
-            std::cout << "The number of integration points is not defined.  NINT_TRANS: "<< GetProperties()[NINT_TRANS] << std::endl;
-            std::cout << "Options are: 2, 3, 5, 7, 11  " << std::endl;
-            std::cout << "Taking default number of integration points (NINT_TRANS = 2)  " << std::endl;
+            KRATOS_INFO("SolidShellElementSprism3D6N") << "The number of integration points is not defined.  NINT_TRANS: "<< GetProperties()[NINT_TRANS] << "\nOptions are: 2, 3, 5, 7, 11  " << "\nTaking default number of integration points (NINT_TRANS = 2)  " << std::endl;
             mThisIntegrationMethod = GeometryData::GI_EXTENDED_GAUSS_2;
         }
     } else {
@@ -1770,7 +1769,7 @@ void SolidShellElementSprism3D6N::PrintElementCalculation(
 {
     KRATOS_TRY;
 
-    std::cout << " Element: " << this->Id() << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " Element: " << this->Id() << std::endl;
 
     WeakPointerVector< NodeType >& NeighbourNodes = this->GetValue(NEIGHBOUR_NODES);
     const IndexType number_of_neighbours = NumberOfActiveNeighbours(NeighbourNodes);
@@ -1780,7 +1779,7 @@ void SolidShellElementSprism3D6N::PrintElementCalculation(
         const array_1d<double, 3 > & current_displacement  = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT);
         const array_1d<double, 3 > & previous_displacement = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT,1);
         const array_1d<double, 3> previous_position  = current_position - (current_displacement-previous_displacement);
-        std::cout << " Previous  Position  node[" << GetGeometry()[i].Id() << "]: "<<previous_position << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Previous  Position  node[" << GetGeometry()[i].Id() << "]: "<<previous_position << std::endl;
     }
 
     for ( IndexType i = 0; i < number_of_neighbours; i++ ) {
@@ -1788,45 +1787,45 @@ void SolidShellElementSprism3D6N::PrintElementCalculation(
         const array_1d<double, 3 > & current_displacement  = NeighbourNodes[i].FastGetSolutionStepValue(DISPLACEMENT);
         const array_1d<double, 3 > & previous_displacement = NeighbourNodes[i].FastGetSolutionStepValue(DISPLACEMENT,1);
         const array_1d<double, 3> previous_position  = current_position - (current_displacement-previous_displacement);
-        std::cout << " Previous  Position  neighbour node[" << NeighbourNodes[i].Id() << "]: "<<previous_position << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Previous  Position  neighbour node[" << NeighbourNodes[i].Id() << "]: "<<previous_position << std::endl;
     }
 
     for ( IndexType i = 0; i < 6; i++ ) {
         const array_1d<double, 3> & current_position  = GetGeometry()[i].Coordinates();
-        std::cout << " Current  Position  node[" << GetGeometry()[i].Id()<<"]: " << current_position << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Current  Position  node[" << GetGeometry()[i].Id()<<"]: " << current_position << std::endl;
     }
 
     for ( IndexType i = 0; i < number_of_neighbours; i++ ) {
         const array_1d<double, 3> & current_position  = NeighbourNodes[i].Coordinates();
-        std::cout << " Current  Position neighbour node[" << NeighbourNodes[i].Id()<<"]: " << current_position << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Current  Position neighbour node[" << NeighbourNodes[i].Id()<<"]: " << current_position << std::endl;
     }
 
     for ( IndexType i = 0; i < 6; i++ ) {
         const array_1d<double, 3 > & previous_displacement = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT,1);
-        std::cout << " Previous Displacement node[" << GetGeometry()[i].Id() << "]: " << previous_displacement << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Previous Displacement node[" << GetGeometry()[i].Id() << "]: " << previous_displacement << std::endl;
     }
 
     for ( IndexType i = 0; i < number_of_neighbours; i++ ) {
         const array_1d<double, 3 > & previous_displacement = NeighbourNodes[i].FastGetSolutionStepValue(DISPLACEMENT,1);
-        std::cout << " Previous Displacement neighbour node[" << NeighbourNodes[i].Id() << "]: " << previous_displacement << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Previous Displacement neighbour node[" << NeighbourNodes[i].Id() << "]: " << previous_displacement << std::endl;
     }
 
     for ( IndexType i = 0; i < 6; i++ ) {
         const array_1d<double, 3 > & current_displacement  = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT);
-        std::cout << " Current  Displacement  node[" << GetGeometry()[i].Id() << "]: " << current_displacement << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Current  Displacement  node[" << GetGeometry()[i].Id() << "]: " << current_displacement << std::endl;
     }
 
     for ( IndexType i = 0; i < number_of_neighbours; i++ ) {
         const array_1d<double, 3 > & current_displacement  = NeighbourNodes[i].FastGetSolutionStepValue(DISPLACEMENT);
-        std::cout << " Current  Displacement  node[" << NeighbourNodes[i].Id() << "]: " << current_displacement << std::endl;
+        KRATOS_INFO("SolidShellElementSprism3D6N") << " Current  Displacement  node[" << NeighbourNodes[i].Id() << "]: " << current_displacement << std::endl;
     }
 
-    std::cout << " Stress " << rVariables.StressVector << std::endl;
-    std::cout << " Strain " << rVariables.StrainVector << std::endl;
-    std::cout << " F  " << rVariables.F<<std::endl;
-    std::cout << " ConstitutiveMatrix " <<rVariables.ConstitutiveMatrix << std::endl;
-    std::cout << " K " << rLocalSystem.GetLeftHandSideMatrix() << std::endl;
-    std::cout << " f " << rLocalSystem.GetRightHandSideVector() << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " Stress " << rVariables.StressVector << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " Strain " << rVariables.StrainVector << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " F  " << rVariables.F<<std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " ConstitutiveMatrix " <<rVariables.ConstitutiveMatrix << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " K " << rLocalSystem.GetLeftHandSideMatrix() << std::endl;
+    KRATOS_INFO("SolidShellElementSprism3D6N") << " f " << rLocalSystem.GetRightHandSideVector() << std::endl;
 
     KRATOS_CATCH( "" );
 }
