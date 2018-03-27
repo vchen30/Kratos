@@ -161,7 +161,7 @@ public:
     ///@{
 
     /**
-     * Creates a new element pointer from an arry of nodes
+     * @brief Creates a new element pointer from an arry of nodes
      * @param NewId the ID of the new element
      * @param rThisNodes the nodes of the new element
      * @param pProperties the properties assigned to the new element
@@ -175,7 +175,7 @@ public:
         ) const override;
 
     /**
-     * Creates a new element pointer from an existing geometry
+     * @brief Creates a new element pointer from an existing geometry
      * @param NewId the ID of the new element
      * @param pGeom the  geometry taken to create the condition
      * @param pProperties the properties assigned to the new element
@@ -189,7 +189,7 @@ public:
         ) const override;
 
     /**
-     * Creates a new element pointer from an existing geometry
+     * @brief Creates a new element pointer from an existing geometry
      * @param NewId the ID of the new element
      * @param pGeom the  geometry taken to create the condition
      * @param pProperties the properties assigned to the new element
@@ -208,7 +208,7 @@ public:
     /******************************************************************/
 
     /**
-     * Sets on rResult the ID's of the element degrees of freedom
+     * @brief Sets on rResult the ID's of the element degrees of freedom
      * @param rResult The result vector with the ID's of the DOF
      * @param rCurrentProcessInfo the current process info instance
      */
@@ -219,7 +219,7 @@ public:
         ) override;
 
     /**
-     * Sets on ConditionalDofList the degrees of freedom of the considered element geometry
+     * @brief Sets on ConditionalDofList the degrees of freedom of the considered element geometry
      * @param rConditionalDofList The list of DOFs
      * @param rCurrentProcessInfo The current process info instance
      */
@@ -230,8 +230,8 @@ public:
         ) override;
 
     /**
-     * This function provides the place to perform checks on the completeness of the input.
-     * It is designed to be called only once (or anyway, not often) typically at the beginning
+     * @brief This function provides the place to perform checks on the completeness of the input.
+     * @details It is designed to be called only once (or anyway, not often) typically at the beginning
      * of the calculations, so to verify that nothing is missing from the input
      * or that no common error is found.
      * @param rCurrentProcessInfo The current process information
@@ -279,7 +279,7 @@ protected:
     /********************************************************************************/
 
     /**
-     * Calculates the local contibution of the LHS
+     * @brief Calculates the local contibution of the LHS
      * @param rLocalLHS The local LHS to compute
      * @param rMortarConditionMatrices The mortar operators to be considered
      * @param rDerivativeData The class containing all the derivatives uses to compute the jacobian
@@ -294,7 +294,7 @@ protected:
         ) override;
 
     /**
-     * Calculates the local contibution of the RHS
+     * @brief Calculates the local contibution of the RHS
      * @param rLocalRHS The local RHS to compute
      * @param rMortarConditionMatrices The mortar operators to be considered
      * @param rDerivativeData The class containing all the derivatives uses to compute the jacobian
@@ -313,7 +313,7 @@ protected:
     /******************************************************************/
 
     /**
-     * Returns a value depending of the active/inactive set
+     * @brief Returns a value depending of the active/inactive set
      * @param CurrentGeometry The geometry containing the nodes that are needed to be checked as active or inactive
      * @return The integer that can be used to identify the case to compute
      */
@@ -334,19 +334,22 @@ protected:
     }
 
     /**
-     * Returns a value depending of the active/inactive set
+     * @brief This method returns a vector containing the friction coefficients
+     * @return The friction coefficient corresponding to each node
      */
-
     array_1d<double, TNumNodes> GetFrictionCoefficient()
     {
         // The friction coefficient
-        const double mu = this->GetProperties().GetValue(FRICTION_COEFFICIENT);
+        array_1d<double, TNumNodes> friction_coeffient_vector;
+        auto& geom = this->GetGeometry();
 
-        array_1d<double, TNumNodes> FrictionCoefficientVector(TNumNodes, mu);
+        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+            friction_coeffient_vector[i_node] = geom[i_node].GetValue(FRICTION_COEFFICIENT);
+        }
 
         // TODO: Define the "CL" or friction law to compute this
 
-        return FrictionCoefficientVector;
+        return friction_coeffient_vector;
     }
 
     ///@}

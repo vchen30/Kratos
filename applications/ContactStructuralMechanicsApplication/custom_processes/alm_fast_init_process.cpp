@@ -33,8 +33,7 @@ void ALMFastInit::Execute()
     NodesArrayType& nodes_array = mrThisModelPart.Nodes();
     
     #pragma omp parallel for
-    for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) 
-    {
+    for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
         auto it_node = nodes_array.begin() + i;
         
         // Weighted values
@@ -55,9 +54,45 @@ void ALMFastInit::Execute()
     // Now we iterate over the conditions
     ConditionsArrayType& conditions_array = mrThisModelPart.Conditions();
     
+    // We initialize the normal
+    const array_1d<double, 3>& zero_vector = ZeroVector(3);
+
     #pragma omp parallel for
     for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i)
-        (conditions_array.begin() + i)->SetValue(NORMAL, ZeroVector(3)); // The normal and tangents vectors
+        (conditions_array.begin() + i)->SetValue(NORMAL, zero_vector); // The normal and tangents vectors
+
+    if (is_frictional == true) {
+        // We initialize the frictional coefficient. The evolution of the frictional coefficient it is supposed to be controled by a law
+        #pragma omp parallel for
+        for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
+            auto it_node = nodes_array.begin() + i;
+            it_node->SetValue(FRICTION_COEFFICIENT, 0.0);
+            it_node->SetValue(NODAL_AREA, 0.0);
+        }
+
+        #pragma omp parallel for
+        for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i) {
+            auto it_cond = (conditions_array.begin() + i);
+
+            auto p_prop = it_cond->pGetProperties();
+            const double friction_coefficient = p_prop->GetValue(FRICTION_COEFFICIENT);
+            auto& geom = it_cond->GetGeometry();
+
+            for (auto& node : geom) {
+                node.SetLock();
+                node.GetValue(FRICTION_COEFFICIENT) += friction_coefficient;
+                node.GetValue(NODAL_AREA) += 1.0;
+                node.UnSetLock();
+            }
+        }
+
+        #pragma omp parallel for
+        for(int i = 0; i < static_cast<int>(nodes_array.size()); ++i) {
+            auto it_node = nodes_array.begin() + i;
+            double& friction_coefficient = it_node->GetValue(FRICTION_COEFFICIENT);
+            friction_coefficient /= it_node->GetValue(NODAL_AREA);
+        }
+    }
 
 
     KRATOS_CATCH("");
