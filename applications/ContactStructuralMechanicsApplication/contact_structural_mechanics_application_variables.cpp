@@ -35,7 +35,6 @@ KRATOS_CREATE_VARIABLE( double, NORMAL_GAP )                                    
 /* Weighted values */
 KRATOS_CREATE_VARIABLE( double, WEIGHTED_GAP )                                       // The integrated gap employed in mortar formulation
 KRATOS_CREATE_VARIABLE( double, WEIGHTED_SLIP )                                      // The integrated slip employed in mortar formulation
-KRATOS_CREATE_VARIABLE( double, WEIGHTED_FRICTION )                                  // The integrated friction coefficient
 KRATOS_CREATE_VARIABLE( double, WEIGHTED_SCALAR_RESIDUAL )                           // The integrated scalar residual
 KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( WEIGHTED_VECTOR_RESIDUAL )                // The integrated vector residual
 

@@ -165,7 +165,7 @@ public:
         const double scale_factor = rModelPart.GetProcessInfo()[SCALE_FACTOR];
         const double tangent_factor = rModelPart.GetProcessInfo()[TANGENT_FACTOR];
         
-        const array_1d<double,3> zero_vector(3, 0.0);
+        const array_1d<double,3> zero_vector = ZeroVector(3);
         
         NodesArrayType& nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
 
@@ -194,7 +194,7 @@ public:
                 const double lambda_tangent = norm_2(tangent_lagrange_multiplier); 
                 
                 // The friction coefficient
-                const double mu = it_node->GetValue(WEIGHTED_FRICTION);
+                const double mu = it_node->GetValue(FRICTION_COEFFICIENT);
                 
                 // Finally we compute the augmented tangent pressure
                 const double gt = it_node->FastGetSolutionStepValue(WEIGHTED_SLIP);
