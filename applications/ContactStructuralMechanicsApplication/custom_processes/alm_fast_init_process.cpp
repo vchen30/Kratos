@@ -94,7 +94,6 @@ void ALMFastInit::Execute()
         }
     }
 
-
     KRATOS_CATCH("");
 } // class ALMFastInit
 } // namespace Kratos
