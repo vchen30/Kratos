@@ -47,6 +47,9 @@ BOOST_PYTHON_MODULE(KratosMappingApplication)
 
 
     AddCustomMappersToPython();
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+    AddCustomMappersToPythonMPI();
+#endif
 
     //registering variables in python
 

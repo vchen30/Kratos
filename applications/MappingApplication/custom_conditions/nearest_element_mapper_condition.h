@@ -22,7 +22,7 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/base_mapper_condition.h"
+#include "includes/condition.h"
 
 namespace Kratos
 {
@@ -46,13 +46,13 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-class KRATOS_API(MAPPING_APPLICATION) NearestElementMapperCondition : public BaseMapperCondition
+class KRATOS_API(MAPPING_APPLICATION) NearestElementMapperCondition : public Condition
 {
   public:
     ///@name Type Definitions
     ///@{
 
-    typedef BaseMapperCondition BaseType;
+    typedef Condition BaseType;
 
     ///@}
     ///@name Pointer Definitions

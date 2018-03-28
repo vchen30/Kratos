@@ -17,7 +17,7 @@
 // System includes
 
 
-// External includes 
+// External includes
 
 
 // Project includes
@@ -26,7 +26,7 @@
 
 namespace Kratos
 {
-    Mapper::Pointer MapperFactory::CreateMapper(ModelPart& rModelPartOrigin, 
+    Mapper::Pointer MapperFactory::CreateMapper(ModelPart& rModelPartOrigin,
                                                 ModelPart& rModelPartDestination,
                                                 Parameters JsonParameters)
     {
@@ -51,7 +51,7 @@ namespace Kratos
             {
                 err_msg << registered_mapper.first << ", ";
             }
-            KRATOS_ERROR << err_msg.str() << std::endl;  
+            KRATOS_ERROR << err_msg.str() << std::endl;
         }
     }
 
@@ -80,7 +80,7 @@ namespace Kratos
         if (InterfaceParameters.Has(key_sub_model_part))
         {
             const std::string name_interface_submodel_part = InterfaceParameters[key_sub_model_part].GetString();
-            
+
             if (echo_level >= 3 && comm_rank == 0)
             {
                 std::cout << "Mapper: SubModelPart used for " << InterfaceSide << "-ModelPart" << std::endl;
@@ -105,6 +105,6 @@ namespace Kratos
 
         return registered_mappers;
     }
-  
+
 }  // namespace Kratos.
 

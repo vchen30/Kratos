@@ -20,6 +20,7 @@
 
 // Include Base h
 #include "custom_conditions/nearest_neighbor_mapper_condition.h"
+#include "mapping_application_variables.h"
 
 namespace Kratos
 {
@@ -47,7 +48,7 @@ namespace Kratos
  * Constructor.
  */
 NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId)
-    : BaseMapperCondition(NewId) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -55,7 +56,7 @@ NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId)
  * Constructor using an array of nodes
  */
 NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, const NodesArrayType &ThisNodes)
-    : BaseMapperCondition(NewId, ThisNodes) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, ThisNodes) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -63,7 +64,7 @@ NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, 
  * Constructor using Geometry
  */
 NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, GeometryType::Pointer pGeometry)
-    : BaseMapperCondition(NewId, pGeometry) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, pGeometry) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -71,7 +72,7 @@ NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, 
  * Constructor using Properties
  */
 NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : BaseMapperCondition(NewId, pGeometry, pProperties) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, pGeometry, pProperties) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -79,7 +80,7 @@ NearestNeighborMapperCondition::NearestNeighborMapperCondition(IndexType NewId, 
  * Copy Constructor
  */
 NearestNeighborMapperCondition::NearestNeighborMapperCondition(NearestNeighborMapperCondition const &rOther)
-    : BaseMapperCondition(rOther) // @{KRATOS_CC_INIT_MEMBER_LIST}
+    : Condition(rOther) // @{KRATOS_CC_INIT_MEMBER_LIST}
 {
 }
 
@@ -161,6 +162,19 @@ Condition::Pointer NearestNeighborMapperCondition::Clone(IndexType NewId, NodesA
     KRATOS_TRY
     return Condition::Pointer(new NearestNeighborMapperCondition(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
     KRATOS_CATCH("");
+}
+
+/**
+ * this determines the condition equation ID vector for all conditional
+ * DOFs
+ * @param rResult: the condition equation ID vector
+ * @param rCurrentProcessInfo: the current process info instance
+ */
+void NearestNeighborMapperCondition::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+{
+  unsigned int number_of_nodes = GetGeometry().PointsNumber();
+  if (rResult.size() != number_of_nodes)
+    rResult.resize(number_of_nodes, false);
 }
 
 /**
@@ -301,7 +315,7 @@ void NearestNeighborMapperCondition::PrintData(std::ostream &rOStream) const
 
 void NearestNeighborMapperCondition::save(Serializer &rSerializer) const
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseMapperCondition);
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list
@@ -309,7 +323,7 @@ void NearestNeighborMapperCondition::save(Serializer &rSerializer) const
 
 void NearestNeighborMapperCondition::load(Serializer &rSerializer)
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, BaseMapperCondition);
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list

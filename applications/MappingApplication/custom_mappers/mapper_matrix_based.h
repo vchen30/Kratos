@@ -22,8 +22,8 @@
 
 // Project includes
 #include "mapper.h"
-#include "custom_utilities/interface_preprocess.h"
-#include "custom_conditions/base_mapper_condition.h"
+#include "custom_utilities/interface_preprocessor.h"
+// #include "custom_conditions/base_mapper_condition.h"
 // #include "custom_strategies/builders/mapping_matrix_builder.h"
 // #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 // #include "custom_strategies/builders/trilinos_mapping_matrix_builder.h"
@@ -51,10 +51,9 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 /// Short class definition.
-template <class TMappingMatrixBuilder,
-          class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
->
-class MapperMatrixBased : public Mapper
+template < class TInterfaceCommunicator,
+           class TMappingMatrixBuilder >
+class MapperMatrixBased : public Mapper  // the functionalities of these two classes will be merged once the old mappers will be removed
 {
 public:
 
@@ -66,6 +65,7 @@ public:
     /// Pointer definition of MapperMatrixBased
     KRATOS_CLASS_POINTER_DEFINITION(MapperMatrixBased);
 
+    typedef TInterfaceCommunicator TInterfaceCommunicatorType;
     typedef TMappingMatrixBuilder TMappingMatrixBuilderType;
 
     typedef typename TMappingMatrixBuilderType::Pointer TMappingMatrixBuilderPointerType;
@@ -91,18 +91,20 @@ public:
     ///@name Life Cycle
     ///@{
 
-    MapperMatrixBased(ModelPart &rModelPartOrigin, ModelPart &rModelpartDestination,
+    MapperMatrixBased(ModelPart& rModelPartOrigin, ModelPart& rModelpartDestination,
                       Parameters rJsonParameters) : Mapper(rModelPartOrigin, rModelpartDestination, rJsonParameters)
     {
-        mpMappingMatrixBuilder = TMappingMatrixBuilderPointerType(new TMappingMatrixBuilderType(this->mEchoLevel));
+        mpInterfaceModelPart = Kratos::make_shared<ModelPart>("Mapper-Interface");
+        mpInterfacePreprocessor = Kratos::make_shared<InterfacePreprocessor>(this->mrModelPartDestination,
+                                                                           this->mpInterfaceModelPart) );
 
-        mpInterfaceModelPart = ModelPart::Pointer( new ModelPart("Mapper-Interface") );
-        this->mpMapperCommunicator->pSetModelpartDestination(&*(this->mpInterfaceModelPart));        
+        mpInterfaceCommunicator = Kratos::make_shared<TInterfaceCommunicatorType>(rModelPartOrigin, mpInterfaceModelPart)
 
-        mpInterfacePreprocessor = InterfacePreprocess::Pointer( new InterfacePreprocess(this->mrModelPartDestination,
-                                                                                        this->mpInterfaceModelPart) );
+        mpMappingMatrixBuilder = Kratos::make_shared<TMappingMatrixBuilderPointerType>(this->mEchoLevel));
 
+        GenerateInterfaceModelPart();
         InitializeMappingMatrix();
+        ComputeMappingMatrix();
     }
 
     /// Destructor.
@@ -131,14 +133,14 @@ public:
         else
         {
             // TODO move these three steps to a function
-            InitializeMappingStep<>(rOriginVariable, 
-                                    rDestinationVariable, 
+            InitializeMappingStep<>(rOriginVariable,
+                                    rDestinationVariable,
                                     MappingOptions);
-            
+
             ExecuteMappingStep(MappingOptions);
 
-            FinalizeMappingStep<>(rOriginVariable, 
-                                rDestinationVariable, 
+            FinalizeMappingStep<>(rOriginVariable,
+                                rDestinationVariable,
                                 MappingOptions);
         }
     }
@@ -166,36 +168,36 @@ public:
             VectorComponentType var_component_z_destination = KratosComponents< VectorComponentType >::Get(rDestinationVariable.Name()+std::string("_Z"));
 
             // X-Component
-            InitializeMappingStep<VectorComponentType>(var_component_x_origin, 
+            InitializeMappingStep<VectorComponentType>(var_component_x_origin,
                                                     var_component_x_destination,
                                                     MappingOptions);
 
             ExecuteMappingStep(MappingOptions);
 
-            FinalizeMappingStep<VectorComponentType>(var_component_x_origin, 
-                                                    var_component_x_destination,  
+            FinalizeMappingStep<VectorComponentType>(var_component_x_origin,
+                                                    var_component_x_destination,
                                                     MappingOptions);
-            
+
             // Y-Component
-            InitializeMappingStep<VectorComponentType>(var_component_y_origin, 
+            InitializeMappingStep<VectorComponentType>(var_component_y_origin,
                                                     var_component_y_destination,
                                                     MappingOptions);
 
             ExecuteMappingStep(MappingOptions);
-            
-            FinalizeMappingStep<VectorComponentType>(var_component_y_origin, 
-                                                    var_component_y_destination,  
+
+            FinalizeMappingStep<VectorComponentType>(var_component_y_origin,
+                                                    var_component_y_destination,
                                                     MappingOptions);
 
             // Z-Component
-            InitializeMappingStep<VectorComponentType>(var_component_z_origin, 
+            InitializeMappingStep<VectorComponentType>(var_component_z_origin,
                                                     var_component_z_destination,
                                                     MappingOptions);
 
             ExecuteMappingStep(MappingOptions);
-            
-            FinalizeMappingStep<VectorComponentType>(var_component_z_origin, 
-                                                    var_component_z_destination,  
+
+            FinalizeMappingStep<VectorComponentType>(var_component_z_origin,
+                                                    var_component_z_destination,
                                                     MappingOptions);
         }
     }
@@ -216,7 +218,7 @@ public:
         {
             // Construct the inverse mapper if it hasn't been done before
             if (!mpInverseMapper) InitializeInverseMapper();
-            
+
             mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
         }
     }
@@ -237,9 +239,9 @@ public:
         {
             // Construct the inverse mapper if it hasn't been done before
             if (!mpInverseMapper) InitializeInverseMapper();
-            
+
             mpInverseMapper->Map(rDestinationVariable, rOriginVariable, MappingOptions);
-        }        
+        }
     }
 
     TSystemMatrixType& GetSystemMatrix()
@@ -293,14 +295,16 @@ protected:
     ///@name Protected member Variables
     ///@{
 
+    ModelPart::Pointer mpInterfaceModelPart;
+    InterfacePreprocessor::Pointer mpInterfacePreprocessor;
+
+    TInterfaceCommunicatorType mpInterfaceCommunicator;
     TMappingMatrixBuilderPointerType mpMappingMatrixBuilder;
 
     TSystemVectorPointerType mpQo;
     TSystemVectorPointerType mpQd;
     TSystemMatrixPointerType mpMdo;
 
-    ModelPart::Pointer mpInterfaceModelPart;
-    InterfacePreprocess::Pointer mpInterfacePreprocessor;
     Parameters mInterfaceParameters = Parameters(R"({})");
 
     ///@}
@@ -316,7 +320,7 @@ protected:
         if (MappingOptions.Is(MapperFlags::REMESHED))
         {
             GenerateInterfaceModelPart();
-            
+
             mpMappingMatrixBuilder->ClearData(mpMdo);
             mpMappingMatrixBuilder->ClearData(mpQo);
             mpMappingMatrixBuilder->ClearData(mpQd);
@@ -351,8 +355,10 @@ protected:
 
     void ComputeMappingMatrix()
     {
-        this->ExchangeInterfaceGeometryData();
-        
+        // Exchanging this informatin is needed such that the local mapper conditions have the
+        // information they need to build the local mapping Matrix (local Mapper LHS)
+        mpInterfaceCommunicator->ExchangeInterfaceGeometryData();
+
         mpMappingMatrixBuilder->BuildMappingMatrix(*mpInterfaceModelPart, *mpMdo);
     }
 
@@ -360,8 +366,8 @@ protected:
     This function creates the Interface-ModelPart
     */
     void GenerateInterfaceModelPart()
-    {   
-        this->mpInterfacePreprocessor->GenerateInterfacePart(mInterfaceParameters);
+    {
+        this->mpInterfacePreprocessor->GenerateInterfaceModelPart(mInterfaceParameters);
     }
 
     template< class TVarType>
@@ -410,8 +416,6 @@ protected:
             mpMappingMatrixBuilder->Update(mrModelPartDestination, *mpQd, rVarDestination, MappingOptions, factor);
         }
     }
-
-    virtual void ExchangeInterfaceGeometryData() = 0; // TODO make private and only virtual
 
     ///@}
     ///@name Protected  Access

@@ -21,7 +21,7 @@
 // External includes
 
 // Project includes
-#include "interface_object.h"
+#include "interface_base_object.h"
 
 
 namespace Kratos
@@ -49,11 +49,11 @@ namespace Kratos
 ///@{
 
 /// Node on the Interface for Searching
-/** This class Is the "wrapper" for nodes on the interface. It selects the best result by the closest distance to the 
+/** This class Is the "wrapper" for nodes on the interface. It selects the best result by the closest distance to the
 * point of which neighbor have to be found
 * Look into the class description of the MapperCommunicator to see how this Object is used in the application
 */
-class InterfaceNode : public InterfaceObject
+class InterfaceNode : public InterfaceBaseObject
 {
 public:
     ///@name Type Definitions
@@ -66,15 +66,14 @@ public:
     ///@name Life Cycle
     ///@{
 
-    // A default constructor necessary for serialization 
-    InterfaceNode() : InterfaceObject()
+    // A default constructor necessary for serialization
+    InterfaceNode() : InterfaceBaseObject()
     {
     }
-    
-    InterfaceNode(Node<3>& rNode, const int EchoLevel) : mpNode(&rNode)
+
+    InterfaceNode(Node<3>& rNode, const int EchoLevel) :
+        InterfaceBaseObject(rNode.Coordinates()), mpNode(&rNode)
     {
-        SetCoordinates();
-        mEchoLevel = EchoLevel;
     }
 
     /// Destructor.
@@ -93,45 +92,6 @@ public:
     Node<3>* pGetBaseNode() override
     {
         return mpNode;
-    }
-
-    bool EvaluateResult(const array_1d<double, 3>& GlobalCooords,
-                        double& rMinDistance, const double Distance,
-                        std::vector<double>& rShapeFunctionValues) override   // I am an object in the bins
-    {
-        bool is_closer = false;
-
-        if (Distance < rMinDistance)
-        {
-            rMinDistance = Distance;
-            is_closer = true;
-        }
-
-        return is_closer;
-    }
-
-    // Functions used for Debugging
-    void PrintNeighbors(const int CommRank) override
-    {
-        array_1d<double, 3> neighbor_coordinates = mpNode->GetValue(NEIGHBOR_COORDINATES);
-        double neighbor_comm_rank = mpNode->GetValue(NEIGHBOR_RANK);
-
-        PrintMatchInfo("InterfaceNode", CommRank,
-                       neighbor_comm_rank, neighbor_coordinates);
-    }
-
-    void WriteRankAndCoordinatesToVariable(const int CommRank) override
-    {
-        // This function writes the coordinates and the rank of the
-        // InterfaceObject to the variables "NEIGHBOR_COORDINATES"
-        // and "NEIGHBOR_RANK", for debugging
-        array_1d<double, 3> neighbor_coordinates;
-        // TODO exchange with "Coordinates()"
-        neighbor_coordinates[0] = this->X();
-        neighbor_coordinates[1] = this->Y();
-        neighbor_coordinates[2] = this->Z();
-        mpNode->SetValue(NEIGHBOR_COORDINATES, neighbor_coordinates);
-        mpNode->SetValue(NEIGHBOR_RANK, CommRank);
     }
 
     ///@}
@@ -220,22 +180,20 @@ private:
     ///@{
 
     Node<3>* mpNode;
-        
+
     ///@}
     ///@name Serialization
     ///@{
 
     friend class Serializer;
-    
+
     virtual void save(Serializer& rSerializer) const override
     {
-        KRATOS_ERROR << "This object is not supposed to be used with serialization!" << std::endl;        
-        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, InterfaceObject);
+        KRATOS_ERROR << "This object is not supposed to be used with serialization!" << std::endl;
     }
     virtual void load(Serializer& rSerializer) override
     {
         KRATOS_ERROR << "This object is not supposed to be used with serialization!" << std::endl;
-        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, InterfaceObject);
     }
 
     ///@}
@@ -246,11 +204,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    void SetCoordinates() override
-    {
-        this->Coordinates() = mpNode->Coordinates();
-    }
 
 
     ///@}

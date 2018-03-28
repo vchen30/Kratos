@@ -13,10 +13,13 @@
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
 
+
 #if !defined(KRATOS_MAPPER_UTILITIES_H_INCLUDED )
 #define  KRATOS_MAPPER_UTILITIES_H_INCLUDED
 
+
 // System includes
+#include <unordered_map>
 
 // External includes
 #ifdef KRATOS_USING_MPI
@@ -27,48 +30,38 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "utilities/math_utils.h" // Cross Product
-#include "utilities/openmp_utils.h" // for GetCurrentTime()
-
+#include "utilities/openmp_utils.h" // for GetCurrentTime() // change to mikes timer, if needed at all
 
 namespace Kratos
 {
-///@addtogroup ApplicationNameApplication
-///@{
-
-///@name Kratos Globals
-///@{
-
-///@}
-///@name Type Definitions
-///@{
-
-///@}
-///@name  Enum's
-///@{
-
-///@}
-///@name  Functions
-///@{
-
-///@}
-///@name Kratos Classes
-///@{
-
-/// Auxiliary functions for the MappingApplication
-/** This class provides a set of auxiliary functions that are used by several other functions / classes
-*/
-class MapperUtilities
+namespace MapperUtilities
 {
-public:
-    ///@name Type Definitions
-    ///@{
+    typedef std::unordered_map<std::string, InterfaceSearchObject::Pointer> InterfaceObjectMap;
 
-    /// Pointer definition of MapperUtilities
-    KRATOS_CLASS_POINTER_DEFINITION(MapperUtilities);
+    void RegisterInterfaceSearchObject(const std::string& InterfaceSearchObjectName,
+                                       InterfaceSearchObject::Pointer pInterfaceSearchObjectPrototype);
 
-    ///@}
-    ///@name  Enum's
-    ///@{
+    InterfaceObjectMap& GetRegisteredInterfaceSearchObjectsList();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     enum InterfaceObjectConstructionType
     {
@@ -78,22 +71,11 @@ public:
         // Point or Coordinates or sth => for Contact => create with list of points/coords,
     };
 
-    ///@}
-    ///@name Life Cycle
-    ///@{
-
-    /// Destructor.
-    virtual ~MapperUtilities() { }
-
-
-    ///@}
-    ///@name Operators
-    ///@{
-
-
-    ///@}
-    ///@name Operations
-    ///@{
+    enum SearchType
+    {
+        In_Radius,
+        Closest
+    }
 
     static double GetCurrentTime()
     {
@@ -516,77 +498,7 @@ public:
         return is_inside;
     }
 
-    // static bool ProjectPointToTetrahedra(pGeometry,
-    //                                      const array_1d<double, 3>& GlobalCoords,
-    //                                      array_1d<double,3>& rLocalCoords,
-    //                                      double& rDistance) {
-    //     // xi,yi,zi are Nodal Coordinates
-    //     // | DestX-x1 |   | x2-x1  x3-x1  x4-x1 |   | Chi1 |
-    //     // | DestY-y1 | = | y2-y1  y3-y1  y4-y1 | . | Chi2 |
-    //     // | DestZ-z1 |   | z2-z1  z3-z1  z4-z1 |   | Chi3 |
 
-    //     Matrix transform_matrix(3, 3, false);
-    //     Matrix inv_transform_matrix(3, 3, false);
-    //     double det;
-
-    //     array_1d<double, 3> RHS;
-
-    //     RHS[0] = GlobalCoords[0] - pGeometry->GetPoint(0).X();
-    //     RHS[1] = GlobalCoords[1] - pGeometry->GetPoint(0).Y();
-    //     RHS[2] = GlobalCoords[2] - pGeometry->GetPoint(0).Z();
-
-    //     transform_matrix(0, 0) = pGeometry->GetPoint(1).X() - pGeometry->GetPoint(0).X();
-    //     transform_matrix(1, 0) = pGeometry->GetPoint(1).Y() - pGeometry->GetPoint(0).Y();
-    //     transform_matrix(2, 0) = pGeometry->GetPoint(1).Z() - pGeometry->GetPoint(0).Z();
-
-    //     transform_matrix(0, 1) = pGeometry->GetPoint(2).X() - pGeometry->GetPoint(0).X();
-    //     transform_matrix(1, 1) = pGeometry->GetPoint(2).Y() - pGeometry->GetPoint(0).Y();
-    //     transform_matrix(2, 1) = pGeometry->GetPoint(2).Z() - pGeometry->GetPoint(0).Z();
-
-    //     transform_matrix(0, 2) = pGeometry[3].X() - pGeometry->GetPoint(0).X();
-    //     transform_matrix(1, 2) = pGeometry[3].Y() - pGeometry->GetPoint(0).Y();
-    //     transform_matrix(2, 2) = pGeometry[3].Z() - pGeometry->GetPoint(0).Z();
-
-    //     MathUtils<double>::InvertMatrix3(transform_matrix,inv_transform_matrix,det);
-    //     noalias(rLocalCoords) = prod(inv_transform_matrix, RHS);
-
-    //     bool is_inside = false;
-
-    //     if( rLocalCoords[0] >= 0.0-MapperUtilities::tol_local_coords ) {
-    //         if( rLocalCoords[1] >= 0.0-MapperUtilities::tol_local_coords ) {
-    //             if( rLocalCoords[2] >= 0.0-MapperUtilities::tol_local_coords ) {
-    //                 if( (rLocalCoords[0] + rLocalCoords[1] + rLocalCoords[2]) <= (1.0+MapperUtilities::tol_local_coords)) {
-    //                     is_inside = true;
-
-    //                     rDistance = ComputeDistance(GlobalCoords, pGeometry.Center());
-    //                     rDistance /= pGeometry.Volume(); // Normalize Distance by Volume
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     return is_inside;
-    // }
-
-    // static bool ProjectPointToCondition(Geometry<Node<3>>* pGeometry,
-    //                                     const array_1d<double, 3>& GlobalCoords,
-    //                                     array_1d<double,3>& rLocalCoords,
-    //                                     double& rDistance) {
-
-    //     Condition::GeometryType& r_condition_geometry = pGeometry;
-    //     bool is_inside = r_condition_geometry.IsInside(GlobalCoords, rLocalCoords);
-
-    //     if (is_inside) {
-    //         // Calculate Distance
-    //         array_1d<double, 3> projection_global_coords;
-    //         r_condition_geometry.GlobalCoordinates(projection_global_coords, rLocalCoords);
-    //         rDistance = ComputeDistance(GlobalCoords, projection_global_coords);
-    //         // KRATOS_WATCH(rDistance)
-    //         // std::cout << "Local Coords: [ " << rLocalCoords[0] << " , " << rLocalCoords[1] << " , " << rLocalCoords[2] << " ]" << std::endl;
-    //     }
-
-    //     return is_inside;
-    // }
 
     static bool PointLocalCoordinatesInVolume(Geometry<Node<3>>* pGeometry,
             const array_1d<double, 3>& GlobalCoords,
@@ -647,164 +559,12 @@ public:
         rNormal /= norm_2(rNormal); // normalize the nomal (i.e. length=1)
     }
 
-    ///@}
-    ///@name Access
-    ///@{
 
-
-    ///@}
-    ///@name Inquiry
-    ///@{
-
-
-    ///@}
-    ///@name Input and output
-    ///@{
-
-    /// Turn back information as a string.
-    virtual std::string Info() const
-    {
-        std::stringstream buffer;
-        buffer << "MapperUtilities" ;
-        return buffer.str();
-    }
-
-    /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
-    {
-        rOStream << "MapperUtilities";
-    }
-
-    /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const {}
-
-
-    ///@}
-    ///@name Friends
-    ///@{
-
-
-    ///@}
-
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Protected Operators
-    ///@{
-
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
-
-    ///@}
-    ///@name Protected  Access
-    ///@{
-
-
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
-
-
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
-
-
-    ///@}
-
-private:
-    ///@name Static Member Variables
-    ///@{
-
-
-    ///@}
-    ///@name Member Variables
-    ///@{
 
     static constexpr double tol_local_coords = 1E-15; // TODO what to use here?
     // static constexpr double tol_local_coords = std::numeric_limits<double>::epsilon(); // gives Problems if nodes are in the same location
 
-
-    ///@}
-    ///@name Private Operators
-    ///@{
-
-
-    ///@}
-    ///@name Private Operations
-    ///@{
-
-    /// Default constructor.
-    MapperUtilities() { }
-
-    ///@}
-    ///@name Private  Access
-    ///@{
-
-
-    ///@}
-    ///@name Private Inquiry
-    ///@{
-
-
-    ///@}
-    ///@name Un accessible methods
-    ///@{
-
-    /// Assignment operator.
-    MapperUtilities& operator=(MapperUtilities const& rOther);
-
-    //   /// Copy constructor.
-    //   MapperUtilities(MapperUtilities const& rOther){}
-
-
-    ///@}
-
-}; // Class MapperUtilities
-
-///@}
-
-///@name Type Definitions
-///@{
-
-
-///@}
-///@name Input and output
-///@{
-
-
-/// input stream function
-inline std::istream& operator >> (std::istream& rIStream,
-                                  MapperUtilities& rThis)
-{
-    return rIStream;
-}
-
-/// output stream function
-inline std::ostream& operator << (std::ostream& rOStream,
-                                  const MapperUtilities& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
-///@}
-
-///@} addtogroup block
-
+}  // namespace MapperUtilities.
 }  // namespace Kratos.
 
 #endif // KRATOS_MAPPER_UTILITIES_H_INCLUDED  defined

@@ -12,7 +12,6 @@ set( KRATOS_MAPPING_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_mappers_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/mapper_flags.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/mapper_factory.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/base_mapper_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/nearest_neighbor_mapper_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/nearest_element_mapper_condition.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/mortar_mapper_condition.cpp

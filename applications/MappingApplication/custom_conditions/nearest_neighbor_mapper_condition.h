@@ -22,7 +22,7 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/base_mapper_condition.h"
+#include "includes/condition.h"
 
 namespace Kratos
 {
@@ -46,13 +46,13 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public BaseMapperCondition
+class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Condition
 {
   public:
     ///@name Type Definitions
     ///@{
 
-    typedef BaseMapperCondition BaseType;
+    typedef Condition BaseType;
 
     ///@}
     ///@name Pointer Definitions
@@ -135,6 +135,14 @@ class KRATOS_API(MAPPING_APPLICATION) NearestNeighborMapperCondition : public Ba
    * @return a Pointer to the new condition
    */
     Condition::Pointer Clone(IndexType NewId, NodesArrayType const &ThisNodes) const;
+
+    /**
+    * this determines the condition equation ID vector for all conditional
+    * DOFs
+    * @param rResult: the condition equation ID vector
+    * @param rCurrentProcessInfo: the current process info instance
+    */
+    void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo);
 
 
     /**

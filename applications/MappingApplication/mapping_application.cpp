@@ -72,7 +72,6 @@ KratosMappingApplication::KratosMappingApplication() :
     mMortarMapperCondition3D4NSurface( 0, Condition::GeometryType::Pointer( new Quadrilateral3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
     mMortarMapperCondition3D4N( 0, Condition::GeometryType::Pointer( new Tetrahedra3D4 <Node<3> >( Condition::GeometryType::PointsArrayType( 4 ) ) ) ),
     mMortarMapperCondition3D8N( 0, Condition::GeometryType::Pointer( new Hexahedra3D8 <Node<3> >( Condition::GeometryType::PointsArrayType( 8 ) ) ) )
-
 {}
 
 void KratosMappingApplication::Register()
@@ -107,6 +106,8 @@ void KratosMappingApplication::Register()
     MapperFactory::Register("nearest_element",  Kratos::make_shared<NearestElementMapper>(dummy_model_part, dummy_model_part));
 
     KRATOS_REGISTER_VARIABLE(MAPPING_MATRIX_EQUATION_ID);
+    KRATOS_REGISTER_VARIABLE(MAPPING_MATRIX_NEIGHBOR_EQUATION_IDS);
+    KRATOS_REGISTER_VARIABLE(MAPPING_MATRIX_NEIGHBOR_WEIGHTS);
     // Needed to exchange Information abt the found neighbors (i.e. only for debugging)
     KRATOS_REGISTER_VARIABLE( NEIGHBOR_RANK )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( NEIGHBOR_COORDINATES )

@@ -22,7 +22,8 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/base_mapper_condition.h"
+#include "includes/condition.h"
+#include "utilities/exact_mortar_segmentation_utility.h"
 
 namespace Kratos
 {
@@ -46,13 +47,15 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-class KRATOS_API(MAPPING_APPLICATION) MortarMapperCondition : public BaseMapperCondition
+class KRATOS_API(MAPPING_APPLICATION) MortarMapperCondition : public Condition
 {
   public:
     ///@name Type Definitions
     ///@{
 
-    typedef BaseMapperCondition BaseType;
+    typedef Condition BaseType;
+
+    typedef ExactMortarIntegrationUtility<TDim, TNumNodes, true>    IntegrationUtility;
 
     ///@}
     ///@name Pointer Definitions

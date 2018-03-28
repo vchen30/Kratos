@@ -13,29 +13,29 @@
 // "Development and Implementation of a Parallel
 //  Framework for Non-Matching Grid Mapping"
 
-#if !defined(KRATOS_ADD_MAPPERS_TO_PYTHON_H_INCLUDED )
-#define  KRATOS_ADD_MAPPERS_TO_PYTHON_H_INCLUDED
 
 // System includes
 
+
 // External includes
 
+
 // Project includes
-#include "includes/define.h"
+#include "interface_communicator"
 
 
 namespace Kratos
 {
+    InterfaceCommunicator::InterfaceCommunicator(ModelPart& rModelPartOrigin
+                                                 Modelpart::Pointer pModelPartDestination)
+                                                 : mrModelPartOrigin(rModelPartOrigin),
+                                                   mpModelPartDestination(mpModelPartDestination)
+    {
 
-namespace Python
-{
-
-void AddCustomMappersToPython();
-void AddCustomMappersToPythonMPI();
+    }
 
 
-}  // namespace Python.
 
 }  // namespace Kratos.
 
-#endif // KRATOS_ADD_MAPPERS_TO_PYTHON_H_INCLUDED  defined
+

@@ -20,6 +20,7 @@
 
 // Include Base h
 #include "custom_conditions/nearest_element_mapper_condition.h"
+#include "mapping_application_variables.h"
 
 namespace Kratos
 {
@@ -47,7 +48,7 @@ namespace Kratos
  * Constructor.
  */
 NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId)
-    : BaseMapperCondition(NewId) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -55,7 +56,7 @@ NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId)
  * Constructor using an array of nodes
  */
 NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, const NodesArrayType &ThisNodes)
-    : BaseMapperCondition(NewId, ThisNodes) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, ThisNodes) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -63,7 +64,7 @@ NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, co
  * Constructor using Geometry
  */
 NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, GeometryType::Pointer pGeometry)
-    : BaseMapperCondition(NewId, pGeometry) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, pGeometry) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -71,7 +72,7 @@ NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, Ge
  * Constructor using Properties
  */
 NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : BaseMapperCondition(NewId, pGeometry, pProperties) // @{KRATOS_INIT_MEMBER_LIST}
+    : Condition(NewId, pGeometry, pProperties) // @{KRATOS_INIT_MEMBER_LIST}
 {
 }
 
@@ -79,7 +80,7 @@ NearestElementMapperCondition::NearestElementMapperCondition(IndexType NewId, Ge
  * Copy Constructor
  */
 NearestElementMapperCondition::NearestElementMapperCondition(NearestElementMapperCondition const &rOther)
-    : BaseMapperCondition(rOther) // @{KRATOS_CC_INIT_MEMBER_LIST}
+    : Condition(rOther) // @{KRATOS_CC_INIT_MEMBER_LIST}
 {
 }
 
@@ -488,7 +489,7 @@ void NearestElementMapperCondition::PrintData(std::ostream &rOStream) const
 
 void NearestElementMapperCondition::save(Serializer &rSerializer) const
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseMapperCondition);
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list
@@ -496,7 +497,7 @@ void NearestElementMapperCondition::save(Serializer &rSerializer) const
 
 void NearestElementMapperCondition::load(Serializer &rSerializer)
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, BaseMapperCondition);
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list

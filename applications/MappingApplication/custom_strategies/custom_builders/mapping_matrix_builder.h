@@ -202,6 +202,8 @@ class MappingMatrixBuilder : public BaseMappingMatrixBuilder<TSparseSpace, TDens
 
         ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
 
+        EquationIdVectorType equation_id;
+
         const int num_conditions = rModelPart.NumberOfConditions();
         ConditionIterator it_begin = rModelPart.ConditionsBegin();
 
@@ -210,9 +212,12 @@ class MappingMatrixBuilder : public BaseMappingMatrixBuilder<TSparseSpace, TDens
         {
             ConditionIterator cond_it = it_begin + i;
 
+
+
+            cond_it->EquationIdVector(equation_id, r_current_process_info);
             cond_it->CalculateLeftHandSide(mapper_local_system, r_current_process_info);
 
-            Assemble(rA, mapper_local_system);
+            Assemble(rA, mapper_local_system, equation_id);
         }
 
         if (this->mEchoLevel >= 1) TSparseSpace::WriteMatrixMarketMatrix("MappingMatrixSerial", rA, false); // TODO change Level to sth higher later
@@ -484,7 +489,9 @@ class MappingMatrixBuilder : public BaseMappingMatrixBuilder<TSparseSpace, TDens
         }
     }
 
-    void Assemble(TSystemMatrixType& rA, LocalSystemMatrixType& rLocalSystem)
+    void Assemble(TSystemMatrixType& rA,
+                  const LocalSystemMatrixType& rLocalSystem,
+                  const EquationIdVectorType& rEquationID)
     {
         /* The format of "rLocalSystem" is:
         1. Row: Weight
