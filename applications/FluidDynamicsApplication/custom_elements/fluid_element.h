@@ -284,6 +284,25 @@ public:
     ///@name Access
     ///@{
 
+    void GetValueOnIntegrationPoints(Variable<array_1d<double, 3>> const& rVariable,
+                                     std::vector<array_1d<double, 3>>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override;
+
+    void GetValueOnIntegrationPoints(Variable<double> const& rVariable,
+                                     std::vector<double>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override;
+
+    void GetValueOnIntegrationPoints(Variable<array_1d<double, 6>> const& rVariable,
+                                     std::vector<array_1d<double, 6>>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override;
+
+    void GetValueOnIntegrationPoints(Variable<Vector> const& rVariable,
+                                     std::vector<Vector>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override;
+
+    void GetValueOnIntegrationPoints(Variable<Matrix> const& rVariable,
+                                     std::vector<Matrix>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override;
 
     ///@}
     ///@name Inquiry
@@ -343,10 +362,6 @@ protected:
                                        Matrix& rNContainer,
                                        ShapeFunctionDerivativesArrayType& rDN_DX) const;
 
-
-    /// Characteristic element size h to be used in stabilization parameters.
-    virtual double ElementSize() const;
-
     /**
      * @brief Write the convective operator evaluated at this point (for each nodal funciton) to an array
      * Evaluate the convective operator for each node's shape function at an arbitrary point
@@ -373,8 +388,8 @@ protected:
 
     virtual void AddVelocitySystem(
         TElementData& rData,
-        MatrixType& rLHS,
-        VectorType& rRHS);
+        MatrixType& rLocalLHS,
+        VectorType& rLocalRHS);
 
     virtual void AddMassLHS(
         TElementData& rData,
@@ -389,11 +404,6 @@ protected:
     void GetCurrentValuesVector(
         const TElementData& rData,
         array_1d<double,LocalSize>& rValues) const;
-
-    void IntegrationPointVorticity(
-        const ShapeFunctionDerivativesType& rDN_DX,
-        array_1d<double,3> &rVorticity) const;
-
 
     ///@}
     ///@name Protected  Access

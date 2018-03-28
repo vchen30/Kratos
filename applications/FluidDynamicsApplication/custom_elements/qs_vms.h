@@ -101,6 +101,7 @@ public:
     constexpr static unsigned int NumNodes = FluidElement<TElementData>::NumNodes;
     constexpr static unsigned int BlockSize = FluidElement<TElementData>::BlockSize;
     constexpr static unsigned int LocalSize = FluidElement<TElementData>::LocalSize;
+    constexpr static unsigned int StrainSize = FluidElement<TElementData>::StrainSize;
 
     ///@}
     ///@name Life Cycle
@@ -265,6 +266,8 @@ protected:
     ///@name Protected Operations
     ///@{
 
+    // Protected interface of FluidElement ////////////////////////////////////
+
     void AddTimeIntegratedSystem(
         TElementData& rData,
         MatrixType& rLHS,
@@ -280,16 +283,12 @@ protected:
 
     void AddVelocitySystem(
         TElementData& rData,
-        MatrixType& rLHS,
-        VectorType& rRHS) override;
+        MatrixType& rLocalLHS,
+        VectorType& rLocalRHS) override;
 
     void AddMassLHS(
         TElementData& rData,
         MatrixType& rMassMatrix) override;
-
-    void AddMassStabilization(
-        TElementData& rData,
-        MatrixType& rMassMatrix);
 
     // This function integrates the traction over a cut. It is only required to implement embedded formulations
     void AddBoundaryIntegral(
@@ -297,6 +296,17 @@ protected:
         const Vector& rUnitNormal,
         MatrixType& rLHS,
         VectorType& rRHS) override;
+
+    // Implementation details of QSVMS ////////////////////////////////////////
+
+    void AddMassStabilization(
+        TElementData& rData,
+        MatrixType& rMassMatrix);
+
+    void AddViscousTerm(
+        const TElementData& rData,
+        boost::numeric::ublas::bounded_matrix<double,LocalSize,LocalSize>& rLHS,
+        VectorType& rRHS);
 
     /**
      * @brief EffectiveViscosity Evaluate the total kinematic viscosity at a given integration point.
@@ -308,16 +318,12 @@ protected:
     KRATOS_DEPRECATED virtual double EffectiveViscosity(
         TElementData& rData,
         double ElementSize);
-
     
-    virtual void CalculateStaticTau(
+    virtual void CalculateTau(
         const TElementData& rData,
-        double Density,
-        double DynamicViscosity,
         const array_1d<double,3> &Velocity,
-        double ElemSize,
         double &TauOne,
-        double &TauTwo);    
+        double &TauTwo) const;
 
     void CalculateProjections(const ProcessInfo &rCurrentProcessInfo);
 
@@ -340,7 +346,7 @@ protected:
         const ProcessInfo& rProcessInfo,
         double &rPressureSubscale);
 
-        virtual void ASGSMomentumResidual(
+    virtual void ASGSMomentumResidual(
         TElementData& rData,
         array_1d<double,3>& rMomentumRes);
 
@@ -466,12 +472,6 @@ inline std::ostream& operator <<(std::ostream& rOStream,
 
 
 namespace Internals {
-
-template <unsigned int TDim>
-void AddViscousTerm(double DynamicViscosity,
-                    double GaussWeight,
-                    const Kratos::Matrix& rDN_DX,
-                    Kratos::Matrix& rLHS);
 
 template <class TElementData, bool TDataKnowsAboutTimeIntegration>
 class SpecializedAddTimeIntegratedSystem {

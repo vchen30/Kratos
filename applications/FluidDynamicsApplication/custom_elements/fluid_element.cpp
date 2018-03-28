@@ -18,6 +18,7 @@
 #include "custom_utilities/time_integrated_qsvms_data.h"
 #include "custom_utilities/symbolic_navier_stokes_data.h"
 #include "custom_utilities/element_size_calculator.h"
+#include "custom_utilities/vorticity_utilities.h"
 
 namespace Kratos
 {
@@ -237,12 +238,6 @@ void FluidElement<TElementData>::CalculateLocalVelocityContribution(
 
             this->AddVelocitySystem(data, rDampMatrix, rRightHandSideVector);
         }
-
-        // Rewrite local contribution into residual form (A*dx = b - A*x)
-        array_1d<double,LocalSize> values;
-        this->GetCurrentValuesVector(data,values);
-
-        noalias(rRightHandSideVector) -= prod(rDampMatrix, values);
     }
 }
 
@@ -416,11 +411,90 @@ int FluidElement<TElementData>::Check(const ProcessInfo &rCurrentProcessInfo)
     // Check the constitutive law
     KRATOS_ERROR_IF(mpConstitutiveLaw == nullptr) << "Constitutive Law not initialized for Element " << this->Info() << std::endl;
 
+    constexpr auto dimension = Dim;  // I need to set this here otherwise it gives me a linking error when attempting to '<<' Dim.
+
+    KRATOS_ERROR_IF(mpConstitutiveLaw->WorkingSpaceDimension() != Dim)
+        << "Wrong dimension: The " << mpConstitutiveLaw->WorkingSpaceDimension()
+        << "D constitutive law " << mpConstitutiveLaw->Info()
+        << " is not compatible with " << dimension << "D element " << this->Info()
+        << "." << std::endl;
+
     out = mpConstitutiveLaw->Check(this->GetProperties(),r_geometry,rCurrentProcessInfo);
     KRATOS_ERROR_IF_NOT( out == 0) << "The Constitutive Law provided for Element " << this->Info() << " is not correct." << std::endl;
 
     return out;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+template< class TElementData >
+void FluidElement<TElementData>::GetValueOnIntegrationPoints(
+    Variable<array_1d<double, 3 > > const& rVariable,
+    std::vector<array_1d<double, 3 > >& rValues,
+    ProcessInfo const& rCurrentProcessInfo)
+{
+    if (rVariable == VORTICITY)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_function_gradients;
+        this->CalculateGeometryData(gauss_weights,shape_functions,shape_function_gradients);
+
+        VorticityUtilities<Dim>::CalculateVorticityVector(this->GetGeometry(),shape_function_gradients,rValues);
+    }
+}
+
+
+template< class TElementData >
+void FluidElement<TElementData>::GetValueOnIntegrationPoints(
+    Variable<double> const& rVariable,
+    std::vector<double>& rValues,
+    ProcessInfo const& rCurrentProcessInfo)
+{
+    if (rVariable == Q_VALUE)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_function_gradients;
+        this->CalculateGeometryData(gauss_weights,shape_functions,shape_function_gradients);
+
+        VorticityUtilities<Dim>::CalculateQValue(this->GetGeometry(),shape_function_gradients,rValues);
+    }
+    else if (rVariable == VORTICITY_MAGNITUDE)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_function_gradients;
+        this->CalculateGeometryData(gauss_weights,shape_functions,shape_function_gradients);
+
+        VorticityUtilities<Dim>::CalculateVorticityMagnitude(this->GetGeometry(),shape_function_gradients,rValues);
+    }
+}
+
+template <class TElementData>
+void FluidElement<TElementData>::GetValueOnIntegrationPoints(
+    Variable<array_1d<double, 6>> const& rVariable,
+    std::vector<array_1d<double, 6>>& rValues,
+    ProcessInfo const& rCurrentProcessInfo)
+{}
+
+template <class TElementData>
+void FluidElement<TElementData>::GetValueOnIntegrationPoints(
+    Variable<Vector> const& rVariable,
+    std::vector<Vector>& rValues,
+    ProcessInfo const& rCurrentProcessInfo)
+{}
+
+template <class TElementData>
+void FluidElement<TElementData>::GetValueOnIntegrationPoints(
+    Variable<Matrix> const& rVariable,
+    std::vector<Matrix>& rValues,
+    ProcessInfo const& rCurrentProcessInfo)
+{}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Input and output
@@ -481,21 +555,14 @@ void FluidElement<TElementData>::CalculateMaterialResponse(TElementData& rData) 
 
     auto& Values = rData.ConstitutiveLawValues;
 
-    const Vector Nvec(rData.N);
-    Values.SetShapeFunctionsValues(Nvec);
-
-    // Set constitutive law flags:
-    Flags& ConstitutiveLawOptions=Values.GetOptions();
-    ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
-    ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
-
-    Values.SetStrainVector(rData.StrainRate);   //this is the input parameter
-    Values.SetStressVector(rData.Stress);       //this is an ouput parameter
-    Values.SetConstitutiveMatrix(rData.C);      //this is an ouput parameter
+    const Vector shape_functions_vector(rData.N);
+    Values.SetShapeFunctionsValues(shape_functions_vector);
 
     //ATTENTION: here we assume that only one constitutive law is employed for all of the gauss points in the element.
-    //this is ok under the hypothesis that no history dependent behaviour is employed
+    //this is ok under the hypothesis that no history dependent behavior is employed
     mpConstitutiveLaw->CalculateMaterialResponseCauchy(Values);
+
+    mpConstitutiveLaw->CalculateValue(Values,EFFECTIVE_VISCOSITY,rData.EffectiveViscosity);
 }
 
 template< class TElementData >
@@ -523,15 +590,6 @@ void FluidElement<TElementData>::CalculateGeometryData(Vector &rGaussWeights,
 
     for (unsigned int g = 0; g < number_of_gauss_points; g++)
         rGaussWeights[g] = DetJ[g] * IntegrationPoints[g].Weight();
-}
-
-/** Calculate characteristic element length.
- * @return Minimum element height
- */
-template< class TElementData >
-double FluidElement<TElementData>::ElementSize() const
-{
-    return ElementSizeCalculator<Dim,NumNodes>::MinimumElementSize(this->GetGeometry());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -592,7 +650,9 @@ void FluidElement<TElementData>::AddTimeIntegratedRHS(
 
 template <class TElementData>
 void FluidElement<TElementData>::AddVelocitySystem(
-    TElementData& rData, MatrixType& rLHS, VectorType& rRHS) {
+    TElementData& rData,
+    MatrixType& rLocalLHS,
+    VectorType& rLocalRHS) {
     KRATOS_TRY;
 
     KRATOS_ERROR << "Calling base FluidElement::AddVelocitySystem "
@@ -644,34 +704,6 @@ void FluidElement<TElementData>::GetCurrentValuesVector(
         for (unsigned int d = 0; d < Dim; ++d)  // Velocity Dofs
             rValues[local_index++] = r_velocities(i, d);
         rValues[local_index++] = r_pressures[i];  // Pressure Dof
-    }
-}
-
-template <class TElementData>
-void FluidElement<TElementData>::IntegrationPointVorticity(
-    const ShapeFunctionDerivativesType& rDN_DX, array_1d<double, 3>& rVorticity) const
-{
-    rVorticity = array_1d<double, 3>(3, 0.0);
-
-    if (Dim == 2)
-    {
-        for (unsigned int i = 0; i < NumNodes; ++i)
-        {
-            const array_1d<double, 3>& rVelocity =
-                this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
-            rVorticity[2] += rDN_DX(i, 0) * rVelocity[1] - rDN_DX(i, 1) * rVelocity[0];
-        }
-    }
-    else
-    {
-        for (unsigned int i = 0; i < NumNodes; ++i)
-        {
-            const array_1d<double, 3>& rVelocity =
-                this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
-            rVorticity[0] += rDN_DX(i, 1) * rVelocity[2] - rDN_DX(i, 2) * rVelocity[1];
-            rVorticity[1] += rDN_DX(i, 2) * rVelocity[0] - rDN_DX(i, 0) * rVelocity[2];
-            rVorticity[2] += rDN_DX(i, 0) * rVelocity[1] - rDN_DX(i, 1) * rVelocity[0];
-        }
     }
 }
 
