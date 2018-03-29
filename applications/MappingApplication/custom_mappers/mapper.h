@@ -62,13 +62,15 @@ namespace Kratos
 *        Mapping Direction: Origin => Destionation
 * - InverseMap: This function does the opposite of the "Map" function
 *               Mapping Direction: Destination => Origin
-* - UpdateInterface: Called when the interface is changed. It recomputes the neighbors and 
+* - UpdateInterface: Called when the interface is changed. It recomputes the neighbors and
 *   other information related to the relations btw entities (node, elements,...) on the interfaces
 * It is also responsible for initializing the MapperCommunicator or the MapperMPICommuniator
 * For information abt the available echo_levels and the JSON default-parameters
 * look into the class description of the MapperCommunicator
 */
-
+template <class TInterfaceCommunicator,
+          class TMappingOperationSolver
+          >
 class Mapper
 {
 public:
@@ -124,7 +126,7 @@ public:
                             const Variable< array_1d<double, 3> >& rDestinationVariable,
                             Kratos::Flags MappingOptions) = 0;
 
-    virtual Mapper::Pointer Clone(ModelPart& rModelPartOrigin, 
+    virtual Mapper::Pointer Clone(ModelPart& rModelPartOrigin,
                                   ModelPart& rModelPartDestination,
                                   Parameters JsonParameters) = 0;
 
@@ -180,6 +182,9 @@ protected:
     ModelPart& mModelPartDestination;
 
     Parameters mJsonParameters;
+
+    TInterfaceCommunicator::Pointer mpInterfaceCommunicator;
+    TMappingOperationSolver::Pointer mpMappingOperationSolver;
 
     MapperCommunicator::Pointer mpMapperCommunicator;
 
@@ -298,14 +303,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    void InitializeSerialCommunicator()
-    {
-        mpMapperCommunicator = MapperCommunicator::Pointer (
-                                   new MapperCommunicator(mModelPartOrigin,
-                                           mModelPartDestination,
-                                           mJsonParameters) );
-    }
 
     ///@}
     ///@name Private  Access

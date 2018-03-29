@@ -52,7 +52,7 @@ namespace Kratos
 ///@{
 /// Short class definition.
 template < class TInterfaceCommunicator,
-           class TMappingMatrixBuilder >
+           class TMappingOperationSolver >
 class MapperMatrixBased : public Mapper  // the functionalities of these two classes will be merged once the old mappers will be removed
 {
 public:
@@ -66,9 +66,9 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(MapperMatrixBased);
 
     typedef TInterfaceCommunicator TInterfaceCommunicatorType;
-    typedef TMappingMatrixBuilder TMappingMatrixBuilderType;
+    typedef TMappingOperationSolver TMappingOperationSolverType;
 
-    typedef typename TMappingMatrixBuilderType::Pointer TMappingMatrixBuilderPointerType;
+    typedef typename TMappingOperationSolverType::Pointer TMappingOperationSolverPointerType;
 
     // Jordi can I use the same names without problems?
     typedef typename TMappingMatrixBuilderType::TDataType TDataType;
@@ -295,15 +295,16 @@ protected:
     ///@name Protected member Variables
     ///@{
 
+    ModelPart& mModelPartOrigin;
+    ModelPart& mModelPartDestination;
+
+    Parameters mJsonParameters;
+
     ModelPart::Pointer mpInterfaceModelPart;
     InterfacePreprocessor::Pointer mpInterfacePreprocessor;
 
     TInterfaceCommunicatorType mpInterfaceCommunicator;
-    TMappingMatrixBuilderPointerType mpMappingMatrixBuilder;
-
-    TSystemVectorPointerType mpQo;
-    TSystemVectorPointerType mpQd;
-    TSystemMatrixPointerType mpMdo;
+    TMappingOperationSolverPointerType mpMappingOperationSolver;
 
     Parameters mInterfaceParameters = Parameters(R"({})");
 
