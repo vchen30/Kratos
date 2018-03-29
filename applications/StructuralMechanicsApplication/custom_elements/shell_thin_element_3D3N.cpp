@@ -474,10 +474,48 @@ void ShellThinElement3D3N::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessI
 
 void ShellThinElement3D3N::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if((rDampingMatrix.size1() != OPT_NUM_DOFS) || (rDampingMatrix.size2() != OPT_NUM_DOFS))
-        rDampingMatrix.resize(OPT_NUM_DOFS, OPT_NUM_DOFS, false);
+    KRATOS_TRY;
 
-    noalias( rDampingMatrix ) = ZeroMatrix(OPT_NUM_DOFS, OPT_NUM_DOFS);
+    const SizeType num_dofs = OPT_NUM_DOFS;
+
+    if ( rDampingMatrix.size1() != num_dofs )
+        rDampingMatrix.resize( num_dofs, num_dofs, false );
+
+    noalias( rDampingMatrix ) = ZeroMatrix( num_dofs, num_dofs );
+
+    // 1.-Calculate StiffnessMatrix:
+
+    MatrixType StiffnessMatrix  = Matrix();
+    VectorType ResidualVector  = Vector();
+
+    CalculateAll(StiffnessMatrix, ResidualVector, rCurrentProcessInfo, true, false);
+
+    // 2.-Calculate MassMatrix:
+
+    MatrixType MassMatrix  = Matrix();
+
+    CalculateMassMatrix(MassMatrix, rCurrentProcessInfo);
+
+    // 3.-Get Damping Coeffitients (RAYLEIGH_ALPHA, RAYLEIGH_BETA)
+    double alpha = 0.0;
+    if( GetProperties().Has(RAYLEIGH_ALPHA) )
+        alpha = GetProperties()[RAYLEIGH_ALPHA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_ALPHA) )
+        alpha = rCurrentProcessInfo[RAYLEIGH_ALPHA];
+
+    double beta  = 0.0;
+    if( GetProperties().Has(RAYLEIGH_BETA) )
+        beta = GetProperties()[RAYLEIGH_BETA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
+        beta = rCurrentProcessInfo[RAYLEIGH_BETA];
+
+    // 4.-Compose the Damping Matrix:
+
+    // Rayleigh Damping Matrix: alpha*M + beta*K
+    noalias( rDampingMatrix ) += alpha * MassMatrix;
+    noalias( rDampingMatrix ) += beta  * StiffnessMatrix;
+
+    KRATOS_CATCH( "" )
 }
 
 void ShellThinElement3D3N::CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
